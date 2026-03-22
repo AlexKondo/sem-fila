@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+
+<html class="light" lang="pt-br"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Configurações - SaaS Platform</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#ec5b13",
+                        "background-light": "#f8f6f6",
+                        "background-dark": "#221610",
+                    },
+                    fontFamily: {
+                        "display": ["Public Sans"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        body { font-family: 'Public Sans', sans-serif; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 antialiased">
+<!-- Header -->
+<header class="sticky top-0 z-50 bg-white dark:bg-background-dark border-b border-slate-200 dark:border-slate-800 px-4 py-4 flex items-center gap-4">
+<button class="flex items-center justify-center p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800">
+<span class="material-symbols-outlined text-slate-700 dark:text-slate-300">arrow_back</span>
+</button>
+<h1 class="text-xl font-bold tracking-tight">Configurações</h1>
+</header>
+<main class="pb-24 max-w-md mx-auto">
+<!-- User Profile Section -->
+<section class="p-4 mt-2">
+<div class="flex items-center gap-4 bg-white dark:bg-slate-900 p-5 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800">
+<div class="relative">
+<div class="h-16 w-16 rounded-full bg-cover bg-center border-2 border-primary" data-alt="Foto de perfil do usuário sorrindo" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuDicjAyDHUR1_3HDFclIR42Ue17SxYbJNakl49plT0nU1LanexCVIH6sPk1SW4sl0G6imJ5Mcw9CQUzzbPgokPer-6ffIekq4gURAXY07aaUalR48zOFBanqU3p7AlO_l8NWvXHaT19dGt498Hb3TI81YbbskR1mCFnPbOT5j-0_i3U3gwEmPUha9BAsMQ-wo84rRAnyjp33m4KowXPw6wU9WQwzGYizWnf9gxkP67dBjZELnTq1yqIv_GtEg2JLNXVAxS8RZpXFPh3')"></div>
+<div class="absolute bottom-0 right-0 bg-primary p-1 rounded-full border-2 border-white dark:border-slate-900">
+<span class="material-symbols-outlined text-white text-xs block">edit</span>
+</div>
+</div>
+<div class="flex-1">
+<h2 class="text-lg font-bold">Rodrigo Oliveira</h2>
+<p class="text-sm text-slate-500 dark:text-slate-400">rodrigo.dev@exemplo.com</p>
+</div>
+<span class="material-symbols-outlined text-slate-400">chevron_right</span>
+</div>
+</section>
+<!-- Language Selection -->
+<section class="px-4 py-2">
+<h3 class="text-sm font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-3 px-1">Idioma</h3>
+<div class="flex flex-col gap-2 bg-white dark:bg-slate-900 rounded-xl overflow-hidden border border-slate-100 dark:border-slate-800 shadow-sm">
+<label class="flex items-center gap-4 p-4 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+<div class="w-8 h-6 bg-slate-200 rounded overflow-hidden flex items-center justify-center">
+<span class="text-xl">🇧🇷</span>
+</div>
+<div class="flex-1">
+<p class="text-sm font-medium">Português - Brasil</p>
+</div>
+<input checked="" class="w-5 h-5 text-primary border-slate-300 focus:ring-primary" name="language" type="radio"/>
+</label>
+<div class="h-px bg-slate-100 dark:bg-slate-800 mx-4"></div>
+<label class="flex items-center gap-4 p-4 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+<div class="w-8 h-6 bg-slate-200 rounded overflow-hidden flex items-center justify-center">
+<span class="text-xl">🇺🇸</span>
+</div>
+<div class="flex-1">
+<p class="text-sm font-medium">English</p>
+</div>
+<input class="w-5 h-5 text-primary border-slate-300 focus:ring-primary" name="language" type="radio"/>
+</label>
+<div class="h-px bg-slate-100 dark:bg-slate-800 mx-4"></div>
+<label class="flex items-center gap-4 p-4 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+<div class="w-8 h-6 bg-slate-200 rounded overflow-hidden flex items-center justify-center">
+<span class="text-xl">🇯🇵</span>
+</div>
+<div class="flex-1">
+<p class="text-sm font-medium">Japanese</p>
+</div>
+<input class="w-5 h-5 text-primary border-slate-300 focus:ring-primary" name="language" type="radio"/>
+</label>
+</div>
+</section>
+<!-- App Settings -->
+<section class="px-4 py-4">
+<h3 class="text-sm font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-3 px-1">Preferências do App</h3>
+<div class="flex flex-col gap-2 bg-white dark:bg-slate-900 rounded-xl overflow-hidden border border-slate-100 dark:border-slate-800 shadow-sm">
+<div class="flex items-center gap-4 p-4">
+<span class="material-symbols-outlined text-primary">notifications</span>
+<div class="flex-1">
+<p class="text-sm font-medium">Notificações</p>
+<p class="text-xs text-slate-500">Alertas de pedidos e promoções</p>
+</div>
+<div class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary"></div>
+</div>
+</div>
+<div class="h-px bg-slate-100 dark:bg-slate-800 mx-4"></div>
+<div class="flex items-center gap-4 p-4">
+<span class="material-symbols-outlined text-primary">dark_mode</span>
+<div class="flex-1">
+<p class="text-sm font-medium">Modo Escuro</p>
+<p class="text-xs text-slate-500">Alterar aparência do aplicativo</p>
+</div>
+<div class="relative inline-flex items-center cursor-pointer">
+<input class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary"></div>
+</div>
+</div>
+</div>
+</section>
+<!-- Security -->
+<section class="px-4 py-4">
+<h3 class="text-sm font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-3 px-1">Segurança</h3>
+<div class="bg-white dark:bg-slate-900 rounded-xl overflow-hidden border border-slate-100 dark:border-slate-800 shadow-sm">
+<button class="w-full flex items-center gap-4 p-4 text-left hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
+<span class="material-symbols-outlined text-primary">lock_reset</span>
+<div class="flex-1">
+<p class="text-sm font-medium">Alterar Senha</p>
+<p class="text-xs text-slate-500">Última alteração há 3 meses</p>
+</div>
+<span class="material-symbols-outlined text-slate-400">chevron_right</span>
+</button>
+</div>
+</section>
+<!-- About -->
+<section class="px-4 py-4">
+<h3 class="text-sm font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-3 px-1">Sobre</h3>
+<div class="flex flex-col gap-2 bg-white dark:bg-slate-900 rounded-xl overflow-hidden border border-slate-100 dark:border-slate-800 shadow-sm">
+<button class="w-full flex items-center gap-4 p-4 text-left hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
+<span class="material-symbols-outlined text-slate-400">description</span>
+<div class="flex-1">
+<p class="text-sm font-medium text-slate-700 dark:text-slate-300">Termos de Serviço</p>
+</div>
+<span class="material-symbols-outlined text-slate-400">open_in_new</span>
+</button>
+<div class="h-px bg-slate-100 dark:bg-slate-800 mx-4"></div>
+<button class="w-full flex items-center gap-4 p-4 text-left hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
+<span class="material-symbols-outlined text-slate-400">policy</span>
+<div class="flex-1">
+<p class="text-sm font-medium text-slate-700 dark:text-slate-300">Política de Privacidade</p>
+</div>
+<span class="material-symbols-outlined text-slate-400">open_in_new</span>
+</button>
+</div>
+</section>
+<!-- Sign Out -->
+<section class="px-4 py-4 mb-8">
+<button class="w-full py-4 text-center rounded-xl font-bold text-red-500 bg-red-50 dark:bg-red-950/20 border border-red-100 dark:border-red-900/30">
+                Sair da Conta
+            </button>
+<p class="text-center text-xs text-slate-400 mt-6 font-medium">Versão 2.4.12-build.54</p>
+</section>
+</main>
+<!-- Bottom Navigation Bar -->
+<nav class="fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-background-dark border-t border-slate-200 dark:border-slate-800 px-2 pb-6 pt-2">
+<div class="flex max-w-md mx-auto justify-around items-center">
+<a class="flex flex-col items-center gap-1 p-2 text-slate-400 dark:text-slate-500 transition-colors" href="#">
+<span class="material-symbols-outlined">home</span>
+<span class="text-[10px] font-semibold uppercase tracking-wider">Início</span>
+</a>
+<a class="flex flex-col items-center gap-1 p-2 text-slate-400 dark:text-slate-500 transition-colors" href="#">
+<span class="material-symbols-outlined">receipt_long</span>
+<span class="text-[10px] font-semibold uppercase tracking-wider">Pedidos</span>
+</a>
+<a class="flex flex-col items-center gap-1 p-2 text-primary" href="#">
+<div class="relative">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">person</span>
+<span class="absolute -top-1 -right-1 w-2 h-2 bg-primary rounded-full border-2 border-white dark:border-background-dark"></span>
+</div>
+<span class="text-[10px] font-bold uppercase tracking-wider">Perfil</span>
+</a>
+</div>
+</nav>
+</body></html>

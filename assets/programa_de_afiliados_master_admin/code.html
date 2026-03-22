@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+
+<html class="light" lang="pt-BR"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Master Admin - Gestão de Afiliados</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@300;400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#ec5b13",
+                        "background-light": "#f8f6f6",
+                        "background-dark": "#221610",
+                    },
+                    fontFamily: {
+                        "display": ["Public Sans"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        body { font-family: 'Public Sans', sans-serif; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 antialiased">
+<div class="flex min-h-screen">
+<!-- Sidebar -->
+<aside class="w-64 border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-background-dark flex flex-col sticky top-0 h-screen">
+<div class="p-6 flex items-center gap-3">
+<div class="size-10 rounded-lg bg-primary flex items-center justify-center text-white">
+<span class="material-symbols-outlined">hub</span>
+</div>
+<div>
+<h1 class="text-sm font-bold tracking-tight">Master Admin</h1>
+<p class="text-xs text-slate-500">Plataforma SaaS</p>
+</div>
+</div>
+<nav class="flex-1 px-4 space-y-1">
+<a class="flex items-center gap-3 px-3 py-2 text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors" href="#">
+<span class="material-symbols-outlined text-[20px]">dashboard</span>
+                Dashboard
+            </a>
+<a class="flex items-center gap-3 px-3 py-2 text-sm font-medium bg-primary/10 text-primary rounded-lg" href="#">
+<span class="material-symbols-outlined text-[20px]">group</span>
+                Afiliados
+            </a>
+<a class="flex items-center gap-3 px-3 py-2 text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors" href="#">
+<span class="material-symbols-outlined text-[20px]">payments</span>
+                Pagamentos
+            </a>
+<a class="flex items-center gap-3 px-3 py-2 text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors" href="#">
+<span class="material-symbols-outlined text-[20px]">settings</span>
+                Configurações
+            </a>
+<a class="flex items-center gap-3 px-3 py-2 text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors" href="#">
+<span class="material-symbols-outlined text-[20px]">help_center</span>
+                Suporte
+            </a>
+</nav>
+<div class="p-4 border-t border-slate-200 dark:border-slate-800">
+<div class="flex items-center gap-3 p-2">
+<div class="size-8 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden">
+<img alt="Admin Avatar" data-alt="Avatar circular do administrador da plataforma" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA7Ws_qZ2irBBCc4tvrAxojkPANGalX4ckN2Um9SqXKFYKr9fqHYAgHjxCV1UtwOVKts_4CJ6Rmr9JP1z4-31mJRLR9U1-s2yJfizTqGRrEs9JHu4X_o8ydGXT7DfEiWJLkFT4cMZwDsT6ahPUTSuaMWOOAcOuiKC0F4NWyVY_2Gs_gFAOHaeDb7KasvayHg1wea-MAm0Gs6bvf6e5isnufQIjPcYt4W-6DXfsR3Buj93SlVrZqjbstauCOFCcQvsl9V-mtJuKO4Z-f"/>
+</div>
+<div class="flex-1 min-w-0">
+<p class="text-xs font-semibold truncate">Ricardo Souza</p>
+<p class="text-[10px] text-slate-500 truncate">Super Admin</p>
+</div>
+<span class="material-symbols-outlined text-slate-400 text-[18px]">logout</span>
+</div>
+</div>
+</aside>
+<!-- Main Content -->
+<main class="flex-1 flex flex-col">
+<!-- Header -->
+<header class="h-16 border-b border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-background-dark/80 backdrop-blur-md sticky top-0 z-10 px-8 flex items-center justify-between">
+<h2 class="text-lg font-bold">Gestão de Programa de Afiliados</h2>
+<div class="flex items-center gap-4">
+<button class="flex items-center gap-2 px-4 py-2 text-sm font-semibold bg-primary text-white rounded-lg hover:bg-primary/90 transition-all">
+<span class="material-symbols-outlined text-[18px]">download</span>
+                    Exportar Relatórios
+                </button>
+</div>
+</header>
+<div class="p-8 space-y-8 max-w-[1400px] mx-auto w-full">
+<!-- Summary Metrics Cards -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+<div class="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
+<div class="flex items-center justify-between mb-4">
+<span class="material-symbols-outlined text-primary bg-primary/10 p-2 rounded-lg">group</span>
+<span class="text-xs font-bold text-emerald-500 flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">trending_up</span> +12%</span>
+</div>
+<p class="text-slate-500 text-sm font-medium">Total de Afiliados</p>
+<h3 class="text-2xl font-bold mt-1">1.240</h3>
+</div>
+<div class="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
+<div class="flex items-center justify-between mb-4">
+<span class="material-symbols-outlined text-primary bg-primary/10 p-2 rounded-lg">payments</span>
+<span class="text-xs font-bold text-emerald-500 flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">trending_up</span> +5%</span>
+</div>
+<p class="text-slate-500 text-sm font-medium">Comissões Pagas</p>
+<h3 class="text-2xl font-bold mt-1">R$ 45.800</h3>
+</div>
+<div class="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
+<div class="flex items-center justify-between mb-4">
+<span class="material-symbols-outlined text-primary bg-primary/10 p-2 rounded-lg">monetization_on</span>
+<span class="text-xs font-bold text-emerald-500 flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">trending_up</span> +18%</span>
+</div>
+<p class="text-slate-500 text-sm font-medium">Receita de Referência</p>
+<h3 class="text-2xl font-bold mt-1">R$ 210.500</h3>
+</div>
+<div class="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
+<div class="flex items-center justify-between mb-4">
+<span class="material-symbols-outlined text-primary bg-primary/10 p-2 rounded-lg">pending_actions</span>
+<span class="text-xs font-bold text-orange-500 flex items-center gap-1">12 Pendentes</span>
+</div>
+<p class="text-slate-500 text-sm font-medium">Aprovações Pendentes</p>
+<h3 class="text-2xl font-bold mt-1">12</h3>
+</div>
+</div>
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+<!-- Main Content Area (Table & Approvals) -->
+<div class="lg:col-span-2 space-y-8">
+<!-- Affiliate List Table -->
+<section class="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm">
+<div class="p-6 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
+<h3 class="font-bold">Lista de Afiliados</h3>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-[18px]">search</span>
+<input class="pl-10 pr-4 py-2 text-sm border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all" placeholder="Buscar afiliado..." type="text"/>
+</div>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left text-sm">
+<thead class="bg-slate-50 dark:bg-slate-800/50 text-slate-500 uppercase text-[11px] font-bold">
+<tr>
+<th class="px-6 py-4">Nome / Email</th>
+<th class="px-6 py-4">Código</th>
+<th class="px-6 py-4">Referenciados</th>
+<th class="px-6 py-4">Taxa</th>
+<th class="px-6 py-4">Status</th>
+<th class="px-6 py-4"></th>
+</tr>
+</thead>
+<tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+<tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
+<td class="px-6 py-4">
+<div class="font-semibold">Bruno Silveira</div>
+<div class="text-xs text-slate-500">bruno@afiliado.com.br</div>
+</td>
+<td class="px-6 py-4 font-mono text-primary font-medium">BRUNO15</td>
+<td class="px-6 py-4 font-medium">152</td>
+<td class="px-6 py-4">15%</td>
+<td class="px-6 py-4">
+<span class="px-2 py-1 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 text-[10px] font-bold rounded-full uppercase">Ativo</span>
+</td>
+<td class="px-6 py-4 text-right">
+<button class="text-slate-400 hover:text-primary transition-colors">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</td>
+</tr>
+<tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
+<td class="px-6 py-4">
+<div class="font-semibold">Amanda Costa</div>
+<div class="text-xs text-slate-500">amanda.c@influencer.com</div>
+</td>
+<td class="px-6 py-4 font-mono text-primary font-medium">AMANDA20</td>
+<td class="px-6 py-4 font-medium">89</td>
+<td class="px-6 py-4">20%</td>
+<td class="px-6 py-4">
+<span class="px-2 py-1 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 text-[10px] font-bold rounded-full uppercase">Ativo</span>
+</td>
+<td class="px-6 py-4 text-right">
+<button class="text-slate-400 hover:text-primary transition-colors">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</td>
+</tr>
+<tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
+<td class="px-6 py-4">
+<div class="font-semibold">Carlos Eduardo</div>
+<div class="text-xs text-slate-500">carlos@dev.com.br</div>
+</td>
+<td class="px-6 py-4 font-mono text-primary font-medium">CARLOS10</td>
+<td class="px-6 py-4 font-medium">12</td>
+<td class="px-6 py-4">10%</td>
+<td class="px-6 py-4">
+<span class="px-2 py-1 bg-slate-100 dark:bg-slate-800 text-slate-500 text-[10px] font-bold rounded-full uppercase">Inativo</span>
+</td>
+<td class="px-6 py-4 text-right">
+<button class="text-slate-400 hover:text-primary transition-colors">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="p-4 border-t border-slate-200 dark:border-slate-800 flex justify-center">
+<button class="text-xs font-bold text-primary hover:underline">Ver todos os afiliados</button>
+</div>
+</section>
+<!-- Approval Queue -->
+<section class="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
+<div class="p-6 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
+<h3 class="font-bold flex items-center gap-2">
+<span class="material-symbols-outlined text-orange-500">verified_user</span>
+                                Fila de Aprovação
+                            </h3>
+<span class="bg-orange-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">3 NOVOS</span>
+</div>
+<div class="divide-y divide-slate-100 dark:divide-slate-800">
+<div class="p-6 flex items-center justify-between group">
+<div class="flex items-center gap-4">
+<div class="size-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center font-bold text-slate-600">JP</div>
+<div>
+<p class="font-semibold">João Pedro Marketing</p>
+<p class="text-xs text-slate-500 italic">"Gostaria de promover para minha base de 50k leads de e-commerce."</p>
+<p class="text-[10px] text-slate-400 mt-1">Solicitado em 15/10/2023</p>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<button class="px-3 py-1.5 text-xs font-bold text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors">Rejeitar</button>
+<button class="px-3 py-1.5 text-xs font-bold bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 transition-colors">Aprovar</button>
+</div>
+</div>
+<div class="p-6 flex items-center justify-between group">
+<div class="flex items-center gap-4">
+<div class="size-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center font-bold text-slate-600">LR</div>
+<div>
+<p class="font-semibold">Luciana Ramos</p>
+<p class="text-xs text-slate-500 italic">"Especialista em tráfego pago focado em B2B SaaS."</p>
+<p class="text-[10px] text-slate-400 mt-1">Solicitado em 14/10/2023</p>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<button class="px-3 py-1.5 text-xs font-bold text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors">Rejeitar</button>
+<button class="px-3 py-1.5 text-xs font-bold bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 transition-colors">Aprovar</button>
+</div>
+</div>
+</div>
+</section>
+</div>
+<!-- Sidebar Area (Commission Settings & Top Performers) -->
+<div class="space-y-8">
+<!-- Commission Settings -->
+<section class="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm p-6">
+<div class="flex items-center justify-between mb-6">
+<h3 class="font-bold flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-[20px]">tune</span>
+                                Ajustes de Comissão
+                            </h3>
+</div>
+<div class="space-y-4">
+<div>
+<label class="text-[11px] font-bold text-slate-500 uppercase block mb-1.5">Comissão Global Padrão</label>
+<div class="flex items-center gap-2">
+<div class="relative flex-1">
+<input class="w-full pl-3 pr-8 py-2 border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all font-semibold" type="number" value="10"/>
+<span class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold">%</span>
+</div>
+<div class="relative w-24">
+<input class="w-full pl-3 pr-8 py-2 border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all font-semibold text-xs" type="number" value="12"/>
+<span class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 text-[10px] font-bold">meses</span>
+</div>
+</div>
+</div>
+<hr class="border-slate-100 dark:border-slate-800"/>
+<div>
+<label class="text-[11px] font-bold text-slate-500 uppercase block mb-1.5">Regras VIP Customizadas</label>
+<div class="space-y-3">
+<div class="flex items-center justify-between p-2 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-800">
+<span class="text-xs font-semibold">Amanda Costa (Influencer)</span>
+<span class="text-xs font-bold text-primary">20%</span>
+</div>
+<div class="flex items-center justify-between p-2 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-800">
+<span class="text-xs font-semibold">Tech Review Hub</span>
+<span class="text-xs font-bold text-primary">18%</span>
+</div>
+</div>
+</div>
+<button class="w-full py-2.5 text-sm font-bold border-2 border-primary text-primary hover:bg-primary hover:text-white rounded-lg transition-all mt-2">
+                                Salvar Configurações
+                            </button>
+</div>
+</section>
+<!-- Top Performers -->
+<section class="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm p-6">
+<div class="flex items-center justify-between mb-6">
+<h3 class="font-bold flex items-center gap-2">
+<span class="material-symbols-outlined text-yellow-500 text-[20px]">workspace_premium</span>
+                                Melhores Afiliados
+                            </h3>
+</div>
+<div class="space-y-5">
+<div class="flex items-center gap-3">
+<div class="relative">
+<div class="size-10 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden">
+<img alt="Top 1" data-alt="Avatar de perfil do melhor afiliado" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDOcwrGy5vhBlT6bd3-X7yhlWoxAIWnm6_YeDZv-aS6C0EJbka-oro15jvY7aL-AfYMeo7ql8-oxhpeLmpCVlQZ_PRF35Anvwa-RNSn6vdj8nhjutoE6142ZJRjJuNnr3PFRiy437H00jALEd2aPaT4lKCiBHZJwAXyhbyd6pBqkpOCoEVvxh0Sl32Hx_yQjy-IT_LmVOm_mrIGLO9DRyh3g677AIpJAlUJUlFzgmbuUR5bJbvESCY7aH6BvFCva5_Bf7_1BMWEUV5_"/>
+</div>
+<span class="absolute -top-1 -right-1 size-5 bg-yellow-400 text-white flex items-center justify-center text-[10px] font-bold rounded-full border-2 border-white dark:border-slate-900">1</span>
+</div>
+<div class="flex-1">
+<p class="text-sm font-bold">Amanda Costa</p>
+<p class="text-[10px] text-slate-500">Receita: R$ 12.450,00</p>
+</div>
+<div class="text-right">
+<p class="text-xs font-bold text-emerald-500">89 vendas</p>
+</div>
+</div>
+<div class="flex items-center gap-3">
+<div class="relative">
+<div class="size-10 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden">
+<img alt="Top 2" data-alt="Avatar de perfil do segundo melhor afiliado" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDQtpvCTf-UeX8Zv4jiDHnhFKNm20Imno4e8aqI4SEK8AsHnlhk1ywntByCDeme8n2KRjK7g8XEa7IlDKdr1awseToQOw4PXhBVVu7iq2Kr9q42-0RABx4v282wfLLbfSxCUWMt7CqoQH3JmIRiG8FqkbfPOZvmOr8T8cCL-p6LCFl5jnP1xDhH66xYKG7pA3Ul1dMhTcmC4iA9-zkY3P6f6RMxUpaRQ4tqIs9n6VxHJr9zgJoc4IzvD4npPTldnv8amlOM_zsF-AQv"/>
+</div>
+<span class="absolute -top-1 -right-1 size-5 bg-slate-400 text-white flex items-center justify-center text-[10px] font-bold rounded-full border-2 border-white dark:border-slate-900">2</span>
+</div>
+<div class="flex-1">
+<p class="text-sm font-bold">Bruno Silveira</p>
+<p class="text-[10px] text-slate-500">Receita: R$ 8.210,00</p>
+</div>
+<div class="text-right">
+<p class="text-xs font-bold text-emerald-500">64 vendas</p>
+</div>
+</div>
+<div class="flex items-center gap-3">
+<div class="relative">
+<div class="size-10 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden">
+<img alt="Top 3" data-alt="Avatar de perfil do terceiro melhor afiliado" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB3kiEKc_EbpDZRObECSgC9GOQaVImjG_dj_1RKH-gNtgFE5fACjXkkz18NbaMXTbU4EowOe4K60rs6F-3O3kDJh1saM1eGmcdjq4E53qL7mnYpfz_7u4w6_JJ10JyRvuek3CHauMdAOgTUuFBvIAHMjJTnSn4cLzyLOM4opFZVExXwUQD1JRptk5F36J0fMIKxeZaKUYnV2usjs0GYOKa7twDB7fL2v0LjV_vpkyFWT56RZWFGSuaZUu5cLIuLeGa4GC-kPzwGgxny"/>
+</div>
+<span class="absolute -top-1 -right-1 size-5 bg-orange-700 text-white flex items-center justify-center text-[10px] font-bold rounded-full border-2 border-white dark:border-slate-900">3</span>
+</div>
+<div class="flex-1">
+<p class="text-sm font-bold">Tech Review Hub</p>
+<p class="text-[10px] text-slate-500">Receita: R$ 5.120,00</p>
+</div>
+<div class="text-right">
+<p class="text-xs font-bold text-emerald-500">42 vendas</p>
+</div>
+</div>
+</div>
+</section>
+</div>
+</div>
+</div>
+</main>
+</div>
+</body></html>

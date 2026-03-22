@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Customer Onboarding</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#ec5b13",
+                        "background-light": "#f8f6f6",
+                        "background-dark": "#221610",
+                    },
+                    fontFamily: {
+                        "display": ["Public Sans", "sans-serif"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 antialiased">
+<div class="relative flex h-screen w-full flex-col overflow-hidden max-w-md mx-auto shadow-2xl">
+<!-- Header with Skip -->
+<div class="flex items-center p-6 justify-end">
+<button class="text-primary text-base font-bold leading-normal tracking-wide hover:opacity-80 transition-opacity">Skip</button>
+</div>
+<!-- Main Content (Carousel Simulation - Slide 1) -->
+<div class="flex-1 flex flex-col justify-between px-6 pb-12">
+<div class="@container flex flex-col items-center">
+<div class="w-full @[480px]:px-4 @[480px]:py-3">
+<!-- Hero Illustration Container -->
+<div class="bg-cover bg-center flex flex-col justify-end overflow-hidden bg-primary/10 rounded-3xl min-h-[320px] relative border border-primary/20 shadow-inner" data-alt="Person scanning a QR code at a sleek modern kiosk" style='background-image: linear-gradient(180deg, rgba(236, 91, 19, 0) 60%, rgba(236, 91, 19, 0.1) 100%), url("https://lh3.googleusercontent.com/aida-public/AB6AXuDu0N0xpSYmMC3T98IitHJrMGoaZh1PtG2KVTUioY0NpH_GrjS9EwSgkuYXz5TH1bE9zsmhiaut_vxXpMU0tau8sMsbvGGqzIPOdbfFQ9_PRjhOO_oKmlO3uGm7nPaEF0uNeCE6ue3kK1E7afUk3QnUiiTrB6flg8NVJUI2WXjoI8itvu1PQR9fuO8B06TCwhNnEQcdFeaxnkwpYL8y2MPhyN7-eL3-AWAuf-rURG5KTiw4G98AN6SNx0m-HIOvVs8EsXGQBWWhopB5")'>
+<div class="absolute inset-0 flex items-center justify-center">
+<span class="material-symbols-outlined text-primary text-8xl opacity-90">qr_code_scanner</span>
+</div>
+<!-- Progress Dots (Top level context) -->
+<div class="flex justify-center gap-2 p-6">
+<div class="size-2 rounded-full bg-primary"></div>
+<div class="size-2 rounded-full bg-primary/30"></div>
+<div class="size-2 rounded-full bg-primary/30"></div>
+<div class="size-2 rounded-full bg-primary/30"></div>
+</div>
+</div>
+</div>
+<!-- Text Content -->
+<div class="mt-10 text-center">
+<h2 class="text-slate-900 dark:text-slate-100 text-3xl font-extrabold leading-tight mb-4">Scan &amp; Go</h2>
+<p class="text-slate-600 dark:text-slate-400 text-lg font-normal leading-relaxed">
+                        Simply scan the QR code at any of our kiosks to start your order instantly without waiting in line.
+                    </p>
+</div>
+</div>
+<!-- Footer Action Area -->
+<div class="flex flex-col gap-4 mt-8">
+<!-- Large Primary Button -->
+<button class="w-full bg-primary py-4 rounded-xl text-white font-bold text-lg shadow-lg shadow-primary/30 flex items-center justify-center gap-2 active:scale-[0.98] transition-transform">
+                    Next
+                    <span class="material-symbols-outlined">arrow_forward</span>
+</button>
+<!-- Bottom Step Indicator -->
+<div class="flex w-full flex-row items-center justify-center gap-3 py-2">
+<div class="h-1.5 w-6 rounded-full bg-primary"></div>
+<div class="h-1.5 w-1.5 rounded-full bg-primary/20"></div>
+<div class="h-1.5 w-1.5 rounded-full bg-primary/20"></div>
+<div class="h-1.5 w-1.5 rounded-full bg-primary/20"></div>
+</div>
+</div>
+</div>
+</div>
+<!-- Background Elements for Context -->
+<div class="hidden md:flex fixed inset-0 -z-10 bg-primary/5 items-center justify-center">
+<div class="max-w-4xl w-full grid grid-cols-4 gap-6 px-10 opacity-20 select-none">
+<div class="flex flex-col items-center gap-4 text-primary">
+<span class="material-symbols-outlined text-6xl">qr_code_scanner</span>
+<span class="text-sm font-bold">1. Scan</span>
+</div>
+<div class="flex flex-col items-center gap-4 text-primary">
+<span class="material-symbols-outlined text-6xl">shopping_cart_checkout</span>
+<span class="text-sm font-bold">2. Choose &amp; Pay</span>
+</div>
+<div class="flex flex-col items-center gap-4 text-primary">
+<span class="material-symbols-outlined text-6xl">stars</span>
+<span class="text-sm font-bold">3. Earn Points</span>
+</div>
+<div class="flex flex-col items-center gap-4 text-primary">
+<span class="material-symbols-outlined text-6xl">shopping_bag</span>
+<span class="text-sm font-bold">4. Collect</span>
+</div>
+</div>
+</div>
+</body></html>

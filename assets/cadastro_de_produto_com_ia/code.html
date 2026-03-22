@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+
+<html class="light" lang="pt-BR"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@300;400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#ec5b13",
+                        "background-light": "#f8f6f6",
+                        "background-dark": "#221610",
+                    },
+                    fontFamily: {
+                        "display": ["Public Sans"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        body { font-family: 'Public Sans', sans-serif; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 min-h-screen">
+<div class="relative flex h-auto min-h-screen w-full flex-col overflow-x-hidden">
+<div class="layout-container flex h-full grow flex-col">
+<!-- Top Navigation Bar -->
+<header class="flex items-center justify-between whitespace-nowrap border-b border-slate-200 dark:border-slate-800 px-6 lg:px-10 py-3 bg-white dark:bg-background-dark sticky top-0 z-50">
+<div class="flex items-center gap-4">
+<div class="flex items-center justify-center bg-primary rounded-lg p-1.5 text-white">
+<span class="material-symbols-outlined">storefront</span>
+</div>
+<h2 class="text-slate-900 dark:text-slate-100 text-lg font-bold leading-tight tracking-tight">Kiosk Manager</h2>
+</div>
+<div class="flex flex-1 justify-end gap-4 items-center">
+<button class="flex items-center justify-center rounded-xl h-10 w-10 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<div class="h-8 w-px bg-slate-200 dark:bg-slate-800 mx-2"></div>
+<div class="flex items-center gap-3">
+<div class="text-right hidden sm:block">
+<p class="text-xs font-bold text-slate-900 dark:text-slate-100">João Silva</p>
+<p class="text-[10px] text-slate-500">Admin Kiosk #42</p>
+</div>
+<div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-10 border-2 border-primary/20" data-alt="User profile avatar photo" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuCK0k2kQJlgpSuJ1j0Ye3c-aQhRg6-s-PO_Wa_3mXHeY0Pjyiq6IXo96OokH4gaL0XsXQR7E7wiNEQ2ynWMhoEJekz5Wo0ZC72OJvBjzIMVTS6mC7TrJcPa00oRqtPFt3Xd2Kq5P7hgASiG0NJaXOlffnh3igoRJpVce_dc4W8NDnYLDY6M5p-yBY4pNKD4YEKWi0nRNN6aES1l_KnuPF5INH95Y1pXl8QrrjStCUpUFQ01gssd2T9b4D1trVcwzvjOTKg22kWbAQiN");'></div>
+</div>
+</div>
+</header>
+<main class="flex-1 px-4 lg:px-10 py-8 max-w-7xl mx-auto w-full">
+<!-- Page Title Area -->
+<div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+<div>
+<h1 class="text-3xl font-black tracking-tight text-slate-900 dark:text-slate-100">Cadastrar Novo Produto</h1>
+<p class="text-slate-500 dark:text-slate-400 mt-1">Configure os detalhes do item e use IA para otimizar suas fotos.</p>
+</div>
+<div class="flex gap-3">
+<button class="px-6 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 font-bold text-sm hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">Descartar</button>
+<button class="px-6 py-2.5 rounded-xl bg-primary text-white font-bold text-sm shadow-lg shadow-primary/20 hover:brightness-110 transition-all">Salvar Produto</button>
+</div>
+</div>
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+<!-- Left Column: Form Details -->
+<div class="lg:col-span-7 space-y-6">
+<!-- Basic Info Card -->
+<section class="bg-white dark:bg-slate-900/50 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+<div class="flex items-center gap-2 mb-6">
+<span class="material-symbols-outlined text-primary">info</span>
+<h3 class="text-lg font-bold">Informações Básicas</h3>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+<div class="md:col-span-2">
+<label class="block text-sm font-semibold mb-2">Nome do Produto</label>
+<input class="w-full rounded-xl border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-3 text-sm focus:ring-primary focus:border-primary" placeholder="Ex: Burger Bacon Supremo" type="text"/>
+</div>
+<div class="md:col-span-2">
+<label class="block text-sm font-semibold mb-2">Descrição</label>
+<textarea class="w-full rounded-xl border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-3 text-sm focus:ring-primary focus:border-primary" placeholder="Descreva os ingredientes e diferenciais..." rows="3"></textarea>
+</div>
+<div>
+<label class="block text-sm font-semibold mb-2">Categoria</label>
+<select class="w-full rounded-xl border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-3 text-sm focus:ring-primary focus:border-primary">
+<option>Hambúrgueres</option>
+<option>Bebidas</option>
+<option>Acompanhamentos</option>
+<option>Sobremesas</option>
+</select>
+</div>
+<div>
+<label class="block text-sm font-semibold mb-2">Preço (R$)</label>
+<input class="w-full rounded-xl border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-3 text-sm focus:ring-primary focus:border-primary" placeholder="0,00" step="0.01" type="number"/>
+</div>
+<div>
+<label class="block text-sm font-semibold mb-2">Tempo de Prep. (min)</label>
+<div class="relative">
+<input class="w-full rounded-xl border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-3 text-sm focus:ring-primary focus:border-primary" placeholder="15" type="number"/>
+<span class="absolute right-3 top-3 text-slate-400 text-xs font-bold uppercase">min</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Customization Card -->
+<section class="bg-white dark:bg-slate-900/50 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+<div class="flex items-center justify-between mb-6">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">tune</span>
+<h3 class="text-lg font-bold">Personalização</h3>
+</div>
+<button class="text-primary text-sm font-bold flex items-center gap-1">
+<span class="material-symbols-outlined text-sm">add_circle</span>
+                                    Novo Grupo
+                                </button>
+</div>
+<div class="space-y-4">
+<div class="border border-slate-100 dark:border-slate-800 rounded-xl p-4 bg-slate-50/50 dark:bg-slate-800/30">
+<div class="flex justify-between items-center mb-3">
+<span class="text-sm font-bold">Adicionais (Opcional)</span>
+<span class="text-[10px] bg-slate-200 dark:bg-slate-700 px-2 py-0.5 rounded uppercase font-bold">Ativo</span>
+</div>
+<div class="flex flex-wrap gap-2">
+<div class="flex items-center gap-2 bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 px-3 py-1.5 rounded-lg text-xs">
+<span>Queijo Extra (+R$ 3,00)</span>
+<span class="material-symbols-outlined text-xs cursor-pointer text-slate-400 hover:text-red-500">close</span>
+</div>
+<div class="flex items-center gap-2 bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 px-3 py-1.5 rounded-lg text-xs">
+<span>Bacon (+R$ 4,50)</span>
+<span class="material-symbols-outlined text-xs cursor-pointer text-slate-400 hover:text-red-500">close</span>
+</div>
+</div>
+</div>
+<div class="border border-slate-100 dark:border-slate-800 rounded-xl p-4 bg-slate-50/50 dark:bg-slate-800/30">
+<div class="flex justify-between items-center mb-3">
+<span class="text-sm font-bold">Remover Ingredientes</span>
+<span class="text-[10px] bg-slate-200 dark:bg-slate-700 px-2 py-0.5 rounded uppercase font-bold">Ativo</span>
+</div>
+<div class="flex flex-wrap gap-2">
+<div class="flex items-center gap-2 bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 px-3 py-1.5 rounded-lg text-xs">
+<span>Sem Cebola</span>
+<span class="material-symbols-outlined text-xs cursor-pointer text-slate-400 hover:text-red-500">close</span>
+</div>
+<div class="flex items-center gap-2 bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 px-3 py-1.5 rounded-lg text-xs">
+<span>Sem Picles</span>
+<span class="material-symbols-outlined text-xs cursor-pointer text-slate-400 hover:text-red-500">close</span>
+</div>
+</div>
+</div>
+</div>
+</section>
+</div>
+<!-- Right Column: AI Photo Enhancement -->
+<div class="lg:col-span-5 space-y-6">
+<section class="bg-white dark:bg-slate-900/50 p-6 rounded-2xl border-2 border-dashed border-primary/30 shadow-sm relative overflow-hidden">
+<div class="flex items-center gap-2 mb-4">
+<span class="material-symbols-outlined text-primary">auto_fix_high</span>
+<h3 class="text-lg font-bold">Fotos do Produto</h3>
+</div>
+<!-- Upload Area / Preview UI -->
+<div class="space-y-6">
+<!-- Main Preview Before/After -->
+<div class="group relative aspect-video rounded-xl bg-slate-100 dark:bg-slate-800 overflow-hidden border border-slate-200 dark:border-slate-700">
+<!-- This div represents the "Before" (simulated) -->
+<div class="absolute inset-0 bg-cover bg-center opacity-40 grayscale" data-alt="Raw photo of a burger before AI enhancement" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuCf5V7Ye1Rmofz4H9lLpLRMAMB8DTFK5qpd-q79h_sbtZC3E6OFQ6BwCU3uZfgwdDFpoX3N19g-jPlChuhimBjuu5QzaUSxXf1olZklDab716Pgr0snhKC4iIzzutazW95bS3enLtqaia8mMTgrOnEcx4Ie-Ht5EqvgIBm2PVxAZIUHHwqZW01yEfbziViDopcZLzzNaayDSUHnq6kr-KWmspWxhQBRmFRaPNBCmrFgfX2r0VDsFFg3P_G9z6djdwHpSQeMY7ODKlbm');"></div>
+<!-- This div represents the "After" (simulated with clipping) -->
+<div class="absolute inset-0 bg-cover bg-center" data-alt="Enhanced professional photo of a delicious burger" style="clip-path: inset(0 0 0 50%); background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuDGVJktDnNk1l5YYWsYKDUp-_OkXtg90yxk-fBnAc7RYQE2fqCQ7VP3ly9zyPZ_8nqYOdAO0f74olrZfzq75WF0Qn_TP0GuzgFo_KslQnY8zQIHz-5m-D6PRlf7EDE8jUpkRJsrXGhHxsyaEvMwy6qVmxHCUMSSxzsqxl3xeG9De0eRl7FTHbcD4RezP0QKZ5BH0cJjVvunF0Si8NPJY7Rpzyazm_-s_3JSfSaExjvuvZRsEXOSLktF-GnnpUa3t3UsbpgrjC1FwPbH');"></div>
+<!-- Divider Handle -->
+<div class="absolute top-0 bottom-0 left-1/2 w-0.5 bg-white shadow-xl flex items-center justify-center">
+<div class="bg-white text-primary rounded-full p-1 shadow-lg">
+<span class="material-symbols-outlined text-xs font-bold leading-none">unfold_more</span>
+</div>
+</div>
+<!-- Floating Labels -->
+<span class="absolute top-3 left-3 px-2 py-1 bg-black/50 text-white text-[10px] font-bold rounded">ORIGINAL</span>
+<span class="absolute top-3 right-3 px-2 py-1 bg-primary text-white text-[10px] font-bold rounded">IA REALÇADA</span>
+<div class="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
+<button class="pointer-events-auto px-4 py-2 bg-white text-slate-900 rounded-lg text-xs font-bold shadow-lg flex items-center gap-2">
+<span class="material-symbols-outlined text-sm">upload</span>
+                                            Alterar Foto
+                                        </button>
+</div>
+</div>
+<!-- AI Tools Panel -->
+<div class="p-4 bg-primary/5 dark:bg-primary/10 rounded-xl border border-primary/20">
+<p class="text-xs font-bold text-primary uppercase tracking-wider mb-4">Ferramentas de IA</p>
+<div class="grid grid-cols-2 gap-3">
+<button class="flex items-center gap-2 p-2.5 bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium hover:border-primary transition-colors text-left">
+<span class="material-symbols-outlined text-primary text-lg">background_replace</span>
+<span>Remover Fundo</span>
+</button>
+<button class="flex items-center gap-2 p-2.5 bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium hover:border-primary transition-colors text-left">
+<span class="material-symbols-outlined text-primary text-lg">wb_sunny</span>
+<span>Melhorar Iluminação</span>
+</button>
+<button class="flex items-center gap-2 p-2.5 bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium hover:border-primary transition-colors text-left">
+<span class="material-symbols-outlined text-primary text-lg">palette</span>
+<span>Padronizar Cores</span>
+</button>
+<button class="flex items-center gap-2 p-2.5 bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium hover:border-primary transition-colors text-left">
+<span class="material-symbols-outlined text-primary text-lg">high_quality</span>
+<span>Smart Upscale</span>
+</button>
+</div>
+<div class="mt-4 pt-4 border-t border-primary/10">
+<div class="flex items-center justify-between text-[11px] text-slate-500 mb-2">
+<span>Processando realces...</span>
+<span>85%</span>
+</div>
+<div class="w-full bg-slate-200 dark:bg-slate-700 h-1 rounded-full overflow-hidden">
+<div class="bg-primary h-full w-[85%] rounded-full"></div>
+</div>
+</div>
+</div>
+<!-- Gallery Thumbnails -->
+<div class="grid grid-cols-4 gap-2">
+<div class="aspect-square rounded-lg border-2 border-primary overflow-hidden relative">
+<img class="w-full h-full object-cover" data-alt="Main product thumbnail burger" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD0ai-R-l-DtevwsTCdbddDNAGoYFj9MwPT-Slvy6mCRYkzp5uu0by1It6us6LC-B4db0b-LNwQPai0Q0EMZBGUj5OIvFgu2O_edEMlzQ5FvsV3dhjnc60KRtWUeIsvU47-xm5l50V7MSbXwzo8tJu3FcY0YIqckyu9ipaWFWrjeKBqXVJx_ErMDQOKQUam8UVlITPYKrAySTbWApho3rMBbmSnOw35Rm6PD6nlsbFwsh5EF7X0V86N28VVst9UEgFny0tJi779ORWI"/>
+<div class="absolute inset-0 bg-primary/10"></div>
+</div>
+<div class="aspect-square rounded-lg border border-slate-200 dark:border-slate-800 overflow-hidden bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
+<span class="material-symbols-outlined text-slate-400">add</span>
+</div>
+<div class="aspect-square rounded-lg border border-slate-200 dark:border-slate-800 overflow-hidden bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
+<span class="material-symbols-outlined text-slate-400">add</span>
+</div>
+<div class="aspect-square rounded-lg border border-slate-200 dark:border-slate-800 overflow-hidden bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
+<span class="material-symbols-outlined text-slate-400">add</span>
+</div>
+</div>
+<div class="flex items-start gap-3 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-xl">
+<span class="material-symbols-outlined text-blue-500 text-lg">lightbulb</span>
+<p class="text-[11px] text-blue-700 dark:text-blue-300">Dica: Fotos com fundo branco e boa iluminação convertem até 45% mais pedidos em totens de autoatendimento.</p>
+</div>
+</div>
+</section>
+<!-- Visibility/Status Card -->
+<section class="bg-white dark:bg-slate-900/50 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+<h3 class="text-sm font-bold mb-4">Disponibilidade</h3>
+<div class="space-y-3">
+<label class="flex items-center justify-between cursor-pointer">
+<span class="text-sm">Item Ativo no Menu</span>
+<div class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox" value=""/>
+<div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary"></div>
+</div>
+</label>
+<label class="flex items-center justify-between cursor-pointer">
+<span class="text-sm">Destaque na Home</span>
+<div class="relative inline-flex items-center cursor-pointer">
+<input class="sr-only peer" type="checkbox" value=""/>
+<div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary"></div>
+</div>
+</label>
+</div>
+</section>
+</div>
+</div>
+<!-- Footer Mobile Actions -->
+<div class="mt-8 pt-6 border-t border-slate-200 dark:border-slate-800 flex justify-end gap-3 md:hidden">
+<button class="flex-1 py-3 rounded-xl border border-slate-300 dark:border-slate-700 font-bold text-sm">Descartar</button>
+<button class="flex-1 py-3 rounded-xl bg-primary text-white font-bold text-sm">Salvar</button>
+</div>
+</main>
+</div>
+</div>
+</body></html>

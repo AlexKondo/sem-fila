@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+
+<html class="light" lang="pt-BR"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Painel de Gestão de Cupons - Kiosque SaaS</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@300;400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#ec5b13",
+                        "background-light": "#f8f6f6",
+                        "background-dark": "#221610",
+                    },
+                    fontFamily: {
+                        "display": ["Public Sans"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            font-family: 'Public Sans', sans-serif;
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100">
+<div class="relative flex h-auto min-h-screen w-full flex-col overflow-x-hidden">
+<div class="layout-container flex h-full grow flex-col">
+<!-- Top Navigation -->
+<header class="flex items-center justify-between whitespace-nowrap border-b border-solid border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-6 py-3 lg:px-40">
+<div class="flex items-center gap-8">
+<div class="flex items-center gap-3 text-primary">
+<span class="material-symbols-outlined text-3xl font-bold">confirmation_number</span>
+<h2 class="text-slate-900 dark:text-slate-100 text-lg font-bold leading-tight tracking-[-0.015em]">Kiosque SaaS</h2>
+</div>
+<nav class="hidden md:flex items-center gap-9">
+<a class="text-slate-600 dark:text-slate-400 hover:text-primary transition-colors text-sm font-medium leading-normal" href="#">Dashboard</a>
+<a class="text-primary text-sm font-bold leading-normal border-b-2 border-primary pb-1" href="#">Cupons</a>
+<a class="text-slate-600 dark:text-slate-400 hover:text-primary transition-colors text-sm font-medium leading-normal" href="#">Promoções</a>
+<a class="text-slate-600 dark:text-slate-400 hover:text-primary transition-colors text-sm font-medium leading-normal" href="#">Configurações</a>
+</nav>
+</div>
+<div class="flex flex-1 justify-end gap-6 items-center">
+<label class="hidden sm:flex flex-col min-w-40 h-10 max-w-64">
+<div class="flex w-full flex-1 items-stretch rounded-xl h-full border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800">
+<div class="text-slate-400 flex items-center justify-center pl-4">
+<span class="material-symbols-outlined">search</span>
+</div>
+<input class="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-xl focus:outline-0 focus:ring-0 border-none bg-transparent h-full placeholder:text-slate-400 px-4 pl-2 text-base font-normal" placeholder="Buscar cupons..." value=""/>
+</div>
+</label>
+<div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-10 border border-primary/20" data-alt="Avatar do perfil do proprietário do quiosque" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuCnxFYYBzP9uUFL8AWtcjEZ_aFKdjXIT7MpJQC7NnWiogXOoZrxiyQYXtclwC4hCFY5VuMVk0WoNqVOZOlAd5rT8KAUuAInNv51BDLbQd42ZY1xWzhC1s7RIG4fegAe8REbJ0ED4oBvCj9g6fJBbbCpGVtEboVf8wWZtdMKCu7Dq5Dr-yGwPaCKzRT748OQyEWKyKrDs7Yfb1N5yGREHOhMwnZcZah3KjfDXEjaWg_YqHbNkwH-zEqm-MoCtfpua39BSH05FRTcmMJK");'></div>
+</div>
+</header>
+<main class="flex-1 w-full max-w-[1280px] mx-auto px-6 lg:px-10 py-8">
+<!-- Header Section -->
+<div class="flex flex-wrap justify-between items-end gap-4 mb-8">
+<div class="flex flex-col gap-2">
+<h1 class="text-slate-900 dark:text-slate-100 text-3xl font-black leading-tight tracking-tight">Gestão de Cupons &amp; Ofertas</h1>
+<p class="text-slate-500 dark:text-slate-400 text-base font-normal">Crie, monitore e otimize o desempenho das suas promoções.</p>
+</div>
+<button class="flex items-center gap-2 cursor-pointer rounded-xl h-12 px-6 bg-primary hover:bg-primary/90 text-white text-sm font-bold transition-all shadow-lg shadow-primary/20">
+<span class="material-symbols-outlined">add_circle</span>
+<span>Criar Novo Cupom</span>
+</button>
+</div>
+<!-- Metrics Grid -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+<div class="flex flex-col gap-2 rounded-xl p-6 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm">
+<div class="flex justify-between items-start">
+<p class="text-slate-500 dark:text-slate-400 text-sm font-medium">Total de Resgates</p>
+<span class="bg-green-100 dark:bg-green-900/30 text-green-600 text-xs font-bold px-2 py-1 rounded-full">+12.5%</span>
+</div>
+<p class="text-slate-900 dark:text-slate-100 tracking-tight text-3xl font-extrabold leading-tight">1.240</p>
+<div class="w-full bg-slate-100 dark:bg-slate-800 h-1.5 rounded-full mt-2 overflow-hidden">
+<div class="bg-primary h-full w-[65%]"></div>
+</div>
+</div>
+<div class="flex flex-col gap-2 rounded-xl p-6 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm">
+<div class="flex justify-between items-start">
+<p class="text-slate-500 dark:text-slate-400 text-sm font-medium">Receita via Cupons</p>
+<span class="bg-green-100 dark:bg-green-900/30 text-green-600 text-xs font-bold px-2 py-1 rounded-full">+8.2%</span>
+</div>
+<p class="text-slate-900 dark:text-slate-100 tracking-tight text-3xl font-extrabold leading-tight">R$ 15.400,00</p>
+<p class="text-slate-400 text-xs">Mês de Outubro</p>
+</div>
+<div class="flex flex-col gap-2 rounded-xl p-6 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm">
+<div class="flex justify-between items-start">
+<p class="text-slate-500 dark:text-slate-400 text-sm font-medium">Cupom Mais Utilizado</p>
+<span class="bg-primary/10 text-primary text-xs font-bold px-2 py-1 rounded-full">POPULAR</span>
+</div>
+<p class="text-primary tracking-tight text-3xl font-extrabold leading-tight">VERAO24</p>
+<p class="text-slate-400 text-xs">450 usos esta semana</p>
+</div>
+</div>
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+<!-- Main Table Section -->
+<div class="lg:col-span-2 space-y-6">
+<div class="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm">
+<div class="p-5 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center">
+<h2 class="text-slate-900 dark:text-slate-100 text-lg font-bold">Cupons Ativos e Inativos</h2>
+<div class="flex gap-2">
+<button class="text-xs font-semibold px-3 py-1.5 bg-slate-100 dark:bg-slate-800 rounded-lg text-slate-600 dark:text-slate-300">Todos</button>
+<button class="text-xs font-semibold px-3 py-1.5 bg-primary/10 text-primary rounded-lg">Ativos</button>
+</div>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left">
+<thead class="bg-slate-50 dark:bg-slate-800/50">
+<tr>
+<th class="px-6 py-4 text-slate-500 dark:text-slate-400 text-xs font-bold uppercase tracking-wider">Código</th>
+<th class="px-6 py-4 text-slate-500 dark:text-slate-400 text-xs font-bold uppercase tracking-wider">Desconto</th>
+<th class="px-6 py-4 text-slate-500 dark:text-slate-400 text-xs font-bold uppercase tracking-wider">Limite</th>
+<th class="px-6 py-4 text-slate-500 dark:text-slate-400 text-xs font-bold uppercase tracking-wider">Expiração</th>
+<th class="px-6 py-4 text-slate-500 dark:text-slate-400 text-xs font-bold uppercase tracking-wider text-right">Status</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+<tr class="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors">
+<td class="px-6 py-5">
+<span class="font-mono font-bold text-slate-900 dark:text-slate-100 bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded">VERAO20</span>
+</td>
+<td class="px-6 py-5 text-sm text-slate-600 dark:text-slate-400">20% Percentual</td>
+<td class="px-6 py-5 text-sm text-slate-600 dark:text-slate-400">500 / <span class="text-slate-400">342 usados</span></td>
+<td class="px-6 py-5 text-sm text-slate-600 dark:text-slate-400">31 Dez, 2024</td>
+<td class="px-6 py-5 text-right">
+<div class="inline-flex items-center cursor-pointer group">
+<div class="relative w-11 h-6 bg-primary rounded-full transition-colors">
+<div class="absolute right-1 top-1 bg-white w-4 h-4 rounded-full shadow-sm"></div>
+</div>
+</div>
+</td>
+</tr>
+<tr class="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors">
+<td class="px-6 py-5">
+<span class="font-mono font-bold text-slate-900 dark:text-slate-100 bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded">LANCHE10</span>
+</td>
+<td class="px-6 py-5 text-sm text-slate-600 dark:text-slate-400">R$ 10,00 Fixo</td>
+<td class="px-6 py-5 text-sm text-slate-600 dark:text-slate-400">200 / <span class="text-slate-400">200 usado</span></td>
+<td class="px-6 py-5 text-sm text-slate-600 dark:text-slate-400">15 Nov, 2024</td>
+<td class="px-6 py-5 text-right">
+<div class="inline-flex items-center cursor-pointer group">
+<div class="relative w-11 h-6 bg-slate-300 dark:bg-slate-700 rounded-full transition-colors">
+<div class="absolute left-1 top-1 bg-white w-4 h-4 rounded-full shadow-sm"></div>
+</div>
+</div>
+</td>
+</tr>
+<tr class="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors">
+<td class="px-6 py-5">
+<span class="font-mono font-bold text-slate-900 dark:text-slate-100 bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded">FIDELIDADE</span>
+</td>
+<td class="px-6 py-5 text-sm text-slate-600 dark:text-slate-400">15% Fidelidade</td>
+<td class="px-6 py-5 text-sm text-slate-600 dark:text-slate-400">Ilimitado</td>
+<td class="px-6 py-5 text-sm text-slate-600 dark:text-slate-400">Permanente</td>
+<td class="px-6 py-5 text-right">
+<div class="inline-flex items-center cursor-pointer group">
+<div class="relative w-11 h-6 bg-primary rounded-full transition-colors">
+<div class="absolute right-1 top-1 bg-white w-4 h-4 rounded-full shadow-sm"></div>
+</div>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+<!-- Sidebar Controls -->
+<div class="space-y-6">
+<!-- Scheduling & Audience -->
+<div class="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm">
+<h3 class="text-slate-900 dark:text-slate-100 text-md font-bold mb-4 flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">event_upcoming</span>
+                            Agendar Promoção
+                        </h3>
+<div class="space-y-4">
+<div>
+<label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-2">Tipo de Promoção</label>
+<select class="w-full rounded-lg border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 text-sm focus:ring-primary focus:border-primary">
+<option>Happy Hour</option>
+<option>Especial de Festival</option>
+<option>Oferta Relâmpago</option>
+</select>
+</div>
+<div>
+<label class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-2">Público-Alvo</label>
+<div class="grid grid-cols-1 gap-2">
+<label class="flex items-center gap-3 p-3 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 cursor-pointer hover:border-primary transition-all group">
+<input checked="" class="text-primary focus:ring-primary h-4 w-4" name="audience" type="radio"/>
+<span class="text-sm font-medium text-slate-700 dark:text-slate-300">Todos os usuários</span>
+</label>
+<label class="flex items-center gap-3 p-3 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 cursor-pointer hover:border-primary transition-all group">
+<input class="text-primary focus:ring-primary h-4 w-4" name="audience" type="radio"/>
+<span class="text-sm font-medium text-slate-700 dark:text-slate-300">Apenas Clientes Fiéis</span>
+</label>
+</div>
+</div>
+<button class="w-full py-3 bg-primary/10 hover:bg-primary/20 text-primary font-bold rounded-xl transition-all text-sm">
+                                Confirmar Agendamento
+                            </button>
+</div>
+</div>
+<!-- Campaign Tips Card -->
+<div class="bg-gradient-to-br from-primary/10 to-transparent rounded-xl border border-primary/20 p-6">
+<span class="material-symbols-outlined text-primary mb-2">lightbulb</span>
+<h4 class="text-slate-900 dark:text-slate-100 font-bold text-sm mb-1">Dica de Performance</h4>
+<p class="text-slate-600 dark:text-slate-400 text-xs leading-relaxed">
+                            Cupons com validade de curta duração (menos de 48h) costumam ter uma taxa de conversão 25% maior em quiosques de alimentação.
+                        </p>
+</div>
+</div>
+</div>
+</main>
+</div>
+</div>
+</body></html>

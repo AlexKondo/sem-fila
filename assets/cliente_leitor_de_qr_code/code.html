@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+
+<html lang="pt-BR"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#ec5b13",
+                        "background-light": "#f8f6f6",
+                        "background-dark": "#221610",
+                    },
+                    fontFamily: {
+                        "display": ["Public Sans", "sans-serif"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            font-family: 'Public Sans', sans-serif;
+        }
+        .scanner-viewfinder {
+            background: linear-gradient(45deg, transparent 20%, rgba(236, 91, 19, 0.1) 50%, transparent 80%);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 min-h-screen flex flex-col">
+<!-- Header / Branding -->
+<header class="flex items-center justify-between px-6 py-4">
+<div class="flex items-center gap-2">
+<div class="bg-primary p-2 rounded-lg">
+<span class="material-symbols-outlined text-white text-2xl">grid_view</span>
+</div>
+<h1 class="text-xl font-bold tracking-tight text-slate-900 dark:text-slate-100">KioskFlow</h1>
+</div>
+<button class="w-10 h-10 flex items-center justify-center rounded-full bg-slate-200 dark:bg-slate-800">
+<span class="material-symbols-outlined text-slate-700 dark:text-slate-300">notifications</span>
+</button>
+</header>
+<!-- Main Content -->
+<main class="flex-1 flex flex-col items-center px-6 pt-8">
+<div class="text-center mb-8">
+<h2 class="text-3xl font-bold text-slate-900 dark:text-slate-100 mb-2">Bem-vindo ao Evento!</h2>
+<p class="text-slate-600 dark:text-slate-400 font-medium">Aponte a câmera para o código QR para fazer seu pedido</p>
+</div>
+<!-- QR Scanner Interface -->
+<div class="relative w-full max-w-sm aspect-square flex items-center justify-center">
+<!-- Decorative Corners -->
+<div class="absolute top-0 left-0 w-12 h-12 border-t-4 border-l-4 border-primary rounded-tl-xl"></div>
+<div class="absolute top-0 right-0 w-12 h-12 border-t-4 border-r-4 border-primary rounded-tr-xl"></div>
+<div class="absolute bottom-0 left-0 w-12 h-12 border-b-4 border-l-4 border-primary rounded-bl-xl"></div>
+<div class="absolute bottom-0 right-0 w-12 h-12 border-b-4 border-r-4 border-primary rounded-br-xl"></div>
+<!-- Viewfinder Area -->
+<div class="w-[85%] h-[85%] bg-slate-200 dark:bg-slate-800 rounded-lg overflow-hidden flex flex-col items-center justify-center relative">
+<img alt="Computer circuit board background" class="absolute inset-0 w-full h-full object-cover opacity-20 grayscale" data-alt="Blurred background showing high tech circuit patterns" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAL4M31v2FfqpKRng8-T0U-IcPro9NEc1w_cuvfIcplAzwZTRlXXgQksdH9WDtcHHTHfmCfM5RKM9vSJYH6Is949EJG1eVrvD3OpZE_qbdVTk9b6ypCdDY8j2yD9RXryi72Qg90LZgcC2Iz0VLmyasb6TU-SAKCcbXosSYP74ltV1oMsqburiKQX_x6zifw4QKcVow7SUgwRXH9giZnwS5u_YZ8sEmhdtKYHCbxMWPhCOVuxLI5L67T-BtaqJSbtyV_eqNCWXiJO6QI"/>
+<span class="material-symbols-outlined text-6xl text-primary/40 mb-4">qr_code_scanner</span>
+<!-- Scanning Animation Line -->
+<div class="absolute top-1/2 left-0 w-full h-1 bg-primary shadow-[0_0_15px_rgba(236,91,19,0.8)] opacity-70"></div>
+</div>
+<!-- Flash & Gallery Controls -->
+<div class="absolute -bottom-6 flex gap-4">
+<button class="bg-white dark:bg-slate-800 p-3 rounded-full shadow-lg border border-slate-100 dark:border-slate-700">
+<span class="material-symbols-outlined text-primary">flashlight_on</span>
+</button>
+<button class="bg-white dark:bg-slate-800 p-3 rounded-full shadow-lg border border-slate-100 dark:border-slate-700">
+<span class="material-symbols-outlined text-primary">image</span>
+</button>
+</div>
+</div>
+<!-- Manual Entry Option -->
+<div class="mt-16 w-full max-w-sm">
+<button class="w-full py-4 px-6 border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-xl flex items-center justify-center gap-3 text-slate-600 dark:text-slate-400 font-semibold hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
+<span class="material-symbols-outlined">keyboard</span>
+                Digitar código manualmente
+            </button>
+</div>
+</main>
+<!-- Bottom Navigation Bar -->
+<nav class="bg-white dark:bg-background-dark border-t border-slate-200 dark:border-slate-800 pb-8 pt-2">
+<div class="flex justify-around items-center px-4">
+<a class="flex flex-col items-center gap-1 p-2 text-primary" href="#">
+<span class="material-symbols-outlined text-2xl font-fill">home</span>
+<span class="text-xs font-semibold">Início</span>
+</a>
+<a class="flex flex-col items-center gap-1 p-2 text-slate-400 dark:text-slate-500" href="#">
+<span class="material-symbols-outlined text-2xl">receipt_long</span>
+<span class="text-xs font-semibold">Pedidos</span>
+</a>
+<a class="flex flex-col items-center gap-1 p-2 text-slate-400 dark:text-slate-500" href="#">
+<span class="material-symbols-outlined text-2xl">settings</span>
+<span class="text-xs font-semibold">Ajustes</span>
+</a>
+</div>
+</nav>
+</body></html>

@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+
+<html lang="pt-BR"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#ec5b13",
+                        "background-light": "#f8f6f6",
+                        "background-dark": "#221610",
+                    },
+                    fontFamily: {
+                        "display": ["Public Sans"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            font-family: 'Public Sans', sans-serif;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark font-display">
+<div class="relative flex h-auto min-h-screen w-full flex-col overflow-x-hidden max-w-md mx-auto">
+<!-- Top Navigation -->
+<div class="flex items-center p-4 pb-2 justify-between">
+<button class="text-slate-900 dark:text-slate-100 flex size-12 shrink-0 items-center justify-center rounded-full hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors">
+<span class="material-symbols-outlined">arrow_back</span>
+</button>
+<h2 class="text-slate-900 dark:text-slate-100 text-lg font-bold leading-tight tracking-[-0.015em] flex-1 text-center pr-12">Confirmação</h2>
+</div>
+<!-- Success Visual -->
+<div class="flex flex-col items-center px-4 pt-10 pb-6">
+<div class="w-24 h-24 bg-green-500 rounded-full flex items-center justify-center shadow-lg mb-6 ring-8 ring-green-500/20">
+<span class="material-symbols-outlined text-white text-6xl">check_circle</span>
+</div>
+<h1 class="text-slate-900 dark:text-slate-100 tracking-tight text-[32px] font-bold leading-tight text-center">Pagamento Confirmado!</h1>
+<p class="text-slate-600 dark:text-slate-400 text-base font-normal leading-normal pt-2 text-center max-w-[280px]">Seu pedido foi recebido e já está sendo preparado com carinho.</p>
+</div>
+<!-- Order Image/Banner -->
+<div class="flex flex-col px-4 py-2">
+<div class="flex flex-col items-center gap-6">
+<div class="bg-center bg-no-repeat aspect-video bg-cover rounded-xl w-full max-w-[360px] shadow-sm border border-slate-200 dark:border-slate-800" data-alt="Delicious gourmet meal presented on a table" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuBMeeNY-HnTfdwuOljJRclrZOiduUa5UbpTSQWEzrQScA_1NRbVAP_U1yyOzJwFjMz1-ihaQLoXvMoDTfE6IY8fQhzZfuojtdNpTvIBJ-v9cM8O0AHN0-9OYHXywcLBIXHybo9u0FGEu2yqdXNEkOtXctK_PlWlCGsdXMr3HPhiPKnIDrf4SzTJR04jWOMLA-GAtH_EdYy1HHRJydKe8ZUR4Q_iMQlz__2-qKbZyIi038_rofvDg7oEYfVXuCTNfB0ojIXAKEYLzCEb");'>
+</div>
+</div>
+</div>
+<!-- Order Summary Cards -->
+<div class="flex flex-wrap gap-4 p-4">
+<div class="flex min-w-[140px] flex-1 flex-col gap-2 rounded-xl p-5 border border-primary/20 bg-primary/5 dark:bg-primary/10">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-xl">receipt_long</span>
+<p class="text-slate-600 dark:text-slate-400 text-sm font-medium leading-normal uppercase tracking-wider">Pedido</p>
+</div>
+<p class="text-slate-900 dark:text-slate-100 tracking-tight text-2xl font-bold leading-tight">#4582</p>
+</div>
+<div class="flex min-w-[140px] flex-1 flex-col gap-2 rounded-xl p-5 border border-primary/20 bg-primary/5 dark:bg-primary/10">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-xl">schedule</span>
+<p class="text-slate-600 dark:text-slate-400 text-sm font-medium leading-normal uppercase tracking-wider">Tempo Estimado</p>
+</div>
+<p class="text-slate-900 dark:text-slate-100 tracking-tight text-2xl font-bold leading-tight">15-25 min</p>
+</div>
+</div>
+<!-- Delivery Status Steps (Simple Visual) -->
+<div class="px-4 py-4 mb-4">
+<div class="bg-white dark:bg-slate-900/50 rounded-xl p-4 flex flex-col gap-4 border border-slate-200 dark:border-slate-800">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-primary flex items-center justify-center">
+<span class="material-symbols-outlined text-white">restaurant</span>
+</div>
+<div class="flex flex-col">
+<p class="text-slate-900 dark:text-slate-100 font-bold text-sm">Cozinha preparando</p>
+<p class="text-slate-500 text-xs">Aguardando saída para entrega</p>
+</div>
+<div class="ml-auto">
+<span class="flex h-2 w-2 rounded-full bg-primary animate-pulse"></span>
+</div>
+</div>
+</div>
+</div>
+<!-- Action Button -->
+<div class="mt-auto p-4 pb-10">
+<button class="w-full bg-primary hover:bg-primary/90 text-white font-bold py-4 rounded-xl flex items-center justify-center gap-2 transition-all active:scale-[0.98] shadow-lg shadow-primary/25">
+<span class="material-symbols-outlined">map</span>
+                Acompanhar Pedido
+            </button>
+<button class="w-full mt-3 bg-transparent text-slate-600 dark:text-slate-400 font-medium py-3 rounded-xl flex items-center justify-center hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+                Voltar para o Início
+            </button>
+</div>
+</div>
+</body></html>

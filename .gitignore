@@ -1,0 +1,29 @@
+# Dependências
+node_modules/
+jspm_packages/
+
+# Variáveis de ambiente
+.env
+.env.local
+.env.*.local
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Builds e bundles
+dist/
+build/
+out/
+.next/
+.nuxt/
+
+# Sistema - Mac / Windows
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Skills
+skills/

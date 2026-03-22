@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+
+<html class="light" lang="pt-PT"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#ec5b13",
+                        "background-light": "#f8f6f6",
+                        "background-dark": "#221610",
+                    },
+                    fontFamily: {
+                        "display": ["Public Sans"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        body { font-family: 'Public Sans', sans-serif; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 font-display">
+<div class="relative flex min-h-screen w-full flex-col overflow-x-hidden">
+<header class="flex items-center justify-between border-b border-slate-200 dark:border-primary/20 bg-white dark:bg-background-dark/50 px-6 py-4 sticky top-0 z-10 backdrop-blur-sm">
+<div class="flex items-center gap-8">
+<div class="flex items-center gap-3 text-primary">
+<div class="p-2 bg-primary/10 rounded-lg">
+<span class="material-symbols-outlined text-2xl">inventory_2</span>
+</div>
+<h2 class="text-slate-900 dark:text-slate-100 text-xl font-bold leading-tight tracking-tight">Kiosk Manager</h2>
+</div>
+<div class="hidden md:flex items-center gap-1 bg-slate-100 dark:bg-primary/10 p-1 rounded-xl">
+<button class="px-4 py-1.5 text-sm font-medium rounded-lg text-slate-500 dark:text-slate-400 hover:text-primary">Dashboard</button>
+<button class="px-4 py-1.5 text-sm font-semibold rounded-lg bg-white dark:bg-primary text-primary dark:text-white shadow-sm">Inventário</button>
+<button class="px-4 py-1.5 text-sm font-medium rounded-lg text-slate-500 dark:text-slate-400 hover:text-primary">Vendas</button>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<label class="relative hidden sm:block">
+<span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
+<span class="material-symbols-outlined text-sm">search</span>
+</span>
+<input class="w-64 pl-10 pr-4 py-2 bg-slate-100 dark:bg-primary/5 border-none rounded-xl text-sm focus:ring-2 focus:ring-primary/50 transition-all" placeholder="Procurar produtos..."/>
+</label>
+<div class="flex gap-2">
+<button class="p-2.5 rounded-xl bg-slate-100 dark:bg-primary/10 text-slate-600 dark:text-slate-300 hover:bg-primary/20 transition-colors">
+<span class="material-symbols-outlined text-[20px]">notifications</span>
+</button>
+<button class="p-2.5 rounded-xl bg-slate-100 dark:bg-primary/10 text-slate-600 dark:text-slate-300 hover:bg-primary/20 transition-colors">
+<span class="material-symbols-outlined text-[20px]">account_circle</span>
+</button>
+</div>
+</div>
+</header>
+<main class="flex-1 p-6 max-w-7xl mx-auto w-full space-y-8">
+<section>
+<div class="mb-4">
+<h1 class="text-2xl font-bold text-slate-900 dark:text-slate-100">Estado do Inventário</h1>
+<p class="text-slate-500 dark:text-slate-400 text-sm">Resumo geral da saúde do seu stock hoje.</p>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+<div class="bg-white dark:bg-primary/5 border border-slate-200 dark:border-primary/20 rounded-xl p-6 shadow-sm">
+<div class="flex justify-between items-start mb-4">
+<span class="p-2 bg-primary/10 text-primary rounded-lg">
+<span class="material-symbols-outlined">analytics</span>
+</span>
+<span class="text-emerald-500 text-sm font-bold bg-emerald-50 dark:bg-emerald-500/10 px-2 py-1 rounded-lg">+2.4%</span>
+</div>
+<p class="text-slate-500 dark:text-slate-400 text-sm font-medium">Total de Itens</p>
+<h3 class="text-3xl font-bold text-slate-900 dark:text-slate-100 mt-1">1,240</h3>
+</div>
+<div class="bg-white dark:bg-primary/5 border border-slate-200 dark:border-primary/20 rounded-xl p-6 shadow-sm border-l-4 border-l-amber-500">
+<div class="flex justify-between items-start mb-4">
+<span class="p-2 bg-amber-100 dark:bg-amber-500/20 text-amber-600 dark:text-amber-500 rounded-lg">
+<span class="material-symbols-outlined">warning</span>
+</span>
+<span class="text-amber-500 text-sm font-bold bg-amber-50 dark:bg-amber-500/10 px-2 py-1 rounded-lg">+5</span>
+</div>
+<p class="text-slate-500 dark:text-slate-400 text-sm font-medium">Alertas de Stock Baixo</p>
+<h3 class="text-3xl font-bold text-slate-900 dark:text-slate-100 mt-1">12</h3>
+</div>
+<div class="bg-white dark:bg-primary/5 border border-slate-200 dark:border-primary/20 rounded-xl p-6 shadow-sm border-l-4 border-l-rose-500">
+<div class="flex justify-between items-start mb-4">
+<span class="p-2 bg-rose-100 dark:bg-rose-500/20 text-rose-600 dark:text-rose-500 rounded-lg">
+<span class="material-symbols-outlined">error_outline</span>
+</span>
+<span class="text-rose-500 text-sm font-bold bg-rose-50 dark:bg-rose-500/10 px-2 py-1 rounded-lg">Crítico</span>
+</div>
+<p class="text-slate-500 dark:text-slate-400 text-sm font-medium">Esgotados</p>
+<h3 class="text-3xl font-bold text-slate-900 dark:text-slate-100 mt-1">5</h3>
+</div>
+</div>
+</section>
+<section class="bg-white dark:bg-primary/5 border border-slate-200 dark:border-primary/20 rounded-xl shadow-sm overflow-hidden">
+<div class="p-4 border-b border-slate-200 dark:border-primary/20 flex flex-wrap gap-4 items-center justify-between">
+<div class="flex gap-2 items-center overflow-x-auto pb-1 sm:pb-0">
+<button class="px-4 py-2 bg-primary text-white text-sm font-bold rounded-xl whitespace-nowrap">Todos</button>
+<button class="px-4 py-2 bg-slate-100 dark:bg-primary/10 text-slate-600 dark:text-slate-300 text-sm font-medium rounded-xl hover:bg-slate-200 dark:hover:bg-primary/20 transition-colors whitespace-nowrap">Bebidas</button>
+<button class="px-4 py-2 bg-slate-100 dark:bg-primary/10 text-slate-600 dark:text-slate-300 text-sm font-medium rounded-xl hover:bg-slate-200 dark:hover:bg-primary/20 transition-colors whitespace-nowrap">Snacks</button>
+<button class="px-4 py-2 bg-slate-100 dark:bg-primary/10 text-slate-600 dark:text-slate-300 text-sm font-medium rounded-xl hover:bg-slate-200 dark:hover:bg-primary/20 transition-colors whitespace-nowrap">Tabaco</button>
+<button class="px-4 py-2 bg-slate-100 dark:bg-primary/10 text-slate-600 dark:text-slate-300 text-sm font-medium rounded-xl hover:bg-slate-200 dark:hover:bg-primary/20 transition-colors whitespace-nowrap">Revistas</button>
+</div>
+<button class="flex items-center gap-2 bg-primary px-4 py-2 rounded-xl text-white font-bold text-sm shadow-md hover:opacity-90 transition-opacity">
+<span class="material-symbols-outlined text-sm">add</span>
+                        Adicionar Produto
+                    </button>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left">
+<thead class="bg-slate-50 dark:bg-primary/5 text-slate-500 dark:text-slate-400 text-xs uppercase font-bold tracking-wider">
+<tr>
+<th class="px-6 py-4">Produto</th>
+<th class="px-6 py-4">Categoria</th>
+<th class="px-6 py-4">Stock Atual</th>
+<th class="px-6 py-4">Estado</th>
+<th class="px-6 py-4 text-right">Ações</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-slate-200 dark:divide-primary/10">
+<tr class="hover:bg-slate-50/50 dark:hover:bg-primary/5 transition-colors">
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-lg bg-slate-100 dark:bg-primary/10 flex items-center justify-center overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="Red wine bottle" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCeYfl3WjzHL7mZ6ttmJQqqRsuzociY7OFf0DLLv0haiVt075CS9SP6zoDXjhgerzUcAPSDJL_HQc6RyXjsgf2FScZGm6uSudSirsxFYlh6_zEpsDlNoDwjF03oxknWJKRYw9PJgVKA6cRNoyVxV4zE7H0ZId237-YdHTApU8E4hw3xxeLb2NT8GZ-0wv32-inwZiMgX_2wm9VUwnKXLs2Uxi805NhJba2IK__SVkaQsQNwo-NZ0xlNoseVtc7vvVFvddaoO_AVX681"/>
+</div>
+<div>
+<p class="text-sm font-semibold text-slate-900 dark:text-slate-100">Vinho Tinto Reserva</p>
+<p class="text-xs text-slate-500">REF: 82713</p>
+</div>
+</div>
+</td>
+<td class="px-6 py-4 text-sm">Bebidas</td>
+<td class="px-6 py-4 text-sm font-medium">42 un.</td>
+<td class="px-6 py-4">
+<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-100 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-500 text-xs font-bold">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                                        Em Stock
+                                    </span>
+</td>
+<td class="px-6 py-4 text-right">
+<button class="px-4 py-1.5 border border-primary/30 text-primary dark:text-primary rounded-lg text-sm font-bold hover:bg-primary hover:text-white transition-all">Editar Stock</button>
+</td>
+</tr>
+<tr class="bg-amber-50/30 dark:bg-amber-500/5 hover:bg-amber-50/50 dark:hover:bg-amber-500/10 transition-colors">
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-lg bg-slate-100 dark:bg-primary/10 flex items-center justify-center overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="Bag of potato chips" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBWU-Ayd589hgisecU9aC2w8wNsxssCHz3fDPGo14x_QRsWVktJX92rqaB6YF_F0VRClq2363rT3-xfpcGa__RWAZA8F7NijMLtOp7vpnwk_59_uosGDuVkLblM4FLmAWS-UO6tCE94dME5Irxv0PoOIC2wpIyc-hzK8VbsmzTKsHhe08dbjhvFZCttaL850mE5HwuEKAxezrjeZ1l_0aZM5CYAFkf2iedBqDt0lAjarZtzdx-fiyhQ6iXmIkbBkgYc_CE9nMcEdhO4"/>
+</div>
+<div>
+<p class="text-sm font-semibold text-slate-900 dark:text-slate-100">Batatas Fritas Artesanais</p>
+<p class="text-xs text-slate-500">REF: 12456</p>
+</div>
+</div>
+</td>
+<td class="px-6 py-4 text-sm">Snacks</td>
+<td class="px-6 py-4 text-sm font-bold text-amber-600 dark:text-amber-500">8 un.</td>
+<td class="px-6 py-4">
+<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-100 dark:bg-amber-500/20 text-amber-600 dark:text-amber-500 text-xs font-bold">
+<span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                                        Stock Baixo
+                                    </span>
+</td>
+<td class="px-6 py-4 text-right">
+<button class="px-4 py-1.5 bg-primary text-white rounded-lg text-sm font-bold shadow-sm hover:opacity-90 transition-all">Editar Stock</button>
+</td>
+</tr>
+<tr class="bg-rose-50/30 dark:bg-rose-500/5 hover:bg-rose-50/50 dark:hover:bg-rose-500/10 transition-colors">
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-lg bg-slate-100 dark:bg-primary/10 flex items-center justify-center overflow-hidden grayscale">
+<img class="w-full h-full object-cover" data-alt="Journal or newspaper" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDgNb10ZG_oHAZv9ExaVtuUcnjn661U5ttoL-O0D_5-tDU-DShIQfcyLCwc8vMazXgdpC7I_wpjLE2dy3RmdwrmxZE8SSY_5vHTpxeSL3Qrx23ETu1XhkIlIuW7QXgFAWR1i1SnRnLptMsZL2kgj5cmpwXbzUyfnFzlBg2SjK5mEFK16l_5aGgeyvF1O-q_lAup-BRgSTxrYE6sR5AFivYxTkuCfVfn7vBqU4vOOx4SMww0CKJwozjhFJH4ogajWcn4cg3R-2ayevDy"/>
+</div>
+<div>
+<p class="text-sm font-semibold text-slate-900 dark:text-slate-100">Diário de Notícias</p>
+<p class="text-xs text-slate-500">REF: 56781</p>
+</div>
+</div>
+</td>
+<td class="px-6 py-4 text-sm">Revistas</td>
+<td class="px-6 py-4 text-sm font-bold text-rose-600 dark:text-rose-500">0 un.</td>
+<td class="px-6 py-4">
+<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-rose-100 dark:bg-rose-500/20 text-rose-600 dark:text-rose-500 text-xs font-bold">
+<span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
+                                        Esgotado
+                                    </span>
+</td>
+<td class="px-6 py-4 text-right">
+<button class="px-4 py-1.5 bg-rose-600 text-white rounded-lg text-sm font-bold shadow-sm hover:bg-rose-700 transition-all">Repor Já</button>
+</td>
+</tr>
+<tr class="hover:bg-slate-50/50 dark:hover:bg-primary/5 transition-colors">
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-lg bg-slate-100 dark:bg-primary/10 flex items-center justify-center overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="Bottled mineral water" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA_iiUWklD9fDwwL4Yts1X3YjT6AIfpFZkM3jFuVWYOc22rlWLbzSJcl2KTRd6hCX0vINZyYOuqL-1vUSznzI7096FjoqUKz4DH5Ov9s5Z7cCHpFvmIAv5ODsOyjAOZT_qLlifYsmPgo2goLpBll9XRE0BDZkoUxSfznJKjUhcTzmgdKoqM8rRk-6iApHB5Agxn-JnSdhF8Dp0rzMRMaZEZ28oAr5NkmpB1saN_zbPc3nrvpcNMlfrrieYRmssJ1DkeWYGDDO0XZ-Bh"/>
+</div>
+<div>
+<p class="text-sm font-semibold text-slate-900 dark:text-slate-100">Água Mineral 50cl</p>
+<p class="text-xs text-slate-500">REF: 99120</p>
+</div>
+</div>
+</td>
+<td class="px-6 py-4 text-sm">Bebidas</td>
+<td class="px-6 py-4 text-sm font-medium">156 un.</td>
+<td class="px-6 py-4">
+<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-100 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-500 text-xs font-bold">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                                        Em Stock
+                                    </span>
+</td>
+<td class="px-6 py-4 text-right">
+<button class="px-4 py-1.5 border border-primary/30 text-primary dark:text-primary rounded-lg text-sm font-bold hover:bg-primary hover:text-white transition-all">Editar Stock</button>
+</td>
+</tr>
+<tr class="bg-amber-50/30 dark:bg-amber-500/5 hover:bg-amber-50/50 dark:hover:bg-amber-500/10 transition-colors">
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-lg bg-slate-100 dark:bg-primary/10 flex items-center justify-center overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="Tobacco products" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDHV-6yRwyURf2KRs1h-im4lC2pP3w63BXWzQUo__c2HKgWKdEBhwogipKEai3QbKRqr71EVlRYLC9bAgUWf7anuwxsUKNSA7MgVdOmlQjQuEKeOxb3YNX9S61gSZdLM1tF9-YNPuU7kQ3MQeWXPyk4bUmhxdDjtZppfR_xX2RDusv73vFsaKYcyv-WZ7TVDbF9Eh3AHyjOwoy7PGh3clusdw084bAbmmkJiIlew5m8qMemmOD57p5x0ds7zmxi1-2MlgNxl-mMO3mR"/>
+</div>
+<div>
+<p class="text-sm font-semibold text-slate-900 dark:text-slate-100">Cigarros Marlboro Gold</p>
+<p class="text-xs text-slate-500">REF: 44231</p>
+</div>
+</div>
+</td>
+<td class="px-6 py-4 text-sm">Tabaco</td>
+<td class="px-6 py-4 text-sm font-bold text-amber-600 dark:text-amber-500">4 un.</td>
+<td class="px-6 py-4">
+<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-100 dark:bg-amber-500/20 text-amber-600 dark:text-amber-500 text-xs font-bold">
+<span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                                        Stock Baixo
+                                    </span>
+</td>
+<td class="px-6 py-4 text-right">
+<button class="px-4 py-1.5 bg-primary text-white rounded-lg text-sm font-bold shadow-sm hover:opacity-90 transition-all">Editar Stock</button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="p-6 border-t border-slate-200 dark:border-primary/20 flex items-center justify-between">
+<p class="text-sm text-slate-500 dark:text-slate-400">Mostrando <span class="font-bold text-slate-900 dark:text-slate-100">5</span> de <span class="font-bold text-slate-900 dark:text-slate-100">1,240</span> itens</p>
+<div class="flex gap-2">
+<button class="p-2 border border-slate-200 dark:border-primary/20 rounded-lg text-slate-400 hover:bg-slate-50 dark:hover:bg-primary/10 transition-colors disabled:opacity-50" disabled="">
+<span class="material-symbols-outlined">chevron_left</span>
+</button>
+<button class="p-2 border border-slate-200 dark:border-primary/20 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-primary/10 transition-colors">
+<span class="material-symbols-outlined">chevron_right</span>
+</button>
+</div>
+</div>
+</section>
+</main>
+<footer class="mt-auto border-t border-slate-200 dark:border-primary/20 py-8 px-6 text-center">
+<p class="text-slate-500 text-xs">© 2024 Kiosk Manager Dashboard. Todos os direitos reservados.</p>
+</footer>
+</div>
+</body></html>

@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Order Confirmation #4582</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#ec5b13",
+                        "background-light": "#f8f6f6",
+                        "background-dark": "#221610",
+                    },
+                    fontFamily: {
+                        "display": ["Public Sans", "sans-serif"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 min-h-screen">
+<div class="max-w-[480px] mx-auto min-h-screen flex flex-col bg-white dark:bg-slate-900 shadow-xl overflow-hidden">
+<!-- Top Navigation -->
+<header class="flex items-center justify-between px-6 py-4 border-b border-slate-100 dark:border-slate-800">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary">receipt_long</span>
+<h2 class="text-lg font-bold tracking-tight">Order Details</h2>
+</div>
+<button class="flex items-center justify-center rounded-full w-10 h-10 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
+<span class="material-symbols-outlined">close</span>
+</button>
+</header>
+<main class="flex-1 overflow-y-auto px-6 py-8">
+<!-- Success Status -->
+<div class="flex flex-col items-center text-center mb-8">
+<div class="w-20 h-20 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mb-4">
+<span class="material-symbols-outlined text-green-600 dark:text-green-400 text-5xl">check_circle</span>
+</div>
+<h1 class="text-3xl font-extrabold text-slate-900 dark:text-white mb-1">Success!</h1>
+<p class="text-slate-500 dark:text-slate-400 font-medium">Your order has been placed successfully.</p>
+<div class="mt-4 px-4 py-1 bg-primary/10 text-primary rounded-full text-sm font-bold">
+                    ORDER #4582
+                </div>
+</div>
+<!-- QR Code Pickup Section -->
+<div class="bg-slate-50 dark:bg-slate-800/50 rounded-2xl p-6 mb-8 border border-slate-100 dark:border-slate-700">
+<div class="flex flex-col items-center text-center">
+<p class="text-sm font-semibold text-slate-600 dark:text-slate-400 mb-4 uppercase tracking-wider">Pickup QR Code</p>
+<div class="bg-white p-4 rounded-xl shadow-sm mb-4">
+<img alt="Pickup QR Code" class="w-[180px] h-[180px]" data-alt="Black and white QR code for order pickup" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB3JGM_M19VoN0mV_kPYjAMrk2zoX-hSk3fkbe2iey278LnlY5Pr4cv83GpGcyCCf-bwE4QeL0QLmaF8mL7gY-aGa4xOt6s5nsk6KNHRFKv8JYzRo7q1APD66Xp-bgB9UhfqcA6FlYN3XXwxVu5YngsKNCQjl8kd2qZedpPB8ceyts4-12LACGU8vX969--USaUs8fBVbsJlTI9U5A2Fwoh_RXaKIHR52mbgbckIDRIMU3eIFeHtN_nNEKOV6oRf8JRHPHDsfwIxhBV"/>
+</div>
+<p class="text-sm text-slate-500 dark:text-slate-400 leading-relaxed px-4">
+                        Scan this code at the kiosk or show it to a staff member for quick pickup.
+                    </p>
+</div>
+</div>
+<!-- Order Summary -->
+<div class="mb-8">
+<h3 class="text-lg font-bold mb-4 flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-xl">shopping_bag</span>
+                    Items Purchased
+                </h3>
+<div class="space-y-4">
+<!-- Item 1 -->
+<div class="flex items-center gap-4">
+<div class="w-16 h-16 rounded-lg bg-cover bg-center shrink-0" data-alt="A gourmet artisan burger with fresh toppings" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuDFjg1XOTEgcgMCGLb0VJs8KEe3mzfsoCk6yzuMYUAzZSV0lbHciPgkmIHs0DrVaFKXLtgW3rb7onnVy1NFtciwcHRrh8pO09nhwYb-Xr-6bcyfXBoxPtyl2z51M3QY6X62KvEpu34hvOV2lhNed_8QYYnlKNVHj1QEDsEbrlpxFfhZdbEDQHr9PXqA_GS8SeoUROBQtomcxIgE_Tee2hhPYQ_WmcaDmbWfFY0vJlN-CCe7QcK9D6JuZ5tUsPdeJwaFjVik27A6qNv1');"></div>
+<div class="flex-1">
+<h4 class="font-bold text-slate-800 dark:text-slate-200">Signature Beef Burger</h4>
+<p class="text-sm text-slate-500 dark:text-slate-400">1x • Extra Cheese, No Onions</p>
+</div>
+<span class="font-bold">$14.50</span>
+</div>
+<!-- Item 2 -->
+<div class="flex items-center gap-4">
+<div class="w-16 h-16 rounded-lg bg-cover bg-center shrink-0" data-alt="Crispy golden french fries in a container" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuCijvnIXVF_Ke8oRDz_HDC3ArF5lx5XJjjnUSywepuFUr4sY1hMz4lrSWUjfV8jIvPd0Uz9UTBHRPtRG1CDNT39JHl1o5LXlhXjgVXeqjUWYIVFG2BlI8ifDeQ3dv6cpf44npmq8HpJTwkLGBqRsplDfEbrnViuyrd1iASjxQZc3zSU4T8Z3GsOa0z7SNIQzKovYXmwdNz9SnhoMPZ2tUMuO0MKd0z1eXmXzi3PMmUKsJ6p0LwK8-4JHXeSxQt2upask_UAeAe_KZG5');"></div>
+<div class="flex-1">
+<h4 class="font-bold text-slate-800 dark:text-slate-200">Large Seasoned Fries</h4>
+<p class="text-sm text-slate-500 dark:text-slate-400">1x • Spicy Mayo Dip</p>
+</div>
+<span class="font-bold">$5.25</span>
+</div>
+<!-- Item 3 -->
+<div class="flex items-center gap-4">
+<div class="w-16 h-16 rounded-lg bg-cover bg-center shrink-0" data-alt="A refreshing iced craft soda with lemon slice" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuDXktocUqDEOqGDZrtA3P5fbZCoaGWRHLC4ah-B-f8L_WXOXIs7fMqZPzTPxeO6wppNfFfDwwJilKsbxWyEMfdOT3AnCCIWNygUl-33Us40SXhNSV7TQtOlEfc8aruS-14eDVWGRxIZGt0cNVHsl-2R-1FqtGJ4y6JmpChDhpnDHHBBa9evWjeAnYCiViUXvoR00cavC2SyEc7o9NerKVyzuaWL1a6jtdS3gMO7PIt9hFd4NE_HbaQrvYZTISWpuTCkfak9aj-e6MWn');"></div>
+<div class="flex-1">
+<h4 class="font-bold text-slate-800 dark:text-slate-200">Craft Ginger Ale</h4>
+<p class="text-sm text-slate-500 dark:text-slate-400">1x • Iced</p>
+</div>
+<span class="font-bold">$3.75</span>
+</div>
+</div>
+</div>
+<!-- Payment Breakdown -->
+<div class="border-t border-slate-100 dark:border-slate-800 pt-4 space-y-2">
+<div class="flex justify-between text-slate-600 dark:text-slate-400">
+<span>Subtotal</span>
+<span>$23.50</span>
+</div>
+<div class="flex justify-between text-slate-600 dark:text-slate-400">
+<span>Tax (8%)</span>
+<span>$1.88</span>
+</div>
+<div class="flex justify-between text-slate-600 dark:text-slate-400">
+<span>Service Fee</span>
+<span>$0.50</span>
+</div>
+<div class="flex justify-between text-xl font-extrabold text-slate-900 dark:text-white pt-2">
+<span>Total Paid</span>
+<span class="text-primary">$25.88</span>
+</div>
+</div>
+<!-- Payment Info -->
+<div class="mt-6 flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800/30 rounded-xl">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-slate-400">credit_card</span>
+<span class="text-sm font-medium text-slate-600 dark:text-slate-400">Mastercard ending in 8842</span>
+</div>
+<span class="text-xs font-bold text-slate-400 uppercase">Paid</span>
+</div>
+</main>
+<!-- Footer Actions -->
+<footer class="p-6 bg-white dark:bg-slate-900 border-t border-slate-100 dark:border-slate-800">
+<div class="flex flex-col gap-3">
+<button class="w-full bg-primary hover:bg-primary/90 text-white font-bold py-4 rounded-xl shadow-lg shadow-primary/20 transition-colors flex items-center justify-center gap-2">
+<span class="material-symbols-outlined">map</span>
+                    Track Order
+                </button>
+<button class="w-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-bold py-4 rounded-xl transition-colors">
+                    Download Receipt
+                </button>
+</div>
+<p class="text-center text-xs text-slate-400 mt-4">
+                Thank you for choosing our service!
+            </p>
+</footer>
+</div>
+</body></html>

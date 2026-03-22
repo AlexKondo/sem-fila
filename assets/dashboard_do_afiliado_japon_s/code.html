@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+
+<html lang="ja"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#ec5b13",
+                        "background-light": "#f8f6f6",
+                        "background-dark": "#221610",
+                    },
+                    fontFamily: {
+                        "display": ["Public Sans", "sans-serif"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<title>アフィリエイトダッシュボード</title>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100">
+<div class="relative flex min-h-screen w-full flex-col overflow-x-hidden">
+<!-- Header / TopNavBar -->
+<header class="flex items-center justify-between border-b border-primary/10 bg-white dark:bg-background-dark px-6 py-3 lg:px-10">
+<div class="flex items-center gap-4">
+<div class="text-primary">
+<span class="material-symbols-outlined text-4xl">hub</span>
+</div>
+<h2 class="text-xl font-bold leading-tight tracking-tight">アフィリエイトダッシュボード</h2>
+</div>
+<div class="flex flex-1 justify-end gap-4 items-center">
+<div class="hidden md:flex gap-2">
+<button class="flex items-center justify-center rounded-xl h-10 w-10 bg-primary/10 text-primary hover:bg-primary/20 transition-colors">
+<span class="material-symbols-outlined text-[20px]">notifications</span>
+</button>
+<button class="flex items-center justify-center rounded-xl h-10 w-10 bg-primary/10 text-primary hover:bg-primary/20 transition-colors">
+<span class="material-symbols-outlined text-[20px]">settings</span>
+</button>
+</div>
+<div class="flex items-center gap-3 pl-4 border-l border-primary/10">
+<div class="text-right hidden sm:block">
+<p class="text-sm font-bold">田中 太郎</p>
+<p class="text-xs text-slate-500 dark:text-slate-400">一般パートナー</p>
+</div>
+<div class="bg-primary/20 rounded-full size-10 flex items-center justify-center overflow-hidden">
+<img alt="User Profile" class="w-full h-full object-cover" data-alt="Profile photo of a professional male user" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC6txJCGR1piz-7cF1QSnSlRiZCcVQBqmM0zHzk6y38cxFlIpk5vlRbbu5WVb5sigmX3pVa4Qhe-qimmh2CiQ-M8GmUzUca5BI1egDayGf8z74e4AeM_5lsG7sVZ7AcanTxupKwSWvKfXOJZtaCvtitb_d-aPLOjFWL0LvsBzApMDS9TJhdq37ey9-dVEeaS01a7oaAcSWqVo00-_MXkIVun2gGudYoU0Q6UbK3h0DZZDP7Z-p2mbPYyK_p5X1mEjndLX1iiDi-CDJT"/>
+</div>
+</div>
+</div>
+</header>
+<div class="flex flex-1 flex-col lg:flex-row">
+<!-- Sidebar Navigation -->
+<nav class="w-full lg:w-64 border-r border-primary/10 bg-white dark:bg-background-dark p-4 flex flex-col gap-2">
+<div class="flex items-center gap-3 px-3 py-3 rounded-xl bg-primary text-white">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="text-sm font-medium">ダッシュボード</span>
+</div>
+<div class="flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-primary/5 text-slate-600 dark:text-slate-300 transition-colors cursor-pointer">
+<span class="material-symbols-outlined">history</span>
+<span class="text-sm font-medium">紹介履歴</span>
+</div>
+<div class="flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-primary/5 text-slate-600 dark:text-slate-300 transition-colors cursor-pointer">
+<span class="material-symbols-outlined">download</span>
+<span class="text-sm font-medium">販促素材</span>
+</div>
+<div class="flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-primary/5 text-slate-600 dark:text-slate-300 transition-colors cursor-pointer">
+<span class="material-symbols-outlined">payments</span>
+<span class="text-sm font-medium">報酬の支払い</span>
+</div>
+<div class="mt-auto pt-4 border-t border-primary/10">
+<div class="flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-red-50 text-red-500 transition-colors cursor-pointer">
+<span class="material-symbols-outlined">logout</span>
+<span class="text-sm font-medium">ログアウト</span>
+</div>
+</div>
+</nav>
+<!-- Main Content Area -->
+<main class="flex-1 p-4 lg:p-8 space-y-8 overflow-y-auto">
+<!-- Welcome Section -->
+<section class="flex flex-col gap-2">
+<h1 class="text-3xl font-black tracking-tight">お疲れ様です、田中さん</h1>
+<p class="text-slate-500 dark:text-slate-400">現在の収益状況とプロモーション活動を確認できます。</p>
+</section>
+<!-- Earnings Overview -->
+<section class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<div class="bg-white dark:bg-slate-800/50 p-6 rounded-xl border border-primary/10 shadow-sm">
+<div class="flex justify-between items-start mb-4">
+<p class="text-slate-500 dark:text-slate-400 font-medium">合計収益（確定済み）</p>
+<span class="material-symbols-outlined text-primary">account_balance_wallet</span>
+</div>
+<p class="text-4xl font-bold">¥450,000</p>
+<div class="mt-2 flex items-center gap-1 text-green-600 text-sm font-bold">
+<span class="material-symbols-outlined text-sm">trending_up</span>
+<span>前月比 +12.5%</span>
+</div>
+</div>
+<div class="bg-white dark:bg-slate-800/50 p-6 rounded-xl border border-primary/10 shadow-sm">
+<div class="flex justify-between items-start mb-4">
+<p class="text-slate-500 dark:text-slate-400 font-medium">承認待ちの収益</p>
+<span class="material-symbols-outlined text-primary">schedule</span>
+</div>
+<p class="text-4xl font-bold">¥12,500</p>
+<div class="mt-2 flex items-center gap-1 text-slate-400 text-sm">
+<span>次回支払予定日: 2024/06/15</span>
+</div>
+</div>
+</section>
+<!-- Referral Links -->
+<section class="space-y-4">
+<h2 class="text-xl font-bold flex items-center gap-2">
+<span class="material-symbols-outlined">link</span>
+                        紹介リンク
+                    </h2>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+<div class="bg-white dark:bg-slate-800/50 p-5 rounded-xl border border-primary/10">
+<p class="text-sm font-bold mb-3">キオスク運営者向け</p>
+<div class="flex gap-2">
+<input class="flex-1 bg-background-light dark:bg-slate-900 border-none rounded-lg px-3 py-2 text-sm text-slate-600 dark:text-slate-400 focus:ring-1 focus:ring-primary" readonly="" type="text" value="https://example.com/kiosk/ref=tanaka123"/>
+<button class="bg-primary text-white px-4 py-2 rounded-lg text-sm font-bold hover:opacity-90 transition-opacity">コピー</button>
+</div>
+</div>
+<div class="bg-white dark:bg-slate-800/50 p-5 rounded-xl border border-primary/10">
+<p class="text-sm font-bold mb-3">イベントマネージャー向け</p>
+<div class="flex gap-2">
+<input class="flex-1 bg-background-light dark:bg-slate-900 border-none rounded-lg px-3 py-2 text-sm text-slate-600 dark:text-slate-400 focus:ring-1 focus:ring-primary" readonly="" type="text" value="https://example.com/event/ref=tanaka123"/>
+<button class="bg-primary text-white px-4 py-2 rounded-lg text-sm font-bold hover:opacity-90 transition-opacity">コピー</button>
+</div>
+</div>
+</div>
+</section>
+<!-- Referral History Table -->
+<section class="space-y-4">
+<div class="flex justify-between items-center">
+<h2 class="text-xl font-bold flex items-center gap-2">
+<span class="material-symbols-outlined">group</span>
+                            最近の紹介履歴
+                        </h2>
+<button class="text-primary text-sm font-bold hover:underline">すべて見る</button>
+</div>
+<div class="bg-white dark:bg-slate-800/50 rounded-xl border border-primary/10 overflow-hidden">
+<div class="overflow-x-auto">
+<table class="w-full text-left">
+<thead class="bg-primary/5 border-b border-primary/10">
+<tr>
+<th class="px-6 py-4 text-xs font-bold uppercase tracking-wider">顧客名/事業者名</th>
+<th class="px-6 py-4 text-xs font-bold uppercase tracking-wider">紹介コード</th>
+<th class="px-6 py-4 text-xs font-bold uppercase tracking-wider">登録日</th>
+<th class="px-6 py-4 text-xs font-bold uppercase tracking-wider text-right">ステータス</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-primary/10">
+<tr>
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="size-8 rounded bg-slate-100 dark:bg-slate-700 flex items-center justify-center text-xs font-bold">SY</div>
+<span class="font-medium">佐藤 ヨシキ</span>
+</div>
+</td>
+<td class="px-6 py-4 text-sm font-mono">KIOSK-001</td>
+<td class="px-6 py-4 text-sm">2024/05/20</td>
+<td class="px-6 py-4 text-right">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">
+                                                報酬確定
+                                            </span>
+</td>
+</tr>
+<tr>
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="size-8 rounded bg-slate-100 dark:bg-slate-700 flex items-center justify-center text-xs font-bold">TM</div>
+<span class="font-medium">高橋 商事 (株)</span>
+</div>
+</td>
+<td class="px-6 py-4 text-sm font-mono">EVNT-042</td>
+<td class="px-6 py-4 text-sm">2024/05/18</td>
+<td class="px-6 py-4 text-right">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400">
+                                                確認中
+                                            </span>
+</td>
+</tr>
+<tr>
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="size-8 rounded bg-slate-100 dark:bg-slate-700 flex items-center justify-center text-xs font-bold">IO</div>
+<span class="font-medium">伊藤 オフィス</span>
+</div>
+</td>
+<td class="px-6 py-4 text-sm font-mono">KIOSK-009</td>
+<td class="px-6 py-4 text-sm">2024/05/15</td>
+<td class="px-6 py-4 text-right">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">
+                                                報酬確定
+                                            </span>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</section>
+<!-- Marketing Materials -->
+<section class="space-y-4">
+<h2 class="text-xl font-bold flex items-center gap-2">
+<span class="material-symbols-outlined">folder_shared</span>
+                        マーケティング素材
+                    </h2>
+<div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+<!-- Material Card 1 -->
+<div class="bg-white dark:bg-slate-800/50 border border-primary/10 rounded-xl overflow-hidden hover:shadow-md transition-shadow">
+<div class="h-32 bg-primary/10 flex items-center justify-center">
+<span class="material-symbols-outlined text-4xl text-primary">image</span>
+</div>
+<div class="p-4">
+<h3 class="font-bold text-sm mb-1">デジタルバナー集</h3>
+<p class="text-xs text-slate-500 mb-4">SNS・Webサイト用</p>
+<button class="w-full border border-primary text-primary py-2 rounded-lg text-xs font-bold hover:bg-primary/5 transition-colors">ダウンロード</button>
+</div>
+</div>
+<!-- Material Card 2 -->
+<div class="bg-white dark:bg-slate-800/50 border border-primary/10 rounded-xl overflow-hidden hover:shadow-md transition-shadow">
+<div class="h-32 bg-primary/10 flex items-center justify-center">
+<span class="material-symbols-outlined text-4xl text-primary">show_chart</span>
+</div>
+<div class="p-4">
+<h3 class="font-bold text-sm mb-1">営業ピッチ資料</h3>
+<p class="text-xs text-slate-500 mb-4">PDF版プレゼン資料</p>
+<button class="w-full border border-primary text-primary py-2 rounded-lg text-xs font-bold hover:bg-primary/5 transition-colors">ダウンロード</button>
+</div>
+</div>
+<!-- Material Card 3 -->
+<div class="bg-white dark:bg-slate-800/50 border border-primary/10 rounded-xl overflow-hidden hover:shadow-md transition-shadow">
+<div class="h-32 bg-primary/10 flex items-center justify-center">
+<span class="material-symbols-outlined text-4xl text-primary">movie</span>
+</div>
+<div class="p-4">
+<h3 class="font-bold text-sm mb-1">デモ用ビデオ</h3>
+<p class="text-xs text-slate-500 mb-4">製品紹介ショート動画</p>
+<button class="w-full border border-primary text-primary py-2 rounded-lg text-xs font-bold hover:bg-primary/5 transition-colors">ダウンロード</button>
+</div>
+</div>
+<!-- Material Card 4 -->
+<div class="bg-white dark:bg-slate-800/50 border border-primary/10 rounded-xl overflow-hidden hover:shadow-md transition-shadow">
+<div class="h-32 bg-primary/10 flex items-center justify-center">
+<span class="material-symbols-outlined text-4xl text-primary">branding_watermark</span>
+</div>
+<div class="p-4">
+<h3 class="font-bold text-sm mb-1">ブランドガイドライン</h3>
+<p class="text-xs text-slate-500 mb-4">ロゴ・カラー使用規定</p>
+<button class="w-full border border-primary text-primary py-2 rounded-lg text-xs font-bold hover:bg-primary/5 transition-colors">ダウンロード</button>
+</div>
+</div>
+</div>
+</section>
+</main>
+</div>
+<!-- Footer -->
+<footer class="bg-white dark:bg-background-dark border-t border-primary/10 px-10 py-6 text-center text-slate-400 text-sm">
+<p>© 2024 アフィリエイト・プログラム. 無断複写・転載を禁じます。</p>
+</footer>
+</div>
+</body></html>
