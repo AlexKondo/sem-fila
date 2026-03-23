@@ -3,8 +3,9 @@
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import jsQR from 'jsqr';
-import { X, Flashlight, FlashlightOff } from 'lucide-react';
 import Link from 'next/link';
+
+const P = '#ec5b13'; // primary
 
 export default function QrScanner() {
   const router = useRouter();
@@ -18,10 +19,7 @@ export default function QrScanner() {
   const [torch, setTorch] = useState(false);
   const [torchSupported, setTorchSupported] = useState(false);
 
-  useEffect(() => {
-    startCamera();
-    return () => stopCamera();
-  }, []);
+  useEffect(() => { startCamera(); return () => stopCamera(); }, []);
 
   async function startCamera() {
     setError('');
@@ -30,18 +28,13 @@ export default function QrScanner() {
         video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } },
       });
       streamRef.current = stream;
-
-      // Verifica suporte a torch (lanterna)
       const track = stream.getVideoTracks()[0];
-      const capabilities = track.getCapabilities() as MediaTrackCapabilities & { torch?: boolean };
-      if (capabilities.torch) setTorchSupported(true);
-
+      const cap = track.getCapabilities() as MediaTrackCapabilities & { torch?: boolean };
+      if (cap.torch) setTorchSupported(true);
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
         videoRef.current.play();
-        videoRef.current.addEventListener('loadedmetadata', () => {
-          scanLoop();
-        });
+        videoRef.current.addEventListener('loadedmetadata', scanLoop);
       }
     } catch {
       setError('Não foi possível acessar a câmera. Verifique as permissões do navegador.');
@@ -57,131 +50,163 @@ export default function QrScanner() {
     const video = videoRef.current;
     const canvas = canvasRef.current;
     if (!video || !canvas || video.readyState !== video.HAVE_ENOUGH_DATA) {
-      rafRef.current = requestAnimationFrame(scanLoop);
-      return;
+      rafRef.current = requestAnimationFrame(scanLoop); return;
     }
-
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
+    canvas.width = video.videoWidth; canvas.height = video.videoHeight;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
-
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
     const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-    const code = jsQR(imageData.data, imageData.width, imageData.height, {
-      inversionAttempts: 'dontInvert',
-    });
-
+    const code = jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: 'dontInvert' });
     if (code?.data) {
-      const url = code.data;
-      setDetected(url);
-      stopCamera();
-
-      // Navega automaticamente se for URL do QuickPick
+      setDetected(code.data); stopCamera();
       try {
-        const parsed = new URL(url);
-        if (parsed.pathname.startsWith('/menu/')) {
-          router.push(parsed.pathname + parsed.search);
-          return;
-        }
+        const parsed = new URL(code.data);
+        if (parsed.pathname.startsWith('/menu/')) { router.push(parsed.pathname + parsed.search); return; }
       } catch {}
-
-      // URL externa: exibe para o usuário clicar
       return;
     }
-
     rafRef.current = requestAnimationFrame(scanLoop);
   }
 
   async function toggleTorch() {
     const track = streamRef.current?.getVideoTracks()[0];
     if (!track) return;
-    const newState = !torch;
-    await track.applyConstraints({ advanced: [{ torch: newState } as MediaTrackConstraintSet] });
-    setTorch(newState);
+    const next = !torch;
+    await track.applyConstraints({ advanced: [{ torch: next } as MediaTrackConstraintSet] });
+    setTorch(next);
   }
 
   return (
-    <main className="fixed inset-0 bg-black flex flex-col">
+    <div className="relative flex min-h-screen flex-col" style={{ backgroundColor: '#f8f6f6' }}>
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 z-10">
-        <Link href="/" className="text-white/80 hover:text-white">
-          <X className="w-6 h-6" />
-        </Link>
-        <p className="text-white font-semibold text-sm">Escanear QR Code</p>
-        {torchSupported && (
-          <button onClick={toggleTorch} className="text-white/80 hover:text-white">
-            {torch ? <FlashlightOff className="w-6 h-6" /> : <Flashlight className="w-6 h-6" />}
-          </button>
-        )}
-        {!torchSupported && <div className="w-6" />}
-      </div>
-
-      {/* Câmera */}
-      <div className="flex-1 relative overflow-hidden">
-        <video
-          ref={videoRef}
-          className="absolute inset-0 w-full h-full object-cover"
-          playsInline
-          muted
-        />
-        <canvas ref={canvasRef} className="hidden" />
-
-        {/* Overlay com mira */}
-        {!detected && !error && (
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="relative w-64 h-64">
-              {/* Cantos da mira */}
-              <div className="absolute top-0 left-0 w-10 h-10 border-t-4 border-l-4 border-orange-400 rounded-tl-lg" />
-              <div className="absolute top-0 right-0 w-10 h-10 border-t-4 border-r-4 border-orange-400 rounded-tr-lg" />
-              <div className="absolute bottom-0 left-0 w-10 h-10 border-b-4 border-l-4 border-orange-400 rounded-bl-lg" />
-              <div className="absolute bottom-0 right-0 w-10 h-10 border-b-4 border-r-4 border-orange-400 rounded-br-lg" />
-              {/* Linha de scan animada */}
-              <div className="absolute inset-x-0 top-0 h-0.5 bg-orange-400 animate-scan" />
-            </div>
+      <header className="flex items-center justify-between px-6 py-4">
+        <div className="flex items-center gap-2">
+          <div className="p-2 rounded-lg" style={{ backgroundColor: P }}>
+            <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M3 3h7v7H3V3zm2 2v3h3V5H5zm7-2h7v7h-7V3zm2 2v3h3V5h-3zM3 13h7v7H3v-7zm2 2v3h3v-3H5zm10 0h2v2h-2v-2zm-2 2h2v2h-2v-2zm4 0h2v2h-2v-2zm0-4h2v2h-2v-2zm-4 0h2v2h-2v-2zm2 2h2v2h-2v-2z"/>
+            </svg>
           </div>
-        )}
-      </div>
+          <h1 className="text-xl font-bold tracking-tight text-slate-900">QuickPick</h1>
+        </div>
+        <Link href="/" className="w-10 h-10 flex items-center justify-center rounded-full bg-slate-200 text-slate-700 hover:bg-slate-300 transition">
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </Link>
+      </header>
 
-      {/* Instrução / Resultado / Erro */}
-      <div className="px-4 py-6 text-center z-10">
+      {/* Main */}
+      <main className="flex-1 flex flex-col items-center px-6 pt-8">
         {error ? (
-          <div className="space-y-3">
-            <p className="text-red-400 text-sm">{error}</p>
+          <>
+            <div className="text-center mb-8">
+              <h2 className="text-3xl font-bold text-slate-900 mb-2">Câmera bloqueada</h2>
+              <p className="text-slate-600 font-medium">{error}</p>
+            </div>
             <button
               onClick={startCamera}
-              className="bg-orange-500 text-white px-6 py-2.5 rounded-xl text-sm font-medium"
+              className="w-full max-w-sm py-4 rounded-xl font-bold text-white shadow-lg"
+              style={{ backgroundColor: P }}
             >
               Tentar novamente
             </button>
-          </div>
+          </>
         ) : detected ? (
-          <div className="space-y-3">
-            <p className="text-green-400 text-sm font-medium">QR Code detectado!</p>
+          <>
+            <div className="text-center mb-8">
+              <h2 className="text-3xl font-bold text-slate-900 mb-2">QR Code detectado!</h2>
+              <p className="text-slate-600 font-medium">Redirecionando para o cardápio…</p>
+            </div>
             <a
               href={detected}
-              className="block bg-orange-500 text-white px-6 py-2.5 rounded-xl text-sm font-medium"
+              className="w-full max-w-sm py-4 rounded-xl font-bold text-white text-center shadow-lg block"
+              style={{ backgroundColor: P }}
             >
               Abrir cardápio
             </a>
-          </div>
+          </>
         ) : (
-          <p className="text-white/60 text-sm">
-            Aponte a câmera para o QR Code da barraca
-          </p>
-        )}
-      </div>
+          <>
+            <div className="text-center mb-8">
+              <h2 className="text-3xl font-bold text-slate-900 mb-2">Bem-vindo!</h2>
+              <p className="text-slate-600 font-medium">Aponte a câmera para o código QR para fazer seu pedido</p>
+            </div>
 
-      <style jsx>{`
-        @keyframes scan {
-          0% { top: 0; }
-          50% { top: calc(100% - 2px); }
-          100% { top: 0; }
-        }
-        .animate-scan {
-          animation: scan 2s linear infinite;
-        }
-      `}</style>
-    </main>
+            {/* Scanner viewfinder — exatamente como o asset */}
+            <div className="relative w-full max-w-sm aspect-square flex items-center justify-center">
+              {/* Corner brackets */}
+              <div className="absolute top-0 left-0 w-12 h-12 border-t-4 border-l-4 rounded-tl-xl" style={{ borderColor: P }} />
+              <div className="absolute top-0 right-0 w-12 h-12 border-t-4 border-r-4 rounded-tr-xl" style={{ borderColor: P }} />
+              <div className="absolute bottom-0 left-0 w-12 h-12 border-b-4 border-l-4 rounded-bl-xl" style={{ borderColor: P }} />
+              <div className="absolute bottom-0 right-0 w-12 h-12 border-b-4 border-r-4 rounded-br-xl" style={{ borderColor: P }} />
+
+              {/* Camera area */}
+              <div className="w-[85%] h-[85%] bg-slate-200 rounded-lg overflow-hidden flex flex-col items-center justify-center relative">
+                <video ref={videoRef} className="absolute inset-0 w-full h-full object-cover" playsInline muted />
+                <canvas ref={canvasRef} className="hidden" />
+                {/* Scan line */}
+                <div
+                  className="absolute left-0 w-full h-1 animate-scan"
+                  style={{ backgroundColor: P, boxShadow: `0 0 15px rgba(236,91,19,0.8)`, opacity: 0.7 }}
+                />
+              </div>
+
+              {/* Flash & Gallery controls */}
+              <div className="absolute -bottom-6 flex gap-4">
+                {torchSupported && (
+                  <button
+                    onClick={toggleTorch}
+                    className="bg-white p-3 rounded-full shadow-lg border border-slate-100"
+                  >
+                    <svg className="w-5 h-5" style={{ color: torch ? P : '#64748b' }} fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M7 2h10l-2 7h3l-8 13 2-8H9z"/>
+                    </svg>
+                  </button>
+                )}
+                <button className="bg-white p-3 rounded-full shadow-lg border border-slate-100">
+                  <svg className="w-5 h-5" style={{ color: P }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            {/* Manual entry */}
+            <div className="mt-16 w-full max-w-sm">
+              <button className="w-full py-4 px-6 border-2 border-dashed border-slate-300 rounded-xl flex items-center justify-center gap-3 text-slate-600 font-semibold hover:bg-slate-50 transition-colors">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h7" />
+                </svg>
+                Digitar código manualmente
+              </button>
+            </div>
+          </>
+        )}
+      </main>
+
+      {/* Bottom nav */}
+      <nav className="bg-white border-t border-slate-200 pb-8 pt-2">
+        <div className="flex justify-around items-center px-4">
+          <a className="flex flex-col items-center gap-1 p-2" style={{ color: P }} href="#">
+            <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+            <span className="text-xs font-semibold">Início</span>
+          </a>
+          <a className="flex flex-col items-center gap-1 p-2 text-slate-400" href="#">
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+            </svg>
+            <span className="text-xs font-semibold">Pedidos</span>
+          </a>
+          <a className="flex flex-col items-center gap-1 p-2 text-slate-400" href="#">
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+            <span className="text-xs font-semibold">Ajustes</span>
+          </a>
+        </div>
+      </nav>
+    </div>
   );
 }

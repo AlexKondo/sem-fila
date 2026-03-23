@@ -45,6 +45,8 @@ CREATE TABLE public.profiles (
   id         uuid PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
   name       text,
   phone      text,
+  cnpj       text,
+  address    text,
   role       app_role NOT NULL DEFAULT 'customer',
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now()
@@ -54,8 +56,15 @@ CREATE TABLE public.profiles (
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
 BEGIN
-  INSERT INTO public.profiles (id, name, role)
-  VALUES (NEW.id, NEW.raw_user_meta_data->>'name', 'customer');
+  INSERT INTO public.profiles (id, name, phone, cnpj, address, role)
+  VALUES (
+    NEW.id,
+    NEW.raw_user_meta_data->>'name',
+    NEW.raw_user_meta_data->>'phone',
+    NEW.raw_user_meta_data->>'cnpj',
+    NEW.raw_user_meta_data->>'address',
+    'vendor'
+  );
   RETURN NEW;
 END;
 $$;

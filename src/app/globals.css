@@ -1,7 +1,9 @@
 @import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Public+Sans:wght@300;400;500;600;700&display=swap');
 
 :root {
-  --font-inter: "Inter", system-ui, sans-serif;
+  --color-primary: #ec5b13;
+  --color-bg: #f8f6f6;
 }
 
 * {
@@ -9,13 +11,25 @@
 }
 
 body {
-  font-family: var(--font-inter);
+  font-family: 'Public Sans', sans-serif;
+  background-color: var(--color-bg);
+  color: #0f172a;
   -webkit-font-smoothing: antialiased;
+  min-height: 100dvh;
 }
 
-/* PWA: esconde scrollbar no mobile mas mantém scroll */
+/* Hide scrollbar on mobile, keep scroll */
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
 @media (max-width: 768px) {
-  ::-webkit-scrollbar {
-    display: none;
-  }
+  ::-webkit-scrollbar { display: none; }
 }
+
+/* Scan animation */
+@keyframes scan {
+  0% { top: 0; }
+  50% { top: calc(100% - 2px); }
+  100% { top: 0; }
+}
+.animate-scan { animation: scan 2s linear infinite; }

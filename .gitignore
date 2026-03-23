@@ -28,6 +28,9 @@ desktop.ini
 # Skills
 skills/
 
+# Assets locais
+assets/
+
 # TypeScript
 *.tsbuildinfo
 next-env.d.ts

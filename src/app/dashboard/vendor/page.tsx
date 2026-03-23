@@ -5,7 +5,7 @@ import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import VendorOrdersBoard from '@/components/dashboard/VendorOrdersBoard';
 import Link from 'next/link';
-import { QrCode, UtensilsCrossed, Users } from 'lucide-react';
+import { QrCode, UtensilsCrossed, Users, UserCircle } from 'lucide-react';
 import LogoutButton from '@/components/ui/LogoutButton';
 
 export default async function VendorDashboardPage() {
@@ -62,7 +62,12 @@ export default async function VendorDashboardPage() {
               <h1 className="font-bold text-gray-900 text-base">{vendor.name}</h1>
               <p className="text-xs text-gray-400">Fila de pedidos em tempo real</p>
             </div>
-            <LogoutButton />
+            <div className="flex items-center gap-1">
+              <Link href="/profile" className="p-2 rounded-xl hover:bg-gray-100 text-gray-500" title="Meu perfil">
+                <UserCircle className="w-5 h-5" />
+              </Link>
+              <LogoutButton />
+            </div>
           </div>
 
           {/* Navegação rápida com labels */}
