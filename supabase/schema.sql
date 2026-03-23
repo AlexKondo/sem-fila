@@ -56,6 +56,7 @@ CREATE TABLE public.profiles (
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
 BEGIN
+  -- Cria o perfil do usuário
   INSERT INTO public.profiles (id, name, phone, cnpj, address, role)
   VALUES (
     NEW.id,
@@ -65,6 +66,15 @@ BEGIN
     NEW.raw_user_meta_data->>'address',
     'vendor'
   );
+
+  -- Auto-cria o registro de vendor vinculado ao usuário
+  INSERT INTO public.vendors (owner_id, name, event_id)
+  VALUES (
+    NEW.id,
+    COALESCE(NEW.raw_user_meta_data->>'name', 'Meu Negócio'),
+    NULL
+  );
+
   RETURN NEW;
 END;
 $$;
@@ -148,7 +158,7 @@ CREATE TABLE public.events (
 
 CREATE TABLE public.vendors (
   id               uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  event_id         uuid NOT NULL REFERENCES public.events(id) ON DELETE CASCADE,
+  event_id         uuid REFERENCES public.events(id) ON DELETE CASCADE,
   owner_id         uuid REFERENCES public.profiles(id),
   name             text NOT NULL,
   description      text,
