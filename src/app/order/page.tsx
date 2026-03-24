@@ -18,12 +18,13 @@ interface Order {
 export default function OrderPage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isGuest, setIsGuest] = useState(false);
   const supabase = createClient();
 
   useEffect(() => {
     async function loadOrders() {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+      if (!user) { setIsGuest(true); setLoading(false); return; }
 
       const { data } = await supabase
         .from('orders')
@@ -83,6 +84,20 @@ export default function OrderPage() {
           <div className="flex flex-col items-center justify-center p-12 text-slate-400">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500 mb-4" />
             <p>Carregando pedidos...</p>
+          </div>
+        ) : isGuest ? (
+          <div className="flex flex-col items-center justify-center p-12 text-center text-slate-400">
+            <ShoppingBag className="w-16 h-16 text-slate-300 mb-4" />
+            <h2 className="text-xl font-bold text-slate-800 mb-2">Faça login para ver seus pedidos</h2>
+            <p className="text-sm text-slate-500 mb-8">
+              Entre na sua conta para acompanhar o histórico de pedidos.
+            </p>
+            <Link
+              href="/login?redirect=/order"
+              className="px-6 py-3 bg-orange-500 text-white rounded-xl font-bold hover:bg-orange-600 transition shadow-lg shadow-orange-200"
+            >
+              Entrar
+            </Link>
           </div>
         ) : orders.length === 0 ? (
           <div className="flex flex-col items-center justify-center p-12 text-center text-slate-400">
