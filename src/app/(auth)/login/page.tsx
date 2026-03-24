@@ -36,7 +36,7 @@ export default function LoginPage() {
       .select('role')
       .single();
 
-    const role = profile?.role;
+    const role = (profile as any)?.role;
 
     if (role === 'platform_admin') {
       router.push('/dashboard/admin');
