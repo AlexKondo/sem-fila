@@ -9,10 +9,12 @@ const ACCEPTED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 export const MenuItemSchema = z.object({
   vendor_id: z.string().uuid(),
   name: z.string().min(2, 'Nome deve ter ao menos 2 caracteres').max(100),
-  description: z.string().max(300).optional(),
-  price: z.number().min(0.01, 'Preço deve ser positivo').max(9999.99),
+  description: z.string().max(300).optional().nullable(),
+  price: z.number().min(0, 'Preço deve ser positivo').max(9999.99),
   available: z.boolean().default(true),
   position: z.number().int().min(0).default(0),
+  category: z.string().optional().nullable(),
+  extras: z.array(z.object({ name: z.string(), price: z.number() })).optional().default([]),
 });
 
 export const MenuItemImageSchema = z.object({

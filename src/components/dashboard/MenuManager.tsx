@@ -54,13 +54,15 @@ export default function MenuManager({ initialItems, vendorId }: MenuManagerProps
           description: parsed.data.description,
           price: parsed.data.price,
           available: parsed.data.available,
+          category: parsed.data.category ?? null,
+          extras: parsed.data.extras ?? [],
         })
         .eq('id', editingItem.id)
         .select()
         .single();
 
       if (error) { setFormError(error.message); setSaving(false); return; }
-      setItems((prev) => prev.map((i) => i.id === data!.id ? data! : i));
+      setItems((prev) => prev.map((i) => i.id === data!.id ? (data as any) : i));
     } else {
       // Insert
       const { data, error } = await supabase
@@ -72,12 +74,14 @@ export default function MenuManager({ initialItems, vendorId }: MenuManagerProps
           price: parsed.data.price,
           available: parsed.data.available,
           position: parsed.data.position,
+          category: parsed.data.category ?? null,
+          extras: parsed.data.extras ?? [],
         })
         .select()
         .single();
 
       if (error) { setFormError(error.message); setSaving(false); return; }
-      setItems((prev) => [...prev, data!]);
+      setItems((prev) => [...prev, data as any]);
     }
 
     setSaving(false);
@@ -101,6 +105,41 @@ export default function MenuManager({ initialItems, vendorId }: MenuManagerProps
     const supabase = createClient();
     const { error } = await supabase.from('menu_items').delete().eq('id', item.id);
     if (!error) setItems((prev) => prev.filter((i) => i.id !== item.id));
+  }
+
+  const [uploadingFile, setUploadingFile] = useState(false);
+
+  async function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file || !editingItem) return;
+
+    setUploadingFile(true);
+    setFormError('');
+
+    const supabase = createClient();
+    // Nome do arquivo seguro: vendorId / timestamp-nome original
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${editingItem.vendor_id || vendorId}/${Date.now()}.${fileExt}`;
+
+    const { data, error } = await supabase
+      .storage
+      .from('menu-items')
+      .upload(fileName, file, { upsert: true });
+
+    if (error) {
+      setFormError(`Erro no upload: ${error.message}`);
+      setUploadingFile(false);
+      return;
+    }
+
+    // Pega a URL pública
+    const { data: { publicUrl } } = supabase
+      .storage
+      .from('menu-items')
+      .getPublicUrl(fileName);
+
+    setEditingItem((prev) => ({ ...prev!, image_url: publicUrl }));
+    setUploadingFile(false);
   }
 
   return (
@@ -147,8 +186,8 @@ export default function MenuManager({ initialItems, vendorId }: MenuManagerProps
                   <div className="flex items-center gap-1 ml-2">
                     <button onClick={() => toggleAvailable(item)} className="text-gray-400 hover:text-orange-500 p-1">
                       {item.available
-                        ? <ToggleRight className="w-5 h-5 text-green-500" />
-                        : <ToggleLeft className="w-5 h-5" />
+                         ? <ToggleRight className="w-5 h-5 text-green-500" />
+                         : <ToggleLeft className="w-5 h-5" />
                       }
                     </button>
                     <button onClick={() => openEdit(item)} className="text-gray-400 hover:text-blue-500 p-1">
@@ -177,6 +216,64 @@ export default function MenuManager({ initialItems, vendorId }: MenuManagerProps
               <div className="bg-red-50 text-red-700 text-sm px-3 py-2 rounded-lg">{formError}</div>
             )}
 
+            {/* Upload de Imagem */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Foto do Produto</label>
+              <div className="flex items-center gap-4">
+                <div className="w-20 h-20 rounded-2xl bg-gray-100 flex items-center justify-center text-3xl border-2 border-dashed border-gray-200 cursor-pointer overflow-hidden relative group">
+                  {editingItem.image_url ? (
+                    <div className="relative w-full h-full group">
+                      <img src={editingItem.image_url} alt="Produto" className="w-full h-full object-cover" />
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          e.preventDefault();
+                          setEditingItem((prev) => ({ ...prev!, image_url: null }));
+                        }}
+                        className="absolute top-1 right-1 bg-red-500 hover:bg-red-600 text-white p-1 rounded-full shadow-md z-10"
+                        title="Remover imagem"
+                      >
+                        <Trash2 className="w-3 h-3" />
+                      </button>
+                    </div>
+                  ) : (
+                    <span className="text-gray-400 text-lg">{uploadingFile ? '...' : '+'}</span>
+                  )}
+                  <input 
+                    type="file" 
+                    accept="image/*" 
+                    disabled={uploadingFile}
+                    className="absolute inset-0 opacity-0 cursor-pointer disabled:cursor-not-allowed" 
+                    onChange={handleImageUpload}
+                  />
+                  {uploadingFile && (
+                    <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                      <div className="w-5 h-5 border-2 border-white border-t-transparent animate-spin rounded-full" />
+                    </div>
+                  )}
+                </div>
+                
+                {/* AI Feature Component */}
+                <div className="flex-1 bg-gradient-to-r from-orange-50 to-amber-50 border border-orange-100 p-3 rounded-2xl">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-xs font-black text-orange-600 flex items-center gap-1">
+                      ✨ Melhorias com IA
+                    </span>
+                    <span className="text-[10px] bg-orange-200 text-orange-800 font-bold px-1.5 py-0.5 rounded flex items-center gap-1">
+                      🔒 PREMIUM
+                    </span>
+                  </div>
+                  <p className="text-[10px] text-slate-500 leading-snug">
+                    Ajuste automático de brilho, foco e remoção de fundo para fotos mais atraentes.
+                  </p>
+                  <button type="button" onClick={() => setFormError('O serviço de IA está bloqueado. Assine o Plano Pro na aba de ajustes do Painel.')} className="mt-2 text-[11px] font-bold text-orange-500 hover:underline">
+                    Habilitar Serviço Extra →
+                  </button>
+                </div>
+              </div>
+            </div>
+
             {[
               { label: 'Nome', key: 'name', type: 'text', required: true, placeholder: 'Ex: Coxinha de frango' },
               { label: 'Descrição', key: 'description', type: 'text', placeholder: 'Ingredientes ou observações' },
@@ -190,7 +287,7 @@ export default function MenuManager({ initialItems, vendorId }: MenuManagerProps
                   placeholder={placeholder}
                   step={key === 'price' ? '0.01' : undefined}
                   min={key === 'price' ? '0' : undefined}
-                  value={(editingItem[key as keyof MenuItem] as string | number | undefined) ?? ''}
+                  value={(editingItem[key as keyof typeof editingItem] as string | number | undefined) ?? ''}
                   onChange={(e) =>
                     setEditingItem((prev) => ({
                       ...prev!,
@@ -201,6 +298,85 @@ export default function MenuManager({ initialItems, vendorId }: MenuManagerProps
                 />
               </div>
             ))}
+
+            {/* Categorias / Submenus em datalist editável */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Categoria (Submenu)</label>
+              <input
+                type="text"
+                list="category-suggestions"
+                placeholder="Selecione ou digite uma categoria"
+                value={editingItem.category ?? ''}
+                onChange={(e) => setEditingItem((p) => ({ ...p!, category: e.target.value || null }))}
+                className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 bg-white"
+              />
+              <datalist id="category-suggestions">
+                <option value="Lanches" />
+                <option value="Bebidas" />
+                <option value="Sobremesas" />
+                <option value="Porções" />
+                <option value="Combos" />
+                <option value="Vinhos" />
+              </datalist>
+            </div>
+
+            {/* Opcionais / Adicionais */}
+            <div className="space-y-2 border-t border-gray-100 pt-3">
+              <div className="flex items-center justify-between">
+                <label className="text-sm font-bold text-gray-800">Adicionais / Opcionais</label>
+                <button
+                  type="button"
+                  onClick={() => setEditingItem((p) => ({ ...p!, extras: [...(p!.extras || []), { name: '', price: 0 }] }))}
+                  className="text-xs text-orange-600 font-bold flex items-center gap-1 hover:underline"
+                >
+                  <Plus className="w-3.5 h-3.5" /> Adicionar
+                </button>
+              </div>
+              
+              <div className="space-y-2 max-h-40 overflow-y-auto no-scrollbar">
+                {(editingItem.extras || []).map((ext, idx) => (
+                  <div key={idx} className="flex gap-2 items-center">
+                    <input
+                      type="text"
+                      placeholder="Ex: Bacon"
+                      value={ext.name}
+                      onChange={(e) => {
+                        const next = [...(editingItem.extras || [])];
+                        next[idx].name = e.target.value;
+                        setEditingItem(p => ({ ...p!, extras: next }));
+                      }}
+                      className="flex-1 border border-gray-300 rounded-xl px-3 py-1.5 text-xs focus:outline-none"
+                    />
+                    <div className="relative w-24">
+                      <span className="absolute left-2.5 top-1.5 text-xs text-gray-400">R$</span>
+                      <input
+                        type="number"
+                        placeholder="0.00"
+                        step="0.01"
+                        min="0"
+                        value={ext.price || ''}
+                        onChange={(e) => {
+                          const next = [...(editingItem.extras || [])];
+                          next[idx].price = parseFloat(e.target.value) || 0;
+                          setEditingItem(p => ({ ...p!, extras: next }));
+                        }}
+                        className="w-full border border-gray-300 rounded-xl pl-7 pr-3 py-1.5 text-xs focus:outline-none"
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const next = (editingItem.extras || []).filter((_, i) => i !== idx);
+                        setEditingItem(p => ({ ...p!, extras: next }));
+                      }}
+                      className="text-gray-400 hover:text-red-500"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
 
             <div className="flex items-center gap-3">
               <label className="text-sm font-medium text-gray-700">Disponível</label>

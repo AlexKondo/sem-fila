@@ -22,9 +22,34 @@ export default function LoginPage() {
     e.preventDefault();
     setError(''); setLoading(true);
     const supabase = createClient();
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) { setError('Email ou senha inválidos.'); setLoading(false); }
-    else { router.push(redirect); router.refresh(); }
+
+    const { error: authError } = await supabase.auth.signInWithPassword({ email, password });
+    if (authError) {
+      setError('Email ou senha inválidos.');
+      setLoading(false);
+      return;
+    }
+
+    // Verifica o perfil para determinar o papel do usuário
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('role')
+      .single();
+
+    const role = profile?.role;
+
+    if (role === 'platform_admin') {
+      router.push('/dashboard/admin');
+      router.refresh();
+    } else if (role === 'vendor') {
+      router.push(redirect === '/dashboard/vendor' ? '/dashboard/vendor' : redirect);
+      router.refresh();
+    } else {
+      // Cliente tentando usar o painel de fornecedor — faz logout e exibe aviso
+      await supabase.auth.signOut();
+      setError('__customer__');
+      setLoading(false);
+    }
   }
 
   return (
@@ -53,9 +78,30 @@ export default function LoginPage() {
             <p className="text-slate-500 mt-1">Acesse o painel da sua barraca</p>
           </div>
 
-          {error && (
+          {error === '__customer__' ? (
+            <div className="bg-amber-50 border border-amber-200 rounded-2xl px-4 py-4 mb-4 space-y-2">
+              <div className="flex items-center gap-2">
+                <svg className="w-5 h-5 text-amber-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+                </svg>
+                <p className="text-sm font-bold text-amber-800">Acesso exclusivo para fornecedores</p>
+              </div>
+              <p className="text-sm text-amber-700 leading-relaxed">
+                Esta área é destinada apenas a <strong>donos de quiosques, barracas e estabelecimentos</strong>.
+              </p>
+              <p className="text-sm text-amber-700 leading-relaxed">
+                Clientes não precisam de login — basta escanear o QR Code do estabelecimento para ver o cardápio e fazer pedidos.
+              </p>
+              <p className="text-sm text-amber-600 mt-1">
+                Quer se tornar um fornecedor?{' '}
+                <Link href="/register" className="font-bold underline" style={{ color: P }}>Criar conta de fornecedor</Link>
+                {' '}ou{' '}
+                <a href="mailto:suporte@quickpick.com.br" className="font-bold underline" style={{ color: P }}>falar com o suporte</a>.
+              </p>
+            </div>
+          ) : error ? (
             <div className="bg-red-50 border border-red-200 text-red-700 text-sm px-4 py-3 rounded-xl mb-4">{error}</div>
-          )}
+          ) : null}
 
           <form onSubmit={handleLogin} className="space-y-4">
             {/* Email */}

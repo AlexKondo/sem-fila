@@ -19,32 +19,52 @@ export default async function VendorDashboardPage() {
 
   if (profile?.role === 'platform_admin') redirect('/dashboard/admin');
 
-  const { data: vendor } = await supabase
+  const { data: vendor, error: vendorErr } = await supabase
     .from('vendors')
     .select('*')
     .eq('owner_id', user.id)
     .eq('active', true)
     .single();
 
+  if (vendorErr) {
+    console.error("Erro ao buscar vendor:", vendorErr);
+  }
+
   // Conta pedidos ativos e calcula receita do dia
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
-  const { data: todayOrders } = vendor ? await supabase
-    .from('orders')
-    .select('total_price, status')
-    .eq('vendor_id', vendor.id)
-    .gte('created_at', today.toISOString()) : { data: [] };
+  let todayOrders: any[] = [];
+  try {
+    if (vendor) {
+      const { data } = await supabase
+        .from('orders')
+        .select('total_price, status')
+        .eq('vendor_id', vendor.id)
+        .gte('created_at', today.toISOString());
+      todayOrders = data || [];
+    }
+  } catch (e) {
+    console.error("Erro ao processar todayOrders:", e);
+  }
 
-  const todayRevenue = (todayOrders ?? []).reduce((s, o) => s + Number(o.total_price), 0);
-  const todayCount = (todayOrders ?? []).length;
+  const todayRevenue = todayOrders.reduce((s, o) => s + Number(o.total_price || 0), 0);
+  const todayCount = todayOrders.length;
 
-  const { data: activeOrders } = vendor ? await supabase
-    .from('orders')
-    .select(`*, order_items(id, quantity, unit_price, menu_items(id, name))`)
-    .eq('vendor_id', vendor.id)
-    .in('status', ['received', 'preparing', 'almost_ready', 'ready'])
-    .order('created_at', { ascending: true }) : { data: [] };
+  let activeOrders: any[] = [];
+  try {
+    if (vendor) {
+      const { data } = await supabase
+        .from('orders')
+        .select(`*, order_items(id, quantity, unit_price, menu_items(id, name))`)
+        .eq('vendor_id', vendor.id)
+        .in('status', ['received', 'preparing', 'almost_ready', 'ready'])
+        .order('created_at', { ascending: true });
+      activeOrders = data || [];
+    }
+  } catch (e) {
+    console.error("Erro ao buscar activeOrders:", e);
+  }
 
   if (!vendor) {
     return (

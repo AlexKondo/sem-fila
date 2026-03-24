@@ -77,6 +77,9 @@ export default function QrScanner() {
     setTorch(next);
   }
 
+  const [isManualOpen, setIsManualOpen] = useState(false);
+  const [manualCode, setManualCode] = useState('');
+
   return (
     <div className="relative flex min-h-screen flex-col" style={{ backgroundColor: '#f8f6f6' }}>
       {/* Header */}
@@ -174,13 +177,48 @@ export default function QrScanner() {
 
             {/* Manual entry */}
             <div className="mt-16 w-full max-w-sm">
-              <button className="w-full py-4 px-6 border-2 border-dashed border-slate-300 rounded-xl flex items-center justify-center gap-3 text-slate-600 font-semibold hover:bg-slate-50 transition-colors">
+              <button 
+                onClick={() => setIsManualOpen(true)}
+                className="w-full py-4 px-6 border-2 border-dashed border-slate-300 rounded-xl flex items-center justify-center gap-3 text-slate-600 font-semibold hover:bg-slate-50 transition-colors"
+              >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h7" />
                 </svg>
                 Digitar código manualmente
               </button>
             </div>
+
+            {/* Custom Manual Code Modal */}
+            {isManualOpen && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-6">
+                <div className="bg-white rounded-2xl w-full max-w-sm p-5 space-y-4 shadow-xl">
+                  <h3 className="text-lg font-bold text-slate-900">Digitar Código</h3>
+                  <p className="text-xs text-slate-500">Insira o código numérico fixado na sua mesa ou quiosque:</p>
+                  <input 
+                    type="text" 
+                    placeholder="Ex: 502" 
+                    value={manualCode} 
+                    onChange={(e) => setManualCode(e.target.value)}
+                    className="w-full border border-slate-200 rounded-xl px-4 py-3 text-center text-lg font-bold tracking-wider focus:outline-none focus:ring-2 focus:ring-orange-400"
+                  />
+                  <div className="flex gap-2">
+                    <button 
+                      onClick={() => { setIsManualOpen(false); setManualCode(''); }} 
+                      className="flex-1 bg-slate-100 py-3 rounded-xl text-slate-700 font-semibold text-sm hover:bg-slate-200 transition"
+                    >
+                      Cancelar
+                    </button>
+                    <button 
+                      onClick={() => { if (manualCode) router.push(`/menu/${manualCode.trim()}`); }} 
+                      style={{ backgroundColor: P }} 
+                      className="flex-1 text-white py-3 rounded-xl font-semibold text-sm hover:opacity-90 transition"
+                    >
+                      Entrar
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
           </>
         )}
       </main>
@@ -188,23 +226,23 @@ export default function QrScanner() {
       {/* Bottom nav */}
       <nav className="bg-white border-t border-slate-200 pb-8 pt-2">
         <div className="flex justify-around items-center px-4">
-          <a className="flex flex-col items-center gap-1 p-2" style={{ color: P }} href="#">
+          <Link className="flex flex-col items-center gap-1 p-2" style={{ color: P }} href="/">
             <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
             <span className="text-xs font-semibold">Início</span>
-          </a>
-          <a className="flex flex-col items-center gap-1 p-2 text-slate-400" href="#">
+          </Link>
+          <Link href="/order" className="flex flex-col items-center gap-1 p-2 text-slate-400">
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
             </svg>
             <span className="text-xs font-semibold">Pedidos</span>
-          </a>
-          <a className="flex flex-col items-center gap-1 p-2 text-slate-400" href="#">
+          </Link>
+          <Link className="flex flex-col items-center gap-1 p-2 text-slate-400" href="/profile">
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
             </svg>
             <span className="text-xs font-semibold">Ajustes</span>
-          </a>
+          </Link>
         </div>
       </nav>
     </div>
