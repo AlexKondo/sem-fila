@@ -40,7 +40,7 @@ export default async function ProfilePage({ searchParams }: { searchParams: Prom
       </header>
 
       <div className="max-w-lg mx-auto w-full px-4 py-6 flex-1 flex flex-col">
-        {isCustomer && !isEditing ? (
+        {!isEditing ? (
           <div className="space-y-6 flex-1 flex flex-col">
             {/* Boas-vindas / Card Principal */}
             <div className="bg-white p-5 rounded-3xl shadow-sm border border-slate-50 flex items-center gap-4">
@@ -48,7 +48,9 @@ export default async function ProfilePage({ searchParams }: { searchParams: Prom
                 {profile?.name ? profile.name[0].toUpperCase() : '?'}
               </div>
               <div>
-                <p className="text-xs text-slate-400 font-semibold uppercase tracking-wider">Cliente</p>
+                <p className="text-xs text-slate-400 font-semibold uppercase tracking-wider">
+                  {profile?.role === 'vendor' ? 'Fornecedor' : profile?.role === 'platform_admin' ? 'Admin' : 'Cliente'}
+                </p>
                 <p className="font-black text-xl text-slate-900 leading-tight">{profile?.name || 'Seu Nome'}</p>
                 <p className="text-sm text-slate-400 mt-0.5">{user.email}</p>
               </div>
