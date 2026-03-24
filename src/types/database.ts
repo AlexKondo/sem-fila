@@ -60,8 +60,8 @@ export interface MenuItem {
   image_url: string | null;
   available: boolean;
   position: number;
-  category?: string | null;
-  extras?: { name: string; price: number }[];
+  category: string | null;
+  extras: { name: string; price: number }[] | null;
   created_at: string;
   updated_at: string;
 }
@@ -117,20 +117,23 @@ export interface VendorWithEvent extends Vendor {
 export type Database = {
   public: {
     Tables: {
-      profiles: { Row: Profile; Insert: Omit<Profile, 'created_at' | 'updated_at'>; Update: Partial<Profile>; };
-      organizations: { Row: Organization; Insert: Omit<Organization, 'id' | 'created_at'>; Update: Partial<Organization>; };
-      events: { Row: Event; Insert: Omit<Event, 'id' | 'created_at'>; Update: Partial<Event>; };
-      vendors: { Row: Vendor; Insert: Omit<Vendor, 'id' | 'created_at' | 'updated_at'>; Update: Partial<Vendor>; };
-      menu_items: { Row: MenuItem; Insert: Omit<MenuItem, 'id' | 'created_at' | 'updated_at'>; Update: Partial<MenuItem>; };
-      orders: { Row: Order; Insert: Omit<Order, 'id' | 'created_at' | 'updated_at' | 'pickup_code'>; Update: Partial<Order>; };
-      order_items: { Row: OrderItem; Insert: Omit<OrderItem, 'id' | 'created_at'>; Update: Partial<OrderItem>; };
-      waiter_calls: { Row: WaiterCall; Insert: Omit<WaiterCall, 'id' | 'created_at'>; Update: Partial<WaiterCall>; };
+      profiles: { Row: Profile; Insert: Omit<Profile, 'created_at' | 'updated_at'>; Update: Partial<Profile>; Relationships: never[] };
+      organizations: { Row: Organization; Insert: Omit<Organization, 'id' | 'created_at'>; Update: Partial<Organization>; Relationships: never[] };
+      events: { Row: Event; Insert: Omit<Event, 'id' | 'created_at'>; Update: Partial<Event>; Relationships: never[] };
+      vendors: { Row: Vendor; Insert: Omit<Vendor, 'id' | 'created_at' | 'updated_at'>; Update: Partial<Vendor>; Relationships: never[] };
+      menu_items: { Row: MenuItem; Insert: Omit<MenuItem, 'id' | 'created_at' | 'updated_at'>; Update: Partial<MenuItem>; Relationships: never[] };
+      orders: { Row: Order; Insert: Omit<Order, 'id' | 'created_at' | 'updated_at' | 'pickup_code'>; Update: Partial<Order>; Relationships: never[] };
+      order_items: { Row: OrderItem; Insert: Omit<OrderItem, 'id' | 'created_at'>; Update: Partial<OrderItem>; Relationships: never[] };
+      waiter_calls: { Row: WaiterCall; Insert: Omit<WaiterCall, 'id' | 'created_at'>; Update: Partial<WaiterCall>; Relationships: never[] };
     };
+    Views: {};
+    Functions: {};
     Enums: {
       app_role: AppRole;
       order_status: OrderStatus;
       payment_status: PaymentStatus;
       payment_mode: PaymentMode;
     };
+    CompositeTypes: {};
   };
 };

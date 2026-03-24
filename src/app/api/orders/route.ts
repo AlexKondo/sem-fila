@@ -75,7 +75,8 @@ export async function POST(request: Request) {
   }
 
   // Calcula total no servidor
-  const priceMap = Object.fromEntries(menuItems.map((m) => [m.id, m.price]));
+  const safeMenuItems = menuItems as unknown as { id: string; price: number }[];
+  const priceMap = Object.fromEntries(safeMenuItems.map((m) => [m.id, m.price]));
   const total_price = items.reduce((sum, item) => {
     return sum + (priceMap[item.menu_item_id] ?? 0) * item.quantity;
   }, 0);

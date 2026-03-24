@@ -40,7 +40,8 @@ export default async function AdminVendorsPage() {
         </div>
       </header>
 
-      <VendorAdminManager initialVendors={vendors ?? []} events={events ?? []} />
+      {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+      <VendorAdminManager initialVendors={(vendors ?? []) as any} events={(events ?? []) as any} />
     </main>
   );
 }

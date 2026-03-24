@@ -96,7 +96,7 @@ export default function VendorAdminManager({ initialVendors, events }: Props) {
     } else {
       const { error } = await supabase.from('vendors').update({ owner_id: users[0].id }).eq('id', vendorId);
       if (error) { setLinkError(error.message); setLinking(false); return; }
-      setVendors((prev) => prev.map((v) => v.id === vendorId ? { ...v, profiles: users[0] } : v));
+      setVendors((prev) => prev.map((v) => v.id === vendorId ? { ...v, profiles: users[0] as VendorProfile } : v));
     }
 
     setLinkEmail(null);
