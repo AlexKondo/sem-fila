@@ -56,7 +56,7 @@ export default function MenuManager({ initialItems, vendorId }: MenuManagerProps
           available: parsed.data.available,
           category: parsed.data.category ?? null,
           extras: parsed.data.extras ?? [],
-        })
+        } as any)
         .eq('id', editingItem.id)
         .select()
         .single();
@@ -76,7 +76,7 @@ export default function MenuManager({ initialItems, vendorId }: MenuManagerProps
           position: parsed.data.position,
           category: parsed.data.category ?? null,
           extras: parsed.data.extras ?? [],
-        })
+        } as any)
         .select()
         .single();
 
@@ -93,11 +93,11 @@ export default function MenuManager({ initialItems, vendorId }: MenuManagerProps
     const supabase = createClient();
     const { data } = await supabase
       .from('menu_items')
-      .update({ available: !item.available })
+      .update({ available: !item.available } as any)
       .eq('id', item.id)
       .select()
       .single();
-    if (data) setItems((prev) => prev.map((i) => i.id === data.id ? data : i));
+    if (data) setItems((prev) => prev.map((i: any) => i.id === (data as any).id ? (data as any) : i));
   }
 
   async function deleteItem(item: MenuItem) {
