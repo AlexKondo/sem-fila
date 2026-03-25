@@ -11,30 +11,24 @@ export default async function VendorDashboardPage() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect('/login');
 
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('role, name, cnpj, phone')
-    .eq('id', user.id)
-    .single();
+  // Busca perfil e vendors com o cliente padrão (RLS cuidará do acesso)
+  const [profileRes, vendorsRes] = await Promise.all([
+    supabase.from('profiles').select('role, name, cnpj, phone').eq('id', user.id).single(),
+    supabase.from('vendors').select('*').eq('owner_id', user.id).eq('active', true)
+  ]);
+
+  const profile = profileRes.data;
+  const vendors = vendorsRes.data || [];
 
   if (profile?.role === 'platform_admin') redirect('/dashboard/admin');
-
-  const { createAdminClient } = await import('@/lib/supabase/server');
-  const adminSupabase = await createAdminClient();
-
-  const { data: vendors } = await adminSupabase
-    .from('vendors')
-    .select('*')
-    .eq('owner_id', user.id)
-    .eq('active', true);
 
   const { cookies } = await import('next/headers');
   const cookieStore = await cookies();
   const selectedId = cookieStore.get('selected_vendor_id')?.value;
 
   const vendor = selectedId 
-    ? vendors?.find(v => v.id === selectedId) || vendors?.[0]
-    : vendors?.[0] || null;
+    ? vendors.find(v => v.id === selectedId) || vendors[0]
+    : vendors[0] || null;
 
   let todayOrders: any[] = [];
   let activeOrders: any[] = [];
@@ -43,16 +37,12 @@ export default async function VendorDashboardPage() {
   today.setHours(0, 0, 0, 0);
   
   if (vendor) {
-    try {
-      const [todayRes, activeRes] = await Promise.all([
-        adminSupabase.from('orders').select('total_price, status').eq('vendor_id', vendor.id).gte('created_at', today.toISOString()),
-        adminSupabase.from('orders').select(`*, order_items(id, quantity, unit_price, menu_items(id, name))`).eq('vendor_id', vendor.id).in('status', ['received', 'preparing', 'almost_ready', 'ready', 'delivered', 'cancelled']).gte('created_at', today.toISOString()).order('created_at', { ascending: true })
-      ]);
-      todayOrders = todayRes.data || [];
-      activeOrders = (activeRes.data || []).filter((o: any) => o.status !== 'cancelled' || o.payment_status === 'paid');
-    } catch (e) {
-      console.error("Erro massivo ao processar Promise.all no Vendor Dashboard:", e);
-    }
+    const [todayRes, activeRes] = await Promise.all([
+      supabase.from('orders').select('total_price, status').eq('vendor_id', vendor.id).gte('created_at', today.toISOString()),
+      supabase.from('orders').select(`*, order_items(id, quantity, unit_price, menu_items(id, name))`).eq('vendor_id', vendor.id).in('status', ['received', 'preparing', 'almost_ready', 'ready', 'delivered', 'cancelled']).gte('created_at', today.toISOString()).order('created_at', { ascending: true })
+    ]);
+    todayOrders = todayRes.data || [];
+    activeOrders = (activeRes.data || []).filter((o: any) => o.status !== 'cancelled' || o.payment_status === 'paid');
   }
 
   const todayRevenue = todayOrders.reduce((s, o) => s + Number(o.total_price || 0), 0);
@@ -62,10 +52,6 @@ export default async function VendorDashboardPage() {
     const VendorOnboarding = (await import('@/components/dashboard/VendorOnboarding')).default;
     return <VendorOnboarding userId={user.id} />;
   }
-
-  const cnpjFormatted = profile?.cnpj
-    ? profile.cnpj.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/, '$1.$2.$3/$4-$5')
-    : null;
 
   return (
     <>
@@ -97,15 +83,15 @@ export default async function VendorDashboardPage() {
       <div className="max-w-2xl mx-auto px-4 pb-2">
         <div className="flex items-center gap-2">
           <span className="text-sm font-bold text-slate-900">Fila em tempo real</span>
-          {(activeOrders ?? []).length > 0 && (
+          {activeOrders.length > 0 && (
             <span className="text-[11px] font-bold px-2 py-0.5 rounded-full text-white" style={{ backgroundColor: P }}>
-              {(activeOrders ?? []).length}
+              {activeOrders.length}
             </span>
           )}
         </div>
       </div>
 
-      <VendorOrdersBoard initialOrders={activeOrders ?? []} vendorId={vendor.id} />
+      <VendorOrdersBoard initialOrders={activeOrders} vendorId={vendor.id} />
     </>
   );
 }
