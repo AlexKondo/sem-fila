@@ -45,10 +45,9 @@ function LoginPageContent() {
       router.push(redirect === '/dashboard/vendor' ? '/dashboard/vendor' : redirect);
       router.refresh();
     } else {
-      // Cliente tentando usar o painel de fornecedor — faz logout e exibe aviso
-      await supabase.auth.signOut();
-      setError('__customer__');
-      setLoading(false);
+      // Cliente logado — Redireciona para o perfil de ajustes
+      router.push('/profile?edit=true');
+      router.refresh();
     }
   }
 

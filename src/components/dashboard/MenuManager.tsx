@@ -158,49 +158,49 @@ export default function MenuManager({ initialItems, vendorId }: MenuManagerProps
           <p>Seu cardápio está vazio.</p>
         </div>
       ) : (
-        <div className="space-y-3">
-          {items.map((item) => (
-            <div key={item.id} className={`bg-white rounded-2xl shadow-sm p-4 flex gap-3 ${!item.available ? 'opacity-60' : ''}`}>
-              {item.image_url ? (
-                <Image
-                  src={item.image_url}
-                  alt={item.name}
-                  width={64}
-                  height={64}
-                  className="w-16 h-16 rounded-xl object-cover flex-shrink-0"
-                />
-              ) : (
-                <div className="w-16 h-16 rounded-xl bg-gray-100 flex-shrink-0 flex items-center justify-center text-2xl">
-                  🍴
-                </div>
-              )}
-              <div className="flex-1 min-w-0">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <p className="font-semibold text-gray-900 text-sm">{item.name}</p>
-                    {item.description && (
-                      <p className="text-xs text-gray-500 line-clamp-1">{item.description}</p>
-                    )}
-                    <p className="font-bold text-orange-500 text-sm mt-1">{formatCurrency(item.price)}</p>
+        <div className="space-y-6">
+          {(() => {
+            const categories = Array.from(new Set(items.map(i => i.category).filter((c): c is string => !!c)));
+            const uncategorized = items.filter(i => !i.category);
+
+            return (
+              <>
+                {categories.map(cat => (
+                  <div key={cat} className="space-y-2">
+                    <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest px-1">📂 {cat}</h3>
+                    <div className="space-y-2">
+                      {items.filter(i => i.category === cat).map((item) => (
+                        <MenuItemCard 
+                          key={item.id} 
+                          item={item} 
+                          toggleAvailable={toggleAvailable} 
+                          openEdit={openEdit} 
+                          deleteItem={deleteItem} 
+                        />
+                      ))}
+                    </div>
                   </div>
-                  <div className="flex items-center gap-1 ml-2">
-                    <button onClick={() => toggleAvailable(item)} className="text-gray-400 hover:text-orange-500 p-1">
-                      {item.available
-                         ? <ToggleRight className="w-5 h-5 text-green-500" />
-                         : <ToggleLeft className="w-5 h-5" />
-                      }
-                    </button>
-                    <button onClick={() => openEdit(item)} className="text-gray-400 hover:text-blue-500 p-1">
-                      <Edit2 className="w-4 h-4" />
-                    </button>
-                    <button onClick={() => deleteItem(item)} className="text-gray-400 hover:text-red-500 p-1">
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+                ))}
+
+                {uncategorized.length > 0 && (
+                  <div className="space-y-2">
+                    <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest px-1">📂 Geral / Sem Categoria</h3>
+                    <div className="space-y-2">
+                      {uncategorized.map((item) => (
+                        <MenuItemCard 
+                          key={item.id} 
+                          item={item} 
+                          toggleAvailable={toggleAvailable} 
+                          openEdit={openEdit} 
+                          deleteItem={deleteItem} 
+                        />
+                      ))}
+                    </div>
                   </div>
-                </div>
-              </div>
-            </div>
-          ))}
+                )}
+              </>
+            );
+          })()}
         </div>
       )}
 
@@ -409,6 +409,41 @@ export default function MenuManager({ initialItems, vendorId }: MenuManagerProps
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+function MenuItemCard({ item, toggleAvailable, openEdit, deleteItem }: { item: MenuItem; toggleAvailable: (i: MenuItem) => void; openEdit: (i: MenuItem) => void; deleteItem: (i: MenuItem) => void }) {
+  const P = '#ec5b13';
+  return (
+    <div key={item.id} className={`bg-white rounded-2xl shadow-sm p-4 flex gap-3 ${!item.available ? 'opacity-60' : ''}`}>
+      {item.image_url ? (
+        <Image src={item.image_url} alt={item.name} width={64} height={64} className="w-16 h-16 rounded-xl object-cover flex-shrink-0" />
+      ) : (
+        <div className="w-16 h-16 rounded-xl bg-gray-100 flex-shrink-0 flex items-center justify-center text-2xl">🍴</div>
+      )}
+      <div className="flex-1 min-w-0">
+        <div className="flex items-start justify-between">
+          <div>
+            <p className="font-semibold text-gray-900 text-sm">{item.name}</p>
+            {item.description && (
+              <p className="text-xs text-slate-500 line-clamp-1">{item.description}</p>
+            )}
+            <p className="font-bold text-orange-500 text-sm mt-1">{formatCurrency(item.price)}</p>
+          </div>
+          <div className="flex items-center gap-1 ml-2">
+            <button onClick={() => toggleAvailable(item)} className="text-gray-400 hover:text-orange-500 p-1">
+              {item.available ? <ToggleRight className="w-5 h-5 text-green-500" /> : <ToggleLeft className="w-5 h-5" />}
+            </button>
+            <button onClick={() => openEdit(item)} className="text-gray-400 hover:text-blue-500 p-1">
+              <Edit2 className="w-4 h-4" />
+            </button>
+            <button onClick={() => deleteItem(item)} className="text-gray-400 hover:text-red-500 p-1">
+              <Trash2 className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

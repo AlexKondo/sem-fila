@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { formatCurrency } from '@/lib/utils';
+import { createClient } from '@/lib/supabase/client';
 import CartSheet from './CartSheet';
 import type { MenuItem, Vendor } from '@/types/database';
 
@@ -17,6 +18,21 @@ interface MenuClientProps {
 
 export default function MenuClient({ vendor, items, mesa, waitTime }: MenuClientProps) {
   const [selectedCat, setSelectedCat] = useState('Todos');
+  const [customerName, setCustomerName] = useState<string | null>(null);
+
+  useEffect(() => {
+    const supabase = createClient();
+    supabase.auth.getUser().then(({ data }) => {
+      if (data.user) {
+        supabase.from('profiles').select('name, role').eq('id', data.user.id).single().then(({ data: p }) => {
+          // Só exibe se NÃO for um perfil de fornecedor/vendor
+          if (p?.name && p.role !== 'vendor') {
+            setCustomerName(p.name.split(' ')[0]);
+          }
+        });
+      }
+    });
+  }, []);
 
   // Extrai categorias únicas cadastradas nos itens do cardápio
   const categories = ['Todos', ...Array.from(new Set(items.map(i => i.category).filter((c): c is string => !!c)))];
@@ -47,10 +63,19 @@ export default function MenuClient({ vendor, items, mesa, waitTime }: MenuClient
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-1">
-            {vendor.accept_pix && <span className="text-[10px] font-bold bg-green-100 text-green-700 px-2 py-0.5 rounded-full">PIX</span>}
-            {vendor.accept_card && <span className="text-[10px] font-bold bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">Cartão</span>}
-            {vendor.accept_cash && <span className="text-[10px] font-bold bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full">Dinheiro</span>}
+
+          <div>
+            {customerName ? (
+              <div className="flex items-center gap-1.5 bg-orange-50 border border-orange-200/50 rounded-xl px-2.5 py-1 text-xs font-bold text-orange-600 shadow-sm">
+                <span>👤 Olá, {customerName}</span>
+              </div>
+            ) : (
+              <div className="w-9 h-9 rounded-xl bg-slate-100 flex items-center justify-center text-slate-400">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+              </div>
+            )}
           </div>
         </div>
 

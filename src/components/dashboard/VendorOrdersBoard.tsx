@@ -116,6 +116,11 @@ export default function VendorOrdersBoard({ initialOrders, vendorId }: Props) {
     );
   }
 
+  // Cria um mapeamento de id -> número sequencial (Mais antigo = #1)
+  const orderNumbers: Record<string, number> = {};
+  [...orders].sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
+    .forEach((o, i) => { orderNumbers[o.id] = i + 1; });
+
   // Agrupa por status para a visão kanban
   const grouped = STATUS_ORDER.reduce<Record<string, OrderWithItems[]>>((acc, status) => {
     acc[status] = orders.filter((o) => o.status === status);
@@ -144,6 +149,7 @@ export default function VendorOrdersBoard({ initialOrders, vendorId }: Props) {
                   <OrderCard
                     key={order.id}
                     order={order}
+                    orderNumber={orderNumbers[order.id]}
                     onAdvance={advanceStatus}
                     onCancel={cancelOrder}
                   />
@@ -159,15 +165,18 @@ export default function VendorOrdersBoard({ initialOrders, vendorId }: Props) {
 
 function OrderCard({
   order,
+  orderNumber,
   onAdvance,
   onCancel,
 }: {
   order: OrderWithItems;
+  orderNumber: number;
   onAdvance: (id: string, next: OrderStatus) => void;
   onCancel: (id: string) => void;
 }) {
   const nextStatus = NEXT_STATUS[order.status];
   const [loading, setLoading] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
 
   async function handleAdvance() {
     if (!nextStatus) return;
@@ -176,12 +185,30 @@ function OrderCard({
     setLoading(false);
   }
 
+  function getCustomerName(notes: string | null) {
+    if (!notes) return 'Cliente';
+    const match = notes.match(/Cliente:\s*([^|]+)/);
+    return match ? match[1].trim() : 'Cliente';
+  }
+
+  function getRealNotes(notes: string | null) {
+    if (!notes) return null;
+    return notes.split(' | ').filter(p => !p.startsWith('Cliente:') && !p.startsWith('Tel:') && !p.startsWith('Pagamento:')).join(' | ') || null;
+  }
+
+  const clientName = getCustomerName(order.notes);
+  const realNotes = getRealNotes(order.notes);
+
   return (
-    <div className="bg-white rounded-2xl shadow-sm p-4">
-      <div className="flex items-start justify-between mb-3">
+    <div 
+      className="bg-white rounded-2xl shadow-sm p-4 cursor-pointer hover:shadow-md transition-shadow"
+      onClick={() => setIsExpanded(!isExpanded)}
+    >
+      <div className="flex items-start justify-between">
         <div>
           <div className="flex items-center gap-2">
-            <span className="font-bold text-gray-900 text-base">#{order.pickup_code}</span>
+            <span className="font-black text-gray-900 text-lg">{clientName}</span>
+            <span className="text-xs text-orange-600 font-black bg-orange-50 px-2 py-0.5 rounded-full">#{orderNumber}</span>
             {order.table_number && (
               <span className="text-xs bg-orange-50 text-orange-600 px-2 py-0.5 rounded-full">
                 Mesa {order.table_number}
@@ -195,48 +222,58 @@ function OrderCard({
         </span>
       </div>
 
-      {/* Itens */}
-      <div className="space-y-1 mb-3">
-        {order.order_items.map((item) => (
-          <div key={item.id} className="flex justify-between text-sm">
-            <span className="text-gray-700">
-              {item.quantity}x {item.menu_items?.name ?? 'Item'}
-            </span>
-            <span className="text-gray-500">
-              {formatCurrency(item.unit_price * item.quantity)}
-            </span>
+      {isExpanded && (
+        <div className="mt-4 pt-3 border-t border-slate-100 space-y-3" onClick={e => e.stopPropagation()}>
+          {/* Itens */}
+          <div className="space-y-1">
+            {order.order_items.map((item) => (
+              <div key={item.id} className="flex justify-between text-sm">
+                <span className="text-gray-700 font-medium">
+                  {item.quantity}x {item.menu_items?.name ?? 'Item'}
+                </span>
+                <span className="text-gray-500">
+                  {formatCurrency(item.unit_price * item.quantity)}
+                </span>
+              </div>
+            ))}
           </div>
-        ))}
-      </div>
 
-      {order.notes && (
-        <p className="text-xs text-gray-500 bg-gray-50 rounded-lg px-3 py-1.5 mb-3">
-          💬 {order.notes}
-        </p>
+          {realNotes && (
+            <p className="text-xs text-gray-500 bg-gray-50 rounded-lg px-3 py-1.5 ">
+              💬 {realNotes}
+            </p>
+          )}
+
+          <div className="flex items-center justify-between pt-1">
+            <span className="font-bold text-gray-900">{formatCurrency(order.total_price)}</span>
+            <div className="flex gap-2">
+              {order.status !== 'delivered' && (
+                <button
+                  onClick={(e) => { e.stopPropagation(); onCancel(order.id); }}
+                  className="text-xs text-red-500 border border-red-200 px-3 py-1.5 rounded-xl hover:bg-red-50 transition"
+                >
+                  Cancelar
+                </button>
+              )}
+              {nextStatus && (
+                <button
+                  onClick={(e) => { e.stopPropagation(); handleAdvance(); }}
+                  disabled={loading}
+                  className="text-xs bg-orange-500 text-white px-3 py-1.5 rounded-xl hover:bg-orange-600 transition disabled:opacity-50 font-bold"
+                >
+                  {loading ? '...' : ORDER_STATUS_LABEL[nextStatus]}
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
       )}
 
-      <div className="flex items-center justify-between">
-        <span className="font-bold text-gray-900">{formatCurrency(order.total_price)}</span>
-        <div className="flex gap-2">
-          {order.status !== 'delivered' && (
-            <button
-              onClick={() => onCancel(order.id)}
-              className="text-xs text-red-500 border border-red-200 px-3 py-1.5 rounded-xl hover:bg-red-50 transition"
-            >
-              Cancelar
-            </button>
-          )}
-          {nextStatus && (
-            <button
-              onClick={handleAdvance}
-              disabled={loading}
-              className="text-xs bg-orange-500 text-white px-3 py-1.5 rounded-xl hover:bg-orange-600 transition disabled:opacity-50 font-medium"
-            >
-              {loading ? '...' : ORDER_STATUS_LABEL[nextStatus]}
-            </button>
-          )}
+      {!isExpanded && (
+        <div className="mt-2 text-center text-slate-400 text-[10px] font-semibold border-t border-dashed border-slate-100 pt-1.5">
+          Clique para ver os itens 📂
         </div>
-      </div>
+      )}
     </div>
   );
 }

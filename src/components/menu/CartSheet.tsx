@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { formatCurrency } from '@/lib/utils';
 import type { Vendor } from '@/types/database';
+import { createClient } from '@/lib/supabase/client';
 
 const STORAGE_KEY = 'qp_customer';
 const P = '#ec5b13';
@@ -22,12 +23,30 @@ export default function CartSheet({ vendor, tableNumber }: CartSheetProps) {
   const [step, setStep] = useState<Step>('cart');
   const [customerName, setCustomerName] = useState('');
   const [customerPhone, setCustomerPhone] = useState('');
+  
+  const [paymentMethod, setPaymentMethod] = useState<'pix' | 'cartão' | 'dinheiro' | ''>('');
+
+  // Estados de Autenticação
+  const [user, setUser] = useState<any>(null);
+  const [isLogin, setIsLogin] = useState(true); // Alterna entre Cadastro e Login
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [cpf, setCpf] = useState('');
 
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) { const { name, phone } = JSON.parse(saved); setCustomerName(name ?? ''); setCustomerPhone(phone ?? ''); }
-    } catch {}
+    const supabase = createClient();
+    supabase.auth.getUser().then(({ data }) => {
+      if (data.user) {
+        setUser(data.user);
+        supabase.from('profiles').select('*').eq('id', data.user.id).single().then(({ data: p }) => {
+          if (p) { 
+            setCustomerName(p.name || ''); 
+            setCustomerPhone(p.phone || ''); 
+            setCpf(p.cpf || ''); 
+          }
+        });
+      }
+    });
   }, []);
 
   useEffect(() => {
@@ -57,28 +76,82 @@ export default function CartSheet({ vendor, tableNumber }: CartSheetProps) {
 
   function handleConfirm() {
     setError('');
-    if (customerName.trim()) placeOrder(customerName.trim(), customerPhone.trim());
-    else setStep('identify');
+    if (!items.length) return;
+    if (!paymentMethod) { setError('Por favor, selecione uma forma de pagamento.'); return; }
+    if (user) {
+      if (customerName.trim()) placeOrder(customerName.trim(), customerPhone.trim());
+      else setStep('identify');
+    } else {
+      setStep('identify');
+    }
   }
 
   async function handleIdentify(e: React.FormEvent) {
     e.preventDefault();
-    if (!customerName.trim()) { setError('Por favor, informe seu nome.'); return; }
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({ name: customerName.trim(), phone: customerPhone.trim() }));
-    await placeOrder(customerName.trim(), customerPhone.trim());
+    setError(''); setLoading(true);
+    const supabase = createClient();
+
+    if (isLogin) {
+      // Fluxo Login
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) { setError(error.message); setLoading(false); return; }
+      
+      const { data: p } = await supabase.from('profiles').select('*').eq('id', data.user.id).single();
+      if (p) { setCustomerName(p.name); setCustomerPhone(p.phone); setCpf(p.cpf || ''); }
+      setUser(data.user);
+      placeOrder(p?.name || '', p?.phone || '');
+    } else {
+      // Fluxo Cadastro
+      if (!customerName.trim()) { setError('Por favor, informe seu nome.'); setLoading(false); return; }
+      const cleanCpf = cpf.replace(/\D/g, '');
+      if (cleanCpf.length !== 11) { setError('CPF inválido. Digite os 11 números.'); setLoading(false); return; }
+      if (!email.trim() || !password.trim()) { setError('E-mail e Senha são obrigatórios.'); setLoading(false); return; }
+
+      const { data, error } = await supabase.auth.signUp({
+        email, 
+        password,
+        options: { data: { name: customerName.trim() } }
+      });
+
+      if (error) { setError(error.message); setLoading(false); return; }
+
+      if (data.user) {
+        await supabase.from('profiles').insert({
+          id: data.user.id,
+          name: customerName.trim(),
+          phone: customerPhone.replace(/\D/g, ''),
+          cpf: cleanCpf,
+          role: 'customer'
+        });
+        setUser(data.user);
+        placeOrder(customerName.trim(), customerPhone.trim());
+      }
+    }
+    setLoading(false);
   }
 
   async function placeOrder(name: string, phone: string) {
     if (!items.length) return;
     setError(''); setLoading(true);
-    const notesStr = [name ? `Cliente: ${name}` : '', phone ? `Tel: ${phone}` : '', notes.trim()].filter(Boolean).join(' | ');
-    const res = await fetch('/api/orders', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ vendor_id: vendor.id, table_number: tableNumber, notes: notesStr || null, items: items.map(i => ({ menu_item_id: i.id, quantity: i.quantity })) }),
-    });
-    const data = await res.json();
-    if (!res.ok) { setError(data.error ?? 'Erro ao fazer pedido.'); setLoading(false); return; }
-    router.push(`/order/${data.order_id}`);
+    const notesStr = [
+      name ? `Cliente: ${name}` : '', 
+      phone ? `Tel: ${phone}` : '', 
+      `Pagamento: ${paymentMethod.toUpperCase()}`, 
+      notes.trim()
+    ].filter(Boolean).join(' | ');
+
+    try {
+      const res = await fetch('/api/orders', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ vendor_id: vendor.id, table_number: tableNumber, notes: notesStr || null, items: items.map(i => ({ menu_item_id: i.id, quantity: i.quantity })) }),
+      });
+      const data = await res.json();
+      if (!res.ok) { setError(data.error ?? 'Erro ao fazer pedido.'); setLoading(false); return; }
+      router.push(`/order/${data.order_id}`);
+    } catch (err: any) {
+      setError('Problema na conexão. Tente novamente.');
+      setLoading(false);
+    }
   }
 
   if (count === 0) return null;
@@ -183,6 +256,21 @@ export default function CartSheet({ vendor, tableNumber }: CartSheetProps) {
                     <textarea value={notes} onChange={e => setNotes(e.target.value)} maxLength={500} rows={2} placeholder="Ex: sem cebola, bem passado…"
                       className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2" style={{ '--tw-ring-color': P } as React.CSSProperties} />
                   </div>
+                  
+                  <div className="pt-2">
+                    <label className="block text-xs font-semibold text-slate-500 mb-1.5">Forma de pagamento <span className="text-red-500">*</span></label>
+                    <div className="grid grid-cols-3 gap-2">
+                      {vendor.accept_pix && (
+                        <button type="button" onClick={() => setPaymentMethod('pix')} className={`p-2.5 rounded-xl border text-center text-xs font-bold transition-all ${paymentMethod === 'pix' ? 'border-orange-500 bg-orange-50 text-orange-600' : 'border-slate-200 text-slate-600 bg-white'}`}>Pix</button>
+                      )}
+                      {vendor.accept_card && (
+                        <button type="button" onClick={() => setPaymentMethod('cartão')} className={`p-2.5 rounded-xl border text-center text-xs font-bold transition-all ${paymentMethod === 'cartão' ? 'border-orange-500 bg-orange-50 text-orange-600' : 'border-slate-200 text-slate-600 bg-white'}`}>Cartão</button>
+                      )}
+                      {vendor.accept_cash && (
+                        <button type="button" onClick={() => setPaymentMethod('dinheiro')} className={`p-2.5 rounded-xl border text-center text-xs font-bold transition-all ${paymentMethod === 'dinheiro' ? 'border-orange-500 bg-orange-50 text-orange-600' : 'border-slate-200 text-slate-600 bg-white'}`}>Dinheiro</button>
+                      )}
+                    </div>
+                  </div>
                   {customerName && (
                     <button onClick={() => setStep('identify')} className="flex items-center gap-1.5 text-xs text-slate-400 hover:text-slate-600 transition">
                       <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
@@ -208,30 +296,67 @@ export default function CartSheet({ vendor, tableNumber }: CartSheetProps) {
 
             {step === 'identify' && (
               <form onSubmit={handleIdentify} className="flex flex-col flex-1">
-                <div className="overflow-y-auto flex-1 px-5 py-5 space-y-4">
-                  <p className="text-sm text-slate-500">Para avisar quando seu pedido estiver pronto, precisamos do seu nome.</p>
+                <div className="overflow-y-auto flex-1 px-5 py-5 space-y-4 no-scrollbar">
+                  <p className="text-xs text-slate-400">
+                    {isLogin ? 'Faça login para prosseguir com seu pedido.' : 'Para sua segurança, crie uma conta rápida para fazer o pedido.'}
+                  </p>
+
+                  {!isLogin && (
+                    <>
+                      <div>
+                        <label className="block text-sm font-semibold text-slate-700 mb-1.5">Seu nome <span className="text-red-400">*</span></label>
+                        <input type="text" value={customerName} onChange={e => setCustomerName(e.target.value)} placeholder="Como você se chama?" autoFocus
+                          className="w-full bg-white border border-slate-200 rounded-xl px-4 h-12 text-sm focus:outline-none focus:ring-2" style={{ '--tw-ring-color': P } as React.CSSProperties} />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-semibold text-slate-700 mb-1.5">CPF <span className="text-red-400">*</span></label>
+                        <input type="text" value={cpf} onChange={e => {
+                          const digits = e.target.value.replace(/\D/g, '').substring(0, 11);
+                          let f = digits;
+                          if (f.length > 9) f = `${f.substring(0, 3)}.${f.substring(3, 6)}.${f.substring(6, 9)}-${f.substring(9)}`;
+                          else if (f.length > 6) f = `${f.substring(0, 3)}.${f.substring(3, 6)}.${f.substring(6)}`;
+                          else if (f.length > 3) f = `${f.substring(0, 3)}.${f.substring(3)}`;
+                          setCpf(f);
+                        }} placeholder="000.000.000-00"
+                          className="w-full bg-white border border-slate-200 rounded-xl px-4 h-12 text-sm focus:outline-none focus:ring-2" style={{ '--tw-ring-color': P } as React.CSSProperties} />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-semibold text-slate-700 mb-1.5">Telefone <span className="text-slate-400 font-normal">(opcional)</span></label>
+                        <input type="tel" value={customerPhone} onChange={e => {
+                          const digits = e.target.value.replace(/\D/g, '').substring(0, 11);
+                          let f = digits;
+                          if (f.length > 7) f = `(${f.substring(0, 2)}) ${f.substring(2, 7)}-${f.substring(7)}`;
+                          else if (f.length > 6) f = `(${f.substring(0, 2)}) ${f.substring(2, 6)}-${f.substring(6)}`;
+                          else if (f.length > 2) f = `(${f.substring(0, 2)}) ${f.substring(2)}`;
+                          setCustomerPhone(f);
+                        }} placeholder="(11) 99999-9999"
+                          className="w-full bg-white border border-slate-200 rounded-xl px-4 h-12 text-sm focus:outline-none focus:ring-2" style={{ '--tw-ring-color': P } as React.CSSProperties} />
+                      </div>
+                    </>
+                  )}
+
                   <div>
-                    <label className="block text-sm font-semibold text-slate-700 mb-1.5">Seu nome <span className="text-red-400">*</span></label>
-                    <input type="text" value={customerName} onChange={e => setCustomerName(e.target.value)} placeholder="Como você se chama?" autoFocus
-                      className="w-full bg-white border border-slate-200 rounded-xl px-4 h-14 text-sm focus:outline-none focus:ring-2"
-                      style={{ '--tw-ring-color': P } as React.CSSProperties} />
+                    <label className="block text-sm font-semibold text-slate-700 mb-1.5">E-mail <span className="text-red-400">*</span></label>
+                    <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="seu@email.com"
+                      className="w-full bg-white border border-slate-200 rounded-xl px-4 h-12 text-sm focus:outline-none focus:ring-2" style={{ '--tw-ring-color': P } as React.CSSProperties} />
                   </div>
+
                   <div>
-                    <label className="block text-sm font-semibold text-slate-700 mb-1.5">Telefone <span className="text-slate-400 font-normal">(opcional)</span></label>
-                    <input type="tel" value={customerPhone} onChange={e => setCustomerPhone(e.target.value)} placeholder="(11) 99999-9999"
-                      className="w-full bg-white border border-slate-200 rounded-xl px-4 h-14 text-sm focus:outline-none focus:ring-2"
-                      style={{ '--tw-ring-color': P } as React.CSSProperties} />
+                    <label className="block text-sm font-semibold text-slate-700 mb-1.5">Senha <span className="text-red-400">*</span></label>
+                    <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="••••••••"
+                      className="w-full bg-white border border-slate-200 rounded-xl px-4 h-12 text-sm focus:outline-none focus:ring-2" style={{ '--tw-ring-color': P } as React.CSSProperties} />
                   </div>
-                  <p className="text-xs text-slate-400">Seus dados ficam salvos neste dispositivo para o próximo pedido.</p>
                 </div>
+
                 <div className="px-5 py-4 border-t border-slate-100 space-y-2">
                   {error && <div className="bg-red-50 text-red-700 text-xs px-3 py-2 rounded-lg">{error}</div>}
-                  <button type="submit" disabled={loading}
-                    className="w-full h-14 font-bold rounded-xl text-white shadow-lg transition disabled:opacity-50"
-                    style={{ backgroundColor: P }}>
-                    {loading ? 'Enviando…' : 'Confirmar pedido'}
+                  <button type="submit" disabled={loading} className="w-full h-14 font-bold rounded-xl text-white shadow-lg transition" style={{ backgroundColor: P }}>
+                    {loading ? 'Processando…' : isLogin ? 'Confirmar e Pagar' : 'Finalizar Cadastro'}
                   </button>
-                  <button type="button" onClick={() => setStep('cart')} className="w-full text-slate-400 text-sm py-2">← Voltar</button>
+                  <button type="button" onClick={() => setIsLogin(!isLogin)} className="w-full text-slate-600 font-bold text-xs py-1">
+                    {isLogin ? 'Não tem conta? Cadastrar-se' : 'Já tem conta? Entrar'}
+                  </button>
+                  <button type="button" onClick={() => setStep('cart')} className="w-full text-slate-400 text-xs py-1">← Voltar na sacola</button>
                 </div>
               </form>
             )}

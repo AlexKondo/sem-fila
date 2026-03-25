@@ -30,5 +30,10 @@ export async function createClient() {
   );
 }
 
-// Nota: createAdminClient (service_role) será adicionado quando necessário
-// para webhooks de pagamento ou jobs administrativos.
+export async function createAdminClient() {
+  const { createClient } = await import('@supabase/supabase-js');
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
+}

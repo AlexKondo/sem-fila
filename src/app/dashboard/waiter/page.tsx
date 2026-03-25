@@ -11,18 +11,21 @@ export default async function WaiterPage() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect('/login');
 
-  // Garçom é vinculado a um vendor via owner_id ou waitstaff role
-  // Para o MVP, usa o mesmo vendor do usuário logado
-  const { data: vendor } = await supabase
+  const { createAdminClient } = await import('@/lib/supabase/server');
+  const adminSupabase = await createAdminClient();
+
+  const { data: vendors } = await adminSupabase
     .from('vendors')
     .select('id, name')
     .eq('owner_id', user.id)
-    .single();
+    .limit(1);
+
+  const vendor = vendors?.[0] || null;
 
   if (!vendor) redirect('/dashboard/vendor');
 
   // Pedidos prontos para entrega na mesa
-  const { data: readyOrders } = await supabase
+  const { data: readyOrders } = await adminSupabase
     .from('orders')
     .select(`*, order_items(id, quantity, menu_items(name))`)
     .eq('vendor_id', vendor.id)
@@ -31,7 +34,7 @@ export default async function WaiterPage() {
     .order('created_at', { ascending: true });
 
   // Chamadas de garçom pendentes
-  const { data: waiterCalls } = await supabase
+  const { data: waiterCalls } = await adminSupabase
     .from('waiter_calls')
     .select('*')
     .eq('vendor_id', vendor.id)

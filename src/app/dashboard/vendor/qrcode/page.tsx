@@ -19,11 +19,16 @@ export default async function QrCodePage() {
     .eq('id', user.id)
     .single();
 
-  const { data: vendor } = await supabase
+  const { createAdminClient } = await import('@/lib/supabase/server');
+  const adminSupabase = await createAdminClient();
+
+  const { data: vendors } = await adminSupabase
     .from('vendors')
     .select('id, name')
     .eq('owner_id', user.id)
-    .single();
+    .limit(1);
+
+  const vendor = vendors?.[0] || null;
 
   if (!vendor) redirect('/dashboard/vendor');
 
@@ -34,24 +39,10 @@ export default async function QrCodePage() {
     : null;
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#f8f6f6' }}>
-      <header className="bg-white border-b border-slate-100 sticky top-0 z-40">
-        <div className="max-w-lg mx-auto px-4 py-3 flex items-center gap-3">
-          <Link href="/dashboard/vendor" className="w-8 h-8 rounded-xl bg-slate-100 flex items-center justify-center text-slate-500 hover:bg-slate-200 transition">
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-            </svg>
-          </Link>
-          <div>
-            <h1 className="font-bold text-slate-900 text-sm">Meu QR Code</h1>
-            <p className="text-[11px] text-slate-400">{vendor.name}</p>
-          </div>
-        </div>
-      </header>
-
+    <>
       <div className="max-w-lg mx-auto px-4 py-6">
         <QrCodeDisplay vendorName={vendor.name} menuUrl={menuUrl} cnpj={cnpjFormatted} />
       </div>
-    </div>
+    </>
   );
 }

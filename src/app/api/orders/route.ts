@@ -46,8 +46,11 @@ export async function POST(request: Request) {
 
   const { vendor_id, table_number, notes, items } = parsed.data;
 
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const userClient = await createClient();
+  const { data: { user } } = await userClient.auth.getUser();
+
+  const { createAdminClient } = await import('@/lib/supabase/server');
+  const supabase = await createAdminClient();
 
   // Verifica se o vendor existe e está ativo
   const { data: vendor, error: vendorError } = await supabase
@@ -81,6 +84,16 @@ export async function POST(request: Request) {
     return sum + (priceMap[item.menu_item_id] ?? 0) * item.quantity;
   }, 0);
 
+  function generatePickupCode() {
+    const letters = 'ABCDEFGHJKLMNPQRSTUVWXYZ'; // Sem 'I' e 'O' para evitar confundir com 1 e 0
+    const numbers = '123456789'; 
+    const L1 = letters[Math.floor(Math.random() * letters.length)];
+    const L2 = letters[Math.floor(Math.random() * letters.length)];
+    const N1 = numbers[Math.floor(Math.random() * numbers.length)];
+    const N2 = numbers[Math.floor(Math.random() * numbers.length)];
+    return `${L1}${L2}${N1}${N2}`;
+  }
+
   // Cria o pedido
   const { data: order, error: orderError } = await supabase
     .from('orders')
@@ -92,12 +105,14 @@ export async function POST(request: Request) {
       total_price,
       status: 'received',
       payment_status: 'pending',
+      pickup_code: generatePickupCode(), // Sobrescreve o padrão de 6 dígitos
     })
     .select('id, pickup_code')
     .single();
 
   if (orderError || !order) {
-    return NextResponse.json({ error: 'Erro ao criar pedido.' }, { status: 500 });
+    console.error("Erro ao criar pedido no Supabase:", orderError);
+    return NextResponse.json({ error: `Erro ao criar pedido: ${orderError?.message || 'Erro desconhecido'}` }, { status: 500 });
   }
 
   // Insere os itens do pedido

@@ -11,6 +11,16 @@ interface QrCodeDisplayProps {
   cnpj?: string | null;
 }
 
+function getNumericCode(uuid: string): string {
+  let hash = 0;
+  for (let i = 0; i < uuid.length; i++) {
+    hash = (hash << 5) - hash + uuid.charCodeAt(i);
+    hash |= 0; // Converte para inteiro de 32 bits
+  }
+  const num = Math.abs(hash) % 1000000; // Máximo 6 dígitos
+  return num.toString().padStart(6, '0').replace(/(\d{3})(\d{3})/, '$1.$2');
+}
+
 export default function QrCodeDisplay({ vendorName, menuUrl, cnpj }: QrCodeDisplayProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [copied, setCopied] = useState(false);
@@ -39,6 +49,8 @@ export default function QrCodeDisplay({ vendorName, menuUrl, cnpj }: QrCodeDispl
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   }
+
+  const vendorId = menuUrl.split('/').pop() || '';
 
   return (
     <div className="space-y-4">
@@ -69,14 +81,11 @@ export default function QrCodeDisplay({ vendorName, menuUrl, cnpj }: QrCodeDispl
 
         {/* URL */}
         <div className="px-6 pb-6 space-y-3">
-          <div className="flex items-center gap-2 bg-slate-50 rounded-xl px-3 py-2.5">
-            <svg className="w-4 h-4 text-slate-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
-            </svg>
-            <p className="text-xs text-slate-500 truncate flex-1">{menuUrl}</p>
-            <button onClick={copyLink} className="flex-shrink-0 text-xs font-semibold transition" style={{ color: copied ? '#22c55e' : P }}>
-              {copied ? 'Copiado!' : 'Copiar'}
-            </button>
+          <div className="flex flex-col items-center justify-center border-2 border-slate-100 rounded-2xl py-3 bg-slate-50">
+            <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Código do Quiosque</span>
+            <p className="text-2xl font-black text-slate-800 tracking-wider mt-0.5" style={{ letterSpacing: '2px' }}>
+              {getNumericCode(vendorId)}
+            </p>
           </div>
 
           <button
@@ -90,17 +99,6 @@ export default function QrCodeDisplay({ vendorName, menuUrl, cnpj }: QrCodeDispl
             Baixar QR Code (PNG)
           </button>
         </div>
-      </div>
-
-      {/* Tip card */}
-      <div className="bg-white rounded-2xl border border-slate-100 px-4 py-3 flex gap-3">
-        <svg className="w-5 h-5 flex-shrink-0 mt-0.5" style={{ color: P }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-        </svg>
-        <p className="text-xs text-slate-500 leading-relaxed">
-          Para identificar a mesa, adicione <span className="font-semibold text-slate-700">?mesa=1</span> no final da URL.
-          Ex: <span className="font-semibold text-slate-700">.../menu/{'{id}'}?mesa=1</span>
-        </p>
       </div>
     </div>
   );

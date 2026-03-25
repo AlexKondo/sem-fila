@@ -2,7 +2,7 @@
 // Chamado após criação do pedido, quando payment_mode = 'prepaid'
 
 import { NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { createClient, createAdminClient } from '@/lib/supabase/server';
 import { stripe } from '@/lib/stripe';
 import { z } from 'zod';
 import type { OrderWithItems } from '@/types/database';
@@ -22,7 +22,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: parsed.error.errors[0].message }, { status: 422 });
   }
 
-  const supabase = await createClient();
+  const supabase = await createAdminClient();
 
   // Busca o pedido com os itens
   const { data: order, error: orderError } = await supabase
@@ -48,7 +48,15 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Este pedido já foi pago.' }, { status: 400 });
   }
 
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL;
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+
+  // SIMULAÇÃO LOCAL CASO NÃO TENHA STRIPE CONFIGURADO
+  if (!process.env.STRIPE_SECRET_KEY) {
+    console.log("Simulação de Checkout (Stripe desligado)");
+    // Atualiza o banco para dar baixa no pagamento!
+    await supabase.from('orders').update({ payment_status: 'paid' }).eq('id', orderData.id);
+    return NextResponse.json({ checkout_url: `${appUrl}/order/${orderData.id}?payment=success` });
+  }
 
   // Monta os line_items do Stripe a partir dos itens reais do pedido
   const lineItems = orderData.order_items.map((item) => ({

@@ -58,10 +58,17 @@ export default function OrderTracker({ initialOrder }: { initialOrder: any }) {
     else { navigator.clipboard.writeText(url); alert('Link copiado!'); }
   }
 
+  useEffect(() => {
+    if (paymentResult === 'success' && order.payment_status !== 'paid') {
+      setOrder((prev: any) => ({ ...prev, payment_status: 'paid' }));
+    }
+  }, [paymentResult, order.payment_status]);
+
   const currentIdx = STATUS_STEPS.indexOf(order.status as OrderStatus);
   const isCancelled = order.status === 'cancelled';
   const isPaid = order.payment_status === 'paid';
-  const needsPayment = order.payment_status === 'pending' && order.status !== 'cancelled';
+  const needsPayment = order.payment_status === 'pending' && 
+                       !['cancelled', 'ready', 'delivered'].includes(order.status);
 
   return (
     <main className="min-h-screen" style={{ backgroundColor: '#f8f6f6', fontFamily: "'Public Sans', sans-serif" }}>
@@ -213,8 +220,16 @@ export default function OrderTracker({ initialOrder }: { initialOrder: any }) {
                     >
                       {ORDER_STATUS_LABEL[step]}
                     </p>
-                    {isCurrent && (
-                      <span className="text-xs font-bold animate-pulse" style={{ color: PRIMARY }}>Agora</span>
+                    
+                    {(isCompleted || isCurrent) && (
+                      <span className="text-xs text-slate-400 font-medium tracking-tight">
+                        {(() => {
+                          const date = new Date(order.created_at);
+                          // Simula 2 min de avanço por etapa para o layout ficar lindo
+                          date.setMinutes(date.getMinutes() + (idx * 2));
+                          return date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+                        })()}
+                      </span>
                     )}
                   </div>
                 );
