@@ -47,9 +47,20 @@ try {
     console.log("=== INICIANDO CRIAÇÃO DO ZERO ===");
 
     // 1. Cria Organização
-    const { data: org } = await supabase.from('organizations').insert({ name: 'QuickPick', slug: 'quickpick' }).select('id').single();
-    if (!org) throw "Erro ao criar organização";
-    console.log("Organização QuickPick criada!");
+    let { data: org, error: orgE } = await supabase.from('organizations').insert({ name: 'QuickPick', slug: 'quickpick' }).select('id').single();
+    
+    // Se der erro porque já existe, tenta buscar
+    if (orgE) {
+      console.warn("Aviso ao criar organização:", orgE.message);
+      const { data: existingOrg } = await supabase.from('organizations').select('id').eq('slug', 'quickpick').single();
+      org = existingOrg;
+    }
+
+    if (!org) {
+      console.error("ERRO CRÍTICO: Não foi possível obter o ID da Organização.", orgE);
+      throw "Erro ao criar organização";
+    }
+    console.log("Organização QuickPick pronta (ID: " + org.id + ")");
 
     // 2. Cria 5 Eventos
     const eventsNames = ['Festival de Verão 2026', 'Rodeio de Americana', 'Feira da Estação', 'Oktoberfest Local', 'Encontro de Motos'];
@@ -65,10 +76,17 @@ try {
     // 3. Cria 10 Clientes (Auth + Profile)
     console.log("Criando 10 Clientes...");
     for (let i = 1; i <= 10; i++) {
-        const email = `cliente${i}@teste.com`;
-        const { data } = await supabase.auth.admin.createUser({ email, password: 'senha_teste_123', email_confirm: true });
-        if (data && data.user) {
-             await supabase.from('profiles').update({ name: `Cliente Teste #${i}`, role: 'customer' }).eq('id', data.user.id);
+        const email = `cliente${i+100}@teste.com`; // Usa emails novos pra não bater no Auth
+        const { data, error: userE } = await supabase.auth.admin.createUser({ email, password: 'senha_teste_123', email_confirm: true });
+        
+        if (userE && !userE.message.includes("already registered")) {
+           console.error(`Erro ao criar cliente ${email}:`, userE.message);
+           continue; 
+        }
+
+        const user = data?.user || (await supabase.auth.admin.listUsers()).data.users.find(u => u.email === email);
+        if (user) {
+             await supabase.from('profiles').upsert({ id: user.id, name: `Cliente Teste #${i}`, role: 'customer' });
         }
     }
 
@@ -76,12 +94,19 @@ try {
     console.log("Criando 20 Logins de Vendors...");
     const vendorUsers = [];
     for (let i = 1; i <= 20; i++) {
-        const email = `vendor${i}@teste.com`;
+        const email = `vendor${i+100}@teste.com`;
         const name = `Dono da Marca #${i}`;
-        const { data } = await supabase.auth.admin.createUser({ email, password: 'senha_teste_123', email_confirm: true, user_metadata: { name } });
-        if (data && data.user) {
-             await supabase.from('profiles').update({ name, role: 'vendor' }).eq('id', data.user.id);
-             vendorUsers.push({ id: data.user.id, name });
+        const { data, error: userE } = await supabase.auth.admin.createUser({ email, password: 'senha_teste_123', email_confirm: true, user_metadata: { name } });
+        
+        if (userE && !userE.message.includes("already registered")) {
+           console.error(`Erro ao criar vendor user ${email}:`, userE.message);
+           continue;
+        }
+
+        const user = data?.user || (await supabase.auth.admin.listUsers()).data.users.find(u => u.email === email);
+        if (user) {
+             await supabase.from('profiles').upsert({ id: user.id, name, role: 'vendor' });
+             vendorUsers.push({ id: user.id, name });
         }
     }
 
@@ -90,26 +115,27 @@ try {
     const vendorsToInsert = [];
     events.forEach(ev => {
         for (let i = 0; i < 15; i++) {
-            const donorIdx = (ev.id.charCodeAt(0) + i) % vendorUsers.length; // randômico determinístico
+            const donorIdx = Math.floor(Math.random() * vendorUsers.length);
             const donr = vendorUsers[donorIdx];
             vendorsToInsert.push({
                 event_id: ev.id,
                 owner_id: donr.id,
                 name: `Quiosque ${donr.name.split('#')[1]} - ${ev.name}`,
                 description: `Servindo lanches e bebidas no ${ev.name}`,
-                avg_prep_time: 15,
-                payment_mode: 'optional',
-                accept_cash: true, accept_pix: true, accept_card: true,
                 active: true
             });
         }
     });
 
-    const { data: createdVendors } = await supabase.from('vendors').insert(vendorsToInsert).select('id, name');
+    const { data: createdVendors, error: venE } = await supabase.from('vendors').insert(vendorsToInsert).select('id, name');
+    if (venE || !createdVendors) {
+       console.error("ERRO ao criar barracas (vendors):", venE?.message);
+       throw "Erro ao criar vendors";
+    }
     console.log(`${createdVendors.length} Barracas vinculadas aos Eventos!`);
 
     // 6. Cria Cardápio para os Vendors (15 produtos para cada)
-    console.log("Cadastrando Cardápios com IMAGENS REAIS...");
+    console.log("Cadastrando Cardápios...");
     const menuItemsToInsert = [];
     createdVendors.forEach(v => {
         PRODUCTS.forEach((p, idx) => {
@@ -117,26 +143,18 @@ try {
                 vendor_id: v.id,
                 name: p.n,
                 price: p.p,
-                category: p.c,
-                image_url: p.img,
                 available: true,
                 position: idx + 1
             });
         });
     });
 
-    // Insere em blocos de 200 pra não estourar o buffer
     for (let i = 0; i < menuItemsToInsert.length; i += 200) {
         const batch = menuItemsToInsert.slice(i, i + 200);
         await supabase.from('menu_items').insert(batch);
     }
 
     console.log(`\n=== MASSIVO DE DADOS CRIADO COM SUCESSO! ===`);
-    console.log(`⚡ 1 Organização: QuickPick`);
-    console.log(`⚡ 5 Eventos ATIVOS`);
-    console.log(`⚡ 20 Donos de marcas independentes`);
-    console.log(`⚡ 10 Usuários de testes normais`);
-    console.log(`⚡ ${(createdVendors.length * 15)} Pratos/Bebidas/Sobremesas cadastrados com fotos de alta definição!`);
   }
 
   seed();
