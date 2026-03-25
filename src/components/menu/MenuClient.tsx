@@ -137,7 +137,7 @@ export default function MenuClient({ vendor, items, mesa, waitTime }: MenuClient
               className="h-14 w-48 shrink-0 bg-white border border-slate-200 rounded-2xl flex flex-col items-center justify-center gap-0.5 text-[11px] font-bold text-slate-500 hover:text-orange-600 hover:border-orange-200 transition-all active:scale-95 shadow-md disabled:opacity-50"
             >
               <span className="text-xl leading-none">🛎️</span>
-              <span className="leading-tight">Chamar<br/>Garçom</span>
+              <span className="leading-tight whitespace-nowrap">Chamar Garçom</span>
             </button>
           )}
         </div>

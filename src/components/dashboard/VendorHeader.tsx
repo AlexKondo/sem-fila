@@ -105,7 +105,7 @@ export default function VendorHeader({ vendorName, cnpjFormatted, vendorId }: Ve
           <LogoutButton />
         </div>
 
-        <nav className="flex gap-1 mt-3 overflow-x-auto no-scrollbar">
+        <nav className="flex gap-1 mt-3 overflow-x-auto overflow-y-visible no-scrollbar">
           <NavTab 
             href="/dashboard/vendor" 
             active={pathname === '/dashboard/vendor'} 
@@ -147,20 +147,22 @@ function NavTab({ href, label, icon, active, badge }: { href: string; label: str
   return (
     <Link
       href={href}
-      className="flex items-center gap-1.5 px-3 py-2 pt-[5px] rounded-xl text-xs font-semibold shrink-0 transition-colors relative"
+      className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold shrink-0 transition-colors relative"
       style={active
         ? { backgroundColor: P + '15', color: P }
         : { color: '#64748b' }
       }
     >
-      {icon}
+      <span className="relative">
+        {icon}
+        {badge && (
+          <span className="absolute -top-1.5 -right-1.5 flex h-3.5 w-3.5">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-red-500 border-2 border-white"></span>
+          </span>
+        )}
+      </span>
       {label}
-      {badge && (
-        <span className="absolute -top-1 -right-1 flex h-3 w-3">
-          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-          <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500 border border-white"></span>
-        </span>
-      )}
     </Link>
   );
 }

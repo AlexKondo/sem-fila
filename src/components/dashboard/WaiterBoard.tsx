@@ -108,18 +108,34 @@ export default function WaiterBoard({ initialReadyOrders, initialWaiterCalls, ve
 
   async function markDelivered(orderId: string) {
     const supabase = createClient();
-    await supabase.from('orders').update({ status: 'delivered' }).eq('id', orderId);
+    const { error } = await supabase.from('orders').update({ status: 'delivered' }).eq('id', orderId);
+    if (error) {
+      console.error('Erro ao marcar como entregue:', error.message);
+    } else {
+      setOrders((prev) => prev.filter((o) => o.id !== orderId));
+    }
   }
 
   async function attendCall(callId: string) {
     const supabase = createClient();
-    // Atualiza status e horário de atendimento para o histórico
-    await supabase.from('waiter_calls')
+    const { error } = await supabase.from('waiter_calls')
       .update({ 
         status: 'attended', 
         attended_at: new Date().toISOString() 
       })
       .eq('id', callId);
+    
+    if (error) {
+      console.error('Erro ao atender chamada:', error.message);
+      alert(`Erro: ${error.message}`);
+    } else {
+      // Atualiza local imediatamente sem esperar o Realtime
+      setCalls((prev) => prev.map((c) => 
+        c.id === callId 
+          ? { ...c, status: 'attended' as const, attended_at: new Date().toISOString() } 
+          : c
+      ));
+    }
   }
 
   function getDuration(start: string, end: string | null) {
