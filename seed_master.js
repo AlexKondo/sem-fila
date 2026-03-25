@@ -122,6 +122,11 @@ try {
                 owner_id: donr.id,
                 name: `Quiosque ${donr.name.split('#')[1]} - ${ev.name}`,
                 description: `Servindo lanches e bebidas no ${ev.name}`,
+                avg_prep_time: 15,
+                payment_mode: 'optional',
+                accept_cash: true,
+                accept_pix: true,
+                accept_card: true,
                 active: true
             });
         }
