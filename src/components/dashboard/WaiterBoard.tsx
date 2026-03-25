@@ -74,22 +74,19 @@ export default function WaiterBoard({ initialReadyOrders, initialWaiterCalls, ve
         schema: 'public', 
         table: 'waiter_calls', 
         filter: `vendor_id=eq.${vendorId}` 
-      }, async (payload) => {
-        // Recarrega as chamadas para garantir consistência e pegar o history
-        const { data } = await supabase
-          .from('waiter_calls')
-          .select('*')
-          .eq('vendor_id', vendorId)
-          .order('created_at', { ascending: false });
-        
-        if (data) {
-          setCalls(data as WaiterCall[]);
-          
-          // Se for uma nova chamada (INSERT), ativa o alarme
-          if (payload.eventType === 'INSERT') {
-            setIsAlerting(true);
-            playSound();
-          }
+      }, (payload) => {
+        if (payload.eventType === 'INSERT') {
+          // Adiciona imediatamente ao estado sem esperar DB
+          const newCall = payload.new as WaiterCall;
+          setCalls((prev) => [newCall, ...prev]);
+          setIsAlerting(true);
+          playSound();
+        } else if (payload.eventType === 'UPDATE') {
+          // Atualiza o item específico no estado
+          const updated = payload.new as WaiterCall;
+          setCalls((prev) => prev.map((c) => c.id === updated.id ? updated : c));
+        } else if (payload.eventType === 'DELETE') {
+          setCalls((prev) => prev.filter((c) => c.id !== payload.old.id));
         }
       })
       .subscribe();

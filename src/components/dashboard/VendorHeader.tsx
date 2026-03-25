@@ -128,7 +128,7 @@ export default function VendorHeader({ vendorName, cnpjFormatted, vendorId }: Ve
             href="/dashboard/vendor/waiter" 
             active={pathname.startsWith('/dashboard/vendor/waiter')} 
             label="Garçom" 
-            badge={pendingCalls > 0}
+            badgeCount={pendingCalls}
             icon={<svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" /></svg>} 
           />
           <NavTab 
@@ -143,26 +143,23 @@ export default function VendorHeader({ vendorName, cnpjFormatted, vendorId }: Ve
   );
 }
 
-function NavTab({ href, label, icon, active, badge }: { href: string; label: string; icon: React.ReactNode; active?: boolean; badge?: boolean }) {
+function NavTab({ href, label, icon, active, badgeCount }: { href: string; label: string; icon: React.ReactNode; active?: boolean; badgeCount?: number }) {
   return (
     <Link
       href={href}
-      className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold shrink-0 transition-colors relative"
+      className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold shrink-0 transition-colors"
       style={active
         ? { backgroundColor: P + '15', color: P }
         : { color: '#64748b' }
       }
     >
-      <span className="relative">
-        {icon}
-        {badge && (
-          <span className="absolute -top-1.5 -right-1.5 flex h-3.5 w-3.5">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-red-500 border-2 border-white"></span>
-          </span>
-        )}
-      </span>
+      {icon}
       {label}
+      {badgeCount && badgeCount > 0 ? (
+        <span className="relative -top-2 inline-flex items-center justify-center h-4 min-w-[1rem] px-1 rounded-full text-[10px] font-black text-white bg-red-500 animate-pulse">
+          {badgeCount}
+        </span>
+      ) : null}
     </Link>
   );
 }
