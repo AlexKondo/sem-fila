@@ -195,6 +195,7 @@ export default function QrScanner() {
                   <h3 className="text-lg font-bold text-slate-900">Digitar Código</h3>
                   <p className="text-xs text-slate-500">Insira o código numérico fixado na sua mesa ou quiosque:</p>
                   <input 
+                    autoFocus
                     type="text" 
                     placeholder="Ex: 502" 
                     value={manualCode} 

@@ -40,7 +40,7 @@ export default async function MenuPage({ params, searchParams }: Props) {
           hash |= 0;
         }
         const num = Math.abs(hash) % 1000000;
-        return num.toString().padStart(6, '0') === cleanId;
+        return num === parseInt(cleanId);
       });
       if (match) vendor = match;
     }
@@ -48,14 +48,45 @@ export default async function MenuPage({ params, searchParams }: Props) {
 
   if (!vendor) notFound();
 
-  const { data: items } = await supabase
-    .from('menu_items').select('*').eq('vendor_id', vendor.id).eq('available', true).order('position', { ascending: true });
+  // Optimizing Database Calls - Executa as três buscas ao MESMO TEMPO em vez de esperar uma terminar
+  const [
+    { data: items },
+    { data: pastOrders },
+    { count: activeOrders }
+  ] = await Promise.all([
+    supabase.from('menu_items').select('*').eq('vendor_id', vendor.id).eq('available', true).order('position', { ascending: true }),
+    supabase.from('orders').select('created_at, updated_at').eq('vendor_id', vendor.id).eq('status', 'delivered').order('created_at', { ascending: false }).limit(3),
+    supabase.from('orders').select('*', { count: 'exact', head: true }).eq('vendor_id', vendor.id).in('status', ['received', 'preparing', 'almost_ready'])
+  ]);
 
-  const { count: activeOrders } = await supabase
-    .from('orders').select('*', { count: 'exact', head: true })
-    .eq('vendor_id', vendor.id).in('status', ['received', 'preparing']);
+  let realAvgTime = vendor.avg_prep_time || 0;
 
-  const waitTime = estimatedWaitTime(activeOrders ?? 0, vendor.avg_prep_time);
+  if (pastOrders && pastOrders.length > 0) {
+    let totalSecs = 0;
+    let validOrders = 0;
+    for (const po of pastOrders) {
+      if (po.updated_at) {
+         const duration = (new Date(po.updated_at).getTime() - new Date(po.created_at).getTime()) / 1000;
+         if (duration > 30) { // Ignorar lixo (testes e cliques < 30s)
+            totalSecs += duration;
+            validOrders++;
+         }
+      }
+    }
+    if (validOrders > 0) {
+      const mediaSegundos = totalSecs / validOrders;
+      realAvgTime = Math.ceil(mediaSegundos / 60);
+    }
+  }
+
+  const fila = activeOrders || 0;
+  
+  // Se a fila tá vazia, tempo é 1x a média (o tempo do próprio cara).
+  // Se tem 3 pessoas na frente, tempo é as 3 + a vez dele = 4x a média.
+  const multiplier = fila + 1;
+  const estimatedTime = realAvgTime * multiplier;
+
+  const waitTime = estimatedTime > 0 ? `~${estimatedTime} min (Fila: ${fila})` : 'Preparo imediato';
 
   return (
     <MenuClient 

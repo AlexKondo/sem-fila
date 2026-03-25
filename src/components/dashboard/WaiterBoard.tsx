@@ -31,6 +31,18 @@ interface Props {
 export default function WaiterBoard({ initialReadyOrders, initialWaiterCalls, vendorId }: Props) {
   const [orders, setOrders] = useState<ReadyOrder[]>(initialReadyOrders);
   const [calls, setCalls] = useState<WaiterCall[]>(initialWaiterCalls);
+  const [isAlerting, setIsAlerting] = useState(false);
+
+  useEffect(() => {
+    if (isAlerting) {
+      // Vibra em dispositivos suportados (ex: Android) - [vibrar, pausa, vibrar...]
+      if ('vibrate' in navigator) {
+        navigator.vibrate([200, 100, 200, 100, 200, 100, 200]);
+      }
+      const timer = setTimeout(() => setIsAlerting(false), 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [isAlerting]);
 
   useEffect(() => {
     const supabase = createClient();
@@ -54,7 +66,8 @@ export default function WaiterBoard({ initialReadyOrders, initialWaiterCalls, ve
       })
       // Novas chamadas de garçom
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'waiter_calls', filter: `vendor_id=eq.${vendorId}` }, (payload) => {
-        setCalls((prev) => [payload.new as WaiterCall, ...prev]);
+        setCalls((prev) => prev.some(c => c.id === payload.new.id) ? prev : [payload.new as WaiterCall, ...prev]);
+        setIsAlerting(true); // Ativa o alarme visual/vibratório
         try { new Audio('/sounds/bell.mp3').play(); } catch {}
       })
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'waiter_calls', filter: `vendor_id=eq.${vendorId}` }, (payload) => {
@@ -79,7 +92,15 @@ export default function WaiterBoard({ initialReadyOrders, initialWaiterCalls, ve
   }
 
   return (
-    <div className="max-w-lg mx-auto px-4 py-4 space-y-6">
+    <>
+      {isAlerting && (
+        <div className="fixed inset-0 z-[9999] bg-red-600 flex flex-col items-center justify-center p-8 animate-pulse text-white text-center">
+           <Bell className="w-32 h-32 mb-6" />
+           <h2 className="text-5xl font-black mb-4 uppercase italic">Chamar Garçom!</h2>
+           <p className="text-2xl font-bold opacity-90">Nova chamada em mesa pendente</p>
+        </div>
+      )}
+      <div className="max-w-lg mx-auto px-4 py-4 space-y-6">
       {/* Chamadas de garçom */}
       {calls.length > 0 && (
         <section>
@@ -146,5 +167,6 @@ export default function WaiterBoard({ initialReadyOrders, initialWaiterCalls, ve
         )}
       </section>
     </div>
+    </>
   );
 }

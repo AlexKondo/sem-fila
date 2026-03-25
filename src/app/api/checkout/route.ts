@@ -71,6 +71,24 @@ export async function POST(request: Request) {
     quantity: item.quantity,
   }));
 
+  // Adiciona taxas (serviço/couvert) se houver diferença no total
+  const itemsTotal = orderData.order_items.reduce((acc, i) => acc + (i.unit_price * i.quantity), 0);
+  const fees = orderData.total_price - itemsTotal;
+  
+  if (fees > 0.01) {
+    lineItems.push({
+      price_data: {
+        currency: 'brl',
+        unit_amount: Math.round(fees * 100),
+        product_data: {
+          name: 'Taxas e Serviços',
+          description: 'Taxa de serviço e/ou couvert artístico',
+        },
+      },
+      quantity: 1,
+    });
+  }
+
   const session = await stripe.checkout.sessions.create({
     mode: 'payment',
     line_items: lineItems,

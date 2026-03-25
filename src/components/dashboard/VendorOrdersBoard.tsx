@@ -13,6 +13,7 @@ type OrderWithItems = {
   total_price: number;
   notes: string | null;
   created_at: string;
+  updated_at?: string;
   order_items: {
     id: string;
     quantity: number;
@@ -59,7 +60,11 @@ export default function VendorOrdersBoard({ initialOrders, vendorId }: Props) {
             .eq('id', payload.new.id)
             .single();
           if (data) {
-            setOrders((prev) => [data as OrderWithItems, ...prev]);
+            setOrders((prev) => {
+              // Previne duplicação em dev mode (React StrictMode duplo render)
+              if (prev.some(o => o.id === data.id)) return prev;
+              return [data as OrderWithItems, ...prev];
+            });
             // Notificação sonora (se suportado)
             try { new Audio('/sounds/new-order.mp3').play(); } catch {}
           }
@@ -75,9 +80,15 @@ export default function VendorOrdersBoard({ initialOrders, vendorId }: Props) {
         },
         (payload) => {
           const updated = payload.new;
-          // Remove da lista se entregue ou cancelado
-          if (updated.status === 'delivered' || updated.status === 'cancelled') {
-            setOrders((prev) => prev.filter((o) => o.id !== updated.id));
+          // Se for cancelado: só mantém se estiver pago (para o histórico). Se não pago, remove.
+          if (updated.status === 'cancelled') {
+            if (updated.payment_status === 'paid') {
+              setOrders((prev) =>
+                prev.map((o) => o.id === updated.id ? { ...o, ...updated } as OrderWithItems : o)
+              );
+            } else {
+              setOrders((prev) => prev.filter((o) => o.id !== updated.id));
+            }
           } else {
             setOrders((prev) =>
               prev.map((o) => o.id === updated.id ? { ...o, ...updated } as OrderWithItems : o)
@@ -99,6 +110,14 @@ export default function VendorOrdersBoard({ initialOrders, vendorId }: Props) {
   }
 
   async function cancelOrder(orderId: string) {
+    const order = orders.find(o => o.id === orderId);
+    const isPaid = (order as any).payment_status === 'paid';
+    
+    let msg = 'Tem certeza que deseja cancelar este pedido?';
+    if (isPaid) msg = 'ATENÇÃO: Este pedido já foi PAGO. Se cancelar, você deverá realizar o estorno da transação no painel de pagamentos. Deseja cancelar mesmo assim?';
+    
+    if (!confirm(msg)) return;
+
     const supabase = createClient();
     await supabase
       .from('orders')
@@ -127,25 +146,63 @@ export default function VendorOrdersBoard({ initialOrders, vendorId }: Props) {
     return acc;
   }, {});
 
+  const activeOrders = STATUS_ORDER.flatMap((status) => grouped[status] || []);
+  const historicalOrders = orders.filter((o) => o.status === 'delivered' || (o.status === 'cancelled' && (o as any).payment_status === 'paid'));
+
   return (
-    <div className="max-w-2xl mx-auto px-4 py-4">
+    <div className="max-w-5xl mx-auto px-4 py-4">
       {/* Contador total */}
       <p className="text-sm text-gray-500 mb-4">
-        {orders.length} pedido{orders.length !== 1 ? 's' : ''} ativo{orders.length !== 1 ? 's' : ''}
+        {activeOrders.length} pedido{activeOrders.length !== 1 ? 's' : ''} ativo{activeOrders.length !== 1 ? 's' : ''} na fila
       </p>
 
-      <div className="space-y-6">
-        {STATUS_ORDER.map((status) => {
-          const statusOrders = grouped[status];
-          if (statusOrders.length === 0) return null;
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
+        {/* Coluna da Esquerda: Fila Ativa */}
+        <div className="space-y-6">
+          {STATUS_ORDER.map((status) => {
+            const statusOrders = grouped[status] || [];
+            if (statusOrders.length === 0) return null;
 
-          return (
-            <div key={status}>
-              <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
-                {ORDER_STATUS_LABEL[status]} ({statusOrders.length})
-              </h2>
-              <div className="space-y-3">
-                {statusOrders.map((order) => (
+            return (
+              <div key={status}>
+                <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2 flex items-center gap-2">
+                  <span className={`w-2 h-2 rounded-full ${status === 'ready' ? 'bg-green-500' : 'bg-orange-500'}`} />
+                  {ORDER_STATUS_LABEL[status]} ({statusOrders.length})
+                </h2>
+                <div className="space-y-3">
+                  {statusOrders.map((order) => (
+                    <OrderCard
+                      key={order.id}
+                      order={order}
+                      orderNumber={orderNumbers[order.id]}
+                      onAdvance={advanceStatus}
+                      onCancel={cancelOrder}
+                    />
+                  ))}
+                </div>
+              </div>
+            );
+          })}
+          {activeOrders.length === 0 && (
+            <div className="text-center py-12 text-slate-400 border-2 border-dashed border-slate-200 rounded-2xl">
+              <p className="text-2xl mb-2">🎉</p>
+              <p className="font-semibold">Nenhum pedido ativo</p>
+              <p className="text-xs">Fila completamente vazia</p>
+            </div>
+          )}
+        </div>
+
+        {/* Coluna da Direita: Histórico de Entregues */}
+        <div>
+           <div className="bg-slate-50 border border-slate-100 rounded-2xl p-4">
+            <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-4">
+              Histórico • Concluídos ({historicalOrders.length})
+            </h2>
+            <div className="space-y-3">
+              {historicalOrders.length === 0 ? (
+                <p className="text-xs text-slate-400 text-center py-4">Nenhum pedido processado ainda.</p>
+              ) : (
+                historicalOrders.map((order) => (
                   <OrderCard
                     key={order.id}
                     order={order}
@@ -153,11 +210,11 @@ export default function VendorOrdersBoard({ initialOrders, vendorId }: Props) {
                     onAdvance={advanceStatus}
                     onCancel={cancelOrder}
                   />
-                ))}
-              </div>
+                ))
+              )}
             </div>
-          );
-        })}
+           </div>
+        </div>
       </div>
     </div>
   );
@@ -198,10 +255,18 @@ function OrderCard({
 
   const clientName = getCustomerName(order.notes);
   const realNotes = getRealNotes(order.notes);
+  const isDelivered = order.status === 'delivered';
+
+  // Calculo de tempo percorrido
+  const startMs = new Date(order.created_at).getTime();
+  const endMs = isDelivered ? (order.updated_at ? new Date(order.updated_at).getTime() : Date.now()) : null;
+  const timeDiffSec = endMs ? Math.floor((endMs - startMs) / 1000) : null;
+  const mins = timeDiffSec ? Math.floor(timeDiffSec / 60) : 0;
+  const secs = timeDiffSec ? timeDiffSec % 60 : 0;
 
   return (
     <div 
-      className="bg-white rounded-2xl shadow-sm p-4 cursor-pointer hover:shadow-md transition-shadow"
+      className={`bg-white rounded-2xl shadow-sm p-4 cursor-pointer transition-all border border-slate-100 ${isDelivered ? 'opacity-75 bg-slate-50 shadow-none hover:shadow-none' : 'hover:shadow-md'}`}
       onClick={() => setIsExpanded(!isExpanded)}
     >
       <div className="flex items-start justify-between">
@@ -215,11 +280,23 @@ function OrderCard({
               </span>
             )}
           </div>
-          <p className="text-xs text-gray-400 mt-0.5">{formatDate(order.created_at)}</p>
+          <div className="flex items-center gap-2 mt-0.5">
+            <p className="text-xs text-gray-400">
+              Criado às {new Date(order.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+            </p>
+            {isDelivered && timeDiffSec !== null && (
+              <span className="text-xs font-mono font-bold text-slate-500 bg-slate-200/50 px-1.5 rounded" title="Tempo total de preparo">
+                ⏱️ {mins}m {secs}s
+              </span>
+            )}
+          </div>
         </div>
-        <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${ORDER_STATUS_COLOR[order.status]}`}>
-          {ORDER_STATUS_LABEL[order.status]}
-        </span>
+        <div className="flex flex-col items-end gap-1.5">
+          <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${ORDER_STATUS_COLOR[order.status]}`}>
+            {ORDER_STATUS_LABEL[order.status]}
+          </span>
+          <p className="text-sm font-black text-slate-800 tracking-tight">{formatCurrency(order.total_price)}</p>
+        </div>
       </div>
 
       {isExpanded && (
@@ -246,7 +323,13 @@ function OrderCard({
 
           <div className="flex items-center justify-between pt-1">
             <span className="font-bold text-gray-900">{formatCurrency(order.total_price)}</span>
-            <div className="flex gap-2">
+            <div className="flex items-center gap-3">
+              {timeDiffSec !== null && (
+                <span className="text-xs font-mono font-medium text-slate-500 flex items-center gap-1">
+                  <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                  {mins}m {secs}s
+                </span>
+              )}
               {order.status !== 'delivered' && (
                 <button
                   onClick={(e) => { e.stopPropagation(); onCancel(order.id); }}

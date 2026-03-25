@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import { formatCurrency } from '@/lib/utils';
 import { createClient } from '@/lib/supabase/client';
 import CartSheet from './CartSheet';
@@ -19,6 +20,11 @@ interface MenuClientProps {
 export default function MenuClient({ vendor, items, mesa, waitTime }: MenuClientProps) {
   const [selectedCat, setSelectedCat] = useState('Todos');
   const [customerName, setCustomerName] = useState<string | null>(null);
+  
+  // Custom Waiter Modal State
+  const [showWaiterModal, setShowWaiterModal] = useState(false);
+  const [modalMesa, setModalMesa] = useState(mesa || '');
+  const [callStatus, setCallStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
 
   useEffect(() => {
     const supabase = createClient();
@@ -34,6 +40,34 @@ export default function MenuClient({ vendor, items, mesa, waitTime }: MenuClient
     });
   }, []);
 
+  async function handleCallWaiter() {
+    setCallStatus('idle');
+    setModalMesa(mesa || '');
+    setShowWaiterModal(true);
+  }
+
+  async function confirmWaiterCall() {
+    if (!modalMesa.trim()) return;
+    setCallStatus('loading');
+    
+    const supabase = createClient();
+    const { error } = await supabase.from('waiter_calls').insert({
+      vendor_id: vendor.id,
+      table_number: modalMesa,
+      status: 'pending'
+    });
+    
+    if (error) {
+      setCallStatus('error');
+    } else {
+      setCallStatus('success');
+      setTimeout(() => {
+        setShowWaiterModal(false);
+        setCallStatus('idle');
+      }, 2500);
+    }
+  }
+
   // Extrai categorias únicas cadastradas nos itens do cardápio
   const categories = ['Todos', ...Array.from(new Set(items.map(i => i.category).filter((c): c is string => !!c)))];
 
@@ -42,7 +76,7 @@ export default function MenuClient({ vendor, items, mesa, waitTime }: MenuClient
     : items.filter(i => i.category === selectedCat);
 
   return (
-    <div className="relative flex min-h-screen w-full flex-col max-w-md mx-auto pb-36" style={{ backgroundColor: '#f8f6f6' }}>
+    <div className="relative flex min-h-screen w-full flex-col max-w-md mx-auto pb-24" style={{ backgroundColor: '#f8f6f6' }}>
       {/* Sticky header */}
       <header className="sticky top-0 z-50 border-b border-slate-200" style={{ backgroundColor: 'rgba(248,246,246,0.95)', backdropFilter: 'blur(8px)' }}>
         <div className="flex items-center p-4 justify-between">
@@ -64,24 +98,28 @@ export default function MenuClient({ vendor, items, mesa, waitTime }: MenuClient
             </div>
           </div>
 
-          <div>
+          <div className="flex items-center gap-2">
+
+
+            <div>
             {customerName ? (
-              <div className="flex items-center gap-1.5 bg-orange-50 border border-orange-200/50 rounded-xl px-2.5 py-1 text-xs font-bold text-orange-600 shadow-sm">
+              <Link href="/profile?edit=true" className="flex items-center gap-1.5 bg-orange-50 border border-orange-200/50 rounded-xl px-2.5 py-1 text-xs font-bold text-orange-600 shadow-sm active:scale-95 transition-all">
                 <span>👤 Olá, {customerName}</span>
-              </div>
+              </Link>
             ) : (
-              <div className="w-9 h-9 rounded-xl bg-slate-100 flex items-center justify-center text-slate-400">
+              <Link href="/login" className="w-9 h-9 rounded-xl bg-slate-100 flex items-center justify-center text-slate-400 active:scale-95 transition-all">
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                 </svg>
-              </div>
+              </Link>
             )}
           </div>
         </div>
+      </div>
 
-        {/* Search bar */}
-        <div className="px-4 pb-3">
-          <div className="flex w-full items-center rounded-xl h-12 bg-slate-100 border-none gap-3 px-4">
+        {/* Search bar + Help */}
+        <div className="px-4 pb-3 flex items-center gap-2">
+          <div className="flex-1 flex items-center rounded-xl h-12 bg-slate-100 border-none gap-3 px-4">
             <svg className="w-5 h-5 text-slate-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
@@ -91,6 +129,17 @@ export default function MenuClient({ vendor, items, mesa, waitTime }: MenuClient
               className="bg-transparent border-none outline-none text-slate-800 w-full text-base"
             />
           </div>
+
+          {vendor.allow_waiter_calls && (
+            <button 
+              onClick={handleCallWaiter}
+              disabled={callStatus === 'loading'}
+              className="h-14 w-48 shrink-0 bg-white border border-slate-200 rounded-2xl flex flex-col items-center justify-center gap-0.5 text-[11px] font-bold text-slate-500 hover:text-orange-600 hover:border-orange-200 transition-all active:scale-95 shadow-md disabled:opacity-50"
+            >
+              <span className="text-xl leading-none">🛎️</span>
+              <span className="leading-tight">Chamar<br/>Garçom</span>
+            </button>
+          )}
         </div>
 
         {/* Category tabs dinâmicas */}
@@ -167,6 +216,82 @@ export default function MenuClient({ vendor, items, mesa, waitTime }: MenuClient
       </main>
 
       <CartSheet vendor={vendor} tableNumber={mesa} />
+
+      {/* Custom Waiter Modal */}
+      {showWaiterModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="w-full max-w-xs bg-white rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+            <div className="p-6 text-center">
+              <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <span className="text-3xl">🛎️</span>
+              </div>
+              
+              {callStatus === 'idle' && (
+                <>
+                  <h3 className="text-xl font-bold text-slate-900 mb-2">Chamar Garçom</h3>
+                  <p className="text-sm text-slate-500 mb-6">
+                    {mesa ? `Confirmar chamada para a mesa ${mesa}?` : 'Informe o número da sua mesa para que possamos te encontrar.'}
+                  </p>
+                  
+                  {!mesa && (
+                    <input 
+                      type="text" 
+                      value={modalMesa}
+                      onChange={(e) => setModalMesa(e.target.value)}
+                      placeholder="Ex: 12, Balcão..."
+                      className="w-full h-12 bg-slate-50 border border-slate-200 rounded-xl px-4 text-center text-lg font-bold mb-4 focus:outline-none focus:ring-2 focus:ring-orange-500/50"
+                    />
+                  )}
+                  
+                  <div className="grid grid-cols-2 gap-3">
+                    <button 
+                      onClick={() => setShowWaiterModal(false)}
+                      className="h-12 rounded-xl font-bold text-slate-500 bg-slate-100 active:scale-95 transition-all"
+                    >
+                      Cancelar
+                    </button>
+                    <button 
+                      onClick={confirmWaiterCall}
+                      disabled={!modalMesa.trim()}
+                      className="h-12 rounded-xl font-bold text-white bg-orange-500 shadow-lg shadow-orange-500/30 active:scale-95 transition-all disabled:opacity-50"
+                    >
+                      Chamar
+                    </button>
+                  </div>
+                </>
+              )}
+
+              {callStatus === 'loading' && (
+                <div className="py-8 flex flex-col items-center">
+                  <div className="w-8 h-8 border-4 border-orange-500/20 border-t-orange-500 rounded-full animate-spin mb-4" />
+                  <p className="font-bold text-slate-700">Enviando sinal...</p>
+                </div>
+              )}
+
+              {callStatus === 'success' && (
+                <div className="py-4 animate-in zoom-in duration-300">
+                  <div className="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
+                  </div>
+                  <h3 className="text-xl font-bold text-slate-900 mb-1">Solicitado!</h3>
+                  <p className="text-sm text-slate-500">O garçom já foi avisado e virá até você.</p>
+                </div>
+              )}
+
+              {callStatus === 'error' && (
+                <div className="py-4 text-center">
+                   <div className="w-16 h-16 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <span className="text-2xl font-bold">!</span>
+                  </div>
+                  <h3 className="text-lg font-bold text-slate-900">Ops!</h3>
+                  <p className="text-sm text-slate-500 mb-6">Não conseguimos chamar o garçom agora.</p>
+                  <button onClick={() => setCallStatus('idle')} className="w-full h-11 bg-slate-100 rounded-xl font-bold text-slate-700">Tentar de novo</button>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

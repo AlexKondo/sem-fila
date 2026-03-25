@@ -51,6 +51,11 @@ export default function QrCodeDisplay({ vendorName, menuUrl, cnpj }: QrCodeDispl
   }
 
   const vendorId = menuUrl.split('/').pop() || '';
+  const code = getNumericCode(vendorId);
+  const parts = vendorName.split(' - ');
+  const displayTitle = parts.length > 1
+    ? <>{parts[0]} <span style={{ color: P }}>{code}</span> – {parts.slice(1).join(' - ')}</>
+    : <>{vendorName} <span style={{ color: P }}>{code}</span></>;
 
   return (
     <div className="space-y-4">
@@ -63,7 +68,7 @@ export default function QrCodeDisplay({ vendorName, menuUrl, cnpj }: QrCodeDispl
               <path d="M3 3h7v7H3V3zm2 2v3h3V5H5zm7-2h7v7h-7V3zm2 2v3h3V5h-3zM3 13h7v7H3v-7zm2 2v3h3v-3H5zm10 0h2v2h-2v-2zm-2 2h2v2h-2v-2zm4 0h2v2h-2v-2zm0-4h2v2h-2v-2zm-4 0h2v2h-2v-2zm2 2h2v2h-2v-2z"/>
             </svg>
           </div>
-          <h2 className="font-bold text-slate-900 text-lg">{vendorName}</h2>
+          <h2 className="font-bold text-slate-900 text-lg">{displayTitle}</h2>
           {cnpj && (
             <p className="text-xs text-slate-400 mt-1">CNPJ {cnpj}</p>
           )}

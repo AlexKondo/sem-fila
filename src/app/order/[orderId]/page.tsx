@@ -17,7 +17,7 @@ export default async function OrderPage({ params }: Props) {
     .from('orders')
     .select(`
       *,
-      vendors (id, name, logo_url, avg_prep_time),
+      vendors (id, name, logo_url, avg_prep_time, service_fee_percentage, couvert_fee),
       order_items (
         id, quantity, unit_price,
         menu_items (id, name, image_url)

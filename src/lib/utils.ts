@@ -49,3 +49,11 @@ export function estimatedWaitTime(queueSize: number, avgPrepTime: number): strin
   const m = minutes % 60;
   return `~${h}h ${m > 0 ? `${m}min` : ''}`;
 }
+
+export function getRealNotes(notes: string | null) {
+  if (!notes) return null;
+  return notes
+    .split(' | ')
+    .filter(p => !p.startsWith('Cliente:') && !p.startsWith('Tel:') && !p.startsWith('Pagamento:'))
+    .join(' | ') || null;
+}

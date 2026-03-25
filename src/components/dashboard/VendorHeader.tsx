@@ -9,10 +9,40 @@ const P = '#ec5b13';
 interface VendorHeaderProps {
   vendorName: string;
   cnpjFormatted: string | null;
+  vendorId?: string;
 }
 
-export default function VendorHeader({ vendorName, cnpjFormatted }: VendorHeaderProps) {
+function getShortCode(id: string) {
+  let hash = 0;
+  for (let i = 0; i < id.length; i++) {
+    hash = (hash << 5) - hash + id.charCodeAt(i);
+    hash |= 0;
+  }
+  const num = Math.abs(hash) % 1000000;
+  return num.toString().padStart(6, '0').replace(/(\d{3})(\d{3})/, '$1.$2');
+}
+
+export default function VendorHeader({ vendorName, cnpjFormatted, vendorId }: VendorHeaderProps) {
   const pathname = usePathname();
+
+  let displayName: React.ReactNode = vendorName;
+  if (vendorId) {
+    const code = getShortCode(vendorId);
+    const parts = vendorName.split(' - ');
+    if (parts.length > 1) {
+      displayName = (
+        <>
+          {parts[0]} <span className="text-orange-500 font-black px-1">{code}</span> - {parts.slice(1).join(' - ')}
+        </>
+      );
+    } else {
+      displayName = (
+        <>
+          <span className="text-orange-500 font-black pr-1">{code}</span> {vendorName}
+        </>
+      );
+    }
+  }
 
   return (
     <header className="bg-white border-b border-slate-100 sticky top-0 z-40">
@@ -22,11 +52,11 @@ export default function VendorHeader({ vendorName, cnpjFormatted }: VendorHeader
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ backgroundColor: P }}>
               <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z"/>
+                <path d="M13 10V3L4 14h7v7l9-11h-7z" />
               </svg>
             </div>
             <div>
-              <p className="font-bold text-slate-900 text-sm leading-tight">{vendorName}</p>
+              <p className="font-bold text-slate-900 text-sm leading-tight">{displayName}</p>
               {cnpjFormatted && <p className="text-[11px] text-slate-400">CNPJ {cnpjFormatted}</p>}
             </div>
           </div>
@@ -58,6 +88,12 @@ export default function VendorHeader({ vendorName, cnpjFormatted }: VendorHeader
             active={pathname.startsWith('/dashboard/waiter')} 
             label="Garçom" 
             icon={<svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" /></svg>} 
+          />
+          <NavTab 
+            href="/dashboard/vendor/settings" 
+            active={pathname.startsWith('/dashboard/vendor/settings')} 
+            label="Configurar" 
+            icon={<svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>} 
           />
         </nav>
       </div>

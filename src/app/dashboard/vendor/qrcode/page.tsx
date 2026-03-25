@@ -26,9 +26,15 @@ export default async function QrCodePage() {
     .from('vendors')
     .select('id, name')
     .eq('owner_id', user.id)
-    .limit(1);
+    .eq('active', true);
 
-  const vendor = vendors?.[0] || null;
+  const { cookies } = await import('next/headers');
+  const cookieStore = await cookies();
+  const selectedId = cookieStore.get('selected_vendor_id')?.value;
+
+  const vendor = selectedId 
+    ? vendors?.find(v => v.id === selectedId) || vendors?.[0]
+    : vendors?.[0] || null;
 
   if (!vendor) redirect('/dashboard/vendor');
 

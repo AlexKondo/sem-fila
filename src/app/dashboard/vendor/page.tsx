@@ -36,41 +36,27 @@ export default async function VendorDashboardPage() {
     ? vendors?.find(v => v.id === selectedId) || vendors?.[0]
     : vendors?.[0] || null;
 
-  // Conta pedidos ativos e calcula receita do dia
+  let todayOrders: any[] = [];
+  let activeOrders: any[] = [];
+  
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-
-  let todayOrders: any[] = [];
-  try {
-    if (vendor) {
-      const { data } = await adminSupabase
-        .from('orders')
-        .select('total_price, status')
-        .eq('vendor_id', vendor.id)
-        .gte('created_at', today.toISOString());
-      todayOrders = data || [];
+  
+  if (vendor) {
+    try {
+      const [todayRes, activeRes] = await Promise.all([
+        adminSupabase.from('orders').select('total_price, status').eq('vendor_id', vendor.id).gte('created_at', today.toISOString()),
+        adminSupabase.from('orders').select(`*, order_items(id, quantity, unit_price, menu_items(id, name))`).eq('vendor_id', vendor.id).in('status', ['received', 'preparing', 'almost_ready', 'ready', 'delivered', 'cancelled']).gte('created_at', today.toISOString()).order('created_at', { ascending: true })
+      ]);
+      todayOrders = todayRes.data || [];
+      activeOrders = (activeRes.data || []).filter((o: any) => o.status !== 'cancelled' || o.payment_status === 'paid');
+    } catch (e) {
+      console.error("Erro massivo ao processar Promise.all no Vendor Dashboard:", e);
     }
-  } catch (e) {
-    console.error("Erro ao processar todayOrders:", e);
   }
 
   const todayRevenue = todayOrders.reduce((s, o) => s + Number(o.total_price || 0), 0);
   const todayCount = todayOrders.length;
-
-  let activeOrders: any[] = [];
-  try {
-    if (vendor) {
-      const { data } = await adminSupabase
-        .from('orders')
-        .select(`*, order_items(id, quantity, unit_price, menu_items(id, name))`)
-        .eq('vendor_id', vendor.id)
-        .in('status', ['received', 'preparing', 'almost_ready', 'ready'])
-        .order('created_at', { ascending: true });
-      activeOrders = data || [];
-    }
-  } catch (e) {
-    console.error("Erro ao buscar activeOrders:", e);
-  }
 
   if (!vendor) {
     const VendorOnboarding = (await import('@/components/dashboard/VendorOnboarding')).default;

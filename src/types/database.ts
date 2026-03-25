@@ -11,6 +11,9 @@ export interface Profile {
   name: string | null;
   phone: string | null;
   role: AppRole;
+  cpf?: string | null;
+  birthday_day?: number | null;
+  birthday_month?: number | null;
   created_at: string;
   updated_at: string;
 }
@@ -47,6 +50,13 @@ export interface Vendor {
   accept_pix: boolean;
   accept_card: boolean;
   active: boolean;
+  business_type: string;
+  table_delivery: boolean;
+  service_fee_percentage: number;
+  couvert_fee: number;
+  active_coupon_code: string | null;
+  discount_percentage: number;
+  allow_waiter_calls: boolean;
   created_at: string;
   updated_at: string;
 }

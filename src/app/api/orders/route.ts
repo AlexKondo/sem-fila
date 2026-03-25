@@ -55,7 +55,7 @@ export async function POST(request: Request) {
   // Verifica se o vendor existe e está ativo
   const { data: vendor, error: vendorError } = await supabase
     .from('vendors')
-    .select('id, active, avg_prep_time')
+    .select('id, active, avg_prep_time, service_fee_percentage, couvert_fee')
     .eq('id', vendor_id)
     .eq('active', true)
     .single();
@@ -80,9 +80,12 @@ export async function POST(request: Request) {
   // Calcula total no servidor
   const safeMenuItems = menuItems as unknown as { id: string; price: number }[];
   const priceMap = Object.fromEntries(safeMenuItems.map((m) => [m.id, m.price]));
-  const total_price = items.reduce((sum, item) => {
+  const subtotal = items.reduce((sum, item) => {
     return sum + (priceMap[item.menu_item_id] ?? 0) * item.quantity;
   }, 0);
+
+  const serviceFee = (subtotal * (vendor.service_fee_percentage || 0)) / 100;
+  const total_price = subtotal + serviceFee + (vendor.couvert_fee || 0);
 
   function generatePickupCode() {
     const letters = 'ABCDEFGHJKLMNPQRSTUVWXYZ'; // Sem 'I' e 'O' para evitar confundir com 1 e 0

@@ -1,12 +1,8 @@
-// Gestão de cardápio do vendedor
-
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
-import MenuManager from '@/components/dashboard/MenuManager';
-import Link from 'next/link';
-import { ArrowLeft } from 'lucide-react';
+import VendorSettingsForm from '@/components/dashboard/VendorSettingsForm';
 
-export default async function VendorMenuPage() {
+export default async function VendorSettingsPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect('/login');
@@ -16,7 +12,7 @@ export default async function VendorMenuPage() {
 
   const { data: vendors } = await adminSupabase
     .from('vendors')
-    .select('id, name')
+    .select('*')
     .eq('owner_id', user.id)
     .eq('active', true);
 
@@ -30,17 +26,14 @@ export default async function VendorMenuPage() {
 
   if (!vendor) redirect('/dashboard/vendor');
 
-  const { data: items } = await adminSupabase
-    .from('menu_items')
-    .select('*')
-    .eq('vendor_id', vendor.id)
-    .order('position', { ascending: true });
-
   return (
-    <main className="min-h-screen bg-gray-50">
-
-
-      <MenuManager initialItems={items ?? []} vendorId={vendor.id} />
+    <main className="min-h-screen bg-gray-50 pb-20">
+      <div className="max-w-2xl mx-auto px-4 py-6">
+        <h1 className="text-xl font-bold text-gray-900 mb-1">Configurações da Loja</h1>
+        <p className="text-sm text-gray-500 mb-6">Ajuste as taxas, tipo de operação e cupons ativos para "{vendor.name}".</p>
+        
+        <VendorSettingsForm vendor={vendor} />
+      </div>
     </main>
   );
 }

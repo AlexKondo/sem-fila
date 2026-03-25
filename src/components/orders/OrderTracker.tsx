@@ -2,8 +2,9 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
+import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
-import { formatCurrency, ORDER_STATUS_LABEL } from '@/lib/utils';
+import { formatCurrency, ORDER_STATUS_LABEL, getRealNotes } from '@/lib/utils';
 import type { OrderStatus } from '@/types/database';
 
 const PRIMARY = '#ec5b13';
@@ -28,6 +29,7 @@ export default function OrderTracker({ initialOrder }: { initialOrder: any }) {
     paymentResult === 'success' || paymentResult === 'cancelled'
   );
   const [payingStripe, setPayingStripe] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
 
   useEffect(() => {
     const supabase = createClient();
@@ -58,9 +60,23 @@ export default function OrderTracker({ initialOrder }: { initialOrder: any }) {
     else { navigator.clipboard.writeText(url); alert('Link copiado!'); }
   }
 
+  async function handleCancelOrder() {
+    if (!confirm('Deseja realmente cancelar este pedido e fazer um novo?')) return;
+    setCancelling(true);
+    const supabase = createClient();
+    await supabase.from('orders').update({ status: 'cancelled' }).eq('id', order.id);
+    setCancelling(false);
+  }
+
   useEffect(() => {
-    if (paymentResult === 'success' && order.payment_status !== 'paid') {
-      setOrder((prev: any) => ({ ...prev, payment_status: 'paid' }));
+    if (paymentResult) {
+      if (paymentResult === 'success' && order.payment_status !== 'paid') {
+        setOrder((prev: any) => ({ ...prev, payment_status: 'paid' }));
+      }
+      // Remove o parâmetro ?payment= pra não duplicar quando dar F5
+      const url = new URL(window.location.href);
+      url.searchParams.delete('payment');
+      window.history.replaceState({}, '', url.toString());
     }
   }, [paymentResult, order.payment_status]);
 
@@ -69,6 +85,9 @@ export default function OrderTracker({ initialOrder }: { initialOrder: any }) {
   const isPaid = order.payment_status === 'paid';
   const needsPayment = order.payment_status === 'pending' && 
                        !['cancelled', 'ready', 'delivered'].includes(order.status);
+                       
+  const subtotal = order.order_items?.reduce((acc: number, item: any) => acc + (item.unit_price * item.quantity), 0) || 0;
+  const hasFees = order.total_price > subtotal + 0.01;
 
   return (
     <main className="min-h-screen" style={{ backgroundColor: '#f8f6f6', fontFamily: "'Public Sans', sans-serif" }}>
@@ -258,19 +277,52 @@ export default function OrderTracker({ initialOrder }: { initialOrder: any }) {
                 <span className="font-semibold text-slate-900">{formatCurrency(item.unit_price * item.quantity)}</span>
               </div>
             ))}
-            <div className="border-t border-slate-100 pt-2.5 flex items-center justify-between">
-              <span className="font-bold text-slate-900">Total</span>
-              <span className="font-black text-base" style={{ color: PRIMARY }}>{formatCurrency(order.total_price)}</span>
+            
+            {hasFees && order.vendors?.service_fee_percentage > 0 && (
+              <div className="flex items-center justify-between text-sm text-slate-500 pt-2">
+                <span>Taxa de Serviço ({order.vendors.service_fee_percentage}%)</span>
+                <span>{formatCurrency((subtotal * order.vendors.service_fee_percentage) / 100)}</span>
+              </div>
+            )}
+            {hasFees && order.vendors?.couvert_fee > 0 && (
+              <div className="flex items-center justify-between text-sm text-slate-500 pt-1">
+                <span>Couvert Artístico</span>
+                <span>{formatCurrency(order.vendors.couvert_fee)}</span>
+              </div>
+            )}
+
+            <div className="border-t border-slate-100 pt-3 mt-1 flex items-center justify-between">
+              <span className="font-bold text-slate-900 text-base">Total Final</span>
+              <span className="font-black text-lg" style={{ color: PRIMARY }}>{formatCurrency(order.total_price)}</span>
             </div>
           </div>
         </div>
 
-        {order.notes && (
+        {getRealNotes(order.notes) && (
           <div className="bg-white rounded-2xl border border-slate-100 p-4">
             <p className="text-xs text-slate-400 font-medium mb-1">Observações</p>
-            <p className="text-sm text-slate-700">{order.notes}</p>
+            <p className="text-sm text-slate-700">{getRealNotes(order.notes)}</p>
           </div>
         )}
+
+        <div className="pt-4 pb-12 flex flex-col gap-3">
+          <Link 
+            href="/"
+            className="w-full py-4 rounded-2xl text-center font-black text-slate-700 bg-white border-2 border-slate-100 hover:border-orange-500 hover:text-orange-500 transition-colors shadow-sm"
+          >
+            FAZER NOVO PEDIDO
+          </Link>
+
+          {!isCancelled && !isPaid && (order.status === 'received' || needsPayment) && (
+            <button 
+              onClick={handleCancelOrder}
+              disabled={cancelling}
+              className="text-center font-semibold text-slate-400 hover:text-red-500 text-sm py-2 mt-2 disabled:opacity-50 transition"
+            >
+              {cancelling ? 'Cancelando...' : 'Me arrependi, quero cancelar o pedido'}
+            </button>
+          )}
+        </div>
       </div>
     </main>
   );

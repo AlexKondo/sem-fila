@@ -25,7 +25,7 @@ export default function VendorSelector({ vendors }: VendorSelectorProps) {
         <div className="text-center mb-6">
           <div className="w-14 h-14 rounded-3xl bg-[#ec5b13] flex items-center justify-center text-white mx-auto shadow-lg mb-3">
              <svg className="w-7 h-7" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z"/>
+                <path d="M13 10V3L4 14h7v7l9-11h-7z" />
              </svg>
           </div>
           <h1 className="text-2xl font-black text-slate-900 leading-tight">Escolha sua Marca</h1>

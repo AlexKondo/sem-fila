@@ -47,6 +47,7 @@ export default async function VendorDashboardLayout({ children }: { children: Re
         <VendorHeader 
           vendorName={vendor.name} 
           cnpjFormatted={cnpjFormatted} 
+          vendorId={vendor.id}
         />
       )}
       {children}
