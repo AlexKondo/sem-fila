@@ -147,7 +147,7 @@ function NavTab({ href, label, icon, active, badge }: { href: string; label: str
   return (
     <Link
       href={href}
-      className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold shrink-0 transition-colors relative"
+      className="flex items-center gap-1.5 px-3 py-2 pt-[5px] rounded-xl text-xs font-semibold shrink-0 transition-colors relative"
       style={active
         ? { backgroundColor: P + '15', color: P }
         : { color: '#64748b' }
