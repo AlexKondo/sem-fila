@@ -17,14 +17,15 @@ interface MenuClientProps {
   waitTime: string;
 }
 
+interface Extra { name: string; price: number; }
+
 export default function MenuClient({ vendor, items, mesa, waitTime }: MenuClientProps) {
   const [selectedCat, setSelectedCat] = useState('Todos');
   const [customerName, setCustomerName] = useState<string | null>(null);
   
-  // Custom Waiter Modal State
-  const [showWaiterModal, setShowWaiterModal] = useState(false);
-  const [modalMesa, setModalMesa] = useState(mesa || '');
-  const [callStatus, setCallStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+  // Extras Modal State
+  const [extrasModal, setExtrasModal] = useState<MenuItem | null>(null);
+  const [selectedExtras, setSelectedExtras] = useState<Extra[]>([]);
 
   useEffect(() => {
     const supabase = createClient();
@@ -39,6 +40,42 @@ export default function MenuClient({ vendor, items, mesa, waitTime }: MenuClient
       }
     });
   }, []);
+
+  // Custom Waiter Modal State
+  const [showWaiterModal, setShowWaiterModal] = useState(false);
+  const [modalMesa, setModalMesa] = useState(mesa || '');
+  const [callStatus, setCallStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+
+  // Intercepts the add-to-cart click to show extras modal if needed
+  function handleAddToCart(item: MenuItem) {
+    const extras = (item as any).extras as Extra[] | undefined;
+    if (extras && extras.length > 0) {
+      setSelectedExtras([]);
+      setExtrasModal(item);
+    } else {
+      document.dispatchEvent(new CustomEvent('add-to-cart', { detail: { id: item.id, name: item.name, price: item.price } }));
+    }
+  }
+
+  function confirmExtras() {
+    if (!extrasModal) return;
+    const extrasTotal = selectedExtras.reduce((s, e) => s + e.price, 0);
+    const extrasLabel = selectedExtras.length > 0 ? ` + ${selectedExtras.map(e => e.name).join(', ')}` : '';
+    document.dispatchEvent(new CustomEvent('add-to-cart', { detail: {
+      id: extrasModal.id + (selectedExtras.length ? '-' + selectedExtras.map(e => e.name).join('_') : ''),
+      name: extrasModal.name + extrasLabel,
+      price: extrasModal.price + extrasTotal
+    }}));
+    setExtrasModal(null);
+  }
+
+  function toggleExtra(extra: Extra) {
+    setSelectedExtras(prev => {
+      const exists = prev.find(e => e.name === extra.name);
+      if (exists) return prev.filter(e => e.name !== extra.name);
+      return [...prev, extra];
+    });
+  }
 
   async function handleCallWaiter() {
     setCallStatus('idle');
@@ -199,7 +236,7 @@ export default function MenuClient({ vendor, items, mesa, waitTime }: MenuClient
                 </div>
                 <div className="flex justify-end mt-2">
                   <button
-                    data-add-to-cart={JSON.stringify({ id: item.id, name: item.name, price: item.price })}
+                    onClick={() => handleAddToCart(item)}
                     className="px-4 py-1.5 text-xs font-bold rounded-full flex items-center gap-1 transition-colors hover:opacity-90"
                     style={{ backgroundColor: '#ec5b131a', color: '#ec5b13' }}
                   >
@@ -216,6 +253,67 @@ export default function MenuClient({ vendor, items, mesa, waitTime }: MenuClient
       </main>
 
       <CartSheet vendor={vendor} tableNumber={mesa} />
+
+      {/* Extras Modal */}
+      {extrasModal && (
+        <div className="fixed inset-0 z-[100] flex items-end justify-center bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="w-full max-w-md bg-white rounded-t-3xl shadow-2xl overflow-hidden animate-in slide-in-from-bottom-4 duration-300">
+            <div className="flex justify-center pt-3 pb-1">
+              <div className="w-10 h-1 bg-slate-200 rounded-full" />
+            </div>
+            <div className="px-5 py-3 border-b border-slate-100 flex justify-between items-center">
+              <div>
+                <h2 className="font-bold text-slate-900">{extrasModal.name}</h2>
+                <p className="text-sm" style={{ color: P }}>{formatCurrency(extrasModal.price)}</p>
+              </div>
+              <button onClick={() => setExtrasModal(null)} className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-400">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+              </button>
+            </div>
+
+            <div className="px-5 py-4 max-h-64 overflow-y-auto">
+              <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Adicionais / Opcionais</p>
+              <div className="space-y-2">
+                {((extrasModal as any).extras as Extra[]).map((extra, idx) => {
+                  const selected = !!selectedExtras.find(e => e.name === extra.name);
+                  return (
+                    <button
+                      key={idx}
+                      onClick={() => toggleExtra(extra)}
+                      className={`w-full flex items-center justify-between p-3 rounded-xl border-2 transition-all text-left ${
+                        selected ? 'border-orange-500 bg-orange-50' : 'border-slate-100 bg-white'
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <span className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-colors ${
+                          selected ? 'border-orange-500 bg-orange-500' : 'border-slate-300'
+                        }`}>
+                          {selected && <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>}
+                        </span>
+                        <span className="text-sm font-semibold text-slate-800">{extra.name}</span>
+                      </div>
+                      <span className="text-sm font-bold" style={{ color: P }}>+{formatCurrency(extra.price)}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="px-5 py-4 border-t border-slate-100">
+              <button
+                onClick={confirmExtras}
+                className="w-full h-14 font-bold rounded-xl text-white shadow-lg transition flex items-center justify-between px-6"
+                style={{ backgroundColor: P }}
+              >
+                <span>Adicionar ao carrinho</span>
+                <span className="font-black text-lg">
+                  {formatCurrency(extrasModal.price + selectedExtras.reduce((s, e) => s + e.price, 0))}
+                </span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Custom Waiter Modal */}
       {showWaiterModal && (

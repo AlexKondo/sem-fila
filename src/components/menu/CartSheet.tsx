@@ -60,8 +60,15 @@ export default function CartSheet({ vendor, tableNumber }: CartSheetProps) {
       if (!btn) return;
       addItem(JSON.parse((btn as HTMLElement).dataset.addToCart!));
     }
+    function onCustomAddToCart(e: Event) {
+      addItem((e as CustomEvent).detail);
+    }
     document.addEventListener('click', onAddToCart);
-    return () => document.removeEventListener('click', onAddToCart);
+    document.addEventListener('add-to-cart', onCustomAddToCart);
+    return () => {
+      document.removeEventListener('click', onAddToCart);
+      document.removeEventListener('add-to-cart', onCustomAddToCart);
+    };
   }, []);
 
   const addItem = useCallback((item: { id: string; name: string; price: number }) => {
