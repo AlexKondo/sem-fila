@@ -1,8 +1,10 @@
 'use client';
 
+import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import LogoutButton from '@/components/ui/LogoutButton';
+import { createClient } from '@/lib/supabase/client';
 
 const P = '#ec5b13';
 
@@ -24,6 +26,47 @@ function getShortCode(id: string) {
 
 export default function VendorHeader({ vendorName, cnpjFormatted, vendorId }: VendorHeaderProps) {
   const pathname = usePathname();
+  const [pendingCalls, setPendingCalls] = React.useState(0);
+
+  React.useEffect(() => {
+    if (!vendorId) return;
+
+    const supabase = createClient();
+    
+    // Busca inicial de chamadas pendentes
+    supabase
+      .from('waiter_calls')
+      .select('id', { count: 'exact', head: true })
+      .eq('vendor_id', vendorId)
+      .eq('status', 'pending')
+      .then(({ count }) => {
+        setPendingCalls(count || 0);
+      });
+
+    // Inscrição Realtime para atualizar o badge
+    const channel = supabase
+      .channel(`header-waiter-${vendorId}`)
+      .on('postgres_changes', { 
+        event: '*', 
+        schema: 'public', 
+        table: 'waiter_calls', 
+        filter: `vendor_id=eq.${vendorId}` 
+      }, () => {
+        supabase
+          .from('waiter_calls')
+          .select('id', { count: 'exact', head: true })
+          .eq('vendor_id', vendorId)
+          .eq('status', 'pending')
+          .then(({ count }) => {
+            setPendingCalls(count || 0);
+          });
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [vendorId]);
 
   let displayName: React.ReactNode = vendorName;
   if (vendorId) {
@@ -48,9 +91,8 @@ export default function VendorHeader({ vendorName, cnpjFormatted, vendorId }: Ve
     <header className="bg-white border-b border-slate-100 sticky top-0 z-40">
       <div className="max-w-2xl mx-auto px-4 py-3">
         <div className="flex items-center justify-between">
-          {/* Logo + vendor name */}
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ backgroundColor: P }}>
+            <div className="w-9 h-9 rounded-xl flex items-center justify-center shadow-sm" style={{ backgroundColor: P }}>
               <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M13 10V3L4 14h7v7l9-11h-7z" />
               </svg>
@@ -63,7 +105,6 @@ export default function VendorHeader({ vendorName, cnpjFormatted, vendorId }: Ve
           <LogoutButton />
         </div>
 
-        {/* Nav tabs */}
         <nav className="flex gap-1 mt-3 overflow-x-auto no-scrollbar">
           <NavTab 
             href="/dashboard/vendor" 
@@ -87,6 +128,7 @@ export default function VendorHeader({ vendorName, cnpjFormatted, vendorId }: Ve
             href="/dashboard/vendor/waiter" 
             active={pathname.startsWith('/dashboard/vendor/waiter')} 
             label="Garçom" 
+            badge={pendingCalls > 0}
             icon={<svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" /></svg>} 
           />
           <NavTab 
@@ -101,11 +143,11 @@ export default function VendorHeader({ vendorName, cnpjFormatted, vendorId }: Ve
   );
 }
 
-function NavTab({ href, label, icon, active }: { href: string; label: string; icon: React.ReactNode; active?: boolean }) {
+function NavTab({ href, label, icon, active, badge }: { href: string; label: string; icon: React.ReactNode; active?: boolean; badge?: boolean }) {
   return (
     <Link
       href={href}
-      className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold shrink-0 transition-colors"
+      className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold shrink-0 transition-colors relative"
       style={active
         ? { backgroundColor: P + '15', color: P }
         : { color: '#64748b' }
@@ -113,6 +155,12 @@ function NavTab({ href, label, icon, active }: { href: string; label: string; ic
     >
       {icon}
       {label}
+      {badge && (
+        <span className="absolute -top-1 -right-1 flex h-3 w-3">
+          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+          <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500 border border-white"></span>
+        </span>
+      )}
     </Link>
   );
 }
