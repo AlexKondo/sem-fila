@@ -3,7 +3,7 @@ import { createClient } from '@/lib/supabase/server';
 import ProfileForm from '@/components/profile/ProfileForm';
 import LogoutButton from '@/components/ui/LogoutButton';
 import Link from 'next/link';
-import { ArrowLeft, ChevronRight, ShoppingBag, User, CreditCard, Heart, LogOut } from 'lucide-react';
+import { ArrowLeft, ChevronRight, ShoppingBag, User, CreditCard, LogOut } from 'lucide-react';
 
 export default async function ProfilePage({ searchParams }: { searchParams: Promise<{ edit?: string }> }) {
   const params = await searchParams;
@@ -60,7 +60,7 @@ export default async function ProfilePage({ searchParams }: { searchParams: Prom
             <div className="space-y-2 flex-1">
               <p className="text-xs font-bold text-slate-400 uppercase tracking-widest px-2 mt-4 mb-2">Geral</p>
               
-              <Link href="/order" className="flex items-center justify-between p-4 bg-white rounded-2xl shadow-sm border border-slate-50 hover:bg-slate-50 transition-colors group">
+              <Link href="/profile/orders" className="flex items-center justify-between p-4 bg-white rounded-2xl shadow-sm border border-slate-50 hover:bg-slate-50 transition-colors group">
                 <div className="flex items-center gap-4">
                   <div className="p-2.5 rounded-xl bg-orange-50 text-orange-500 group-hover:bg-orange-500 group-hover:text-white transition-colors">
                     <ShoppingBag className="w-5 h-5" />
@@ -80,27 +80,20 @@ export default async function ProfilePage({ searchParams }: { searchParams: Prom
                 <ChevronRight className="w-5 h-5 text-slate-300" />
               </Link>
 
-              <p className="text-xs font-bold text-slate-400 uppercase tracking-widest px-2 mt-6 mb-2">Preferências</p>
+              <p className="text-xs font-bold text-slate-400 uppercase tracking-widest px-2 mt-6 mb-2">Pagamentos</p>
 
-              <button className="w-full flex items-center justify-between p-4 bg-white rounded-2xl shadow-sm border border-slate-50 opacity-60 cursor-not-allowed">
+              <Link href="/profile/payments" className="flex items-center justify-between p-4 bg-white rounded-2xl shadow-sm border border-slate-50 hover:bg-slate-50 transition-colors group">
                 <div className="flex items-center gap-4">
-                  <div className="p-2.5 rounded-xl bg-pink-50 text-pink-500">
-                    <Heart className="w-5 h-5" />
-                  </div>
-                  <span className="font-bold text-slate-700">Favoritos</span>
-                </div>
-                <span className="text-xs font-semibold text-slate-400 bg-slate-100 px-2 py-1 rounded-md">Em breve</span>
-              </button>
-
-              <button className="w-full flex items-center justify-between p-4 bg-white rounded-2xl shadow-sm border border-slate-50 opacity-60 cursor-not-allowed">
-                <div className="flex items-center gap-4">
-                  <div className="p-2.5 rounded-xl bg-emerald-50 text-emerald-500">
+                  <div className="p-2.5 rounded-xl bg-emerald-50 text-emerald-500 group-hover:bg-emerald-500 group-hover:text-white transition-colors">
                     <CreditCard className="w-5 h-5" />
                   </div>
-                  <span className="font-bold text-slate-700">Pagamentos</span>
+                  <div>
+                    <span className="font-bold text-slate-700">Cartão Salvo</span>
+                    <p className="text-xs text-slate-400 mt-0.5">Gerencie seu cartão de crédito</p>
+                  </div>
                 </div>
-                <span className="text-xs font-semibold text-slate-400 bg-slate-100 px-2 py-1 rounded-md">Em breve</span>
-              </button>
+                <ChevronRight className="w-5 h-5 text-slate-300" />
+              </Link>
             </div>
 
             {/* Link para voltar ao scan ativo na barra */}

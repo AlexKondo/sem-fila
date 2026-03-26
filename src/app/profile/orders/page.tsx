@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 import { formatCurrency, ORDER_STATUS_LABEL } from '@/lib/utils';
+import { UserCircle } from 'lucide-react';
 import type { OrderStatus } from '@/types/database';
 
 const P = '#ec5b13';
@@ -99,11 +100,14 @@ export default function UserOrdersDashboard() {
             <h1 className="text-2xl font-black text-slate-900 tracking-tight">Meus Pedidos</h1>
             <p className="text-sm text-slate-400 font-medium">Acompanhe tudo em tempo real</p>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
             {userName && (
               <span className="text-sm font-semibold text-slate-600 max-w-[120px] truncate">{userName}</span>
             )}
-            <Link href="/" className="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center text-slate-400">
+            <Link href="/profile" className="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 hover:bg-slate-100 transition-colors">
+              <UserCircle className="w-6 h-6" />
+            </Link>
+            <Link href="/" className="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 hover:bg-slate-100 transition-colors">
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"/></svg>
             </Link>
           </div>
