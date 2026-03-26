@@ -180,8 +180,8 @@ export default function CartSheet({ vendor, tableNumber }: CartSheetProps) {
       });
       const data = await res.json();
       if (!res.ok) { setError(data.error ?? 'Erro ao fazer pedido.'); setLoading(false); return; }
-      // Redireciona com ?payment=success para exibir confirmação de pagamento
-      router.push(`/order/${data.order_id}?payment=success`);
+      // Redireciona para o Dashboard de Pedidos do Usuário com ?payment=success
+      router.push(`/profile/orders?payment=success&new_order=${data.order_id}`);
     } catch (err: any) {
       setError('Problema na conexão. Tente novamente.');
       setLoading(false);
