@@ -9,7 +9,15 @@ import { createClient } from '@/lib/supabase/client';
 const STORAGE_KEY = 'qp_customer';
 const P = '#ec5b13';
 
-interface CartItem { id: string; name: string; price: number; quantity: number; breakdown?: { label: string; price: number }[]; }
+interface CartItem { 
+  id: string; 
+  name: string; 
+  price: number; 
+  quantity: number;
+  basePrice?: number;
+  extrasBreakdown?: { name: string; price: number; qty: number }[];
+}
+
 interface CartSheetProps { vendor: Vendor; tableNumber?: string; }
 type Step = 'cart' | 'identify';
 
@@ -71,11 +79,11 @@ export default function CartSheet({ vendor, tableNumber }: CartSheetProps) {
     };
   }, []);
 
-  const addItem = useCallback((item: { id: string; name: string; price: number; breakdown?: { label: string; price: number }[] }) => {
+  const addItem = useCallback((item: { id: string; name: string; price: number; basePrice?: number; extrasBreakdown?: { name: string; price: number; qty: number }[] }) => {
     setItems(prev => {
       const ex = prev.find(i => i.id === item.id);
       if (ex) return prev.map(i => i.id === item.id ? { ...i, quantity: i.quantity + 1 } : i);
-      return [...prev, { ...item, quantity: 1 }];
+      return [...prev, { id: item.id, name: item.name, price: item.price, quantity: 1, basePrice: item.basePrice, extrasBreakdown: item.extrasBreakdown }];
     });
   }, []);
 
@@ -233,12 +241,13 @@ export default function CartSheet({ vendor, tableNumber }: CartSheetProps) {
                     <div key={item.id} className="flex items-start gap-3">
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-semibold text-slate-900 leading-tight">{item.name.split(' + ')[0]}</p>
-                        {/* Price breakdown */}
-                        {item.breakdown && item.breakdown.length > 0 ? (
+                        {/* Discriminação de preços */}
+                        {item.basePrice != null ? (
                           <div className="mt-0.5 space-y-0.5">
-                            {item.breakdown.map((line, i) => (
+                            <p className="text-xs text-slate-400">{formatCurrency(item.basePrice)}</p>
+                            {(item.extrasBreakdown || []).map((e, i) => (
                               <p key={i} className="text-xs text-slate-400">
-                                {line.label}: <span className="font-semibold">{formatCurrency(line.price)}</span>
+                                {e.qty > 1 ? `${e.qty}x ` : ''}+ {e.name} {formatCurrency(e.price * e.qty)}
                               </p>
                             ))}
                           </div>

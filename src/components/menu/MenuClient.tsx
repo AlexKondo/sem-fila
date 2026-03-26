@@ -51,30 +51,22 @@ export default function MenuClient({ vendor, items, mesa, waitTime }: MenuClient
   function handleAddToCart(item: MenuItem) {
     const extras = (item as any).extras as Extra[] | undefined;
     const itemExtrasQty = extrasQty[item.id] || {};
-    const selectedExtras = (extras || []).filter(e => (itemExtrasQty[e.name] || 0) > 0);
+    const activeExtras = (extras || []).filter(e => (itemExtrasQty[e.name] || 0) > 0);
     
-    const extrasTotal = selectedExtras.reduce((s, e) => s + e.price * (itemExtrasQty[e.name] || 0), 0);
-    const extrasLabel = selectedExtras.length > 0
-      ? ` + ${selectedExtras.map(e => `${itemExtrasQty[e.name] > 1 ? itemExtrasQty[e.name] + 'x ' : ''}${e.name}`).join(', ')}`
+    const extrasTotal = activeExtras.reduce((s, e) => s + e.price * (itemExtrasQty[e.name] || 0), 0);
+    const extrasBreakdown = activeExtras.map(e => ({ name: e.name, price: e.price, qty: itemExtrasQty[e.name] || 1 }));
+    const extrasLabel = activeExtras.length > 0
+      ? ` + ${activeExtras.map(e => `${itemExtrasQty[e.name] > 1 ? itemExtrasQty[e.name] + 'x ' : ''}${e.name}`).join(', ')}`
       : '';
-
-    // Build price breakdown for cart display
-    const breakdown = selectedExtras.length > 0 ? [
-      { label: item.name, price: item.price },
-      ...selectedExtras.map(e => ({
-        label: `${itemExtrasQty[e.name] > 1 ? `${itemExtrasQty[e.name]}x ` : ''}${e.name}`,
-        price: e.price * (itemExtrasQty[e.name] || 1)
-      }))
-    ] : undefined;
     
     document.dispatchEvent(new CustomEvent('add-to-cart', { detail: {
       id: item.id + (extrasLabel ? '-' + Object.entries(itemExtrasQty).filter(([,v]) => v > 0).map(([k,v]) => `${k}x${v}`).join('_') : ''),
       name: item.name + extrasLabel,
       price: item.price + extrasTotal,
-      breakdown
+      basePrice: activeExtras.length > 0 ? item.price : undefined,
+      extrasBreakdown: activeExtras.length > 0 ? extrasBreakdown : undefined,
     }}));
 
-    // Reset this item's extras after adding
     setExtrasQty(prev => ({ ...prev, [item.id]: {} }));
     setExpandedItem(null);
   }
