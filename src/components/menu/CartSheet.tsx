@@ -9,7 +9,9 @@ import { createClient } from '@/lib/supabase/client';
 const STORAGE_KEY = 'qp_customer';
 const P = '#ec5b13';
 
-interface CartItem { id: string; name: string; price: number; quantity: number; }
+interface Extra { name: string; price: number; }
+interface CartItem { id: string; name: string; price: number; quantity: number; extras?: Extra[]; }
+
 interface CartSheetProps { vendor: Vendor; tableNumber?: string; }
 type Step = 'cart' | 'identify';
 
@@ -71,11 +73,11 @@ export default function CartSheet({ vendor, tableNumber }: CartSheetProps) {
     };
   }, []);
 
-  const addItem = useCallback((item: { id: string; name: string; price: number }) => {
+  const addItem = useCallback((item: { id: string; name: string; price: number; extras?: Extra[] }) => {
     setItems(prev => {
       const ex = prev.find(i => i.id === item.id);
       if (ex) return prev.map(i => i.id === item.id ? { ...i, quantity: i.quantity + 1 } : i);
-      return [...prev, { ...item, quantity: 1 }];
+      return [...prev, { ...item, quantity: 1, extras: item.extras ?? [] }];
     });
   }, []);
 
@@ -230,9 +232,18 @@ export default function CartSheet({ vendor, tableNumber }: CartSheetProps) {
               <>
                 <div className="overflow-y-auto flex-1 px-5 py-4 space-y-3">
                   {items.map(item => (
-                    <div key={item.id} className="flex items-center gap-3">
+                    <div key={item.id} className="flex items-start gap-3">
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-semibold text-slate-900 leading-tight">{item.name}</p>
+                        {item.extras && item.extras.length > 0 && (
+                          <div className="flex flex-wrap gap-1 mt-1">
+                            {item.extras.map((e, i) => (
+                              <span key={i} className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-orange-50 text-orange-600 border border-orange-100">
+                                +{e.name} {formatCurrency(e.price)}
+                              </span>
+                            ))}
+                          </div>
+                        )}
                         <p className="text-xs text-slate-400 mt-0.5">{formatCurrency(item.price)} cada</p>
                       </div>
                       <div className="flex items-center gap-2">

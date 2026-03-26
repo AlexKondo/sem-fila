@@ -61,11 +61,11 @@ export default function MenuClient({ vendor, items, mesa, waitTime }: MenuClient
   function confirmExtras() {
     if (!extrasModal) return;
     const extrasTotal = selectedExtras.reduce((s, e) => s + e.price, 0);
-    const extrasLabel = selectedExtras.length > 0 ? ` + ${selectedExtras.map(e => e.name).join(', ')}` : '';
     document.dispatchEvent(new CustomEvent('add-to-cart', { detail: {
       id: extrasModal.id + (selectedExtras.length ? '-' + selectedExtras.map(e => e.name).join('_') : ''),
-      name: extrasModal.name + extrasLabel,
-      price: extrasModal.price + extrasTotal
+      name: extrasModal.name,
+      price: extrasModal.price + extrasTotal,
+      extras: selectedExtras,
     }}));
     setExtrasModal(null);
   }
