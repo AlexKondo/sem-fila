@@ -33,13 +33,35 @@ export default function OrderTracker({ initialOrder }: { initialOrder: any }) {
 
   useEffect(() => {
     const supabase = createClient();
+
+    // 1. Realtime subscription para atualizações instantâneas
     const channel = supabase
       .channel(`order-${order.id}`)
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'orders', filter: `id=eq.${order.id}` },
         (payload) => setOrder((prev: typeof initialOrder) => ({ ...prev, ...payload.new }))
       )
       .subscribe();
-    return () => { supabase.removeChannel(channel); };
+
+    // 2. Polling de fallback a cada 4s (garante atualização mesmo se Realtime falhar ou RLS bloquear)
+    const poll = setInterval(async () => {
+      const { data } = await supabase
+        .from('orders')
+        .select('status, payment_status')
+        .eq('id', order.id)
+        .single();
+      if (data) {
+        setOrder((prev: typeof initialOrder) => ({
+          ...prev,
+          status: data.status,
+          payment_status: data.payment_status,
+        }));
+      }
+    }, 4000);
+
+    return () => {
+      supabase.removeChannel(channel);
+      clearInterval(poll);
+    };
   }, [order.id]);
 
   const handlePayWithStripe = useCallback(async () => {
