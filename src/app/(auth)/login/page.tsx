@@ -40,8 +40,9 @@ function LoginPageContent() {
 
     const role = (profile as any)?.role;
 
-    // 3. Redirecionamento baseado no papel (Role)
-    if (role === 'platform_admin') {
+    // 3. Redirecionamento baseado no papel (Role) ou email do dono
+    const ADMIN_EMAIL = 'alexandre.kondo@gmail.com';
+    if (role === 'platform_admin' || authData.user.email === ADMIN_EMAIL) {
       router.push('/dashboard/admin');
       router.refresh();
     } else if (role === 'vendor') {
