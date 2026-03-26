@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import Link from 'next/link';
-import { Users, Building2, CalendarDays, Store, ShoppingBag, TrendingUp, DollarSign, Settings, Award } from 'lucide-react';
+import { Users, Building2, CalendarDays, Store, ShoppingBag, TrendingUp, DollarSign, Settings, Award, UserCog } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
 import LogoutButton from '@/components/ui/LogoutButton';
 
@@ -119,9 +119,11 @@ export default async function AdminDashboardPage() {
             <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">Configurações</h2>
             <div className="grid grid-cols-1 gap-3">
               {[
-                { href: '/dashboard/admin/settings', label: 'Planos e Preços do Sistema', icon: DollarSign, desc: 'Gerencie quanto cada quiosque paga' },
-                { href: '/dashboard/admin/vendors', label: 'Gestão de Quiosques', icon: Store, desc: 'Aprovar e gerenciar parceiros' },
+                { href: '/dashboard/admin/events', label: 'Gestão de Eventos', icon: CalendarDays, desc: 'Criar e gerenciar eventos da plataforma' },
                 { href: '/dashboard/admin/organizations', label: 'Organizações', icon: Building2, desc: 'Empresas e grandes organizadores' },
+                { href: '/dashboard/admin/vendors', label: 'Gestão de Quiosques', icon: Store, desc: 'Aprovar e gerenciar parceiros' },
+                { href: '/dashboard/admin/users', label: 'Gestão de Usuários', icon: UserCog, desc: 'Usuários, roles e permissões' },
+                { href: '/dashboard/admin/settings', label: 'Planos e Preços', icon: DollarSign, desc: 'Gerencie quanto cada quiosque paga' },
               ].map(({ href, label, icon: Icon, desc }) => (
                 <Link
                   key={href}

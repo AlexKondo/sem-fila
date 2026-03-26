@@ -1,7 +1,7 @@
 // Tipos gerados do schema do Supabase (QuickPick)
 // Reflectem exatamente as tabelas do supabase/schema.sql
 
-export type AppRole = 'platform_admin' | 'org_admin' | 'vendor' | 'waitstaff' | 'customer';
+export type AppRole = 'platform_admin' | 'org_admin' | 'vendor' | 'waitstaff' | 'customer' | 'affiliate';
 export type OrderStatus = 'received' | 'preparing' | 'almost_ready' | 'ready' | 'delivered' | 'cancelled';
 export type PaymentStatus = 'pending' | 'paid' | 'failed' | 'refunded';
 export type PaymentMode = 'prepaid' | 'pay_on_pickup' | 'optional';
@@ -31,8 +31,12 @@ export interface Event {
   organization_id: string;
   name: string;
   location: string | null;
+  address: string | null;
+  description: string | null;
   start_date: string | null;
   end_date: string | null;
+  start_time: string | null;
+  end_time: string | null;
   active: boolean;
   created_at: string;
 }

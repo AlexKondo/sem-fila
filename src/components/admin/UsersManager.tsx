@@ -8,10 +8,11 @@ import type { AppRole } from '@/types/database';
 
 const ROLE_LABELS: Record<AppRole, string> = {
   platform_admin: 'Super Admin',
-  org_admin: 'Admin Org',
+  org_admin: 'Event Manager',
   vendor: 'Vendedor',
   waitstaff: 'Garçom',
   customer: 'Cliente',
+  affiliate: 'Afiliado',
 };
 
 const ROLE_COLORS: Record<AppRole, string> = {
@@ -20,6 +21,7 @@ const ROLE_COLORS: Record<AppRole, string> = {
   vendor: 'bg-orange-100 text-orange-700',
   waitstaff: 'bg-blue-100 text-blue-700',
   customer: 'bg-gray-100 text-gray-600',
+  affiliate: 'bg-pink-100 text-pink-700',
 };
 
 type UserProfile = { id: string; name: string | null; phone: string | null; role: AppRole; created_at: string };

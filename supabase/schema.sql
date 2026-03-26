@@ -8,11 +8,12 @@
 -- ==========================================
 
 CREATE TYPE public.app_role AS ENUM (
-  'platform_admin',
-  'org_admin',
-  'vendor',
-  'waitstaff',
-  'customer'
+  'platform_admin',  -- Master Admin da plataforma
+  'org_admin',       -- Event Manager (dono/organizador do evento)
+  'vendor',          -- Dono de barraca/quiosque
+  'waitstaff',       -- Garçom
+  'customer',        -- Cliente/usuário final
+  'affiliate'        -- Afiliado da plataforma
 );
 
 CREATE TYPE public.order_status AS ENUM (
@@ -145,9 +146,13 @@ CREATE TABLE public.events (
   id              uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   organization_id uuid NOT NULL REFERENCES public.organizations(id) ON DELETE CASCADE,
   name            text NOT NULL,
-  location        text,
-  start_date      timestamptz,
-  end_date        timestamptz,
+  location        text,         -- Nome do local (ex: Ginásio Municipal)
+  address         text,         -- Endereço completo (rua, número, cidade)
+  description     text,         -- Observação/descrição do evento
+  start_date      timestamptz,  -- Data de início
+  end_date        timestamptz,  -- Data de término
+  start_time      time,         -- Horário de abertura (ex: 09:00)
+  end_time        time,         -- Horário de encerramento (ex: 22:00)
   active          boolean NOT NULL DEFAULT true,
   created_at      timestamptz NOT NULL DEFAULT now()
 );

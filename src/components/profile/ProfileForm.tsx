@@ -8,10 +8,11 @@ import type { Profile, AppRole } from '@/types/database';
 
 const ROLE_LABELS: Record<AppRole, string> = {
   platform_admin: 'Super Admin',
-  org_admin: 'Admin de Organização',
+  org_admin: 'Event Manager',
   vendor: 'Vendedor',
   waitstaff: 'Garçom',
   customer: 'Cliente',
+  affiliate: 'Afiliado',
 };
 
 interface Props {
