@@ -23,31 +23,36 @@ function LoginPageContent() {
     setError(''); setLoading(true);
     const supabase = createClient();
 
-    const { error: authError } = await supabase.auth.signInWithPassword({ email, password });
-    if (authError) {
+    // 1. Faz o sign in
+    const { data: authData, error: authError } = await supabase.auth.signInWithPassword({ email, password });
+    if (authError || !authData.user) {
       setError('Email ou senha inválidos.');
       setLoading(false);
       return;
     }
 
-    // Verifica o perfil para determinar o papel do usuário
+    // 2. Busca o perfil explicitamente para este usuário
     const { data: profile } = await supabase
       .from('profiles')
       .select('role')
+      .eq('id', authData.user.id)
       .single();
 
     const role = (profile as any)?.role;
 
+    // 3. Redirecionamento baseado no papel (Role)
     if (role === 'platform_admin') {
       router.push('/dashboard/admin');
       router.refresh();
     } else if (role === 'vendor') {
-      router.push(redirect === '/dashboard/vendor' ? '/dashboard/vendor' : redirect);
+      // Vendors sempre vão para o dashboard principal por esta tela
+      router.push('/dashboard/vendor');
       router.refresh();
     } else {
-      // Cliente logado — Redireciona para o perfil de ajustes
-      router.push('/profile?edit=true');
-      router.refresh();
+      // Se for um cliente ('customer'), deslogamos e mostramos o aviso de "área de vendors"
+      await supabase.auth.signOut();
+      setError('__customer__');
+      setLoading(false);
     }
   }
 
