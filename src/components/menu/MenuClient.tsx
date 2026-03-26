@@ -29,19 +29,44 @@ export default function MenuClient({ vendor, items, mesa, waitTime }: MenuClient
   // Map of extra name -> quantity
   const [extraQty, setExtraQty] = useState<Record<string, number>>({});
 
+  const [liveItems, setLiveItems] = useState<MenuItem[]>(items);
+
   useEffect(() => {
     const supabase = createClient();
+
+    // 1. Sincronização do nome do Usuário
     supabase.auth.getUser().then(({ data }) => {
       if (data.user) {
         supabase.from('profiles').select('name, role').eq('id', data.user.id).single().then(({ data: p }) => {
-          // Só exibe se NÃO for um perfil de fornecedor/vendor
           if (p?.name && p.role !== 'vendor') {
             setCustomerName(p.name.split(' ')[0]);
           }
         });
       }
     });
-  }, []);
+
+    // 2. Realtime para o Cardápio (Aparecer itens rápido)
+    const channel = supabase
+      .channel(`menu-${vendor.id}`)
+      .on('postgres_changes', { 
+        event: '*', 
+        schema: 'public', 
+        table: 'menu_items', 
+        filter: `vendor_id=eq.${vendor.id}` 
+      }, async () => {
+        // Quando houver qualquer mudança, recarregamos a lista de itens
+        const { data } = await supabase
+          .from('menu_items')
+          .select('*')
+          .eq('vendor_id', vendor.id)
+          .eq('available', true)
+          .order('position', { ascending: true });
+        if (data) setLiveItems(data as MenuItem[]);
+      })
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, [vendor.id]);
 
   // Custom Waiter Modal State
   const [showWaiterModal, setShowWaiterModal] = useState(false);
@@ -118,16 +143,16 @@ export default function MenuClient({ vendor, items, mesa, waitTime }: MenuClient
   }
 
   // Extrai categorias únicas cadastradas nos itens do cardápio
-  const categories = ['Todos', ...Array.from(new Set(items.map(i => i.category).filter((c): c is string => !!c)))];
+  const categories = ['Todos', ...Array.from(new Set(liveItems.map(i => i.category).filter((c): c is string => !!c)))];
 
   const filteredItems = searchQuery.trim()
-    ? items.filter(i =>
+    ? liveItems.filter(i =>
         i.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         (i.description ?? '').toLowerCase().includes(searchQuery.toLowerCase())
       )
     : selectedCat === 'Todos'
-      ? items
-      : items.filter(i => i.category === selectedCat);
+      ? liveItems
+      : liveItems.filter(i => i.category === selectedCat);
 
   return (
     <div className="relative flex min-h-screen w-full flex-col max-w-md mx-auto pb-24" style={{ backgroundColor: '#f8f6f6' }}>
