@@ -32,7 +32,7 @@ export default function LandingPage() {
             <span style={{ color: '#ec5b13' }}>retire sem fila</span>
           </h1>
           <p className="text-slate-500 text-base mb-10 leading-relaxed">
-            Escaneie o QR Code da barraca, escolha o que quiser e acompanhe seu pedido em tempo real.
+            Escaneie o QR Code do Kiosk, Restaurante ou Food Truck, escolha o que quiser e acompanhe seu pedido em tempo real.
           </p>
 
           <Link
@@ -61,7 +61,7 @@ export default function LandingPage() {
           </div>
           <div className="space-y-4">
             {[
-              { icon: QrCode, step: '01', title: 'Escaneia o QR', desc: 'Aponte a câmera para o código na barraca. Sem download, sem cadastro.' },
+              { icon: QrCode, step: '01', title: 'Escaneia o QR', desc: 'Aponte a câmera para o QR code do Kiosk, barraca ou restaurante. Sem download, sem cadastro.' },
               { icon: ShoppingBag, step: '02', title: 'Faz o pedido', desc: 'Navegue no cardápio, adicione ao carrinho e confirme em segundos.' },
               { icon: Clock, step: '03', title: 'Retira quando pronto', desc: 'Acompanhe o status em tempo real e vá buscar só quando estiver pronto.' },
             ].map(({ icon: Icon, step, title, desc }) => (
