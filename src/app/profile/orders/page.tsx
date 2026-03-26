@@ -16,6 +16,7 @@ type OrderWithVendor = {
   pickup_code: string;
   created_at: string;
   vendors: {
+    id: string;
     name: string;
     logo_url: string | null;
   } | null;
@@ -49,7 +50,7 @@ export default function UserOrdersDashboard() {
         .from('orders')
         .select(`
           id, status, total_price, pickup_code, created_at,
-          vendors (name, logo_url)
+          vendors (id, name, logo_url)
         `)
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
@@ -214,8 +215,19 @@ export default function UserOrdersDashboard() {
   );
 }
 
+function getShortCode(id: string): string {
+  let hash = 0;
+  for (let i = 0; i < id.length; i++) {
+    hash = (hash << 5) - hash + id.charCodeAt(i);
+    hash |= 0;
+  }
+  const num = Math.abs(hash) % 1000000;
+  return num.toString().padStart(6, '0').replace(/(\d{3})(\d{3})/, '$1.$2');
+}
+
 function OrderCard({ order, isPast }: { order: OrderWithVendor; isPast?: boolean }) {
   const statusColor = (order.status === 'ready' || order.status === 'delivered') ? '#22c55e' : order.status === 'cancelled' ? '#ef4444' : P;
+  const vendorCode = order.vendors?.id ? getShortCode(order.vendors.id) : null;
 
   return (
     <Link 
@@ -231,7 +243,9 @@ function OrderCard({ order, isPast }: { order: OrderWithVendor; isPast?: boolean
           </div>
           <div>
             <h3 className="font-bold text-slate-900 leading-none">{order.vendors?.name}</h3>
-            <span className="text-[10px] font-black text-slate-300 tracking-tighter uppercase">PEDIDO #{order.pickup_code}</span>
+            <span className="text-[10px] font-black text-slate-300 tracking-tighter uppercase">
+              PEDIDO ({order.pickup_code}){vendorCode ? ` · ${vendorCode}` : ''}
+            </span>
           </div>
         </div>
         <div className="text-right">
