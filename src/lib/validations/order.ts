@@ -7,6 +7,10 @@ export const CreateOrderSchema = z.object({
   vendor_id: z.string().uuid({ message: 'ID de vendedor inválido' }),
   table_number: z.string().max(50).nullable().optional(),
   notes: z.string().max(500).nullable().optional(),
+  payment_method: z.enum(['pix', 'cartão', 'dinheiro']).optional(),
+  customer_name: z.string().max(200).optional(),
+  customer_cpf: z.string().max(14).optional(),
+  customer_email: z.string().email().optional(),
   items: z
     .array(
       z.object({

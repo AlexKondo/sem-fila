@@ -44,7 +44,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: parsed.error.errors[0].message }, { status: 422 });
   }
 
-  const { vendor_id, table_number, notes, items } = parsed.data;
+  const { vendor_id, table_number, notes, items, payment_method, customer_name, customer_cpf, customer_email } = parsed.data;
 
   const userClient = await createClient();
   const { data: { user } } = await userClient.auth.getUser();
@@ -97,6 +97,9 @@ export async function POST(request: Request) {
     return `${L1}${L2}${N1}${N2}`;
   }
 
+  // PIX paga via Asaas (pending até webhook confirmar); demais métodos são pagamento físico (paid)
+  const isPix = payment_method === 'pix';
+
   // Cria o pedido
   const { data: order, error: orderError } = await supabase
     .from('orders')
@@ -107,8 +110,8 @@ export async function POST(request: Request) {
       notes: notes ?? null,
       total_price,
       status: 'received',
-      payment_status: 'paid', // TODO: alterar para 'pending' ao integrar gateway de pagamento
-      pickup_code: generatePickupCode(), // Sobrescreve o padrão de 6 dígitos
+      payment_status: isPix ? 'pending' : 'paid',
+      pickup_code: generatePickupCode(),
     })
     .select('id, pickup_code')
     .single();
@@ -135,5 +138,36 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Erro ao registrar itens do pedido.' }, { status: 500 });
   }
 
-  return NextResponse.json({ order_id: order.id, pickup_code: order.pickup_code, payment_confirmed: true }, { status: 201 });
+  // Se PIX, gera cobrança no Asaas
+  if (isPix && customer_name && customer_cpf) {
+    try {
+      const { findOrCreateCustomer, createPixCharge } = await import('@/lib/asaas');
+      const customerId = await findOrCreateCustomer({
+        name: customer_name,
+        cpfCnpj: customer_cpf,
+        email: customer_email,
+      });
+      const pix = await createPixCharge({
+        customerId,
+        value: total_price,
+        orderId: order.id,
+        description: `Pedido ${order.pickup_code} — ${vendor.id}`,
+      });
+      return NextResponse.json({
+        order_id: order.id,
+        pickup_code: order.pickup_code,
+        payment_confirmed: false,
+        pix: {
+          payment_id: pix.paymentId,
+          qr_code: pix.pixQrCode,
+          copy_paste: pix.pixCopyPaste,
+        },
+      }, { status: 201 });
+    } catch (err) {
+      console.error('Asaas PIX error:', err);
+      // Não bloqueia o pedido — segue sem PIX (fallback)
+    }
+  }
+
+  return NextResponse.json({ order_id: order.id, pickup_code: order.pickup_code, payment_confirmed: !isPix }, { status: 201 });
 }

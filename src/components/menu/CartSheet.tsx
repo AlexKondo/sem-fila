@@ -13,7 +13,7 @@ interface Extra { name: string; price: number; }
 interface CartItem { id: string; menuItemId: string; name: string; price: number; quantity: number; extras?: Extra[]; }
 
 interface CartSheetProps { vendor: Vendor; tableNumber?: string; }
-type Step = 'cart' | 'identify';
+type Step = 'cart' | 'identify' | 'pix';
 
 export default function CartSheet({ vendor, tableNumber }: CartSheetProps) {
   const router = useRouter();
@@ -28,6 +28,9 @@ export default function CartSheet({ vendor, tableNumber }: CartSheetProps) {
   const [mesa, setMesa] = useState(tableNumber || '');
   
   const [paymentMethod, setPaymentMethod] = useState<'pix' | 'cartão' | 'dinheiro' | ''>('');
+  const [pixData, setPixData] = useState<{ payment_id: string; qr_code: string; copy_paste: string; order_id: string } | null>(null);
+  const [pixCopied, setPixCopied] = useState(false);
+  const [pixSimulating, setPixSimulating] = useState(false);
 
   // Estados de Autenticação
   const [user, setUser] = useState<any>(null);
@@ -167,12 +170,16 @@ export default function CartSheet({ vendor, tableNumber }: CartSheetProps) {
     try {
       const res = await fetch('/api/orders', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          vendor_id: vendor.id, 
-          table_number: mesa.trim() || null, 
-          notes: notesStr || null, 
-          items: items.map(i => ({ 
-            menu_item_id: i.menuItemId || i.id, 
+        body: JSON.stringify({
+          vendor_id: vendor.id,
+          table_number: mesa.trim() || null,
+          notes: notesStr || null,
+          payment_method: paymentMethod || undefined,
+          customer_name: name || undefined,
+          customer_cpf: cpf.replace(/\D/g, '') || undefined,
+          customer_email: email || undefined,
+          items: items.map(i => ({
+            menu_item_id: i.menuItemId || i.id,
             quantity: i.quantity,
             extras: i.extras || []
           }))
@@ -180,7 +187,16 @@ export default function CartSheet({ vendor, tableNumber }: CartSheetProps) {
       });
       const data = await res.json();
       if (!res.ok) { setError(data.error ?? 'Erro ao fazer pedido.'); setLoading(false); return; }
-      // Redireciona para o Dashboard de Pedidos do Usuário com ?payment=success
+
+      // PIX → exibe QR code
+      if (data.pix) {
+        setPixData({ ...data.pix, order_id: data.order_id });
+        setStep('pix');
+        setLoading(false);
+        return;
+      }
+
+      // Pagamento físico → redireciona direto
       router.push(`/profile/orders?payment=success&new_order=${data.order_id}`);
     } catch (err: any) {
       setError('Problema na conexão. Tente novamente.');
@@ -225,7 +241,7 @@ export default function CartSheet({ vendor, tableNumber }: CartSheetProps) {
               <div className="w-10 h-1 bg-slate-200 rounded-full" />
             </div>
             <div className="flex items-center justify-between px-5 pb-3 border-b border-slate-100">
-              <h2 className="font-bold text-slate-900 text-lg">{step === 'identify' ? 'Seus dados' : 'Seu pedido'}</h2>
+              <h2 className="font-bold text-slate-900 text-lg">{step === 'identify' ? 'Seus dados' : step === 'pix' ? 'Pagamento PIX' : 'Seu pedido'}</h2>
               <button onClick={() => setIsOpen(false)} className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500">
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -366,6 +382,61 @@ export default function CartSheet({ vendor, tableNumber }: CartSheetProps) {
                   </button>
                 </div>
               </>
+            )}
+
+            {step === 'pix' && pixData && (
+              <div className="flex flex-col flex-1 overflow-y-auto px-5 py-6 items-center text-center space-y-4">
+                <div className="w-12 h-12 rounded-2xl flex items-center justify-center text-white text-2xl font-black" style={{ backgroundColor: P }}>
+                  ₱
+                </div>
+                <div>
+                  <p className="font-bold text-slate-900 text-lg">Pague com PIX</p>
+                  <p className="text-xs text-slate-400 mt-1">Escaneie o QR code ou copie a chave abaixo</p>
+                </div>
+
+                {pixData.qr_code && (
+                  <img
+                    src={`data:image/png;base64,${pixData.qr_code}`}
+                    alt="QR Code PIX"
+                    className="w-48 h-48 rounded-2xl border border-slate-100 shadow-sm"
+                  />
+                )}
+
+                <button
+                  onClick={() => {
+                    navigator.clipboard.writeText(pixData.copy_paste);
+                    setPixCopied(true);
+                    setTimeout(() => setPixCopied(false), 3000);
+                  }}
+                  className="w-full py-3 rounded-xl border border-dashed border-orange-300 bg-orange-50 text-xs font-bold text-orange-600 break-all px-3"
+                >
+                  {pixCopied ? '✓ Copiado!' : '📋 Copiar chave PIX'}
+                </button>
+
+                <p className="text-[11px] text-slate-400 leading-relaxed">
+                  Após o pagamento, seu pedido será confirmado automaticamente.
+                </p>
+
+                {/* Botão visível apenas no sandbox */}
+                <button
+                  onClick={async () => {
+                    setPixSimulating(true);
+                    await fetch('/api/payments/simulate', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ payment_id: pixData.payment_id }),
+                    });
+                    // Aguarda o webhook processar e redireciona
+                    setTimeout(() => {
+                      router.push(`/profile/orders?payment=success&new_order=${pixData.order_id}`);
+                    }, 1500);
+                  }}
+                  disabled={pixSimulating}
+                  className="w-full py-3 rounded-xl bg-slate-100 text-slate-600 text-xs font-bold disabled:opacity-50"
+                >
+                  {pixSimulating ? 'Simulando pagamento…' : '🧪 Simular pagamento (sandbox)'}
+                </button>
+              </div>
             )}
 
             {step === 'identify' && (
