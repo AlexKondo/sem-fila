@@ -59,34 +59,28 @@ export default async function MenuPage({ params, searchParams }: Props) {
     supabase.from('orders').select('*', { count: 'exact', head: true }).eq('vendor_id', vendor.id).in('status', ['received', 'preparing', 'almost_ready'])
   ]);
 
-  let realAvgTime = vendor.avg_prep_time || 0;
+  let realAvgTime = 0; // Começa em 0 para indicar que não há histórico real
 
   if (pastOrders && pastOrders.length > 0) {
     let totalSecs = 0;
     let validOrders = 0;
     for (const po of pastOrders) {
       if (po.updated_at) {
-         const duration = (new Date(po.updated_at).getTime() - new Date(po.created_at).getTime()) / 1000;
-         if (duration > 30) { // Ignorar lixo (testes e cliques < 30s)
-            totalSecs += duration;
-            validOrders++;
-         }
+        const duration = (new Date(po.updated_at).getTime() - new Date(po.created_at).getTime()) / 1000;
+        if (duration > 30) { // Ignorar lixo (< 30s)
+          totalSecs += duration;
+          validOrders++;
+        }
       }
     }
     if (validOrders > 0) {
-      const mediaSegundos = totalSecs / validOrders;
-      realAvgTime = Math.ceil(mediaSegundos / 60);
+      realAvgTime = Math.ceil((totalSecs / validOrders) / 60);
     }
   }
 
   const fila = activeOrders || 0;
-  
-  // Se a fila tá vazia, tempo é 1x a média (o tempo do próprio cara).
-  // Se tem 3 pessoas na frente, tempo é as 3 + a vez dele = 4x a média.
-  const multiplier = fila + 1;
-  const estimatedTime = realAvgTime * multiplier;
-
-  const waitTime = estimatedTime > 0 ? `~${estimatedTime} min (Fila: ${fila})` : 'Preparo imediato';
+  const avgText = realAvgTime > 0 ? `${realAvgTime} min` : '-- min';
+  const waitTime = `Média: ${avgText} (Fila: ${fila})`;
 
   return (
     <MenuClient 
