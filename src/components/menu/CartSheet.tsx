@@ -295,21 +295,46 @@ export default function CartSheet({ vendor, tableNumber }: CartSheetProps) {
                     </div>
                   </div>
 
-                  {(vendor as any).table_delivery && (
-                    <div className="pt-2">
-                       <label className="block text-xs font-semibold text-slate-500 mb-1.5 flex items-center gap-1">
-                        🛋️ Número da Mesa / Localização <span className="text-red-500">*</span>
-                      </label>
-                      <input 
-                        type="text" 
-                        value={mesa} 
-                        onChange={e => setMesa(e.target.value)} 
-                        placeholder="Em qual mesa você está?"
-                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 h-11 text-sm focus:outline-none focus:ring-2" 
-                        style={{ '--tw-ring-color': P } as React.CSSProperties} 
-                      />
-                    </div>
-                  )}
+                  {(vendor as any).table_delivery && (() => {
+                    const numTables = (vendor as any).num_tables || 0;
+                    return (
+                      <div className="pt-2">
+                        <label className="block text-xs font-semibold text-slate-500 mb-2 flex items-center gap-1">
+                          🛋️ Mesa / Localização <span className="text-red-500">*</span>
+                        </label>
+                        {numTables > 0 ? (
+                          <div className="grid grid-cols-4 gap-1.5">
+                            <button
+                              type="button"
+                              onClick={() => setMesa('Para Viagem')}
+                              className={`col-span-4 py-2.5 rounded-xl border text-xs font-bold transition-all ${mesa === 'Para Viagem' ? 'border-orange-500 bg-orange-50 text-orange-600' : 'border-slate-200 text-slate-600 bg-white'}`}
+                            >
+                              🛍️ Para Viagem
+                            </button>
+                            {Array.from({ length: numTables }, (_, i) => i + 1).map(n => (
+                              <button
+                                key={n}
+                                type="button"
+                                onClick={() => setMesa(String(n))}
+                                className={`py-2.5 rounded-xl border text-xs font-bold transition-all ${mesa === String(n) ? 'border-orange-500 bg-orange-50 text-orange-600' : 'border-slate-200 text-slate-600 bg-white'}`}
+                              >
+                                {n}
+                              </button>
+                            ))}
+                          </div>
+                        ) : (
+                          <input
+                            type="text"
+                            value={mesa}
+                            onChange={e => setMesa(e.target.value)}
+                            placeholder="Em qual mesa você está?"
+                            className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 h-11 text-sm focus:outline-none focus:ring-2"
+                            style={{ '--tw-ring-color': P } as React.CSSProperties}
+                          />
+                        )}
+                      </div>
+                    );
+                  })()}
                   {customerName && (
                     <button onClick={() => setStep('identify')} className="flex items-center gap-1.5 text-xs text-slate-400 hover:text-slate-600 transition">
                       <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>

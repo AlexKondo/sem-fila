@@ -10,6 +10,7 @@ export default function VendorSettingsForm({ vendor }: { vendor: any }) {
   const [deliversToTable, setDeliversToTable] = useState(vendor.table_delivery || false);
   const [serviceFee, setServiceFee] = useState(vendor.service_fee_percentage || 0);
   const [couvert, setCouvert] = useState(vendor.couvert_fee || 0);
+  const [numTables, setNumTables] = useState(vendor.num_tables || 0);
   
   const [couponCode, setCouponCode] = useState(vendor.active_coupon_code || '');
   const [couponDiscount, setCouponDiscount] = useState(vendor.discount_percentage || 0);
@@ -43,7 +44,8 @@ export default function VendorSettingsForm({ vendor }: { vendor: any }) {
         couvert_fee: Number(couvert),
         active_coupon_code: couponCode.trim() || null,
         discount_percentage: Number(couponDiscount),
-        allow_waiter_calls: allowWaiterCalls
+        allow_waiter_calls: allowWaiterCalls,
+        num_tables: Number(numTables),
       })
       .eq('id', vendor.id);
 
@@ -152,6 +154,27 @@ export default function VendorSettingsForm({ vendor }: { vendor: any }) {
           </div>
         </div>
       </section>
+
+      {/* Bloco 2b: Configuração de Mesas */}
+      {deliversToTable && (
+        <section className="bg-white p-5 rounded-2xl shadow-sm border border-orange-100">
+          <h2 className="text-sm font-bold text-gray-900 mb-4 pb-2 border-b border-gray-100 uppercase tracking-wide">2b. Configuração de Mesas</h2>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Número total de mesas do estabelecimento
+            </label>
+            <input
+              type="number" min="0" max="500" step="1"
+              value={numTables} onChange={(e) => setNumTables(Number(e.target.value))}
+              placeholder="Ex: 20"
+              className="w-full h-12 bg-gray-50 border border-slate-200 rounded-xl px-4 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/50"
+            />
+            <p className="text-[10px] text-gray-400 mt-1">
+              O cliente verá botões de Mesa 1 a Mesa {numTables || 'N'}, mais a opção &quot;Para Viagem&quot;.
+            </p>
+          </div>
+        </section>
+      )}
 
       {/* Bloco 3: Cupons e Ofertas */}
       <section className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100">
