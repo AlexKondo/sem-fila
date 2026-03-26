@@ -211,7 +211,7 @@ export default function UserOrdersDashboard() {
 }
 
 function OrderCard({ order, isPast }: { order: OrderWithVendor; isPast?: boolean }) {
-  const statusColor = order.status === 'ready' ? '#22c55e' : order.status === 'cancelled' ? '#ef4444' : P;
+  const statusColor = (order.status === 'ready' || order.status === 'delivered') ? '#22c55e' : order.status === 'cancelled' ? '#ef4444' : P;
 
   return (
     <Link 
