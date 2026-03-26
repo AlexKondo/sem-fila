@@ -57,7 +57,7 @@ CREATE TABLE public.profiles (
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
 BEGIN
-  -- Cria o perfil do usuário
+  -- Cria o perfil do usuário (role padrão: vendor, pois o registro público é de fornecedores)
   INSERT INTO public.profiles (id, name, phone, cnpj, address, role)
   VALUES (
     NEW.id,
@@ -67,15 +67,8 @@ BEGIN
     NEW.raw_user_meta_data->>'address',
     'vendor'
   );
-
-  -- Auto-cria o registro de vendor vinculado ao usuário
-  INSERT INTO public.vendors (owner_id, name, event_id)
-  VALUES (
-    NEW.id,
-    COALESCE(NEW.raw_user_meta_data->>'name', 'Meu Negócio'),
-    NULL
-  );
-
+  -- Vendor NÃO é criado automaticamente.
+  -- O fornecedor cria sua(s) marca(s) via onboarding ou painel.
   RETURN NEW;
 END;
 $$;

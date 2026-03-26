@@ -1,8 +1,7 @@
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import VendorOrdersBoard from '@/components/dashboard/VendorOrdersBoard';
-import Link from 'next/link';
-import LogoutButton from '@/components/ui/LogoutButton';
+import VendorOverview from '@/components/dashboard/VendorOverview';
 
 const P = '#ec5b13';
 
@@ -11,7 +10,6 @@ export default async function VendorDashboardPage() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect('/login');
 
-  // Busca perfil e vendors com o cliente padrão (RLS cuidará do acesso)
   const [profileRes, vendorsRes] = await Promise.all([
     supabase.from('profiles').select('role, name, cnpj, phone').eq('id', user.id).single(),
     supabase.from('vendors').select('*').eq('owner_id', user.id).eq('active', true)
@@ -26,36 +24,40 @@ export default async function VendorDashboardPage() {
   const cookieStore = await cookies();
   const selectedId = cookieStore.get('selected_vendor_id')?.value;
 
-  const vendor = selectedId 
-    ? vendors.find(v => v.id === selectedId) || vendors[0]
-    : vendors[0] || null;
-
-  let todayOrders: any[] = [];
-  let activeOrders: any[] = [];
-  
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  
-  if (vendor) {
-    const [todayRes, activeRes] = await Promise.all([
-      supabase.from('orders').select('total_price, status').eq('vendor_id', vendor.id).gte('created_at', today.toISOString()),
-      supabase.from('orders').select(`*, order_items(id, quantity, unit_price, menu_items(id, name))`).eq('vendor_id', vendor.id).in('status', ['received', 'preparing', 'almost_ready', 'ready', 'delivered', 'cancelled']).gte('created_at', today.toISOString()).order('created_at', { ascending: true })
-    ]);
-    todayOrders = todayRes.data || [];
-    activeOrders = (activeRes.data || []).filter((o: any) => o.status !== 'cancelled' || o.payment_status === 'paid');
+  // Visão geral de todas as marcas
+  if (selectedId === 'all' && vendors.length > 1) {
+    return <VendorOverview vendors={vendors} userId={user.id} />;
   }
 
-  const todayRevenue = todayOrders.reduce((s, o) => s + Number(o.total_price || 0), 0);
-  const todayCount = todayOrders.length;
+  const vendor = selectedId
+    ? vendors.find(v => v.id === selectedId) || vendors[0]
+    : vendors[0] || null;
 
   if (!vendor) {
     const VendorOnboarding = (await import('@/components/dashboard/VendorOnboarding')).default;
     return <VendorOnboarding userId={user.id} />;
   }
 
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const [todayRes, activeRes] = await Promise.all([
+    supabase.from('orders').select('total_price, status').eq('vendor_id', vendor.id).gte('created_at', today.toISOString()),
+    supabase.from('orders')
+      .select('*, order_items(id, quantity, unit_price, menu_items(id, name))')
+      .eq('vendor_id', vendor.id)
+      .in('status', ['received', 'preparing', 'almost_ready', 'ready', 'delivered', 'cancelled'])
+      .gte('created_at', today.toISOString())
+      .order('created_at', { ascending: true })
+  ]);
+
+  const todayOrders = todayRes.data || [];
+  const activeOrders = (activeRes.data || []).filter((o: any) => o.status !== 'cancelled' || o.payment_status === 'paid');
+  const todayRevenue = todayOrders.reduce((s, o) => s + Number(o.total_price || 0), 0);
+  const todayCount = todayOrders.length;
+
   return (
     <>
-      {/* Stats cards */}
       <div className="max-w-2xl mx-auto px-4 pt-5 pb-2">
         <div className="grid grid-cols-2 gap-3">
           <StatCard
@@ -79,7 +81,6 @@ export default async function VendorDashboardPage() {
         </div>
       </div>
 
-      {/* Active orders label */}
       <div className="max-w-2xl mx-auto px-4 pb-2">
         <div className="flex items-center gap-2">
           <span className="text-sm font-bold text-slate-900">Fila em tempo real</span>

@@ -11,7 +11,9 @@ const P = '#ec5b13';
 interface VendorHeaderProps {
   vendorName: string;
   cnpjFormatted: string | null;
-  vendorId?: string;
+  vendorId?: string | null;
+  multiVendor?: boolean;
+  isOverview?: boolean;
 }
 
 function getShortCode(id: string) {
@@ -24,7 +26,17 @@ function getShortCode(id: string) {
   return num.toString().padStart(6, '0').replace(/(\d{3})(\d{3})/, '$1.$2');
 }
 
-export default function VendorHeader({ vendorName, cnpjFormatted, vendorId }: VendorHeaderProps) {
+function clearVendorCookie() {
+  document.cookie = 'selected_vendor_id=; path=/; max-age=0';
+  window.location.reload();
+}
+
+function setOverviewCookie() {
+  document.cookie = 'selected_vendor_id=all; path=/; max-age=86400';
+  window.location.reload();
+}
+
+export default function VendorHeader({ vendorName, cnpjFormatted, vendorId, multiVendor, isOverview }: VendorHeaderProps) {
   const pathname = usePathname();
   const [pendingCalls, setPendingCalls] = React.useState(0);
 
@@ -32,7 +44,7 @@ export default function VendorHeader({ vendorName, cnpjFormatted, vendorId }: Ve
     if (!vendorId) return;
 
     const supabase = createClient();
-    
+
     // Busca inicial de chamadas pendentes
     supabase
       .from('waiter_calls')
@@ -46,11 +58,11 @@ export default function VendorHeader({ vendorName, cnpjFormatted, vendorId }: Ve
     // Inscrição Realtime para atualizar o badge
     const channel = supabase
       .channel(`header-waiter-${vendorId}`)
-      .on('postgres_changes', { 
-        event: '*', 
-        schema: 'public', 
-        table: 'waiter_calls', 
-        filter: `vendor_id=eq.${vendorId}` 
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'waiter_calls',
+        filter: `vendor_id=eq.${vendorId}`
       }, () => {
         supabase
           .from('waiter_calls')
@@ -69,7 +81,7 @@ export default function VendorHeader({ vendorName, cnpjFormatted, vendorId }: Ve
   }, [vendorId]);
 
   let displayName: React.ReactNode = vendorName;
-  if (vendorId) {
+  if (vendorId && !isOverview) {
     const code = getShortCode(vendorId);
     const parts = vendorName.split(' - ');
     if (parts.length > 1) {
@@ -102,40 +114,58 @@ export default function VendorHeader({ vendorName, cnpjFormatted, vendorId }: Ve
               {cnpjFormatted && <p className="text-[11px] text-slate-400">CNPJ {cnpjFormatted}</p>}
             </div>
           </div>
-          <LogoutButton />
+          <div className="flex items-center gap-2">
+            {multiVendor && !isOverview && (
+              <button
+                onClick={setOverviewCookie}
+                className="text-[11px] font-bold px-2.5 py-1.5 rounded-lg border border-slate-200 text-slate-500 hover:border-orange-300 hover:text-orange-600 transition"
+              >
+                Ver Geral
+              </button>
+            )}
+            {multiVendor && (
+              <button
+                onClick={clearVendorCookie}
+                className="text-[11px] font-bold px-2.5 py-1.5 rounded-lg border border-slate-200 text-slate-500 hover:border-orange-300 hover:text-orange-600 transition"
+              >
+                Trocar Marca
+              </button>
+            )}
+            <LogoutButton />
+          </div>
         </div>
 
         <nav className="flex gap-1 mt-3 overflow-x-auto overflow-y-visible no-scrollbar">
-          <NavTab 
-            href="/dashboard/vendor" 
-            active={pathname === '/dashboard/vendor'} 
-            label="Pedidos" 
-            icon={<svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>} 
+          <NavTab
+            href="/dashboard/vendor"
+            active={pathname === '/dashboard/vendor'}
+            label="Pedidos"
+            icon={<svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>}
           />
-          <NavTab 
-            href="/dashboard/vendor/menu" 
-            active={pathname.startsWith('/dashboard/vendor/menu')} 
-            label="Cardápio" 
-            icon={<svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>} 
+          <NavTab
+            href="/dashboard/vendor/menu"
+            active={pathname.startsWith('/dashboard/vendor/menu')}
+            label="Cardápio"
+            icon={<svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>}
           />
-          <NavTab 
-            href="/dashboard/vendor/qrcode" 
-            active={pathname.startsWith('/dashboard/vendor/qrcode')} 
-            label="QR Code" 
-            icon={<svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M3 3h7v7H3V3zm2 2v3h3V5H5zm7-2h7v7h-7V3zm2 2v3h3V5h-3zM3 13h7v7H3v-7zm2 2v3h3v-3H5zm10 0h2v2h-2v-2zm-2 2h2v2h-2v-2zm4 0h2v2h-2v-2zm0-4h2v2h-2v-2zm-4 0h2v2h-2v-2zm2 2h2v2h-2v-2z"/></svg>} 
+          <NavTab
+            href="/dashboard/vendor/qrcode"
+            active={pathname.startsWith('/dashboard/vendor/qrcode')}
+            label="QR Code"
+            icon={<svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M3 3h7v7H3V3zm2 2v3h3V5H5zm7-2h7v7h-7V3zm2 2v3h3V5h-3zM3 13h7v7H3v-7zm2 2v3h3v-3H5zm10 0h2v2h-2v-2zm-2 2h2v2h-2v-2zm4 0h2v2h-2v-2zm0-4h2v2h-2v-2zm-4 0h2v2h-2v-2zm2 2h2v2h-2v-2z"/></svg>}
           />
-          <NavTab 
-            href="/dashboard/vendor/waiter" 
-            active={pathname.startsWith('/dashboard/vendor/waiter')} 
-            label="Garçom" 
+          <NavTab
+            href="/dashboard/vendor/waiter"
+            active={pathname.startsWith('/dashboard/vendor/waiter')}
+            label="Garçom"
             badgeCount={pendingCalls}
-            icon={<svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" /></svg>} 
+            icon={<svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" /></svg>}
           />
-          <NavTab 
-            href="/dashboard/vendor/settings" 
-            active={pathname.startsWith('/dashboard/vendor/settings')} 
-            label="Configurar" 
-            icon={<svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>} 
+          <NavTab
+            href="/dashboard/vendor/settings"
+            active={pathname.startsWith('/dashboard/vendor/settings')}
+            label="Configurar"
+            icon={<svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>}
           />
         </nav>
       </div>
