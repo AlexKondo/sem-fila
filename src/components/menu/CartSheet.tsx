@@ -235,15 +235,23 @@ export default function CartSheet({ vendor, tableNumber }: CartSheetProps) {
                     <div key={item.id} className="flex items-start gap-3">
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-semibold text-slate-900 leading-tight">{item.name}</p>
-                        {item.extras && item.extras.length > 0 && (
-                          <div className="flex flex-wrap gap-1 mt-1">
-                            {item.extras.map((e, i) => (
-                              <span key={i} className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-orange-50 text-orange-600 border border-orange-100">
-                                +{e.name} {formatCurrency(e.price)}
-                              </span>
-                            ))}
-                          </div>
-                        )}
+                        {item.extras && item.extras.length > 0 && (() => {
+                          // Agrupa extras por nome
+                          const grouped: Record<string, { price: number; qty: number }> = {};
+                          item.extras.forEach(e => {
+                            if (grouped[e.name]) grouped[e.name].qty++;
+                            else grouped[e.name] = { price: e.price, qty: 1 };
+                          });
+                          return (
+                            <div className="flex flex-col gap-0.5 mt-1">
+                              {Object.entries(grouped).map(([name, { price, qty }]) => (
+                                <span key={name} className="text-[10px] font-bold text-orange-600">
+                                  {qty > 1 ? `${qty}x ` : '+'}{name} {formatCurrency(price)}{qty > 1 ? ` = ${formatCurrency(price * qty)}` : ''}
+                                </span>
+                              ))}
+                            </div>
+                          );
+                        })()}
                         <p className="text-xs text-slate-400 mt-0.5">{formatCurrency(item.price)} cada</p>
                       </div>
                       <div className="flex items-center gap-2">
