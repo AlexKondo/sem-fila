@@ -236,14 +236,19 @@ export default function CartSheet({ vendor, tableNumber }: CartSheetProps) {
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-semibold text-slate-900 leading-tight">{item.name}</p>
                         {item.extras && item.extras.length > 0 && (() => {
-                          // Agrupa extras por nome
+                          // Agrupa extras por nome e calcula preço base
                           const grouped: Record<string, { price: number; qty: number }> = {};
                           item.extras.forEach(e => {
                             if (grouped[e.name]) grouped[e.name].qty++;
                             else grouped[e.name] = { price: e.price, qty: 1 };
                           });
+                          const extrasTotal = item.extras.reduce((s, e) => s + e.price, 0);
+                          const basePrice = item.price - extrasTotal;
                           return (
                             <div className="flex flex-col gap-0.5 mt-1">
+                              <span className="text-[10px] font-bold text-slate-500">
+                                🍽 Prato {formatCurrency(basePrice)}
+                              </span>
                               {Object.entries(grouped).map(([name, { price, qty }]) => (
                                 <span key={name} className="text-[10px] font-bold text-orange-600">
                                   {qty > 1 ? `${qty}x ` : '+'}{name} {formatCurrency(price)}{qty > 1 ? ` = ${formatCurrency(price * qty)}` : ''}
