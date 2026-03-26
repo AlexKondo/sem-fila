@@ -10,7 +10,7 @@ const STORAGE_KEY = 'qp_customer';
 const P = '#ec5b13';
 
 interface Extra { name: string; price: number; }
-interface CartItem { id: string; name: string; price: number; quantity: number; extras?: Extra[]; }
+interface CartItem { id: string; menuItemId: string; name: string; price: number; quantity: number; extras?: Extra[]; }
 
 interface CartSheetProps { vendor: Vendor; tableNumber?: string; }
 type Step = 'cart' | 'identify';
@@ -73,11 +73,11 @@ export default function CartSheet({ vendor, tableNumber }: CartSheetProps) {
     };
   }, []);
 
-  const addItem = useCallback((item: { id: string; name: string; price: number; extras?: Extra[] }) => {
+  const addItem = useCallback((item: { id: string; menuItemId?: string; name: string; price: number; extras?: Extra[] }) => {
     setItems(prev => {
       const ex = prev.find(i => i.id === item.id);
       if (ex) return prev.map(i => i.id === item.id ? { ...i, quantity: i.quantity + 1 } : i);
-      return [...prev, { ...item, quantity: 1, extras: item.extras ?? [] }];
+      return [...prev, { ...item, menuItemId: item.menuItemId ?? item.id, quantity: 1, extras: item.extras ?? [] }];
     });
   }, []);
 
@@ -171,7 +171,7 @@ export default function CartSheet({ vendor, tableNumber }: CartSheetProps) {
           vendor_id: vendor.id, 
           table_number: mesa.trim() || null, 
           notes: notesStr || null, 
-          items: items.map(i => ({ menu_item_id: i.id, quantity: i.quantity })) 
+          items: items.map(i => ({ menu_item_id: i.menuItemId || i.id, quantity: i.quantity })) 
         }),
       });
       const data = await res.json();

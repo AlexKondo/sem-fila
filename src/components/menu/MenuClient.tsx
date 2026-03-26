@@ -55,7 +55,7 @@ export default function MenuClient({ vendor, items, mesa, waitTime }: MenuClient
       setExtraQty({});
       setExtrasModal(item);
     } else {
-      document.dispatchEvent(new CustomEvent('add-to-cart', { detail: { id: item.id, name: item.name, price: item.price } }));
+      document.dispatchEvent(new CustomEvent('add-to-cart', { detail: { id: item.id, menuItemId: item.id, name: item.name, price: item.price } }));
     }
   }
 
@@ -70,7 +70,10 @@ export default function MenuClient({ vendor, items, mesa, waitTime }: MenuClient
     });
     const extrasTotal = chosenExtras.reduce((s, e) => s + e.price, 0);
     document.dispatchEvent(new CustomEvent('add-to-cart', { detail: {
+      // Unique cart ID (includes extras for deduplication)
       id: extrasModal.id + (chosenExtras.length ? '-' + Object.entries(extraQty).filter(([,q])=>q>0).map(([n,q])=>`${n}x${q}`).join('_') : ''),
+      // Original UUID for the API
+      menuItemId: extrasModal.id,
       name: extrasModal.name,
       price: extrasModal.price + extrasTotal,
       extras: chosenExtras,
