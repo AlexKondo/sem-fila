@@ -13,6 +13,7 @@ const ROLE_LABELS: Record<AppRole, string> = {
   waitstaff: 'Garçom',
   customer: 'Cliente',
   affiliate: 'Afiliado',
+  deliverer: 'Entregador',
 };
 
 const ROLE_COLORS: Record<AppRole, string> = {
@@ -22,6 +23,7 @@ const ROLE_COLORS: Record<AppRole, string> = {
   waitstaff: 'bg-blue-100 text-blue-700',
   customer: 'bg-gray-100 text-gray-600',
   affiliate: 'bg-pink-100 text-pink-700',
+  deliverer: 'bg-green-100 text-green-700',
 };
 
 type UserProfile = { id: string; name: string | null; phone: string | null; role: AppRole; created_at: string };

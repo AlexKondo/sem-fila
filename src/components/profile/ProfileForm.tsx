@@ -13,6 +13,7 @@ const ROLE_LABELS: Record<AppRole, string> = {
   waitstaff: 'Garçom',
   customer: 'Cliente',
   affiliate: 'Afiliado',
+  deliverer: 'Entregador',
 };
 
 interface Props {
