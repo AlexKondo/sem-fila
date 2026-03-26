@@ -107,7 +107,7 @@ export async function POST(request: Request) {
       notes: notes ?? null,
       total_price,
       status: 'received',
-      payment_status: 'pending',
+      payment_status: 'paid', // TODO: alterar para 'pending' ao integrar gateway de pagamento
       pickup_code: generatePickupCode(), // Sobrescreve o padrão de 6 dígitos
     })
     .select('id, pickup_code')
@@ -125,6 +125,7 @@ export async function POST(request: Request) {
       menu_item_id: item.menu_item_id,
       quantity: item.quantity,
       unit_price: priceMap[item.menu_item_id],
+      extras: item.extras || [],
     }))
   );
 
@@ -134,5 +135,5 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Erro ao registrar itens do pedido.' }, { status: 500 });
   }
 
-  return NextResponse.json({ order_id: order.id, pickup_code: order.pickup_code }, { status: 201 });
+  return NextResponse.json({ order_id: order.id, pickup_code: order.pickup_code, payment_confirmed: true }, { status: 201 });
 }

@@ -171,12 +171,17 @@ export default function CartSheet({ vendor, tableNumber }: CartSheetProps) {
           vendor_id: vendor.id, 
           table_number: mesa.trim() || null, 
           notes: notesStr || null, 
-          items: items.map(i => ({ menu_item_id: i.menuItemId || i.id, quantity: i.quantity })) 
+          items: items.map(i => ({ 
+            menu_item_id: i.menuItemId || i.id, 
+            quantity: i.quantity,
+            extras: i.extras || []
+          }))
         }),
       });
       const data = await res.json();
       if (!res.ok) { setError(data.error ?? 'Erro ao fazer pedido.'); setLoading(false); return; }
-      router.push(`/order/${data.order_id}`);
+      // Redireciona com ?payment=success para exibir confirmação de pagamento
+      router.push(`/order/${data.order_id}?payment=success`);
     } catch (err: any) {
       setError('Problema na conexão. Tente novamente.');
       setLoading(false);

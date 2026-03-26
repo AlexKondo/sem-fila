@@ -156,7 +156,9 @@ export default function OrderTracker({ initialOrder }: { initialOrder: any }) {
             <p className="text-xs text-slate-400 mb-0.5">{order.vendors?.name}</p>
             <h1 className="text-lg font-bold text-slate-900">Pedido #{order.pickup_code}</h1>
             {order.table_number && (
-              <p className="text-xs mt-0.5 font-medium" style={{ color: PRIMARY }}>Mesa {order.table_number}</p>
+              <p className="text-xs mt-0.5 font-medium" style={{ color: PRIMARY }}>
+                {order.table_number === 'Para Viagem' ? '🛍️ Para Viagem' : `🛋️ Mesa ${order.table_number}`}
+              </p>
             )}
           </div>
           <div className="flex items-center gap-2">
@@ -183,26 +185,9 @@ export default function OrderTracker({ initialOrder }: { initialOrder: any }) {
 
       <div className="max-w-lg mx-auto px-4 py-4 space-y-3">
 
-        {/* Payment pending */}
-        {needsPayment && (
-          <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 flex items-center justify-between gap-3">
-            <div>
-              <p className="font-semibold text-amber-800 text-sm">Pagamento pendente</p>
-              <p className="text-xs text-amber-600 mt-0.5">Pague agora para confirmar seu pedido</p>
-            </div>
-            <button
-              onClick={handlePayWithStripe}
-              disabled={payingStripe}
-              className="flex items-center gap-1.5 text-white text-xs font-bold px-4 py-2.5 rounded-xl disabled:opacity-50 flex-shrink-0"
-              style={{ backgroundColor: PRIMARY }}
-            >
-              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
-              </svg>
-              {payingStripe ? '…' : 'Pagar'}
-            </button>
-          </div>
-        )}
+        {/* Payment pending — desabilitado até integrar gateway de pagamento real */}
+        {/* {needsPayment && ( ... )} */}
+
 
         {isPaid && (
           <div className="bg-green-50 border border-green-200 rounded-2xl px-4 py-3 flex items-center gap-2">
@@ -290,13 +275,28 @@ export default function OrderTracker({ initialOrder }: { initialOrder: any }) {
         <div className="bg-white rounded-2xl border border-slate-100 p-5">
           <h2 className="text-sm font-bold text-slate-700 mb-3">Resumo do pedido</h2>
           <div className="space-y-2.5">
-            {order.order_items?.map((item: {
-              id: string; quantity: number; unit_price: number;
-              menu_items: { name: string } | null;
-            }) => (
-              <div key={item.id} className="flex items-center justify-between text-sm">
-                <span className="text-slate-600">{item.quantity}× {item.menu_items?.name ?? 'Item'}</span>
-                <span className="font-semibold text-slate-900">{formatCurrency(item.unit_price * item.quantity)}</span>
+            {order.order_items?.map((item: any) => (
+              <div key={item.id} className="pt-2 border-b border-slate-50 pb-2 last:border-0">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-slate-900 font-semibold">{item.quantity}× {item.menu_items?.name ?? 'Item'}</span>
+                  <span className="font-bold text-slate-900">{formatCurrency(item.unit_price * item.quantity)}</span>
+                </div>
+                {item.extras && item.extras.length > 0 && (() => {
+                  const grouped: Record<string, { price: number; qty: number }> = {};
+                  item.extras.forEach((e: any) => {
+                    if (grouped[e.name]) grouped[e.name].qty++;
+                    else grouped[e.name] = { price: e.price, qty: 1 };
+                  });
+                  return (
+                    <div className="flex flex-col gap-0.5 mt-1 ml-4 pl-2 border-l-2 border-slate-100">
+                      {Object.entries(grouped).map(([name, { price, qty }]) => (
+                        <span key={name} className="text-[10px] font-bold text-slate-400">
+                          {qty > 1 ? `${qty}x ` : '+'}{name} {formatCurrency(price)}{qty > 1 ? ` = ${formatCurrency(price * qty)}` : ''}
+                        </span>
+                      ))}
+                    </div>
+                  );
+                })()}
               </div>
             ))}
             

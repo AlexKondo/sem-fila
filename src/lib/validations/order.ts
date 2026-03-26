@@ -12,6 +12,7 @@ export const CreateOrderSchema = z.object({
       z.object({
         menu_item_id: z.string().uuid({ message: 'ID de item inválido' }),
         quantity: z.number().int().min(1).max(99),
+        extras: z.array(z.object({ name: z.string(), price: z.number() })).optional(),
       })
     )
     .min(1, { message: 'Adicione ao menos 1 item ao pedido' })

@@ -14,12 +14,13 @@ type OrderWithItems = {
   notes: string | null;
   created_at: string;
   updated_at?: string;
-  order_items: {
-    id: string;
-    quantity: number;
-    unit_price: number;
-    menu_items: { id: string; name: string } | null;
-  }[];
+    order_items: {
+      id: string;
+      quantity: number;
+      unit_price: number;
+      extras?: { name: string; price: number }[];
+      menu_items: { id: string; name: string } | null;
+    }[];
 };
 
 const STATUS_ORDER: OrderStatus[] = ['received', 'preparing', 'almost_ready', 'ready'];
@@ -56,7 +57,7 @@ export default function VendorOrdersBoard({ initialOrders, vendorId }: Props) {
           // Busca o pedido completo com itens
           const { data } = await supabase
             .from('orders')
-            .select(`*, order_items(id, quantity, unit_price, menu_items(id, name))`)
+            .select(`*, order_items(id, quantity, unit_price, extras, menu_items(id, name))`)
             .eq('id', payload.new.id)
             .single();
           if (data) {
@@ -292,8 +293,8 @@ function OrderCard({
             <span className="font-black text-gray-900 text-lg">{clientName}</span>
             <span className="text-xs text-orange-600 font-black bg-orange-50 px-2 py-0.5 rounded-full">#{orderNumber}</span>
             {order.table_number && (
-              <span className="text-xs bg-orange-50 text-orange-600 px-2 py-0.5 rounded-full">
-                Mesa {order.table_number}
+              <span className="text-xs font-black bg-orange-50 text-orange-600 px-2 py-0.5 rounded-full">
+                {order.table_number === 'Para Viagem' ? '🛍️ Para Viagem' : `🛋️ Mesa ${order.table_number}`}
               </span>
             )}
           </div>
@@ -321,13 +322,24 @@ function OrderCard({
           {/* Itens */}
           <div className="space-y-1">
             {order.order_items.map((item) => (
-              <div key={item.id} className="flex justify-between text-sm">
-                <span className="text-gray-700 font-medium">
-                  {item.quantity}x {item.menu_items?.name ?? 'Item'}
-                </span>
-                <span className="text-gray-500">
-                  {formatCurrency(item.unit_price * item.quantity)}
-                </span>
+              <div key={item.id} className="border-b border-slate-50 last:border-0 pb-1.5 mb-1.5 last:pb-0 last:mb-0">
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-900 font-bold">
+                    {item.quantity}x {item.menu_items?.name ?? 'Item'}
+                  </span>
+                  <span className="text-gray-500 font-medium">
+                    {formatCurrency(item.unit_price * item.quantity)}
+                  </span>
+                </div>
+                {item.extras && item.extras.length > 0 && (
+                  <div className="flex flex-wrap gap-1 mt-1">
+                    {item.extras.map((e, idx) => (
+                      <span key={idx} className="text-[10px] font-black text-orange-600 bg-orange-50 px-1.5 py-0.5 rounded uppercase tracking-wider">
+                        + {e.name}
+                      </span>
+                    ))}
+                  </div>
+                )}
               </div>
             ))}
           </div>
