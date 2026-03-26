@@ -194,11 +194,13 @@ export default function QrScanner() {
                 <div className="bg-white rounded-2xl w-full max-w-sm p-5 space-y-4 shadow-xl">
                   <h3 className="text-lg font-bold text-slate-900">Digitar Código</h3>
                   <p className="text-xs text-slate-500">Insira o código numérico fixado na sua mesa ou quiosque:</p>
-                  <input 
+                  <input
                     autoFocus
-                    type="text" 
-                    placeholder="Ex: 502" 
-                    value={manualCode} 
+                    type="text"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    placeholder="Ex: 502"
+                    value={manualCode}
                     onChange={(e) => setManualCode(e.target.value)}
                     className="w-full border border-slate-200 rounded-xl px-4 py-3 text-center text-lg font-bold tracking-wider focus:outline-none focus:ring-2 focus:ring-orange-400"
                   />
