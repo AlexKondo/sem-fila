@@ -25,9 +25,8 @@ export default function OrderTracker({ initialOrder }: { initialOrder: any }) {
   const paymentResult = searchParams.get('payment');
 
   const [order, setOrder] = useState(initialOrder);
-  const [showPaymentModal, setShowPaymentModal] = useState(
-    paymentResult === 'success' || paymentResult === 'cancelled'
-  );
+  const [paymentStatusResult, setPaymentStatusResult] = useState<string | null>(paymentResult);
+  const [showPaymentModal, setShowPaymentModal] = useState(!!paymentResult);
   const [payingStripe, setPayingStripe] = useState(false);
   const [cancelling, setCancelling] = useState(false);
 
@@ -117,7 +116,7 @@ export default function OrderTracker({ initialOrder }: { initialOrder: any }) {
       {showPaymentModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
           <div className="bg-white rounded-3xl p-6 w-full max-w-sm text-center shadow-2xl">
-            {paymentResult === 'success' ? (
+            {paymentStatusResult === 'success' ? (
               <>
                 <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
                   <svg className="w-8 h-8 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
