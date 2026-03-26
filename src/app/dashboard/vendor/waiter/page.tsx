@@ -34,13 +34,13 @@ export default async function WaiterPage() {
     .not('table_number', 'is', null)
     .order('created_at', { ascending: true });
 
-  // Chamadas de garçom pendentes
+  // Todas as chamadas de garçom (pendentes + histórico)
   const { data: waiterCalls } = await supabase
     .from('waiter_calls')
     .select('*')
     .eq('vendor_id', vendor.id)
-    .eq('status', 'pending')
-    .order('created_at', { ascending: true });
+    .order('created_at', { ascending: false })
+    .limit(50);
 
   return (
     <div className="py-2">
