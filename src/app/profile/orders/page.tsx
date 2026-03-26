@@ -61,6 +61,7 @@ export default function UserOrdersDashboard() {
   }, []);
 
   const [showSuccess, setShowSuccess] = useState(false);
+  const [showAffiliateModal, setShowAffiliateModal] = useState(false);
   useEffect(() => {
     const url = new URL(window.location.href);
     if (url.searchParams.get('payment') === 'success') {
@@ -128,7 +129,44 @@ export default function UserOrdersDashboard() {
             </div>
           </section>
         )}
+
+        {/* Affiliate Promo Card — CTA para o usuário virar parceiro */}
+        <div className="bg-slate-900 rounded-[32px] p-8 text-white relative overflow-hidden shadow-xl border border-white/5">
+           <div className="absolute top-0 right-0 p-4 opacity-10 text-6xl">💸</div>
+           <h3 className="text-xl font-black mb-2 leading-none tracking-tight">Ganhe Dinheiro Indicando</h3>
+           <p className="text-slate-400 text-sm mb-6 leading-relaxed">
+             Conhece algum quiosque ou barraca sem nosso app? Indique e ganhe uma porcentagem recorrente por cada venda deles.
+           </p>
+           <button 
+             onClick={() => setShowAffiliateModal(true)}
+             className="w-full py-4 rounded-2xl bg-orange-600 hover:bg-orange-500 font-black text-sm transition-all shadow-lg active:scale-95"
+           >
+             Saiba Como Ganhar
+           </button>
+        </div>
       </div>
+
+      {/* Affiliate Modal */}
+      {showAffiliateModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-md px-4 pt-20">
+          <div className="bg-[#0f172a] rounded-t-[40px] md:rounded-[40px] p-8 w-full max-w-sm text-center relative border border-white/10 shadow-2xl animate-in slide-in-from-bottom-10 duration-500">
+             <button onClick={() => setShowAffiliateModal(false)} className="absolute top-4 right-4 text-slate-500 font-bold p-2">✕</button>
+             <div className="text-5xl mb-6">💰</div>
+             <h2 className="text-2xl font-black text-white mb-3 tracking-tighter">Seja um Afiliado</h2>
+             <p className="text-slate-400 text-sm mb-8 leading-relaxed">
+               Transforme suas idas à praia ou quiosques em renda recorrente. Ofereça tecnologia e ganhe por cada transação que seu indicado fizer.
+             </p>
+             <Link
+               href="/afiliados"
+               className="block w-full py-4 rounded-2xl text-white font-black text-sm transition-all mb-4"
+               style={{ backgroundColor: P, boxShadow: `0 8px 30px ${P}40` }}
+             >
+               Ver Detalhes do Programa
+             </Link>
+             <button onClick={() => setShowAffiliateModal(false)} className="text-slate-500 text-xs font-bold hover:text-white transition-colors">Talvez mais tarde</button>
+          </div>
+        </div>
+      )}
 
       {/* Success Modal (Simulation) */}
       {showSuccess && (

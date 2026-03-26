@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import Link from 'next/link';
-import { Users, Building2, CalendarDays, Store, ShoppingBag, TrendingUp } from 'lucide-react';
+import { Users, Building2, CalendarDays, Store, ShoppingBag, TrendingUp, DollarSign, Settings, Award } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
 import LogoutButton from '@/components/ui/LogoutButton';
 
@@ -26,39 +26,47 @@ export default async function AdminDashboardPage() {
     { count: totalEvents },
     { count: totalVendors },
     { count: totalOrders },
+    { count: totalAffiliates },
     { data: revenueData },
+    { data: eventPerformance },
   ] = await Promise.all([
     supabase.from('profiles').select('*', { count: 'exact', head: true }),
     supabase.from('organizations').select('*', { count: 'exact', head: true }),
     supabase.from('events').select('*', { count: 'exact', head: true }),
     supabase.from('vendors').select('*', { count: 'exact', head: true }),
     supabase.from('orders').select('*', { count: 'exact', head: true }),
+    supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('role', 'affiliate'),
     supabase.from('orders').select('total_price').eq('payment_status', 'paid'),
+    // Simplificando o performance por evento (últimos 5)
+    supabase.from('events').select('id, name, created_at').order('created_at', { ascending: false }).limit(5),
   ]);
 
   const totalRevenue = revenueData?.reduce((sum, o) => sum + (o.total_price ?? 0), 0) ?? 0;
 
   const stats = [
     { label: 'Usuários', value: totalUsers ?? 0, icon: Users, color: 'bg-blue-50 text-blue-600' },
-    { label: 'Organizações', value: totalOrgs ?? 0, icon: Building2, color: 'bg-purple-50 text-purple-600' },
+    { label: 'Afiliados', value: totalAffiliates ?? 0, icon: Award, color: 'bg-pink-50 text-pink-600' },
     { label: 'Eventos', value: totalEvents ?? 0, icon: CalendarDays, color: 'bg-green-50 text-green-600' },
     { label: 'Barracas', value: totalVendors ?? 0, icon: Store, color: 'bg-orange-50 text-orange-600' },
     { label: 'Pedidos', value: totalOrders ?? 0, icon: ShoppingBag, color: 'bg-yellow-50 text-yellow-600' },
-    { label: 'Receita (pago)', value: formatCurrency(totalRevenue), icon: TrendingUp, color: 'bg-emerald-50 text-emerald-600', isText: true },
+    { label: 'Receita Total', value: formatCurrency(totalRevenue), icon: TrendingUp, color: 'bg-emerald-50 text-emerald-600', isText: true },
   ];
 
   return (
     <main className="min-h-screen bg-gray-50">
       <header className="bg-white border-b border-gray-100 sticky top-0 z-40">
         <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
-          <div>
-            <h1 className="font-bold text-gray-900">Painel Admin</h1>
-            <p className="text-xs text-gray-500">Olá, {profile?.name ?? user.email}</p>
+          <div className="flex items-center gap-3">
+             <div className="w-8 h-8 bg-black rounded-lg flex items-center justify-center font-black text-white">M</div>
+             <div>
+              <h1 className="font-bold text-gray-900 leading-none">Master Admin</h1>
+              <p className="text-[10px] text-gray-400 uppercase font-bold tracking-tighter">Visão Global do Sistema</p>
+             </div>
           </div>
           <nav className="flex items-center gap-1">
-            <Link href="/dashboard/admin/organizations" className="text-xs bg-gray-100 text-gray-700 px-3 py-1.5 rounded-lg hover:bg-gray-200 transition">Organizações</Link>
-            <Link href="/dashboard/admin/vendors" className="text-xs bg-gray-100 text-gray-700 px-3 py-1.5 rounded-lg hover:bg-gray-200 transition">Barracas</Link>
-            <Link href="/dashboard/admin/users" className="text-xs bg-gray-100 text-gray-700 px-3 py-1.5 rounded-lg hover:bg-gray-200 transition">Usuários</Link>
+            <Link href="/dashboard/admin/settings" className="p-2 text-gray-400 hover:text-gray-900 transition">
+              <Settings className="w-5 h-5" />
+            </Link>
             <LogoutButton />
           </nav>
         </div>
@@ -67,40 +75,69 @@ export default async function AdminDashboardPage() {
       <div className="max-w-4xl mx-auto px-4 py-6 space-y-6">
         {/* Métricas */}
         <div>
-          <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">Visão geral</h2>
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide">Status da Plataforma</h2>
+          </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
             {stats.map(({ label, value, icon: Icon, color, isText }) => (
-              <div key={label} className="bg-white rounded-2xl shadow-sm p-4">
+              <div key={label} className="bg-white rounded-2xl shadow-sm p-4 border border-gray-100">
                 <div className={`w-9 h-9 rounded-xl flex items-center justify-center mb-2 ${color}`}>
                   <Icon className="w-4 h-4" />
                 </div>
-                <p className={`font-bold text-gray-900 ${isText ? 'text-base' : 'text-2xl'}`}>{value}</p>
-                <p className="text-xs text-gray-500">{label}</p>
+                <p className={`font-black text-gray-900 ${isText ? 'text-base' : 'text-2xl'}`}>{value}</p>
+                <p className="text-xs text-gray-500 font-medium">{label}</p>
               </div>
             ))}
           </div>
         </div>
 
-        {/* Atalhos */}
-        <div>
-          <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">Ações rápidas</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            {[
-              { href: '/dashboard/admin/organizations', label: 'Gerenciar organizações e eventos', icon: Building2 },
-              { href: '/dashboard/admin/vendors', label: 'Gerenciar barracas e vincular donos', icon: Store },
-              { href: '/dashboard/admin/users', label: 'Gerenciar usuários e cargos', icon: Users },
-            ].map(({ href, label, icon: Icon }) => (
-              <Link
-                key={href}
-                href={href}
-                className="bg-white rounded-2xl shadow-sm p-4 flex items-center gap-3 hover:shadow-md transition"
-              >
-                <div className="w-9 h-9 bg-orange-50 text-orange-500 rounded-xl flex items-center justify-center flex-shrink-0">
-                  <Icon className="w-4 h-4" />
-                </div>
-                <p className="text-sm font-medium text-gray-800">{label}</p>
-              </Link>
-            ))}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Performance de Eventos */}
+          <div>
+            <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">Performance de Eventos</h2>
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+               {eventPerformance?.length === 0 ? (
+                 <p className="p-6 text-sm text-gray-400 text-center">Nenhum evento ativo.</p>
+               ) : (
+                 <div className="divide-y divide-gray-50">
+                    {eventPerformance?.map(event => (
+                      <div key={event.id} className="p-4 flex items-center justify-between hover:bg-gray-50 transition">
+                        <div>
+                          <p className="text-sm font-bold text-gray-800">{event.name}</p>
+                          <p className="text-[10px] text-gray-400">{new Date(event.created_at).toLocaleDateString()}</p>
+                        </div>
+                        <Link href={`/dashboard/admin/events/${event.id}`} className="text-[10px] font-black text-orange-600 bg-orange-50 px-2.5 py-1 rounded-full uppercase">Relatórios</Link>
+                      </div>
+                    ))}
+                 </div>
+               )}
+            </div>
+          </div>
+
+          {/* Atalhos Rápidos */}
+          <div>
+            <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">Configurações</h2>
+            <div className="grid grid-cols-1 gap-3">
+              {[
+                { href: '/dashboard/admin/settings', label: 'Planos e Preços do Sistema', icon: DollarSign, desc: 'Gerencie quanto cada quiosque paga' },
+                { href: '/dashboard/admin/vendors', label: 'Gestão de Quiosques', icon: Store, desc: 'Aprovar e gerenciar parceiros' },
+                { href: '/dashboard/admin/organizations', label: 'Organizações', icon: Building2, desc: 'Empresas e grandes organizadores' },
+              ].map(({ href, label, icon: Icon, desc }) => (
+                <Link
+                  key={href}
+                  href={href}
+                  className="bg-white rounded-2xl shadow-sm p-4 flex items-center gap-4 hover:shadow-md transition border border-gray-100"
+                >
+                  <div className="w-10 h-10 bg-orange-50 text-orange-500 rounded-xl flex items-center justify-center flex-shrink-0">
+                    <Icon className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-bold text-gray-900 leading-none mb-1">{label}</p>
+                    <p className="text-[11px] text-gray-400 line-clamp-1">{desc}</p>
+                  </div>
+                </Link>
+              ))}
+            </div>
           </div>
         </div>
       </div>

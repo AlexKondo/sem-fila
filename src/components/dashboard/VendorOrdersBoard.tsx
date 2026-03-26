@@ -158,56 +158,45 @@ export default function VendorOrdersBoard({ initialOrders, vendorId }: Props) {
   [...orders].sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
     .forEach((o, i) => { orderNumbers[o.id] = i + 1; });
 
-  // Agrupa por status para a visão kanban
-  const grouped = STATUS_ORDER.reduce<Record<string, OrderWithItems[]>>((acc, status) => {
-    acc[status] = orders.filter((o) => o.status === status);
-    return acc;
-  }, {});
+  const activeOrders = orders
+    .filter((o) => !['delivered', 'cancelled'].includes(o.status))
+    .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
 
-  const activeOrders = STATUS_ORDER.flatMap((status) => grouped[status] || []);
-  const historicalOrders = orders.filter((o) => o.status === 'delivered' || (o.status === 'cancelled' && (o as any).payment_status === 'paid'));
+  const historicalOrders = orders
+    .filter((o) => o.status === 'delivered' || (o.status === 'cancelled' && (o as any).payment_status === 'paid'))
+    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-4">
-      {/* Contador total */}
-      <p className="text-sm text-gray-500 mb-4">
-        {activeOrders.length} pedido{activeOrders.length !== 1 ? 's' : ''} ativo{activeOrders.length !== 1 ? 's' : ''} na fila
-      </p>
-
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
-        {/* Coluna da Esquerda: Fila Ativa */}
+        {/* Coluna da Esquerda: Fila em Tempo Real */}
         <div className="space-y-6">
-          {STATUS_ORDER.map((status) => {
-            const statusOrders = grouped[status] || [];
-            if (statusOrders.length === 0) return null;
+          <div className="flex items-center justify-between mb-2">
+            <h2 className="text-xs font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-orange-500 animate-pulse" />
+              Fila de Produção ({activeOrders.length})
+            </h2>
+          </div>
 
-            return (
-              <div key={status}>
-                <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2 flex items-center gap-2">
-                  <span className={`w-2 h-2 rounded-full ${status === 'ready' ? 'bg-green-500' : 'bg-orange-500'}`} />
-                  {ORDER_STATUS_LABEL[status]} ({statusOrders.length})
-                </h2>
-                <div className="space-y-3">
-                  {statusOrders.map((order) => (
-                    <OrderCard
-                      key={order.id}
-                      order={order}
-                      orderNumber={orderNumbers[order.id]}
-                      onAdvance={advanceStatus}
-                      onCancel={cancelOrder}
-                    />
-                  ))}
-                </div>
+          <div className="space-y-4">
+            {activeOrders.map((order) => (
+              <OrderCard
+                key={order.id}
+                order={order}
+                orderNumber={orderNumbers[order.id]}
+                onAdvance={advanceStatus}
+                onCancel={cancelOrder}
+              />
+            ))}
+            
+            {activeOrders.length === 0 && (
+              <div className="text-center py-16 bg-white border-2 border-dashed border-slate-100 rounded-[32px]">
+                <p className="text-4xl mb-3">🍳</p>
+                <p className="font-bold text-slate-900">Nenhum pedido na fila</p>
+                <p className="text-xs text-slate-400">Aguardando novos clientes...</p>
               </div>
-            );
-          })}
-          {activeOrders.length === 0 && (
-            <div className="text-center py-12 text-slate-400 border-2 border-dashed border-slate-200 rounded-2xl">
-              <p className="text-2xl mb-2">🎉</p>
-              <p className="font-semibold">Nenhum pedido ativo</p>
-              <p className="text-xs">Fila completamente vazia</p>
-            </div>
-          )}
+            )}
+          </div>
         </div>
 
         {/* Coluna da Direita: Histórico de Entregues */}
