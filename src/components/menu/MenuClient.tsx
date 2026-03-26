@@ -26,7 +26,8 @@ export default function MenuClient({ vendor, items, mesa, waitTime }: MenuClient
   
   // Extras Modal State
   const [extrasModal, setExtrasModal] = useState<MenuItem | null>(null);
-  const [selectedExtras, setSelectedExtras] = useState<Extra[]>([]);
+  // Map of extra name -> quantity
+  const [extraQty, setExtraQty] = useState<Record<string, number>>({});
 
   useEffect(() => {
     const supabase = createClient();
@@ -51,7 +52,7 @@ export default function MenuClient({ vendor, items, mesa, waitTime }: MenuClient
   function handleAddToCart(item: MenuItem) {
     const extras = (item as any).extras as Extra[] | undefined;
     if (extras && extras.length > 0) {
-      setSelectedExtras([]);
+      setExtraQty({});
       setExtrasModal(item);
     } else {
       document.dispatchEvent(new CustomEvent('add-to-cart', { detail: { id: item.id, name: item.name, price: item.price } }));
@@ -60,21 +61,28 @@ export default function MenuClient({ vendor, items, mesa, waitTime }: MenuClient
 
   function confirmExtras() {
     if (!extrasModal) return;
-    const extrasTotal = selectedExtras.reduce((s, e) => s + e.price, 0);
+    const allExtras = (extrasModal as any).extras as Extra[];
+    // Build flat array of extras from quantities map
+    const chosenExtras: Extra[] = [];
+    allExtras.forEach(e => {
+      const qty = extraQty[e.name] || 0;
+      for (let i = 0; i < qty; i++) chosenExtras.push(e);
+    });
+    const extrasTotal = chosenExtras.reduce((s, e) => s + e.price, 0);
     document.dispatchEvent(new CustomEvent('add-to-cart', { detail: {
-      id: extrasModal.id + (selectedExtras.length ? '-' + selectedExtras.map(e => e.name).join('_') : ''),
+      id: extrasModal.id + (chosenExtras.length ? '-' + Object.entries(extraQty).filter(([,q])=>q>0).map(([n,q])=>`${n}x${q}`).join('_') : ''),
       name: extrasModal.name,
       price: extrasModal.price + extrasTotal,
-      extras: selectedExtras,
+      extras: chosenExtras,
     }}));
     setExtrasModal(null);
   }
 
-  function toggleExtra(extra: Extra) {
-    setSelectedExtras(prev => {
-      const exists = prev.find(e => e.name === extra.name);
-      if (exists) return prev.filter(e => e.name !== extra.name);
-      return [...prev, extra];
+  function changeExtraQty(extra: Extra, delta: number) {
+    setExtraQty(prev => {
+      const cur = prev[extra.name] || 0;
+      const next = Math.max(0, cur + delta);
+      return { ...prev, [extra.name]: next };
     });
   }
 
@@ -288,25 +296,36 @@ export default function MenuClient({ vendor, items, mesa, waitTime }: MenuClient
               <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Adicionais / Opcionais</p>
               <div className="space-y-2">
                 {((extrasModal as any).extras as Extra[]).map((extra, idx) => {
-                  const selected = !!selectedExtras.find(e => e.name === extra.name);
+                  const qty = extraQty[extra.name] || 0;
                   return (
-                    <button
+                    <div
                       key={idx}
-                      onClick={() => toggleExtra(extra)}
-                      className={`w-full flex items-center justify-between p-3 rounded-xl border-2 transition-all text-left ${
-                        selected ? 'border-orange-500 bg-orange-50' : 'border-slate-100 bg-white'
+                      className={`w-full flex items-center justify-between p-3 rounded-xl border-2 transition-all ${
+                        qty > 0 ? 'border-orange-500 bg-orange-50' : 'border-slate-100 bg-white'
                       }`}
                     >
+                      <span className="text-sm font-semibold text-slate-800">{extra.name}</span>
                       <div className="flex items-center gap-3">
-                        <span className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-colors ${
-                          selected ? 'border-orange-500 bg-orange-500' : 'border-slate-300'
-                        }`}>
-                          {selected && <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>}
-                        </span>
-                        <span className="text-sm font-semibold text-slate-800">{extra.name}</span>
+                        <span className="text-sm font-bold" style={{ color: P }}>+{formatCurrency(extra.price)}</span>
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => changeExtraQty(extra, -1)}
+                            disabled={qty === 0}
+                            className="w-7 h-7 rounded-lg border border-slate-200 flex items-center justify-center text-slate-600 hover:bg-slate-50 disabled:opacity-30"
+                          >
+                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M20 12H4" /></svg>
+                          </button>
+                          <span className="w-5 text-center text-sm font-bold text-slate-900">{qty}</span>
+                          <button
+                            onClick={() => changeExtraQty(extra, 1)}
+                            className="w-7 h-7 rounded-lg flex items-center justify-center text-white"
+                            style={{ backgroundColor: P }}
+                          >
+                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" /></svg>
+                          </button>
+                        </div>
                       </div>
-                      <span className="text-sm font-bold" style={{ color: P }}>+{formatCurrency(extra.price)}</span>
-                    </button>
+                    </div>
                   );
                 })}
               </div>
@@ -320,7 +339,10 @@ export default function MenuClient({ vendor, items, mesa, waitTime }: MenuClient
               >
                 <span>Adicionar ao carrinho</span>
                 <span className="font-black text-lg">
-                  {formatCurrency(extrasModal.price + selectedExtras.reduce((s, e) => s + e.price, 0))}
+                  {formatCurrency(extrasModal.price + Object.entries(extraQty).reduce((s, [name, qty]) => {
+                    const ex = ((extrasModal as any).extras as Extra[]).find(e => e.name === name);
+                    return s + (ex ? ex.price * qty : 0);
+                  }, 0))}
                 </span>
               </button>
             </div>
