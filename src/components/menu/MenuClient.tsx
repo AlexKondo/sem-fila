@@ -396,8 +396,10 @@ export default function MenuClient({ vendor, items, mesa, waitTime }: MenuClient
                   </p>
                   
                   {!mesa && (
-                    <input 
-                      type="text" 
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      pattern="[0-9]*"
                       value={modalMesa}
                       onChange={(e) => setModalMesa(e.target.value)}
                       placeholder="Ex: 12, Balcão..."
