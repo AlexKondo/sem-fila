@@ -7,10 +7,10 @@ import { createClient } from '@/lib/supabase/client';
 
 const P = '#ec5b13';
 
-function LoginPageContent() {
+function LoginUserContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const redirect = searchParams.get('redirect') ?? '/dashboard/vendor';
+  const redirectTo = searchParams.get('redirect') ?? '/profile/orders';
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -23,7 +23,6 @@ function LoginPageContent() {
     setError(''); setLoading(true);
     const supabase = createClient();
 
-    // 1. Faz o sign in
     const { data: authData, error: authError } = await supabase.auth.signInWithPassword({ email, password });
     if (authError || !authData.user) {
       setError('Email ou senha inválidos.');
@@ -31,7 +30,6 @@ function LoginPageContent() {
       return;
     }
 
-    // 2. Busca o perfil explicitamente para este usuário
     const { data: profile } = await supabase
       .from('profiles')
       .select('role')
@@ -40,28 +38,22 @@ function LoginPageContent() {
 
     const role = (profile as any)?.role;
 
-    // 3. Redirecionamento baseado no papel (Role) ou email do dono
-    const ADMIN_EMAIL = 'alexandre.kondo@gmail.com';
-    if (role === 'platform_admin' || authData.user.email === ADMIN_EMAIL) {
-      router.push('/dashboard/admin');
-      router.refresh();
-    } else if (role === 'vendor' || role === 'waitstaff') {
-      router.push('/dashboard/vendor');
-      router.refresh();
-    } else if (role === 'deliverer') {
-      router.push('/dashboard/deliverer');
-      router.refresh();
-    } else {
-      // Se for um cliente, redireciona para o login de clientes
-      router.push('/login-user');
-      router.refresh();
+    if (role === 'vendor' || role === 'platform_admin' || role === 'org_admin') {
+      // Redireciona para a tela de vendor/admin correta
+      await supabase.auth.signOut();
+      setError('__vendor__');
+      setLoading(false);
+      return;
     }
+
+    router.push(redirectTo);
+    router.refresh();
   }
 
   return (
     <div className="relative flex min-h-screen w-full flex-col overflow-x-hidden" style={{ backgroundColor: '#f8f6f6' }}>
-      {/* Back Button */}
-      <Link 
+      {/* Back */}
+      <Link
         href="/"
         className="absolute top-8 left-6 z-30 flex items-center gap-2 bg-white/10 backdrop-blur-md px-4 py-2 rounded-xl text-white font-bold text-sm hover:bg-white/20 transition-all border border-white/10 active:scale-95 shadow-lg"
       >
@@ -71,11 +63,10 @@ function LoginPageContent() {
         Voltar
       </Link>
 
-      {/* Hero background */}
+      {/* Hero */}
       <div className="relative h-[40vh] w-full overflow-hidden bg-slate-800">
         <div className="absolute inset-0 bg-gradient-to-t from-[#f8f6f6] via-transparent to-transparent z-10" />
         <div className="h-full w-full" style={{ background: 'linear-gradient(135deg, #1e1008 0%, #3d1f0a 50%, #ec5b1320 100%)' }} />
-        {/* Branding overlay */}
         <div className="absolute top-12 left-0 right-0 z-20 flex flex-col items-center">
           <div className="p-3 rounded-xl shadow-lg mb-4" style={{ backgroundColor: P }}>
             <svg className="w-10 h-10 text-white" fill="currentColor" viewBox="0 0 24 24">
@@ -87,20 +78,26 @@ function LoginPageContent() {
         </div>
       </div>
 
-      {/* Form container — rounded-t-[32px] como no asset */}
       <div className="flex-1 px-6 -mt-12 relative z-20 rounded-t-[32px] pt-8 shadow-2xl bg-white">
         <div className="max-w-md mx-auto">
           <div className="mb-8">
-            <h2 className="text-2xl font-bold text-slate-900">Bem-vindo de volta</h2>
-            <p className="text-slate-500 mt-1">Acesse o painel da sua barraca</p>
+            <h2 className="text-2xl font-bold text-slate-900">Entrar na sua conta</h2>
+            <p className="text-slate-500 mt-1 text-sm">Acompanhe seus pedidos em tempo real</p>
           </div>
 
-          {error && (
+          {error === '__vendor__' ? (
+            <div className="bg-blue-50 border border-blue-200 rounded-2xl px-4 py-4 mb-4 space-y-2">
+              <p className="text-sm font-bold text-blue-800">Essa conta é de fornecedor</p>
+              <p className="text-sm text-blue-700 leading-relaxed">
+                Para acessar o painel da sua barraca, use a{' '}
+                <Link href="/login" className="font-bold underline" style={{ color: P }}>tela de login de fornecedor</Link>.
+              </p>
+            </div>
+          ) : error ? (
             <div className="bg-red-50 border border-red-200 text-red-700 text-sm px-4 py-3 rounded-xl mb-4">{error}</div>
-          )}
+          ) : null}
 
           <form onSubmit={handleLogin} className="space-y-4">
-            {/* Email */}
             <div className="flex flex-col gap-1.5">
               <label className="text-sm font-semibold text-slate-700 ml-1">Email</label>
               <div className="relative">
@@ -111,12 +108,10 @@ function LoginPageContent() {
                   type="email" required autoComplete="email" value={email} onChange={e => setEmail(e.target.value)}
                   placeholder="seu@email.com"
                   className="w-full pl-12 pr-4 h-14 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 transition-all"
-                  style={{ '--tw-ring-color': P + '80' } as React.CSSProperties}
                 />
               </div>
             </div>
 
-            {/* Password */}
             <div className="flex flex-col gap-1.5">
               <label className="text-sm font-semibold text-slate-700 ml-1">Senha</label>
               <div className="relative">
@@ -124,10 +119,9 @@ function LoginPageContent() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                 </svg>
                 <input
-                  type={showPw ? 'text' : 'password'} required autoComplete="current-password" value={password} onChange={e => setPassword(e.target.value)}
+                  type={showPw ? 'text' : 'password'} required value={password} onChange={e => setPassword(e.target.value)}
                   placeholder="••••••••"
                   className="w-full pl-12 pr-12 h-14 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 transition-all"
-                  style={{ '--tw-ring-color': P + '80' } as React.CSSProperties}
                 />
                 <button type="button" onClick={() => setShowPw(!showPw)} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400">
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -141,7 +135,7 @@ function LoginPageContent() {
             </div>
 
             <div className="flex justify-end">
-              <a href="#" className="text-sm font-semibold hover:underline" style={{ color: P }}>Esqueci a senha</a>
+              <Link href="/forgot-password" className="text-sm font-semibold hover:underline" style={{ color: P }}>Esqueci a senha</Link>
             </div>
 
             <button
@@ -158,14 +152,14 @@ function LoginPageContent() {
             </button>
           </form>
 
-          <div className="text-center mt-8 pb-12 space-y-3">
+          <div className="text-center mt-6 pb-12 space-y-3">
             <p className="text-slate-500 text-sm">
               Não tem conta?{' '}
-              <Link href="/register" className="font-bold ml-1" style={{ color: P }}>Criar conta de fornecedor</Link>
+              <Link href="/register-user" className="font-bold ml-1" style={{ color: P }}>Criar conta</Link>
             </p>
             <p className="text-slate-400 text-xs">
-              É cliente?{' '}
-              <Link href="/login-user" className="font-semibold hover:underline text-slate-500">Acessar minha conta</Link>
+              É fornecedor?{' '}
+              <Link href="/login" className="font-semibold hover:underline text-slate-500">Acessar painel da barraca</Link>
             </p>
           </div>
         </div>
@@ -174,10 +168,10 @@ function LoginPageContent() {
   );
 }
 
-export default function LoginPage() {
+export default function LoginUserPage() {
   return (
     <Suspense>
-      <LoginPageContent />
+      <LoginUserContent />
     </Suspense>
   );
 }
