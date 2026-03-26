@@ -2,8 +2,6 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { createClient } from '@/lib/supabase/client';
 
 const P = '#ec5b13';
 
@@ -26,8 +24,6 @@ function maskPhone(v: string) {
 }
 
 export default function RegisterPage() {
-  const router = useRouter();
-
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
@@ -49,16 +45,14 @@ export default function RegisterPage() {
     if (rawCnpj.length > 0 && rawCnpj.length !== 14) { setError('CNPJ inválido. Verifique e tente novamente.'); return; }
 
     setLoading(true);
-    const supabase = createClient();
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: { name, phone: phone.replace(/\D/g, ''), cnpj: rawCnpj, address },
-      },
+    const res = await fetch('/api/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password, name, phone: phone.replace(/\D/g, ''), cnpj: rawCnpj, address }),
     });
+    const data = await res.json();
 
-    if (error) { setError(error.message); }
+    if (!res.ok) { setError(data.error ?? 'Erro ao criar conta.'); }
     else { setSuccess(true); }
     setLoading(false);
   }
