@@ -315,7 +315,7 @@ export default function CartSheet({ vendor, tableNumber }: CartSheetProps) {
                         <button type="button" onClick={() => setPaymentMethod('dinheiro')} className={`p-2.5 rounded-xl border text-center text-xs font-bold transition-all ${paymentMethod === 'dinheiro' ? 'border-orange-500 bg-orange-50 text-orange-600' : 'border-slate-200 text-slate-600 bg-white'}`}>Dinheiro</button>
                       )}
                     </div>
-                    {paymentMethod === 'pix' && !cpf && (
+                    {paymentMethod === 'pix' && (
                       <div className="mt-3">
                         <label className="block text-xs font-semibold text-slate-500 mb-1.5">CPF <span className="text-red-500">*</span> <span className="font-normal text-slate-400">(obrigatório para PIX)</span></label>
                         <input
