@@ -99,6 +99,7 @@ export default function CartSheet({ vendor, tableNumber }: CartSheetProps) {
     setError('');
     if (!items.length) return;
     if (!paymentMethod) { setError('Por favor, selecione uma forma de pagamento.'); return; }
+    if (paymentMethod === 'pix' && cpf.replace(/\D/g, '').length !== 11) { setError('Informe seu CPF para pagar com PIX.'); return; }
     if (vendor.table_delivery && !mesa.trim()) { setError('Por favor, informe o número da mesa para entrega.'); return; }
     
     setLoading(true); // Trava instantânea
@@ -314,6 +315,27 @@ export default function CartSheet({ vendor, tableNumber }: CartSheetProps) {
                         <button type="button" onClick={() => setPaymentMethod('dinheiro')} className={`p-2.5 rounded-xl border text-center text-xs font-bold transition-all ${paymentMethod === 'dinheiro' ? 'border-orange-500 bg-orange-50 text-orange-600' : 'border-slate-200 text-slate-600 bg-white'}`}>Dinheiro</button>
                       )}
                     </div>
+                    {paymentMethod === 'pix' && !cpf && (
+                      <div className="mt-3">
+                        <label className="block text-xs font-semibold text-slate-500 mb-1.5">CPF <span className="text-red-500">*</span> <span className="font-normal text-slate-400">(obrigatório para PIX)</span></label>
+                        <input
+                          type="text"
+                          inputMode="numeric"
+                          value={cpf}
+                          onChange={e => {
+                            const digits = e.target.value.replace(/\D/g, '').substring(0, 11);
+                            let f = digits;
+                            if (f.length > 9) f = `${f.substring(0, 3)}.${f.substring(3, 6)}.${f.substring(6, 9)}-${f.substring(9)}`;
+                            else if (f.length > 6) f = `${f.substring(0, 3)}.${f.substring(3, 6)}.${f.substring(6)}`;
+                            else if (f.length > 3) f = `${f.substring(0, 3)}.${f.substring(3)}`;
+                            setCpf(f);
+                          }}
+                          placeholder="000.000.000-00"
+                          className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 h-11 text-sm focus:outline-none focus:ring-2"
+                          style={{ '--tw-ring-color': P } as React.CSSProperties}
+                        />
+                      </div>
+                    )}
                   </div>
 
                   {(vendor as any).table_delivery && (() => {
