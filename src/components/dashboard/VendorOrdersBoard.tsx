@@ -102,11 +102,28 @@ export default function VendorOrdersBoard({ initialOrders, vendorId }: Props) {
   }, [vendorId]);
 
   async function advanceStatus(orderId: string, nextStatus: OrderStatus) {
-    const supabase = createClient();
-    await supabase
-      .from('orders')
-      .update({ status: nextStatus })
-      .eq('id', orderId);
+    // Atualiza a UI imediatamente (otimista) para resposta instantânea
+    setOrders((prev) =>
+      prev.map((o) => o.id === orderId ? { ...o, status: nextStatus } : o)
+    );
+
+    try {
+      const res = await fetch('/api/orders/status', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ order_id: orderId, status: nextStatus }),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        console.error('Erro ao atualizar status:', data.error);
+        // Reverte o estado em caso de falha
+        const supabase = createClient();
+        const { data: order } = await supabase.from('orders').select('status').eq('id', orderId).single();
+        if (order) setOrders((prev) => prev.map((o) => o.id === orderId ? { ...o, status: order.status } : o));
+      }
+    } catch (e) {
+      console.error('Erro de rede ao atualizar status:', e);
+    }
   }
 
   async function cancelOrder(orderId: string) {
