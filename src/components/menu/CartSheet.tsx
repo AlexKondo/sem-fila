@@ -9,15 +9,7 @@ import { createClient } from '@/lib/supabase/client';
 const STORAGE_KEY = 'qp_customer';
 const P = '#ec5b13';
 
-interface CartItem { 
-  id: string; 
-  name: string; 
-  price: number; 
-  quantity: number;
-  basePrice?: number;
-  extrasBreakdown?: { name: string; price: number; qty: number }[];
-}
-
+interface CartItem { id: string; name: string; price: number; quantity: number; }
 interface CartSheetProps { vendor: Vendor; tableNumber?: string; }
 type Step = 'cart' | 'identify';
 
@@ -79,11 +71,11 @@ export default function CartSheet({ vendor, tableNumber }: CartSheetProps) {
     };
   }, []);
 
-  const addItem = useCallback((item: { id: string; name: string; price: number; basePrice?: number; extrasBreakdown?: { name: string; price: number; qty: number }[] }) => {
+  const addItem = useCallback((item: { id: string; name: string; price: number }) => {
     setItems(prev => {
       const ex = prev.find(i => i.id === item.id);
       if (ex) return prev.map(i => i.id === item.id ? { ...i, quantity: i.quantity + 1 } : i);
-      return [...prev, { id: item.id, name: item.name, price: item.price, quantity: 1, basePrice: item.basePrice, extrasBreakdown: item.extrasBreakdown }];
+      return [...prev, { ...item, quantity: 1 }];
     });
   }, []);
 
@@ -238,22 +230,10 @@ export default function CartSheet({ vendor, tableNumber }: CartSheetProps) {
               <>
                 <div className="overflow-y-auto flex-1 px-5 py-4 space-y-3">
                   {items.map(item => (
-                    <div key={item.id} className="flex items-start gap-3">
+                    <div key={item.id} className="flex items-center gap-3">
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold text-slate-900 leading-tight">{item.name.split(' + ')[0]}</p>
-                        {/* Discriminação de preços */}
-                        {item.basePrice != null ? (
-                          <div className="mt-0.5 space-y-0.5">
-                            <p className="text-xs text-slate-400">{formatCurrency(item.basePrice)}</p>
-                            {(item.extrasBreakdown || []).map((e, i) => (
-                              <p key={i} className="text-xs text-slate-400">
-                                {e.qty > 1 ? `${e.qty}x ` : ''}+ {e.name} {formatCurrency(e.price * e.qty)}
-                              </p>
-                            ))}
-                          </div>
-                        ) : (
-                          <p className="text-xs text-slate-400 mt-0.5">{formatCurrency(item.price)} cada</p>
-                        )}
+                        <p className="text-sm font-semibold text-slate-900 leading-tight">{item.name}</p>
+                        <p className="text-xs text-slate-400 mt-0.5">{formatCurrency(item.price)} cada</p>
                       </div>
                       <div className="flex items-center gap-2">
                         <button onClick={() => updateQty(item.id, -1)} className="w-7 h-7 rounded-lg border border-slate-200 flex items-center justify-center text-slate-600 hover:bg-slate-50">
