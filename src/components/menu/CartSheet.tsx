@@ -9,7 +9,7 @@ import { createClient } from '@/lib/supabase/client';
 const STORAGE_KEY = 'qp_customer';
 const P = '#ec5b13';
 
-interface CartItem { id: string; name: string; price: number; quantity: number; }
+interface CartItem { id: string; name: string; price: number; quantity: number; breakdown?: { label: string; price: number }[]; }
 interface CartSheetProps { vendor: Vendor; tableNumber?: string; }
 type Step = 'cart' | 'identify';
 
@@ -71,7 +71,7 @@ export default function CartSheet({ vendor, tableNumber }: CartSheetProps) {
     };
   }, []);
 
-  const addItem = useCallback((item: { id: string; name: string; price: number }) => {
+  const addItem = useCallback((item: { id: string; name: string; price: number; breakdown?: { label: string; price: number }[] }) => {
     setItems(prev => {
       const ex = prev.find(i => i.id === item.id);
       if (ex) return prev.map(i => i.id === item.id ? { ...i, quantity: i.quantity + 1 } : i);
@@ -230,10 +230,21 @@ export default function CartSheet({ vendor, tableNumber }: CartSheetProps) {
               <>
                 <div className="overflow-y-auto flex-1 px-5 py-4 space-y-3">
                   {items.map(item => (
-                    <div key={item.id} className="flex items-center gap-3">
+                    <div key={item.id} className="flex items-start gap-3">
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold text-slate-900 leading-tight">{item.name}</p>
-                        <p className="text-xs text-slate-400 mt-0.5">{formatCurrency(item.price)} cada</p>
+                        <p className="text-sm font-semibold text-slate-900 leading-tight">{item.name.split(' + ')[0]}</p>
+                        {/* Price breakdown */}
+                        {item.breakdown && item.breakdown.length > 0 ? (
+                          <div className="mt-0.5 space-y-0.5">
+                            {item.breakdown.map((line, i) => (
+                              <p key={i} className="text-xs text-slate-400">
+                                {line.label}: <span className="font-semibold">{formatCurrency(line.price)}</span>
+                              </p>
+                            ))}
+                          </div>
+                        ) : (
+                          <p className="text-xs text-slate-400 mt-0.5">{formatCurrency(item.price)} cada</p>
+                        )}
                       </div>
                       <div className="flex items-center gap-2">
                         <button onClick={() => updateQty(item.id, -1)} className="w-7 h-7 rounded-lg border border-slate-200 flex items-center justify-center text-slate-600 hover:bg-slate-50">

@@ -21,11 +21,12 @@ interface Extra { name: string; price: number; }
 
 export default function MenuClient({ vendor, items, mesa, waitTime }: MenuClientProps) {
   const [selectedCat, setSelectedCat] = useState('Todos');
+  const [searchQuery, setSearchQuery] = useState('');
   const [customerName, setCustomerName] = useState<string | null>(null);
   
-  // Extras Modal State
-  const [extrasModal, setExtrasModal] = useState<MenuItem | null>(null);
-  const [selectedExtras, setSelectedExtras] = useState<Extra[]>([]);
+  // Extras Modal State (replaced with inline)
+  const [extrasQty, setExtrasQty] = useState<Record<string, Record<string, number>>>({});
+  const [expandedItem, setExpandedItem] = useState<string | null>(null);
 
   useEffect(() => {
     const supabase = createClient();
@@ -46,34 +47,43 @@ export default function MenuClient({ vendor, items, mesa, waitTime }: MenuClient
   const [modalMesa, setModalMesa] = useState(mesa || '');
   const [callStatus, setCallStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
 
-  // Intercepts the add-to-cart click to show extras modal if needed
+  // Inline extras handler
   function handleAddToCart(item: MenuItem) {
     const extras = (item as any).extras as Extra[] | undefined;
-    if (extras && extras.length > 0) {
-      setSelectedExtras([]);
-      setExtrasModal(item);
-    } else {
-      document.dispatchEvent(new CustomEvent('add-to-cart', { detail: { id: item.id, name: item.name, price: item.price } }));
-    }
-  }
+    const itemExtrasQty = extrasQty[item.id] || {};
+    const selectedExtras = (extras || []).filter(e => (itemExtrasQty[e.name] || 0) > 0);
+    
+    const extrasTotal = selectedExtras.reduce((s, e) => s + e.price * (itemExtrasQty[e.name] || 0), 0);
+    const extrasLabel = selectedExtras.length > 0
+      ? ` + ${selectedExtras.map(e => `${itemExtrasQty[e.name] > 1 ? itemExtrasQty[e.name] + 'x ' : ''}${e.name}`).join(', ')}`
+      : '';
 
-  function confirmExtras() {
-    if (!extrasModal) return;
-    const extrasTotal = selectedExtras.reduce((s, e) => s + e.price, 0);
-    const extrasLabel = selectedExtras.length > 0 ? ` + ${selectedExtras.map(e => e.name).join(', ')}` : '';
+    // Build price breakdown for cart display
+    const breakdown = selectedExtras.length > 0 ? [
+      { label: item.name, price: item.price },
+      ...selectedExtras.map(e => ({
+        label: `${itemExtrasQty[e.name] > 1 ? `${itemExtrasQty[e.name]}x ` : ''}${e.name}`,
+        price: e.price * (itemExtrasQty[e.name] || 1)
+      }))
+    ] : undefined;
+    
     document.dispatchEvent(new CustomEvent('add-to-cart', { detail: {
-      id: extrasModal.id + (selectedExtras.length ? '-' + selectedExtras.map(e => e.name).join('_') : ''),
-      name: extrasModal.name + extrasLabel,
-      price: extrasModal.price + extrasTotal
+      id: item.id + (extrasLabel ? '-' + Object.entries(itemExtrasQty).filter(([,v]) => v > 0).map(([k,v]) => `${k}x${v}`).join('_') : ''),
+      name: item.name + extrasLabel,
+      price: item.price + extrasTotal,
+      breakdown
     }}));
-    setExtrasModal(null);
+
+    // Reset this item's extras after adding
+    setExtrasQty(prev => ({ ...prev, [item.id]: {} }));
+    setExpandedItem(null);
   }
 
-  function toggleExtra(extra: Extra) {
-    setSelectedExtras(prev => {
-      const exists = prev.find(e => e.name === extra.name);
-      if (exists) return prev.filter(e => e.name !== extra.name);
-      return [...prev, extra];
+  function changeExtraQty(itemId: string, extraName: string, delta: number) {
+    setExtrasQty(prev => {
+      const cur = (prev[itemId] || {})[extraName] || 0;
+      const next = Math.max(0, cur + delta);
+      return { ...prev, [itemId]: { ...(prev[itemId] || {}), [extraName]: next } };
     });
   }
 
@@ -108,9 +118,14 @@ export default function MenuClient({ vendor, items, mesa, waitTime }: MenuClient
   // Extrai categorias únicas cadastradas nos itens do cardápio
   const categories = ['Todos', ...Array.from(new Set(items.map(i => i.category).filter((c): c is string => !!c)))];
 
-  const filteredItems = selectedCat === 'Todos'
-    ? items
-    : items.filter(i => i.category === selectedCat);
+  const filteredItems = searchQuery.trim()
+    ? items.filter(i =>
+        i.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (i.description ?? '').toLowerCase().includes(searchQuery.toLowerCase())
+      )
+    : selectedCat === 'Todos'
+      ? items
+      : items.filter(i => i.category === selectedCat);
 
   return (
     <div className="relative flex min-h-screen w-full flex-col max-w-md mx-auto pb-24" style={{ backgroundColor: '#f8f6f6' }}>
@@ -163,8 +178,15 @@ export default function MenuClient({ vendor, items, mesa, waitTime }: MenuClient
             <input 
               type="text" 
               placeholder="Buscar no cardápio…" 
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
               className="bg-transparent border-none outline-none text-slate-800 w-full text-base"
             />
+            {searchQuery && (
+              <button onClick={() => setSearchQuery('')} className="text-slate-400 hover:text-slate-600 flex-shrink-0">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+              </button>
+            )}
           </div>
 
           {vendor.allow_waiter_calls && (
@@ -208,112 +230,105 @@ export default function MenuClient({ vendor, items, mesa, waitTime }: MenuClient
             <p className="text-slate-400 text-sm">Nenhum item disponível nesta categoria.</p>
           </div>
         ) : (
-          filteredItems.map((item: MenuItem) => (
-            <div key={item.id} className="flex gap-4 p-3 bg-white rounded-2xl shadow-sm border border-slate-100">
-              <div className="relative w-28 h-28 shrink-0 rounded-xl overflow-hidden">
-                {item.image_url ? (
-                  <Image src={item.image_url} alt={item.name} fill className="object-cover" />
-                ) : (
-                  <div className="w-full h-full bg-slate-100 flex items-center justify-center text-3xl">🍴</div>
+          filteredItems.map((item: MenuItem) => {
+            const extras = (item as any).extras as Extra[] | undefined;
+            const hasExtras = extras && extras.length > 0;
+            const isExpanded = expandedItem === item.id;
+            const itemExtrasQty = extrasQty[item.id] || {};
+            const extrasTotal = (extras || []).reduce((s, e) => s + e.price * (itemExtrasQty[e.name] || 0), 0);
+
+            return (
+              <div key={item.id} className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+                {/* Main row */}
+                <div className="flex gap-4 p-3">
+                  <div className="relative w-24 h-24 shrink-0 rounded-xl overflow-hidden">
+                    {item.image_url ? (
+                      <Image src={item.image_url} alt={item.name} fill className="object-cover" />
+                    ) : (
+                      <div className="w-full h-full bg-slate-100 flex items-center justify-center text-3xl">🍴</div>
+                    )}
+                  </div>
+
+                  <div className="flex flex-col flex-1 justify-between">
+                    <div>
+                      <div className="flex justify-between items-start gap-2">
+                        <h4 className="font-bold text-slate-900 leading-tight">{item.name}</h4>
+                        <span className="font-bold flex-shrink-0" style={{ color: P }}>{formatCurrency(item.price + extrasTotal)}</span>
+                      </div>
+                      {item.description && (
+                        <p className="text-xs text-slate-500 line-clamp-2 mt-1">{item.description}</p>
+                      )}
+                      <div className="flex items-center gap-1.5 mt-1.5">
+                        <svg className="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <span className="text-[11px] text-slate-500">{waitTime}</span>
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between mt-2">
+                      {hasExtras && (
+                        <button
+                          onClick={() => setExpandedItem(isExpanded ? null : item.id)}
+                          className="text-[11px] text-slate-400 hover:text-orange-500 font-semibold flex items-center gap-0.5 transition-colors"
+                        >
+                          <svg className={`w-3.5 h-3.5 transition-transform ${isExpanded ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+                          Opcionais
+                        </button>
+                      )}
+                      <button
+                        onClick={() => handleAddToCart(item)}
+                        className="ml-auto px-4 py-1.5 text-xs font-bold rounded-full flex items-center gap-1 transition-colors hover:opacity-90"
+                        style={{ backgroundColor: '#ec5b131a', color: '#ec5b13' }}
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                        </svg>
+                        Adicionar
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Inline extras */}
+                {isExpanded && hasExtras && (
+                  <div className="border-t border-slate-100 px-4 py-3 space-y-2 bg-slate-50">
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Adicionais / Opcionais</p>
+                    {extras!.map((extra, idx) => {
+                      const qty = itemExtrasQty[extra.name] || 0;
+                      return (
+                        <div key={idx} className="flex items-center justify-between">
+                          <div>
+                            <p className="text-sm font-semibold text-slate-800">{extra.name}</p>
+                            <p className="text-xs" style={{ color: P }}>+{formatCurrency(extra.price)}</p>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => changeExtraQty(item.id, extra.name, -1)}
+                              className="w-7 h-7 rounded-lg border border-slate-200 bg-white flex items-center justify-center text-slate-600 hover:bg-slate-100 active:scale-90 transition-all"
+                            >
+                              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M20 12H4" /></svg>
+                            </button>
+                            <span className="text-sm font-bold text-slate-900 w-5 text-center">{qty}</span>
+                            <button
+                              onClick={() => changeExtraQty(item.id, extra.name, 1)}
+                              className="w-7 h-7 rounded-lg flex items-center justify-center text-white active:scale-90 transition-all"
+                              style={{ backgroundColor: P }}
+                            >
+                              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" /></svg>
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
                 )}
               </div>
-
-              <div className="flex flex-col flex-1 justify-between">
-                <div>
-                  <div className="flex justify-between items-start gap-2">
-                    <h4 className="font-bold text-slate-900 leading-tight">{item.name}</h4>
-                    <span className="font-bold flex-shrink-0" style={{ color: P }}>{formatCurrency(item.price)}</span>
-                  </div>
-                  {item.description && (
-                    <p className="text-xs text-slate-500 line-clamp-2 mt-1">{item.description}</p>
-                  )}
-                  <div className="flex items-center gap-1.5 mt-2">
-                    <svg className="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    <span className="text-[11px] text-slate-500">{waitTime}</span>
-                  </div>
-                </div>
-                <div className="flex justify-end mt-2">
-                  <button
-                    onClick={() => handleAddToCart(item)}
-                    className="px-4 py-1.5 text-xs font-bold rounded-full flex items-center gap-1 transition-colors hover:opacity-90"
-                    style={{ backgroundColor: '#ec5b131a', color: '#ec5b13' }}
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                    </svg>
-                    Adicionar
-                  </button>
-                </div>
-              </div>
-            </div>
-          ))
+            );
+          })
         )}
       </main>
 
       <CartSheet vendor={vendor} tableNumber={mesa} />
-
-      {/* Extras Modal */}
-      {extrasModal && (
-        <div className="fixed inset-0 z-[100] flex items-end justify-center bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="w-full max-w-md bg-white rounded-t-3xl shadow-2xl overflow-hidden animate-in slide-in-from-bottom-4 duration-300">
-            <div className="flex justify-center pt-3 pb-1">
-              <div className="w-10 h-1 bg-slate-200 rounded-full" />
-            </div>
-            <div className="px-5 py-3 border-b border-slate-100 flex justify-between items-center">
-              <div>
-                <h2 className="font-bold text-slate-900">{extrasModal.name}</h2>
-                <p className="text-sm" style={{ color: P }}>{formatCurrency(extrasModal.price)}</p>
-              </div>
-              <button onClick={() => setExtrasModal(null)} className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-400">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-              </button>
-            </div>
-
-            <div className="px-5 py-4 max-h-64 overflow-y-auto">
-              <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Adicionais / Opcionais</p>
-              <div className="space-y-2">
-                {((extrasModal as any).extras as Extra[]).map((extra, idx) => {
-                  const selected = !!selectedExtras.find(e => e.name === extra.name);
-                  return (
-                    <button
-                      key={idx}
-                      onClick={() => toggleExtra(extra)}
-                      className={`w-full flex items-center justify-between p-3 rounded-xl border-2 transition-all text-left ${
-                        selected ? 'border-orange-500 bg-orange-50' : 'border-slate-100 bg-white'
-                      }`}
-                    >
-                      <div className="flex items-center gap-3">
-                        <span className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-colors ${
-                          selected ? 'border-orange-500 bg-orange-500' : 'border-slate-300'
-                        }`}>
-                          {selected && <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>}
-                        </span>
-                        <span className="text-sm font-semibold text-slate-800">{extra.name}</span>
-                      </div>
-                      <span className="text-sm font-bold" style={{ color: P }}>+{formatCurrency(extra.price)}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            <div className="px-5 py-4 border-t border-slate-100">
-              <button
-                onClick={confirmExtras}
-                className="w-full h-14 font-bold rounded-xl text-white shadow-lg transition flex items-center justify-between px-6"
-                style={{ backgroundColor: P }}
-              >
-                <span>Adicionar ao carrinho</span>
-                <span className="font-black text-lg">
-                  {formatCurrency(extrasModal.price + selectedExtras.reduce((s, e) => s + e.price, 0))}
-                </span>
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Custom Waiter Modal */}
       {showWaiterModal && (
