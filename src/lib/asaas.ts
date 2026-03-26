@@ -75,6 +75,87 @@ export async function createPixCharge(params: {
   };
 }
 
+export async function createCreditCardCharge(params: {
+  customerId: string;
+  value: number;
+  orderId: string;
+  description: string;
+  card: { holderName: string; number: string; expiryMonth: string; expiryYear: string; ccv: string };
+  holderInfo: { name: string; cpfCnpj: string; email?: string; phone?: string; postalCode?: string; addressNumber?: string };
+  remoteIp?: string;
+}): Promise<{ paymentId: string; cardToken?: string; cardLast4?: string }> {
+  const due = new Date();
+  due.setDate(due.getDate() + 1);
+  const dueDate = due.toISOString().split('T')[0];
+
+  const res = await fetch(`${BASE_URL}/payments`, {
+    method: 'POST',
+    headers: h,
+    body: JSON.stringify({
+      customer: params.customerId,
+      billingType: 'CREDIT_CARD',
+      value: params.value,
+      dueDate,
+      externalReference: params.orderId,
+      description: params.description,
+      creditCard: {
+        holderName: params.card.holderName,
+        number: params.card.number.replace(/\s/g, ''),
+        expiryMonth: params.card.expiryMonth,
+        expiryYear: params.card.expiryYear,
+        ccv: params.card.ccv,
+      },
+      creditCardHolderInfo: {
+        name: params.holderInfo.name,
+        email: params.holderInfo.email || 'cliente@quickpick.com.br',
+        cpfCnpj: params.holderInfo.cpfCnpj.replace(/\D/g, ''),
+        postalCode: params.holderInfo.postalCode || '01310100',
+        addressNumber: params.holderInfo.addressNumber || '0',
+        phone: params.holderInfo.phone || '11999999999',
+      },
+      remoteIp: params.remoteIp || '127.0.0.1',
+      tokenize: true,
+    }),
+  });
+  const payment = await res.json();
+  if (!payment.id) throw new Error(`Asaas card error: ${JSON.stringify(payment)}`);
+
+  return {
+    paymentId: payment.id,
+    cardToken: payment.creditCardToken ?? undefined,
+    cardLast4: payment.creditCard?.creditCardNumber?.slice(-4) ?? undefined,
+  };
+}
+
+export async function createCreditCardChargeWithToken(params: {
+  customerId: string;
+  value: number;
+  orderId: string;
+  description: string;
+  cardToken: string;
+}): Promise<{ paymentId: string }> {
+  const due = new Date();
+  due.setDate(due.getDate() + 1);
+  const dueDate = due.toISOString().split('T')[0];
+
+  const res = await fetch(`${BASE_URL}/payments`, {
+    method: 'POST',
+    headers: h,
+    body: JSON.stringify({
+      customer: params.customerId,
+      billingType: 'CREDIT_CARD',
+      value: params.value,
+      dueDate,
+      externalReference: params.orderId,
+      description: params.description,
+      creditCardToken: params.cardToken,
+    }),
+  });
+  const payment = await res.json();
+  if (!payment.id) throw new Error(`Asaas token charge error: ${JSON.stringify(payment)}`);
+  return { paymentId: payment.id };
+}
+
 // Apenas sandbox — simula confirmação de pagamento pelo Asaas
 export async function simulatePayment(paymentId: string): Promise<void> {
   await fetch(`${BASE_URL}/payments/${paymentId}/simulatePayment`, {

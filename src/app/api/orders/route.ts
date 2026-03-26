@@ -44,7 +44,11 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: parsed.error.errors[0].message }, { status: 422 });
   }
 
-  const { vendor_id, table_number, notes, items, payment_method, customer_name, customer_cpf, customer_email } = parsed.data;
+  const {
+    vendor_id, table_number, notes, items,
+    payment_method, customer_name, customer_cpf, customer_email,
+    use_saved_card, card_number, card_holder, card_expiry_month, card_expiry_year, card_cvv,
+  } = parsed.data;
 
   const userClient = await createClient();
   const { data: { user } } = await userClient.auth.getUser();
@@ -97,8 +101,8 @@ export async function POST(request: Request) {
     return `${L1}${L2}${N1}${N2}`;
   }
 
-  // PIX paga via Asaas (pending até webhook confirmar); demais métodos são pagamento físico (paid)
   const isPix = payment_method === 'pix';
+  const isCard = payment_method === 'cartão';
 
   // Cria o pedido
   const { data: order, error: orderError } = await supabase
@@ -110,7 +114,7 @@ export async function POST(request: Request) {
       notes: notes ?? null,
       total_price,
       status: 'received',
-      payment_status: isPix ? 'pending' : 'paid',
+      payment_status: (isPix || isCard) ? 'pending' : 'paid',
       pickup_code: generatePickupCode(),
     })
     .select('id, pickup_code')
@@ -169,5 +173,73 @@ export async function POST(request: Request) {
     }
   }
 
-  return NextResponse.json({ order_id: order.id, pickup_code: order.pickup_code, payment_confirmed: !isPix }, { status: 201 });
+  // Pagamento por cartão via Asaas
+  if (isCard && customer_name && customer_cpf) {
+    try {
+      const { findOrCreateCustomer, createCreditCardCharge, createCreditCardChargeWithToken } = await import('@/lib/asaas');
+
+      // Busca customer_id e token salvos no perfil (se logado)
+      let asaasCustomerId: string | null = null;
+      let savedToken: string | null = null;
+      if (user) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('asaas_customer_id, asaas_card_token')
+          .eq('id', user.id)
+          .single();
+        asaasCustomerId = profile?.asaas_customer_id ?? null;
+        savedToken = profile?.asaas_card_token ?? null;
+      }
+
+      // Usa token salvo
+      if (use_saved_card && savedToken && asaasCustomerId) {
+        await createCreditCardChargeWithToken({
+          customerId: asaasCustomerId,
+          value: total_price,
+          orderId: order.id,
+          description: `Pedido ${order.pickup_code}`,
+          cardToken: savedToken,
+        });
+        await supabase.from('orders').update({ payment_status: 'paid' }).eq('id', order.id);
+        return NextResponse.json({ order_id: order.id, pickup_code: order.pickup_code, payment_confirmed: true }, { status: 201 });
+      }
+
+      // Novo cartão
+      if (card_number && card_holder && card_expiry_month && card_expiry_year && card_cvv) {
+        if (!asaasCustomerId) {
+          asaasCustomerId = await findOrCreateCustomer({ name: customer_name, cpfCnpj: customer_cpf, email: customer_email });
+          if (user) await supabase.from('profiles').update({ asaas_customer_id: asaasCustomerId }).eq('id', user.id);
+        }
+
+        const result = await createCreditCardCharge({
+          customerId: asaasCustomerId,
+          value: total_price,
+          orderId: order.id,
+          description: `Pedido ${order.pickup_code}`,
+          card: { holderName: card_holder, number: card_number, expiryMonth: card_expiry_month, expiryYear: card_expiry_year, ccv: card_cvv },
+          holderInfo: { name: customer_name, cpfCnpj: customer_cpf, email: customer_email },
+          remoteIp: request.headers.get('x-forwarded-for') || '127.0.0.1',
+        });
+
+        // Salva token para próximas compras (apenas usuários logados)
+        if (user && result.cardToken) {
+          await supabase.from('profiles').update({
+            asaas_customer_id: asaasCustomerId,
+            asaas_card_token: result.cardToken,
+            asaas_card_last4: result.cardLast4 ?? null,
+          }).eq('id', user.id);
+        }
+
+        await supabase.from('orders').update({ payment_status: 'paid' }).eq('id', order.id);
+        return NextResponse.json({ order_id: order.id, pickup_code: order.pickup_code, payment_confirmed: true }, { status: 201 });
+      }
+    } catch (err: any) {
+      // Cancela pedido se cartão recusado
+      await supabase.from('orders').update({ payment_status: 'failed', status: 'cancelled' }).eq('id', order.id);
+      const msg = err?.message?.includes('UNAUTHORIZED') ? 'Cartão recusado. Verifique os dados.' : 'Erro ao processar cartão. Tente novamente.';
+      return NextResponse.json({ error: msg }, { status: 402 });
+    }
+  }
+
+  return NextResponse.json({ order_id: order.id, pickup_code: order.pickup_code, payment_confirmed: !(isPix || isCard) }, { status: 201 });
 }

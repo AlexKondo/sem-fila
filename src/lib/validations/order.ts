@@ -11,6 +11,12 @@ export const CreateOrderSchema = z.object({
   customer_name: z.string().max(200).optional(),
   customer_cpf: z.string().max(14).optional(),
   customer_email: z.string().email().optional(),
+  use_saved_card: z.boolean().optional(),
+  card_number: z.string().max(19).optional(),
+  card_holder: z.string().max(200).optional(),
+  card_expiry_month: z.string().max(2).optional(),
+  card_expiry_year: z.string().max(4).optional(),
+  card_cvv: z.string().max(4).optional(),
   items: z
     .array(
       z.object({

@@ -14,6 +14,9 @@ export interface Profile {
   cpf?: string | null;
   birthday_day?: number | null;
   birthday_month?: number | null;
+  asaas_customer_id?: string | null;
+  asaas_card_token?: string | null;
+  asaas_card_last4?: string | null;
   created_at: string;
   updated_at: string;
 }
