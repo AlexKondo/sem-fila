@@ -364,7 +364,13 @@ export default function StaffPage() {
                 <input
                   type="tel"
                   value={form.phone}
-                  onChange={e => setForm(f => ({ ...f, phone: e.target.value }))}
+                  onChange={e => {
+                    const v = e.target.value.replace(/\D/g, '').slice(0, 11);
+                    const masked = v.length <= 2 ? v
+                      : v.length <= 7 ? `(${v.slice(0,2)}) ${v.slice(2)}`
+                      : `(${v.slice(0,2)}) ${v.slice(2,7)}-${v.slice(7)}`;
+                    setForm(f => ({ ...f, phone: masked }));
+                  }}
                   placeholder="(11) 99999-9999"
                   className="w-full border border-slate-200 rounded-xl px-4 h-12 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/30"
                 />
