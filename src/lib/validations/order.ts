@@ -5,7 +5,7 @@ import { z } from 'zod';
 
 export const CreateOrderSchema = z.object({
   vendor_id: z.string().uuid({ message: 'ID de vendedor inválido' }),
-  table_number: z.string().max(10).nullable().optional(),
+  table_number: z.string().max(50).nullable().optional(),
   notes: z.string().max(500).nullable().optional(),
   items: z
     .array(
