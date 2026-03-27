@@ -102,7 +102,8 @@ export default function VendorOrdersBoard({ initialOrders, vendorId }: Props) {
     }
 
     // Busca pedidos via RPC (bypassa RLS) e sincroniza com o estado local
-    async function syncOrders() {
+    // alertOnPaid=true dispara alerta apenas para pedidos PAGOS que são novos
+    async function syncOrders(alertOnPaid = false) {
       const since = getFilterDate(dateFilter, customDate);
       const { data } = await supabase.rpc('get_vendor_orders', {
         p_vendor_id: vendorId,
@@ -113,15 +114,17 @@ export default function VendorOrdersBoard({ initialOrders, vendorId }: Props) {
 
       setOrders(prev => {
         const prevIds = new Set(prev.map(o => o.id));
-        // Detecta pedidos novos que não existiam no estado anterior
-        const newOrders = fresh.filter(o =>
-          !prevIds.has(o.id) &&
-          !['delivered', 'cancelled'].includes(o.status)
-        );
-        // Alerta para pedidos novos
-        if (newOrders.length > 0) {
-          setAlertOrder(newOrders[0]);
-          playNewOrderSound();
+        if (alertOnPaid) {
+          // Só alerta para pedidos PAGOS que não existiam antes
+          const newPaidOrders = fresh.filter(o =>
+            !prevIds.has(o.id) &&
+            (o as any).payment_status === 'paid' &&
+            !['delivered', 'cancelled'].includes(o.status)
+          );
+          if (newPaidOrders.length > 0) {
+            setAlertOrder(newPaidOrders[0]);
+            playNewOrderSound();
+          }
         }
         return fresh;
       });
@@ -167,17 +170,17 @@ export default function VendorOrdersBoard({ initialOrders, vendorId }: Props) {
             });
 
             if (needsFullSync) {
-              await syncOrders();
+              await syncOrders(true);
             }
             return;
           }
 
-          // INSERT — busca dados completos via RPC (Realtime não traz order_items)
+          // INSERT — só interessa se já veio pago (ex: dinheiro)
           if (eventType === 'INSERT') {
-            // Só adiciona se está pago (ou se o vendor aceita dinheiro/pedidos sem pagamento online)
-            if (updated.payment_status === 'paid' || updated.status === 'received') {
-              await syncOrders();
+            if (updated.payment_status === 'paid') {
+              await syncOrders(true);
             }
+            // Se não está pago, ignoramos — o polling vai pegar quando o Asaas confirmar
           }
         }
       )
@@ -185,7 +188,7 @@ export default function VendorOrdersBoard({ initialOrders, vendorId }: Props) {
 
     // Polling de segurança a cada 10s — garante que pedidos apareçam
     // mesmo se Realtime falhar (RLS, reconexão, WAL delay)
-    pollTimer = setInterval(syncOrders, 10000);
+    pollTimer = setInterval(() => syncOrders(true), 10000);
 
     return () => {
       supabase.removeChannel(channel);
