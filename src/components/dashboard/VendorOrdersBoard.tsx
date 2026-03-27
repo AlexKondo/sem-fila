@@ -54,17 +54,17 @@ export default function VendorOrdersBoard({ initialOrders, vendorId }: Props) {
           filter: `vendor_id=eq.${vendorId}`,
         },
         async (payload) => {
-          // Busca o pedido completo com itens
-          const { data } = await supabase
-            .from('orders')
-            .select(`*, order_items(id, quantity, unit_price, extras, menu_items(id, name))`)
-            .eq('id', payload.new.id)
-            .single();
-          if (data) {
+          // Busca o pedido completo via RPC (SECURITY DEFINER — evita bloqueio RLS)
+          const { data: rpcData } = await supabase.rpc('get_vendor_orders', {
+            p_vendor_id: vendorId,
+            p_since: new Date(payload.new.created_at).toISOString(),
+          });
+          const newOrder = (rpcData as any[] || []).find((o: any) => o.id === payload.new.id);
+          if (newOrder) {
             setOrders((prev) => {
               // Previne duplicação em dev mode (React StrictMode duplo render)
-              if (prev.some(o => o.id === data.id)) return prev;
-              return [data as OrderWithItems, ...prev];
+              if (prev.some(o => o.id === newOrder.id)) return prev;
+              return [newOrder as OrderWithItems, ...prev];
             });
             // Notificação sonora (se suportado)
             try { new Audio('/sounds/new-order.mp3').play(); } catch {}
