@@ -93,84 +93,53 @@ export default function VendorOrdersBoard({ initialOrders, vendorId }: Props) {
       .on(
         'postgres_changes',
         {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'orders',
-          filter: `vendor_id=eq.${vendorId}`,
-        },
-        async (payload) => {
-          // Só adiciona se o pedido já nascer PAGO (ex: Dinheiro ou Cartão OK)
-          if (payload.new.payment_status !== 'paid') return;
-
-          // Busca o pedido completo via RPC
-          const { data: rpcData } = await supabase.rpc('get_vendor_orders', {
-            p_vendor_id: vendorId,
-            p_since: new Date(payload.new.created_at).toISOString(),
-          });
-          const newOrder = (rpcData as any[] || []).find((o: any) => o.id === payload.new.id);
-          if (newOrder) {
-            setOrders((prev) => {
-              if (prev.some(o => o.id === newOrder.id)) return prev;
-              const next = [...prev, newOrder as any].sort((a,b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
-              return next;
-            });
-            
-            // Alerta visual e sonoro imediato
-            setAlertOrder(newOrder as OrderWithItems);
-            playNewOrderSound();
-          }
-        }
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
+          event: '*',
           schema: 'public',
           table: 'orders',
           filter: `vendor_id=eq.${vendorId}`,
         },
         async (payload) => {
           const updated = payload.new as any;
-          const old = payload.old as any;
           
-          // 1. Se o pedido foi CANCELADO
+          if (payload.eventType === 'DELETE') {
+            setOrders(prev => prev.filter(o => o.id === (payload.old as any).id));
+            return;
+          }
+
+          // Se o pedido foi CANCELADO
           if (updated.status === 'cancelled') {
             setOrders(prev => prev.filter(o => o.id !== updated.id));
             return;
           }
 
-          // 2. Se o pedido mudou para PAGO (Pix/Cartão confirmado)
-          // Ou se já nasceu PAGO mas o INSERT não pegou
+          // Se o pedido é PAGO (novo ou atualizado)
           if (updated.payment_status === 'paid') {
-              // Verifica se já temos na lista de forma síncrona
-              setOrders(prev => {
-                  const exists = prev.some(o => o.id === updated.id);
-                  if (exists) {
-                      // Se existe, só atualiza status
-                      return prev.map(o => o.id === updated.id ? { ...o, ...updated } as any : o);
-                  }
-                  
-                  // Se não existe, precisamos buscar completo via RPC e adicionar agora
-                  // Buscamos em background para não bloquear o setOrders síncrono
-                  supabase.rpc('get_vendor_orders', {
+              const currentOrders = await new Promise<any[]>(r => setOrders(p => { r(p); return p; }));
+              const alreadyExists = currentOrders.some(o => o.id === updated.id);
+
+              if (!alreadyExists) {
+                  // NOVO PEDIDO CONFIRMADO (Veio de pending -> paid ou já nasceu paid)
+                  // Usamos um intervalo de 1 hora atrás para garantir que o pedido seja encontrado
+                  const safeSince = new Date(new Date(updated.created_at).getTime() - 60 * 60 * 1000).toISOString();
+                  const { data: rpcData } = await supabase.rpc('get_vendor_orders', {
                     p_vendor_id: vendorId,
-                    p_since: new Date(updated.created_at).toISOString(),
-                  }).then(({ data: rpcData }) => {
-                      const fullOrder = (rpcData as any[] || []).find((o: any) => o.id === updated.id);
-                      if (fullOrder) {
-                          setOrders(current => {
-                              if (current.some(c => c.id === fullOrder.id)) return current;
-                              const next = [...current, fullOrder as any].sort((a,b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
-                              return next;
-                          });
-                          setAlertOrder(fullOrder as any);
-                          playNewOrderSound();
-                      }
+                    p_since: safeSince,
                   });
-                  return prev;
-              });
+                  const fullOrder = (rpcData as any[] || []).find((o: any) => o.id === updated.id);
+                  if (fullOrder) {
+                    setOrders(prev => {
+                        if (prev.some(o => o.id === fullOrder.id)) return prev;
+                        return [...prev, fullOrder as any].sort((a,b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+                    });
+                    setAlertOrder(fullOrder as any);
+                    playNewOrderSound();
+                  }
+              } else {
+                  // APENAS ATUALIZAÇÃO (Já estava na lista)
+                  setOrders(prev => prev.map(o => o.id === updated.id ? { ...o, ...updated } as any : o));
+              }
           } else {
-              // Se não for pago (e não for cancelado), apenas atualiza o estado local (se existir)
+              // Não pago (e não cancelado), mantém ou atualiza se já existir
               setOrders(prev => prev.map(o => o.id === updated.id ? { ...o, ...updated } as any : o));
           }
         }
