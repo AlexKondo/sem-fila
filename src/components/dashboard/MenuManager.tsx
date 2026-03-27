@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Image from 'next/image';
 import { createClient } from '@/lib/supabase/client';
-import { formatCurrency } from '@/lib/utils';
+import { formatCurrency, getItemImage } from '@/lib/utils';
 import { MenuItemSchema } from '@/lib/validations/menu';
 import { Plus, Edit2, Trash2, ToggleLeft, ToggleRight } from 'lucide-react';
 import type { MenuItem } from '@/types/database';
@@ -221,9 +221,13 @@ export default function MenuManager({ initialItems, vendorId }: MenuManagerProps
               <label className="block text-sm font-medium text-gray-700 mb-1">Foto do Produto</label>
               <div className="flex items-center gap-4">
                 <div className="w-20 h-20 rounded-2xl bg-gray-100 flex items-center justify-center text-3xl border-2 border-dashed border-gray-200 cursor-pointer overflow-hidden relative group">
-                  {editingItem.image_url ? (
-                    <div className="relative w-full h-full group">
-                      <img src={editingItem.image_url} alt="Produto" className="w-full h-full object-cover" />
+                  <div className="relative w-full h-full group">
+                    <img 
+                      src={editingItem.image_url || getItemImage(editingItem.name, editingItem.category ?? undefined)} 
+                      alt="Produto" 
+                      className="w-full h-full object-cover" 
+                    />
+                    {editingItem.image_url && (
                       <button
                         type="button"
                         onClick={(e) => {
@@ -236,10 +240,8 @@ export default function MenuManager({ initialItems, vendorId }: MenuManagerProps
                       >
                         <Trash2 className="w-3 h-3" />
                       </button>
-                    </div>
-                  ) : (
-                    <span className="text-gray-400 text-lg">{uploadingFile ? '...' : '+'}</span>
-                  )}
+                    )}
+                  </div>
                   <input 
                     type="file" 
                     accept="image/*" 
@@ -417,11 +419,13 @@ function MenuItemCard({ item, toggleAvailable, openEdit, deleteItem }: { item: M
   const P = '#ec5b13';
   return (
     <div key={item.id} className={`bg-white rounded-2xl shadow-sm p-4 flex gap-3 ${!item.available ? 'opacity-60' : ''}`}>
-      {item.image_url ? (
-        <Image src={item.image_url} alt={item.name} width={64} height={64} className="w-16 h-16 rounded-xl object-cover flex-shrink-0" />
-      ) : (
-        <div className="w-16 h-16 rounded-xl bg-gray-100 flex-shrink-0 flex items-center justify-center text-2xl">🍴</div>
-      )}
+      <Image 
+        src={item.image_url || getItemImage(item.name, item.category ?? undefined)} 
+        alt={item.name} 
+        width={64} 
+        height={64} 
+        className="w-16 h-16 rounded-xl object-cover flex-shrink-0" 
+      />
       <div className="flex-1 min-w-0">
         <div className="flex items-start justify-between">
           <div>

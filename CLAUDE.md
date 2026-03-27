@@ -29,4 +29,8 @@ These defaults are optimized for AI coding agents (and humans) working on apps t
 - **NUNCA** use `createAdminClient` / service role para contornar políticas RLS como workaround de frontend.
 - Quando uma query falhar por RLS, **sempre peça ao usuário para rodar o SQL correto no Supabase** e escreva a migration adequada em `supabase/migrations/`.
 - Políticas RLS devem ser as mais restritivas e corretas possíveis para evitar vazamento de dados.
-- O uso do `createAdminClient` é permitido apenas em API routes de operações administrativas legítimas (criar usuário, deletar conta, etc.), nunca para leitura de dados que deveriam ser protegidos por RLS.
+### Performance (INP)
+- **Otimização de Listas**: Em componentes como o `MenuClient` que renderizam muitos itens, use `useDeferredValue` para o estado de busca/filtro. Isso garante que a digitação continue rápida enquanto o React renderiza os resultados filtrados em segundo plano.
+- **Memoização**: Sempre use `React.memo` para componentes de cartão em listas grandes (ex: `MenuItemCard`) e `useCallback` para as funções passadas a eles.
+- **Renderização**: Evite lógica pesada síncrona dentro do loop de renderização. Mova cálculos complexos para `useMemo`.
+- **Imagens**: Limite o carregamento de imagens pesadas e use as propriedades de otimização do Next.js.

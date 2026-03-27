@@ -40,10 +40,10 @@ VALUES (
 );
 
 -- Itens do cardápio de exemplo
-INSERT INTO public.menu_items (vendor_id, name, description, price, available, position)
+INSERT INTO public.menu_items (vendor_id, name, description, price, available, position, category, image_url)
 VALUES
-  ('00000000-0000-0000-0000-000000000003', 'Coxinha de Frango', 'Massa crocante com recheio cremoso de frango desfiado', 6.00, true, 1),
-  ('00000000-0000-0000-0000-000000000003', 'Esfiha de Carne', 'Aberta com carne moída temperada', 5.00, true, 2),
-  ('00000000-0000-0000-0000-000000000003', 'Risole de Presunto e Queijo', 'Frito na hora', 5.50, true, 3),
-  ('00000000-0000-0000-0000-000000000003', 'Combo 5 Salgados', 'Escolha 5 salgados variados', 22.00, true, 4),
-  ('00000000-0000-0000-0000-000000000003', 'Refrigerante Lata', 'Coca-Cola, Guaraná ou Fanta', 5.00, true, 5);
+  ('00000000-0000-0000-0000-000000000003', 'Coxinha de Frango', 'Massa crocante com recheio cremoso de frango desfiado', 6.00, true, 1, 'Salgados', 'https://images.unsplash.com/photo-1626082927389-6cd097cdc6ec?auto=format&fit=crop&w=500&q=80'),
+  ('00000000-0000-0000-0000-000000000003', 'Esfiha de Carne', 'Aberta com carne moída temperada', 5.00, true, 2, 'Salgados', 'https://images.unsplash.com/photo-1559811814-e2c7dec08091?auto=format&fit=crop&w=500&q=80'),
+  ('00000000-0000-0000-0000-000000000003', 'Risole de Presunto e Queijo', 'Frito na hora', 5.50, true, 3, 'Salgados', 'https://images.unsplash.com/photo-1563379926898-05f4575a45d8?auto=format&fit=crop&w=500&q=80'),
+  ('00000000-0000-0000-0000-000000000003', 'Combo 5 Salgados', 'Escolha 5 salgados variados', 22.00, true, 4, 'Combos', 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=500&q=80'),
+  ('00000000-0000-0000-0000-000000000003', 'Refrigerante Lata', 'Coca-Cola, Guaraná ou Fanta', 5.00, true, 5, 'Bebidas', 'https://images.unsplash.com/photo-1622483767028-3f66f34a50f4?auto=format&fit=crop&w=500&q=80');

@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useEffect, useMemo, useCallback, memo } from 'react';
+import { useState, useEffect, useMemo, useCallback, memo, useDeferredValue } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { formatCurrency } from '@/lib/utils';
+import { formatCurrency, getItemImage } from '@/lib/utils';
 import { createClient } from '@/lib/supabase/client';
 import CartSheet from './CartSheet';
 import type { MenuItem, Vendor } from '@/types/database';
@@ -24,11 +24,12 @@ const MenuItemCard = memo(function MenuItemCard({ item, waitTime, onAdd }: { ite
   return (
     <div className="flex gap-4 p-3 bg-white rounded-2xl shadow-sm border border-slate-100">
       <div className="relative w-28 h-28 shrink-0 rounded-xl overflow-hidden">
-        {item.image_url ? (
-          <Image src={item.image_url} alt={item.name} fill className="object-cover" />
-        ) : (
-          <div className="w-full h-full bg-slate-100 flex items-center justify-center text-3xl">🍴</div>
-        )}
+        <Image 
+          src={item.image_url || getItemImage(item.name, item.category ?? undefined)} 
+          alt={item.name} 
+          fill 
+          className="object-cover" 
+        />
       </div>
 
       <div className="flex flex-col flex-1 justify-between">
@@ -67,6 +68,7 @@ const MenuItemCard = memo(function MenuItemCard({ item, waitTime, onAdd }: { ite
 export default function MenuClient({ vendor, items, mesa, waitTime }: MenuClientProps) {
   const [selectedCat, setSelectedCat] = useState('Todos');
   const [searchQuery, setSearchQuery] = useState('');
+  const deferredSearchQuery = useDeferredValue(searchQuery);
   const [customerName, setCustomerName] = useState<string | null>(null);
 
   // Extras Modal State
@@ -186,8 +188,8 @@ export default function MenuClient({ vendor, items, mesa, waitTime }: MenuClient
   );
 
   const filteredItems = useMemo(() => {
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase();
+    if (deferredSearchQuery.trim()) {
+      const q = deferredSearchQuery.toLowerCase();
       return liveItems.filter(i =>
         i.name.toLowerCase().includes(q) ||
         (i.description ?? '').toLowerCase().includes(q)
@@ -196,7 +198,7 @@ export default function MenuClient({ vendor, items, mesa, waitTime }: MenuClient
     return selectedCat === 'Todos'
       ? liveItems
       : liveItems.filter(i => i.category === selectedCat);
-  }, [liveItems, searchQuery, selectedCat]);
+  }, [liveItems, deferredSearchQuery, selectedCat]);
 
   // Total dos extras para o modal
   const extrasModalTotal = useMemo(() => {
