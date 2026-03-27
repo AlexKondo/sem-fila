@@ -112,22 +112,27 @@ export default function VendorOrdersBoard({ initialOrders, vendorId }: Props) {
       if (!data) return;
       const fresh = data as OrderWithItems[];
 
-      setOrders(prev => {
-        const prevIds = new Set(prev.map(o => o.id));
-        if (alertOnPaid) {
-          // Só alerta para pedidos PAGOS que não existiam antes
+      // Detecta novos pedidos pagos ANTES de atualizar o estado
+      if (alertOnPaid) {
+        setOrders(prev => {
+          const prevIds = new Set(prev.map(o => o.id));
           const newPaidOrders = fresh.filter(o =>
             !prevIds.has(o.id) &&
             (o as any).payment_status === 'paid' &&
             !['delivered', 'cancelled'].includes(o.status)
           );
           if (newPaidOrders.length > 0) {
-            setAlertOrder(newPaidOrders[0]);
-            playNewOrderSound();
+            // Agendar alerta fora do updater para evitar batching
+            setTimeout(() => {
+              setAlertOrder(newPaidOrders[0]);
+              playNewOrderSound();
+            }, 0);
           }
-        }
-        return fresh;
-      });
+          return fresh;
+        });
+      } else {
+        setOrders(fresh);
+      }
     }
 
     // Realtime: escuta mudanças com filtro no vendor_id
