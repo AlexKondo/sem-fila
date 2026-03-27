@@ -35,16 +35,27 @@ export default function StaffPage() {
       const cookieVendorId = document.cookie
         .split('; ').find(c => c.startsWith('selected_vendor_id='))?.split('=')[1];
 
+      const { data: profileData } = await supabase
+        .from('profiles').select('role').eq('id', user.id).single();
+      const isPlatformAdmin = profileData?.role === 'platform_admin';
+
       const { data: vendorsData } = await supabase
         .from('vendors').select('id').eq('owner_id', user.id).eq('active', true);
-      if (!vendorsData?.length) { setLoading(false); return; }
 
-      const vid = (cookieVendorId && cookieVendorId !== 'all' && vendorsData.find(v => v.id === cookieVendorId))
-        ? cookieVendorId
-        : vendorsData[0].id;
+      let vid: string | null = null;
+
+      if (isPlatformAdmin && cookieVendorId && cookieVendorId !== 'all') {
+        // platform_admin usa o vendor do cookie diretamente
+        vid = cookieVendorId;
+      } else if (vendorsData?.length) {
+        vid = (cookieVendorId && cookieVendorId !== 'all' && vendorsData.find(v => v.id === cookieVendorId))
+          ? cookieVendorId
+          : vendorsData[0].id;
+      }
+
+      if (!vid) { setLoading(false); return; }
       setVendorId(vid);
 
-      // API route usa admin client para bypassar RLS da staff_schedules
       const res = await fetch(`/api/staff/list?vendor_id=${vid}`);
       const json = await res.json();
       if (json.data) setStaff(json.data as StaffWithProfile[]);
