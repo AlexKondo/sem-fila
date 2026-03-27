@@ -39,6 +39,7 @@ function setOverviewCookie() {
 export default function VendorHeader({ vendorName, cnpjFormatted, vendorId, multiVendor, isOverview }: VendorHeaderProps) {
   const pathname = usePathname();
   const [pendingCalls, setPendingCalls] = React.useState(0);
+  const [alertingMesa, setAlertingMesa] = React.useState<string | null>(null);
 
   React.useEffect(() => {
     if (!vendorId) return;
@@ -55,7 +56,7 @@ export default function VendorHeader({ vendorName, cnpjFormatted, vendorId, mult
         setPendingCalls(count || 0);
       });
 
-    // Inscrição Realtime para atualizar o badge
+    // Inscrição Realtime para atualizar o badge e disparar alertas globais
     const channel = supabase
       .channel(`header-waiter-${vendorId}`)
       .on('postgres_changes', {
@@ -63,7 +64,8 @@ export default function VendorHeader({ vendorName, cnpjFormatted, vendorId, mult
         schema: 'public',
         table: 'waiter_calls',
         filter: `vendor_id=eq.${vendorId}`
-      }, () => {
+      }, (payload) => {
+        // Atualiza contagem
         supabase
           .from('waiter_calls')
           .select('id', { count: 'exact', head: true })
@@ -72,8 +74,22 @@ export default function VendorHeader({ vendorName, cnpjFormatted, vendorId, mult
           .then(({ count }) => {
             setPendingCalls(count || 0);
           });
+
+        // Alerta sonoro e visual global em novas chamadas
+        if (payload.eventType === 'INSERT') {
+          const newCall = payload.new as any;
+          setAlertingMesa(newCall.table_number);
+          playWaiterSound();
+        }
       })
       .subscribe();
+
+    function playWaiterSound() {
+      try {
+        const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
+        audio.play().catch(() => {});
+      } catch {}
+    }
 
     return () => {
       supabase.removeChannel(channel);
@@ -181,6 +197,26 @@ export default function VendorHeader({ vendorName, cnpjFormatted, vendorId, mult
           />
         </nav>
       </div>
+
+      {/* Alerta Global de Garçom */}
+      {alertingMesa && (
+        <div 
+          onClick={() => setAlertingMesa(null)}
+          className="fixed inset-0 z-[10000] bg-red-600 flex flex-col items-center justify-center p-8 animate-pulse text-white text-center cursor-pointer"
+        >
+           <svg className="w-48 h-48 mb-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+           </svg>
+           <h2 className="text-4xl font-black uppercase tracking-widest opacity-80 mb-4">Mesa Chamando:</h2>
+           <h3 className="text-[12rem] font-black leading-none italic mb-8">
+             {alertingMesa}
+           </h3>
+           <p className="text-2xl font-bold uppercase tracking-widest bg-white text-red-600 px-8 py-2 rounded-full">
+             Aguardando Atendimento
+           </p>
+           <p className="mt-12 text-sm opacity-50 font-bold uppercase tracking-widest">Toque para fechar este alerta</p>
+        </div>
+      )}
     </header>
   );
 }

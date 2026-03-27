@@ -33,17 +33,7 @@ export default function WaiterBoard({ initialReadyOrders, initialWaiterCalls, ve
   const [orders, setOrders] = useState<ReadyOrder[]>(initialReadyOrders);
   const [calls, setCalls] = useState<WaiterCall[]>(initialWaiterCalls);
   const [activeTab, setActiveTab] = useState<'pending' | 'history'>('pending');
-  const [alertingMesa, setAlertingMesa] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (alertingMesa) {
-      if ('vibrate' in navigator) {
-        navigator.vibrate([200, 100, 200, 100, 200, 100, 200]);
-      }
-      const timer = setTimeout(() => setAlertingMesa(null), 8000); // 8 segundos de alerta
-      return () => clearTimeout(timer);
-    }
-  }, [alertingMesa]);
 
   useEffect(() => {
     const supabase = createClient();
@@ -64,7 +54,6 @@ export default function WaiterBoard({ initialReadyOrders, initialWaiterCalls, ve
             .eq('id', updated.id)
             .single();
           if (data) setOrders((prev) => [data as ReadyOrder, ...prev.filter((o) => o.id !== data.id)]);
-          playSound();
         } else if (updated.status === 'delivered') {
           setOrders((prev) => prev.filter((o) => o.id !== updated.id));
         }
@@ -79,8 +68,6 @@ export default function WaiterBoard({ initialReadyOrders, initialWaiterCalls, ve
           // Adiciona imediatamente ao estado sem esperar DB
           const newCall = payload.new as WaiterCall;
           setCalls((prev) => [newCall, ...prev]);
-          setAlertingMesa(newCall.table_number);
-          playSound();
         } else if (payload.eventType === 'UPDATE') {
           // Atualiza o item específico no estado
           const updated = payload.new as WaiterCall;
@@ -94,14 +81,6 @@ export default function WaiterBoard({ initialReadyOrders, initialWaiterCalls, ve
     return () => { supabase.removeChannel(channel); };
   }, [vendorId]);
 
-  function playSound() {
-    try {
-      const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
-      audio.play();
-    } catch (e) {
-      console.warn("Não foi possível tocar o som:", e);
-    }
-  }
 
   async function markDelivered(orderId: string) {
     const supabase = createClient();
@@ -149,24 +128,8 @@ export default function WaiterBoard({ initialReadyOrders, initialWaiterCalls, ve
 
   return (
     <>
-      {alertingMesa && (
-        <div 
-          onClick={() => setAlertingMesa(null)}
-          className="fixed inset-0 z-[9999] bg-red-600 flex flex-col items-center justify-center p-8 animate-pulse text-white text-center cursor-pointer"
-        >
-           <Bell className="w-48 h-48 mb-8" />
-           <h2 className="text-4xl font-black uppercase tracking-widest opacity-80 mb-4">Mesa Chamando:</h2>
-           <h3 className="text-[12rem] font-black leading-none italic mb-8">
-             {alertingMesa}
-           </h3>
-           <p className="text-2xl font-bold uppercase tracking-widest bg-white text-red-600 px-8 py-2 rounded-full">
-             Aguardando Atendimento
-           </p>
-           <p className="mt-12 text-sm opacity-50 font-bold uppercase tracking-widest">Toque para fechar este alerta</p>
-        </div>
-      )}
-
-      <div className="max-w-lg mx-auto px-4 py-2 space-y-6">
+  return (
+    <div className="max-w-lg mx-auto px-4 py-2 space-y-6">
         
         {/* Abas Pedidos/Chamadas */}
         <div className="flex bg-gray-100 p-1 rounded-2xl">
