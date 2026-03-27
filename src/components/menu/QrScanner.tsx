@@ -2,57 +2,89 @@
 
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import jsQR from 'jsqr';
 import Link from 'next/link';
 
 const P = '#ec5b13'; // primary
-const SCAN_INTERVAL = 150; // ms entre scans — libera main thread para inputs
+const SCAN_INTERVAL = 200; // ms entre scans
 
 export default function QrScanner() {
   const router = useRouter();
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const workerRef = useRef<Worker | null>(null);
+  const scanningRef = useRef(false);
+  const activeRef = useRef(true); // controla se o scan loop deve continuar
 
   const [error, setError] = useState('');
   const [detected, setDetected] = useState('');
   const [torch, setTorch] = useState(false);
   const [torchSupported, setTorchSupported] = useState(false);
 
+  // Inicializa o Web Worker uma vez
+  useEffect(() => {
+    workerRef.current = new Worker('/qr-worker.js');
+    return () => { workerRef.current?.terminate(); };
+  }, []);
+
   const stopCamera = useCallback(() => {
-    if (timerRef.current) { clearTimeout(timerRef.current); timerRef.current = null; }
+    activeRef.current = false;
+    scanningRef.current = false;
     streamRef.current?.getTracks().forEach((t) => t.stop());
   }, []);
 
-  const scanOnce = useCallback(() => {
-    const video = videoRef.current;
-    const canvas = canvasRef.current;
-    if (!video || !canvas || video.readyState !== video.HAVE_ENOUGH_DATA) {
-      timerRef.current = setTimeout(scanOnce, SCAN_INTERVAL);
-      return;
-    }
-    canvas.width = video.videoWidth; canvas.height = video.videoHeight;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) { timerRef.current = setTimeout(scanOnce, SCAN_INTERVAL); return; }
-    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-    const code = jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: 'dontInvert' });
-    if (code?.data) {
-      if (timerRef.current) { clearTimeout(timerRef.current); timerRef.current = null; }
-      streamRef.current?.getTracks().forEach((t) => t.stop());
-      setDetected(code.data);
-      try {
-        const parsed = new URL(code.data);
-        if (parsed.pathname.startsWith('/menu/')) { router.push(parsed.pathname + parsed.search); return; }
-      } catch {}
-      return;
-    }
-    timerRef.current = setTimeout(scanOnce, SCAN_INTERVAL);
+  const scheduleNextScan = useCallback(() => {
+    if (!activeRef.current) return;
+    setTimeout(() => {
+      if (!activeRef.current) return;
+      const video = videoRef.current;
+      const canvas = canvasRef.current;
+      if (!video || !canvas || video.readyState !== video.HAVE_ENOUGH_DATA) {
+        scheduleNextScan();
+        return;
+      }
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) { scheduleNextScan(); return; }
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+
+      // Envia para o Worker — main thread fica livre para interações
+      if (workerRef.current && !scanningRef.current) {
+        scanningRef.current = true;
+        workerRef.current.onmessage = (e) => {
+          scanningRef.current = false;
+          if (e.data) {
+            // QR detectado!
+            activeRef.current = false;
+            streamRef.current?.getTracks().forEach((t) => t.stop());
+            setDetected(e.data);
+            try {
+              const parsed = new URL(e.data);
+              if (parsed.pathname.startsWith('/menu/')) {
+                router.push(parsed.pathname + parsed.search);
+                return;
+              }
+            } catch {}
+          } else {
+            scheduleNextScan();
+          }
+        };
+        workerRef.current.postMessage({
+          data: imageData.data,
+          width: imageData.width,
+          height: imageData.height,
+        });
+      } else {
+        scheduleNextScan();
+      }
+    }, SCAN_INTERVAL);
   }, [router]);
 
   const startCamera = useCallback(async () => {
     setError('');
+    activeRef.current = true;
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
         video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } },
@@ -65,13 +97,13 @@ export default function QrScanner() {
         videoRef.current.srcObject = stream;
         videoRef.current.play();
         videoRef.current.addEventListener('loadedmetadata', () => {
-          timerRef.current = setTimeout(scanOnce, SCAN_INTERVAL);
+          scheduleNextScan();
         });
       }
     } catch {
       setError('Não foi possível acessar a câmera. Verifique as permissões do navegador.');
     }
-  }, [scanOnce]);
+  }, [scheduleNextScan]);
 
   useEffect(() => { startCamera(); return () => stopCamera(); }, [startCamera, stopCamera]);
 

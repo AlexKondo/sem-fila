@@ -86,7 +86,11 @@ export default function VendorHeader({ vendorName, cnpjFormatted, vendorId, mult
 
     function playWaiterSound() {
       try {
-        const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
+        if (typeof window !== 'undefined') {
+          const enabled = localStorage.getItem('vendor_alerts_enabled') !== 'false';
+          if (!enabled) return;
+        }
+        const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3');
         audio.play().catch(() => {});
       } catch {}
     }

@@ -99,6 +99,9 @@ export default function VendorOrdersBoard({ initialOrders, vendorId }: Props) {
           filter: `vendor_id=eq.${vendorId}`,
         },
         async (payload) => {
+          // Só adiciona se o pedido já nascer PAGO (ex: Dinheiro ou Cartão OK)
+          if (payload.new.payment_status !== 'paid') return;
+
           // Busca o pedido completo via RPC
           const { data: rpcData } = await supabase.rpc('get_vendor_orders', {
             p_vendor_id: vendorId,
@@ -159,7 +162,11 @@ export default function VendorOrdersBoard({ initialOrders, vendorId }: Props) {
 
     function playNewOrderSound() {
       try {
-        const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/1388/1388-preview.mp3');
+        if (typeof window !== 'undefined') {
+          const enabled = localStorage.getItem('vendor_alerts_enabled') !== 'false';
+          if (!enabled) return;
+        }
+        const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3');
         audio.play().catch(() => {});
       } catch {}
     }

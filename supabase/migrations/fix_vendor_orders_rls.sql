@@ -51,7 +51,8 @@ BEGIN
   FROM public.orders o
   WHERE o.vendor_id = p_vendor_id
     AND o.created_at >= p_since
-    AND (o.status != 'cancelled' OR o.payment_status = 'paid')
+    AND o.payment_status = 'paid'
+    AND o.status != 'cancelled'
   ORDER BY o.created_at ASC;
 END;
 $$;

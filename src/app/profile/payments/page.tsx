@@ -51,61 +51,83 @@ export default function PaymentsPage() {
 
   return (
     <main className="min-h-screen bg-slate-50">
-      <header className="bg-white border-b border-slate-100 sticky top-0 z-40 px-4 py-3 flex items-center gap-3">
-        <Link href="/profile" className="p-2 rounded-full hover:bg-slate-50 text-slate-500">
-          <ArrowLeft className="w-5 h-5" />
-        </Link>
-        <h1 className="font-bold text-slate-900">Cartão Salvo</h1>
+      <header className="bg-white border-b border-slate-100 sticky top-0 z-40 px-4 py-4 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <Link href="/profile" className="p-2 rounded-full hover:bg-slate-50 text-slate-500 transition-colors">
+            <ArrowLeft className="w-5 h-5" />
+          </Link>
+          <h1 className="font-black text-slate-900 tracking-tight">Cartões de Crédito</h1>
+        </div>
       </header>
 
-      <div className="max-w-lg mx-auto px-4 py-6 space-y-4">
+      <div className="max-w-md mx-auto px-4 py-8">
         {cardLast4 ? (
-          <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-2xl bg-emerald-50 flex items-center justify-center">
-                  <CreditCard className="w-6 h-6 text-emerald-500" />
+          <div className="space-y-6">
+            {/* Card Visual */}
+            <div className="relative overflow-hidden bg-slate-900 rounded-[32px] p-8 text-white shadow-2xl border border-white/10 group">
+              <div className="absolute top-0 right-0 p-6 opacity-20 group-hover:scale-110 transition-transform duration-500">
+                <CreditCard className="w-20 h-20" />
+              </div>
+              
+              <div className="relative z-10">
+                <div className="flex justify-between items-start mb-12">
+                   <div className="px-3 py-1 bg-white/10 rounded-full text-[10px] font-black uppercase tracking-widest border border-white/5">
+                     Cartão Salvo
+                   </div>
+                   <div className="text-right">
+                     <div className="w-10 h-7 bg-white/20 rounded-md backdrop-blur-sm ml-auto" />
+                   </div>
                 </div>
-                <div>
-                  <p className="font-bold text-slate-900">Cartão de crédito</p>
-                  <p className="text-sm text-slate-400">•••• •••• •••• {cardLast4}</p>
+
+                <div className="space-y-1">
+                  <p className="text-xl font-black tracking-tight leading-none italic">
+                    Cartão final ***** {cardLast4}
+                  </p>
+                  <p className="text-xs text-slate-400 font-bold uppercase tracking-widest opacity-60">Status: Ativo para compras</p>
                 </div>
               </div>
-              <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-full">Ativo</span>
+
+              {/* Decorative gradient overlay */}
+              <div className="absolute inset-0 bg-gradient-to-br from-orange-500/10 to-transparent pointer-events-none" />
             </div>
 
-            <div className="flex items-start gap-2 bg-slate-50 rounded-2xl p-3 mb-5">
-              <ShieldCheck className="w-4 h-4 text-slate-400 mt-0.5 shrink-0" />
-              <p className="text-xs text-slate-500 leading-relaxed">
-                Apenas os últimos 4 dígitos são armazenados. O token de pagamento é gerenciado com segurança pelo Asaas e nunca passa pelo nosso servidor após o cadastro.
-              </p>
+            <div className="flex items-start gap-3 bg-white border border-slate-100 rounded-3xl p-5 shadow-sm">
+              <div className="p-2 bg-emerald-50 rounded-xl">
+                 <ShieldCheck className="w-5 h-5 text-emerald-500" />
+              </div>
+              <div className="space-y-1">
+                <p className="text-sm font-bold text-slate-800">Pagamento Tokenizado</p>
+                <p className="text-xs text-slate-500 leading-relaxed">
+                  Para sua segurança, os dados sensíveis do cartão não são salvos em nosso sistema. Usamos apenas o token seguro gerado pelo <strong>Asaas</strong>.
+                </p>
+              </div>
             </div>
 
             <button
               onClick={handleRemoveCard}
               disabled={removing}
-              className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl border-2 border-red-100 text-red-500 font-bold text-sm hover:bg-red-50 transition-all active:scale-95 disabled:opacity-50"
+              className="w-full flex items-center justify-center gap-2 py-4 rounded-2xl bg-white border border-red-100 text-red-500 font-black text-sm hover:bg-red-50 transition-all active:scale-95 disabled:opacity-50 shadow-sm"
             >
               <Trash2 className="w-4 h-4" />
-              {removing ? 'Removendo...' : 'Remover cartão salvo'}
+              {removing ? 'Removendo...' : 'EXCLUIR CARTÃO SALVO'}
             </button>
           </div>
         ) : (
-          <div className="bg-white rounded-3xl p-8 border border-slate-100 shadow-sm text-center">
-            <div className="w-16 h-16 rounded-2xl bg-slate-50 flex items-center justify-center mx-auto mb-4">
-              <CreditCard className="w-8 h-8 text-slate-300" />
+          <div className="bg-white rounded-[40px] p-10 border border-slate-100 shadow-sm text-center">
+            <div className="w-20 h-20 rounded-3xl bg-slate-50 flex items-center justify-center mx-auto mb-6">
+              <CreditCard className="w-10 h-10 text-slate-300" />
             </div>
-            <h2 className="font-bold text-slate-900 mb-2">
+            <h2 className="text-xl font-black text-slate-900 mb-2">
               {removed ? 'Cartão removido' : 'Nenhum cartão salvo'}
             </h2>
-            <p className="text-sm text-slate-400 leading-relaxed mb-6">
+            <p className="text-sm text-slate-400 leading-relaxed mb-8">
               {removed
-                ? 'Seu cartão foi removido com sucesso. Você pode cadastrar um novo na próxima compra.'
-                : 'Ao pagar com cartão de crédito, você pode salvar o cartão para compras futuras com 1 clique.'}
+                ? 'Seu cartão foi removido com sucesso. Você pode cadastrar um novo token de pagamento na sua próxima compra.'
+                : 'Pague com 1 clique nas próximas vezes. Ao finalizar um pedido com cartão, você poderá salvá-lo com total segurança via Asaas.'}
             </p>
             <Link
               href="/"
-              className="inline-block px-6 py-3 rounded-2xl text-white font-bold text-sm"
+              className="inline-block w-full py-4 rounded-2xl text-white font-black text-sm shadow-xl shadow-orange-100 transition-transform active:scale-95"
               style={{ backgroundColor: P }}
             >
               Ir para o cardápio

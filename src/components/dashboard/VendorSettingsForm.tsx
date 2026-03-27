@@ -15,6 +15,15 @@ export default function VendorSettingsForm({ vendor }: { vendor: any }) {
   const [couponCode, setCouponCode] = useState(vendor.active_coupon_code || '');
   const [couponDiscount, setCouponDiscount] = useState(vendor.discount_percentage || 0);
   const [allowWaiterCalls, setAllowWaiterCalls] = useState(vendor.allow_waiter_calls || false);
+  const [alertsEnabled, setAlertsEnabled] = useState(true);
+
+  // Carrega preferência local de som
+  useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('vendor_alerts_enabled');
+      if (saved !== null) setAlertsEnabled(saved === 'true');
+    }
+  });
 
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState({ text: '', type: '' });
@@ -59,6 +68,8 @@ export default function VendorSettingsForm({ vendor }: { vendor: any }) {
       }
     } else {
       setMsg({ text: 'Configurações salvas com sucesso!', type: 'success' });
+      // Salva preferência de som localmente
+      localStorage.setItem('vendor_alerts_enabled', String(alertsEnabled));
     }
   }
 
@@ -118,6 +129,26 @@ export default function VendorSettingsForm({ vendor }: { vendor: any }) {
             </div>
           </label>
         </div>
+      </section>
+
+      {/* Bloco 1.5: Preferências de Alerta */}
+      <section className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100">
+        <h2 className="text-sm font-bold text-gray-900 mb-4 pb-2 border-b border-gray-100 uppercase tracking-wide">Preferências de Notificação</h2>
+        <label className="flex items-center gap-3 p-3 bg-orange-50/30 border border-orange-100 rounded-xl cursor-pointer hover:bg-orange-50 transition">
+          <div className="relative flex items-center">
+            <input 
+              type="checkbox" 
+              checked={alertsEnabled}
+              onChange={(e) => setAlertsEnabled(e.target.checked)}
+              className="peer shrink-0 appearance-none w-5 h-5 border border-orange-200 rounded-md bg-white checked:bg-orange-600 checked:border-orange-600 focus:outline-none focus:ring-2 focus:ring-orange-500/50 transition-colors"
+            />
+            <svg className="absolute w-5 h-5 text-white pointer-events-none hidden peer-checked:block p-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
+          </div>
+          <div className="flex-1">
+            <p className="text-sm font-bold text-gray-800">Ativar Alertas Sonoros (Beep)</p>
+            <p className="text-[11px] text-gray-500 font-medium">Toca um bipe quando novos pedidos chegarem ou quando o garçom for chamado.</p>
+          </div>
+        </label>
       </section>
 
       {/* Bloco 2: Cobranças */}

@@ -232,24 +232,24 @@ function OrderCard({ order, isPast }: { order: OrderWithVendor; isPast?: boolean
   return (
     <Link 
       href={`/order/${order.id}`}
-      className="bg-white rounded-3xl p-4 border border-slate-100 shadow-sm block active:scale-[0.98] transition-all"
+      className="bg-white rounded-[24px] p-5 border border-slate-100 shadow-sm block active:scale-[0.98] transition-all"
     >
-      <div className="flex items-start justify-between mb-3">
-        <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-2xl bg-slate-50 flex items-center justify-center text-xl overflow-hidden border border-slate-100">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 rounded-2xl bg-slate-50 flex items-center justify-center text-xl overflow-hidden border border-slate-100 shrink-0">
              {order.vendors?.logo_url ? (
                <img src={order.vendors.logo_url} className="w-full h-full object-cover" />
              ) : '🍽️'}
           </div>
-          <div>
-            <h3 className="font-bold text-slate-900 leading-none">{order.vendors?.name}</h3>
-            <span className="text-[10px] font-black text-slate-300 tracking-tighter uppercase">
-              PEDIDO ({order.pickup_code}){vendorCode ? ` · ${vendorCode}` : ''}
-            </span>
+          <div className="min-w-0">
+            <h3 className="font-bold text-slate-900 leading-none truncate mb-1">{order.vendors?.name}</h3>
+            <p className="text-[10px] font-black text-slate-400 tracking-tighter uppercase tabular-nums">
+              PEDIDO {order.pickup_code}{vendorCode ? ` · ${vendorCode}` : ''}
+            </p>
           </div>
         </div>
-        <div className="text-right">
-          <p className="font-black text-slate-900 leading-none mb-1">{formatCurrency(order.total_price)}</p>
+        <div className="text-right shrink-0">
+          <p className="font-black text-slate-900 leading-none mb-1.5">{formatCurrency(order.total_price)}</p>
           <span 
             className="text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider"
             style={{ backgroundColor: statusColor + '10', color: statusColor }}
@@ -258,13 +258,6 @@ function OrderCard({ order, isPast }: { order: OrderWithVendor; isPast?: boolean
           </span>
         </div>
       </div>
-      
-      {!isPast && (
-        <div className="mt-3 pt-3 border-t border-slate-50 flex items-center justify-between text-xs">
-          <span className="text-slate-400 font-medium">Ver detalhes e código QR</span>
-          <svg className="w-48 h-48 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
-        </div>
-      )}
     </Link>
   );
 }
