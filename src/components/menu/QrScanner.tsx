@@ -1,27 +1,57 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import jsQR from 'jsqr';
 import Link from 'next/link';
 
 const P = '#ec5b13'; // primary
+const SCAN_INTERVAL = 150; // ms entre scans — libera main thread para inputs
 
 export default function QrScanner() {
   const router = useRouter();
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
-  const rafRef = useRef<number>(0);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const [error, setError] = useState('');
   const [detected, setDetected] = useState('');
   const [torch, setTorch] = useState(false);
   const [torchSupported, setTorchSupported] = useState(false);
 
-  useEffect(() => { startCamera(); return () => stopCamera(); }, []);
+  const stopCamera = useCallback(() => {
+    if (timerRef.current) { clearTimeout(timerRef.current); timerRef.current = null; }
+    streamRef.current?.getTracks().forEach((t) => t.stop());
+  }, []);
 
-  async function startCamera() {
+  const scanOnce = useCallback(() => {
+    const video = videoRef.current;
+    const canvas = canvasRef.current;
+    if (!video || !canvas || video.readyState !== video.HAVE_ENOUGH_DATA) {
+      timerRef.current = setTimeout(scanOnce, SCAN_INTERVAL);
+      return;
+    }
+    canvas.width = video.videoWidth; canvas.height = video.videoHeight;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) { timerRef.current = setTimeout(scanOnce, SCAN_INTERVAL); return; }
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    const code = jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: 'dontInvert' });
+    if (code?.data) {
+      if (timerRef.current) { clearTimeout(timerRef.current); timerRef.current = null; }
+      streamRef.current?.getTracks().forEach((t) => t.stop());
+      setDetected(code.data);
+      try {
+        const parsed = new URL(code.data);
+        if (parsed.pathname.startsWith('/menu/')) { router.push(parsed.pathname + parsed.search); return; }
+      } catch {}
+      return;
+    }
+    timerRef.current = setTimeout(scanOnce, SCAN_INTERVAL);
+  }, [router]);
+
+  const startCamera = useCallback(async () => {
     setError('');
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
@@ -34,41 +64,16 @@ export default function QrScanner() {
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
         videoRef.current.play();
-        videoRef.current.addEventListener('loadedmetadata', scanLoop);
+        videoRef.current.addEventListener('loadedmetadata', () => {
+          timerRef.current = setTimeout(scanOnce, SCAN_INTERVAL);
+        });
       }
     } catch {
       setError('Não foi possível acessar a câmera. Verifique as permissões do navegador.');
     }
-  }
+  }, [scanOnce]);
 
-  function stopCamera() {
-    cancelAnimationFrame(rafRef.current);
-    streamRef.current?.getTracks().forEach((t) => t.stop());
-  }
-
-  function scanLoop() {
-    if (isManualOpen) return; // Pausa o processamento pesado enquanto digita
-    const video = videoRef.current;
-    const canvas = canvasRef.current;
-    if (!video || !canvas || video.readyState !== video.HAVE_ENOUGH_DATA) {
-      rafRef.current = requestAnimationFrame(scanLoop); return;
-    }
-    canvas.width = video.videoWidth; canvas.height = video.videoHeight;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-    const code = jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: 'dontInvert' });
-    if (code?.data) {
-      setDetected(code.data); stopCamera();
-      try {
-        const parsed = new URL(code.data);
-        if (parsed.pathname.startsWith('/menu/')) { router.push(parsed.pathname + parsed.search); return; }
-      } catch {}
-      return;
-    }
-    rafRef.current = requestAnimationFrame(scanLoop);
-  }
+  useEffect(() => { startCamera(); return () => stopCamera(); }, [startCamera, stopCamera]);
 
   async function toggleTorch() {
     const track = streamRef.current?.getVideoTracks()[0];
@@ -79,7 +84,6 @@ export default function QrScanner() {
   }
 
   const [isManualOpen, setIsManualOpen] = useState(false);
-  const [manualCode, setManualCode] = useState('');
 
   // Para liberar CPU durante a digitação no modal manual
   useEffect(() => {
@@ -88,7 +92,7 @@ export default function QrScanner() {
     } else if (!detected) {
       startCamera();
     }
-  }, [isManualOpen, detected]);
+  }, [isManualOpen, detected, stopCamera, startCamera]);
 
   return (
     <div className="relative flex min-h-screen flex-col" style={{ backgroundColor: '#f8f6f6' }}>
