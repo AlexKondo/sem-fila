@@ -4,7 +4,12 @@ import { cookies } from 'next/headers';
 import { formatCurrency } from '@/lib/utils';
 import VendorDashboardClient from '@/components/dashboard/VendorDashboardClient';
 
-export default async function VendorDashboardPage() {
+interface Props {
+  searchParams: Promise<{ period?: string }>;
+}
+
+export default async function VendorDashboardPage({ searchParams }: Props) {
+  const { period = 'today' } = await searchParams;
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect('/login');
@@ -24,26 +29,29 @@ export default async function VendorDashboardPage() {
     ? vendors.find(v => v.id === selectedId) ?? vendors[0]
     : vendors[0];
 
-  // Hoje
-  const todayStart = new Date();
-  todayStart.setHours(0, 0, 0, 0);
+  // Cálculo do Início do Período
+  const now = new Date();
+  const startDate = new Date();
+  startDate.setHours(0, 0, 0, 0);
 
-  // Últimos 7 dias
+  if (period === '7d') startDate.setDate(now.getDate() - 6);
+  else if (period === '30d') startDate.setDate(now.getDate() - 29);
+  else if (period === 'all') startDate.setFullYear(2020); // Data genérica antiga
+
+  // No caso de "hoje", usamos o hojeStart real. Para outros, o startDate calculado.
+  const periodStart = startDate.toISOString();
+
+  // Para o gráfico de histórico (últimos 7 dias fixos ou conforme período)
   const weekStart = new Date();
-  weekStart.setDate(weekStart.getDate() - 6);
+  weekStart.setDate(now.getDate() - 6);
   weekStart.setHours(0, 0, 0, 0);
 
-  const [todayRes, weekRes, customersRes] = await Promise.all([
+  const [periodRes, customersRes] = await Promise.all([
     supabase
       .from('orders')
       .select('id, total_price, status, created_at, updated_at')
       .eq('vendor_id', vendor.id)
-      .gte('created_at', todayStart.toISOString()),
-    supabase
-      .from('orders')
-      .select('id, total_price, status, created_at, updated_at')
-      .eq('vendor_id', vendor.id)
-      .gte('created_at', weekStart.toISOString())
+      .gte('created_at', periodStart)
       .order('created_at', { ascending: true }),
     supabase
       .from('orders')
@@ -52,63 +60,67 @@ export default async function VendorDashboardPage() {
       .not('user_id', 'is', null),
   ]);
 
-  const todayOrders = todayRes.data ?? [];
-  const weekOrders = weekRes.data ?? [];
+  const periodOrders = periodRes.data ?? [];
 
-  const todayRevenue = todayOrders.reduce((s, o) => s + Number(o.total_price || 0), 0);
-  const activeCount = todayOrders.filter(o => !['delivered', 'cancelled'].includes(o.status)).length;
+  const revenue = periodOrders.reduce((s, o) => s + Number(o.total_price || 0), 0);
+  const activeCount = periodOrders.filter(o => !['delivered', 'cancelled'].includes(o.status)).length;
   const uniqueCustomers = new Set(customersRes.data?.map(o => o.user_id)).size;
 
-  // Tempo médio por pedido (delivered): updated_at - created_at em minutos
-  const deliveredToday = todayOrders.filter(o => o.status === 'delivered' && o.updated_at);
-  const avgMinutes = deliveredToday.length > 0
+  // Tempo médio por pedido (delivered) no período
+  const delivered = periodOrders.filter(o => o.status === 'delivered' && o.updated_at);
+  const avgMinutes = delivered.length > 0
     ? Math.round(
-        deliveredToday.reduce((s, o) => {
+        delivered.reduce((s, o) => {
           const diff = (new Date(o.updated_at).getTime() - new Date(o.created_at).getTime()) / 60000;
           return s + diff;
-        }, 0) / deliveredToday.length
+        }, 0) / delivered.length
       )
     : null;
 
-  // Eficiência: prontos / total de hoje (excluindo cancelados)
-  const validToday = todayOrders.filter(o => o.status !== 'cancelled');
-  const readyToday = validToday.filter(o => ['ready', 'delivered'].includes(o.status));
-  const efficiency = validToday.length > 0 ? Math.round((readyToday.length / validToday.length) * 100) : null;
+  // Eficiência: prontos / total (excluindo cancelados) no período
+  const validOrders = periodOrders.filter(o => o.status !== 'cancelled');
+  const readyOrders = validOrders.filter(o => ['ready', 'delivered'].includes(o.status));
+  const efficiency = validOrders.length > 0 ? Math.round((readyOrders.length / validOrders.length) * 100) : null;
 
-  // Receita por hora hoje (0–23h)
-  const revenueByHour = Array.from({ length: 24 }, (_, h) => {
-    const total = todayOrders
-      .filter(o => new Date(o.created_at).getHours() === h && o.status !== 'cancelled')
-      .reduce((s, o) => s + Number(o.total_price || 0), 0);
-    return { hour: h, total };
-  });
+  // Dados para o gráfico de barras (Receita por hora se for HOJE, ou por dia se for período maior)
+  let chartData: { label: string; total: number; isNow?: boolean }[] = [];
 
-  // Receita por dia últimos 7 dias
-  const revenueByDay = Array.from({ length: 7 }, (_, i) => {
-    const d = new Date(weekStart);
-    d.setDate(d.getDate() + i);
-    const label = d.toLocaleDateString('pt-BR', { weekday: 'short' });
-    const total = weekOrders
-      .filter(o => {
-        const od = new Date(o.created_at);
-        return od.getDate() === d.getDate() && od.getMonth() === d.getMonth() && o.status !== 'cancelled';
-      })
-      .reduce((s, o) => s + Number(o.total_price || 0), 0);
-    return { label, total };
-  });
+  if (period === 'today') {
+    chartData = Array.from({ length: 24 }, (_, h) => {
+      const total = periodOrders
+        .filter(o => new Date(o.created_at).getHours() === h && o.status !== 'cancelled')
+        .reduce((s, o) => s + Number(o.total_price || 0), 0);
+      return { label: `${h}h`, total, isNow: now.getHours() === h, hour: h } as any;
+    });
+  } else {
+    // Agrupar por dia para períodos longos
+    const daysCount = period === '7d' ? 7 : 30;
+    chartData = Array.from({ length: daysCount }, (_, i) => {
+      const d = new Date(startDate);
+      d.setDate(d.getDate() + i);
+      const label = d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+      const total = periodOrders
+        .filter(o => {
+          const od = new Date(o.created_at);
+          return od.getDate() === d.getDate() && od.getMonth() === d.getMonth();
+        })
+        .reduce((s, o) => s + Number(o.total_price || 0), 0);
+      return { label, total };
+    });
+  }
 
   return (
     <VendorDashboardClient
       vendorName={vendor.name}
-      todayRevenue={todayRevenue}
+      revenue={revenue}
       activeCount={activeCount}
       avgMinutes={avgMinutes}
       uniqueCustomers={uniqueCustomers}
       efficiency={efficiency}
-      readyCount={readyToday.length}
-      validCount={validToday.length}
-      revenueByHour={revenueByHour}
-      revenueByDay={revenueByDay}
+      readyCount={readyOrders.length}
+      validCount={validOrders.length}
+      chartData={chartData}
+      currentPeriod={period}
     />
   );
 }
