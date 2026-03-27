@@ -31,6 +31,8 @@ These defaults are optimized for AI coding agents (and humans) working on apps t
 - Políticas RLS devem ser as mais restritivas e corretas possíveis para evitar vazamento de dados.
 ### Performance (INP)
 - **Otimização de Listas**: Em componentes como o `MenuClient` que renderizam muitos itens, use `useDeferredValue` para o estado de busca/filtro. Isso garante que a digitação continue rápida enquanto o React renderiza os resultados filtrados em segundo plano.
+- **Componentes**: Siga o padrão de `'use client'` no topo de componentes que usam hooks (useState, useEffect, useTransition, useRouter, etc). **Cuidado para não remover esta linha em edições futuras**.
+- **Segurança**: RLS habilitado (zero-trust).
 - **Memoização**: Sempre use `React.memo` para componentes de cartão em listas grandes (ex: `MenuItemCard`) e `useCallback` para as funções passadas a eles.
 - **Renderização**: Evite lógica pesada síncrona dentro do loop de renderização. Mova cálculos complexos para `useMemo`.
 - **Imagens**: Limite o carregamento de imagens pesadas e use as propriedades de otimização do Next.js.

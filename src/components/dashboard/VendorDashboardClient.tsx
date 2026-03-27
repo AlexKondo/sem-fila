@@ -1,3 +1,5 @@
+'use client';
+
 import { useRouter } from 'next/navigation';
 import { useState, useTransition } from 'react';
 import { formatCurrency } from '@/lib/utils';
