@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { formatCurrency, formatDate, ORDER_STATUS_LABEL, ORDER_STATUS_COLOR } from '@/lib/utils';
 import type { OrderStatus } from '@/types/database';
@@ -64,6 +64,9 @@ export default function VendorOrdersBoard({ initialOrders, vendorId }: Props) {
   const [loadingFilter, setLoadingFilter] = useState(false);
   const [alertOrder, setAlertOrder] = useState<OrderWithItems | null>(null);
 
+  // Ref para rastrear IDs de pedidos já conhecidos (evita alertas falsos)
+  const knownIdsRef = useRef<Set<string>>(new Set(initialOrders.map(o => o.id)));
+
   // Recarrega pedidos imediatamente quando o filtro de data muda
   useEffect(() => {
     if (dateFilter === 'today') return; // initialOrders já cobre "Hoje"
@@ -102,7 +105,6 @@ export default function VendorOrdersBoard({ initialOrders, vendorId }: Props) {
     }
 
     // Busca pedidos via RPC (bypassa RLS) e sincroniza com o estado local
-    // alertOnPaid=true dispara alerta apenas para pedidos PAGOS que são novos
     async function syncOrders(alertOnPaid = false) {
       const since = getFilterDate(dateFilter, customDate);
       const { data } = await supabase.rpc('get_vendor_orders', {
@@ -112,27 +114,21 @@ export default function VendorOrdersBoard({ initialOrders, vendorId }: Props) {
       if (!data) return;
       const fresh = data as OrderWithItems[];
 
-      // Detecta novos pedidos pagos ANTES de atualizar o estado
+      // Detecta pedidos novos comparando com ref (fora do setState)
       if (alertOnPaid) {
-        setOrders(prev => {
-          const prevIds = new Set(prev.map(o => o.id));
-          const newPaidOrders = fresh.filter(o =>
-            !prevIds.has(o.id) &&
-            (o as any).payment_status === 'paid' &&
-            !['delivered', 'cancelled'].includes(o.status)
-          );
-          if (newPaidOrders.length > 0) {
-            // Agendar alerta fora do updater para evitar batching
-            setTimeout(() => {
-              setAlertOrder(newPaidOrders[0]);
-              playNewOrderSound();
-            }, 0);
-          }
-          return fresh;
-        });
-      } else {
-        setOrders(fresh);
+        const newPaidOrders = fresh.filter(o =>
+          !knownIdsRef.current.has(o.id) &&
+          !['delivered', 'cancelled'].includes(o.status)
+        );
+        if (newPaidOrders.length > 0) {
+          setAlertOrder(newPaidOrders[0]);
+          playNewOrderSound();
+        }
       }
+
+      // Atualiza ref com todos os IDs atuais
+      knownIdsRef.current = new Set(fresh.map(o => o.id));
+      setOrders(fresh);
     }
 
     // Realtime: escuta mudanças com filtro no vendor_id
