@@ -102,7 +102,7 @@ export default function VendorHeader({ vendorName, userName, cnpjFormatted, vend
   }, [vendorId]);
 
   const firstName = userName ? userName.split(' ')[0] : '';
-  const fullDisplayName = firstName ? `${vendorName} ${firstName}` : vendorName;
+  const fullDisplayName = firstName ? `${vendorName} | ${firstName}` : vendorName;
 
   let displayName: React.ReactNode = fullDisplayName;
   if (vendorId && !isOverview) {
