@@ -62,6 +62,7 @@ export default function VendorOrdersBoard({ initialOrders, vendorId }: Props) {
   const [dateFilter, setDateFilter] = useState<DateFilter>('today');
   const [customDate, setCustomDate] = useState('');
   const [loadingFilter, setLoadingFilter] = useState(false);
+  const [alertOrder, setAlertOrder] = useState<OrderWithItems | null>(null);
 
   // Recarrega pedidos quando o filtro de data muda
   useEffect(() => {
@@ -98,7 +99,7 @@ export default function VendorOrdersBoard({ initialOrders, vendorId }: Props) {
           filter: `vendor_id=eq.${vendorId}`,
         },
         async (payload) => {
-          // Busca o pedido completo via RPC (SECURITY DEFINER — evita bloqueio RLS)
+          // Busca o pedido completo via RPC
           const { data: rpcData } = await supabase.rpc('get_vendor_orders', {
             p_vendor_id: vendorId,
             p_since: new Date(payload.new.created_at).toISOString(),
@@ -106,12 +107,14 @@ export default function VendorOrdersBoard({ initialOrders, vendorId }: Props) {
           const newOrder = (rpcData as any[] || []).find((o: any) => o.id === payload.new.id);
           if (newOrder) {
             setOrders((prev) => {
-              // Previne duplicação em dev mode (React StrictMode duplo render)
               if (prev.some(o => o.id === newOrder.id)) return prev;
-              return [newOrder as OrderWithItems, ...prev];
+              const next = [newOrder as OrderWithItems, ...prev];
+              return next;
             });
-            // Notificação sonora (se suportado)
-            try { new Audio('/sounds/new-order.mp3').play(); } catch {}
+            
+            // Alerta visual e sonoro imediato
+            setAlertOrder(newOrder as OrderWithItems);
+            playNewOrderSound();
           }
         }
       )
@@ -123,25 +126,43 @@ export default function VendorOrdersBoard({ initialOrders, vendorId }: Props) {
           table: 'orders',
           filter: `vendor_id=eq.${vendorId}`,
         },
-        (payload) => {
+        async (payload) => {
           const updated = payload.new;
-          // Se for cancelado: só mantém se estiver pago (para o histórico). Se não pago, remove.
+          const old = payload.old as any;
+          
+          // Se o pedido acabou de ser PAGO, dispara alerta
+          if (updated.payment_status === 'paid' && old?.payment_status !== 'paid') {
+              const { data: rpcData } = await supabase.rpc('get_vendor_orders', {
+                p_vendor_id: vendorId,
+                p_since: new Date(updated.created_at).toISOString(),
+              });
+              const fullOrder = (rpcData as any[] || []).find((o: any) => o.id === updated.id);
+              if (fullOrder) {
+                setAlertOrder(fullOrder as OrderWithItems);
+                playNewOrderSound();
+              }
+          }
+
+          // Atualização de estado normal
           if (updated.status === 'cancelled') {
             if (updated.payment_status === 'paid') {
-              setOrders((prev) =>
-                prev.map((o) => o.id === updated.id ? { ...o, ...updated } as OrderWithItems : o)
-              );
+              setOrders((prev) => prev.map((o) => o.id === updated.id ? { ...o, ...updated } as OrderWithItems : o));
             } else {
               setOrders((prev) => prev.filter((o) => o.id !== updated.id));
             }
           } else {
-            setOrders((prev) =>
-              prev.map((o) => o.id === updated.id ? { ...o, ...updated } as OrderWithItems : o)
-            );
+            setOrders((prev) => prev.map((o) => o.id === updated.id ? { ...o, ...updated } as OrderWithItems : o));
           }
         }
       )
       .subscribe();
+
+    function playNewOrderSound() {
+      try {
+        const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/1388/1388-preview.mp3');
+        audio.play().catch(() => {});
+      } catch {}
+    }
 
     return () => { supabase.removeChannel(channel); };
   }, [vendorId]);
@@ -226,6 +247,27 @@ export default function VendorOrdersBoard({ initialOrders, vendorId }: Props) {
   if (orders.length === 0) {
     return (
       <>
+        {alertOrder && (
+          <div 
+            onClick={() => setAlertOrder(null)}
+            className="fixed inset-0 z-[10000] bg-green-600 flex flex-col items-center justify-center p-8 text-white text-center cursor-pointer animate-in fade-in zoom-in duration-300"
+          >
+            <div className="w-32 h-32 bg-white/20 rounded-full flex items-center justify-center mb-8 animate-bounce">
+              <svg className="w-20 h-20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+            <h2 className="text-4xl font-black uppercase tracking-widest mb-2">Novo Pedido Recebido!</h2>
+            <p className="text-xl font-bold opacity-80 mb-8">O pagamento foi confirmado e o pedido já está na fila.</p>
+            <div className="bg-white text-green-700 px-12 py-8 rounded-[40px] shadow-2xl space-y-2">
+                <p className="text-sm font-black uppercase tracking-widest opacity-60">Código do Pedido</p>
+                <p className="text-7xl font-black italic">{alertOrder.pickup_code}</p>
+            </div>
+            <button className="mt-12 bg-white/10 hover:bg-white/20 px-8 py-3 rounded-full font-bold uppercase tracking-widest transition-all">
+              Toque para fechar e ver detalhes
+            </button>
+          </div>
+        )}
         {filterBar}
         <div className="flex flex-col items-center justify-center py-24 text-gray-400">
           <p className="text-5xl mb-4">🍳</p>
@@ -251,6 +293,27 @@ export default function VendorOrdersBoard({ initialOrders, vendorId }: Props) {
 
   return (
     <>
+    {alertOrder && (
+      <div 
+        onClick={() => setAlertOrder(null)}
+        className="fixed inset-0 z-[10000] bg-green-600 flex flex-col items-center justify-center p-8 text-white text-center cursor-pointer animate-in fade-in zoom-in duration-300"
+      >
+        <div className="w-32 h-32 bg-white/20 rounded-full flex items-center justify-center mb-8 animate-bounce">
+          <svg className="w-20 h-20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+          </svg>
+        </div>
+        <h2 className="text-4xl font-black uppercase tracking-widest mb-2">Novo Pedido Recebido!</h2>
+        <p className="text-xl font-bold opacity-80 mb-8">O pagamento foi confirmado e o pedido já está na fila.</p>
+        <div className="bg-white text-green-700 px-12 py-8 rounded-[40px] shadow-2xl space-y-2">
+            <p className="text-sm font-black uppercase tracking-widest opacity-60">Código do Pedido</p>
+            <p className="text-7xl font-black italic">{alertOrder.pickup_code}</p>
+        </div>
+        <button className="mt-12 bg-white/10 hover:bg-white/20 px-8 py-3 rounded-full font-bold uppercase tracking-widest transition-all">
+          Toque para fechar e ver detalhes
+        </button>
+      </div>
+    )}
     {filterBar}
     <div className="max-w-5xl mx-auto px-4 py-4">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">

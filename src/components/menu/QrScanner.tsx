@@ -47,6 +47,7 @@ export default function QrScanner() {
   }
 
   function scanLoop() {
+    if (isManualOpen) return; // Pausa o processamento pesado enquanto digita
     const video = videoRef.current;
     const canvas = canvasRef.current;
     if (!video || !canvas || video.readyState !== video.HAVE_ENOUGH_DATA) {
@@ -79,6 +80,15 @@ export default function QrScanner() {
 
   const [isManualOpen, setIsManualOpen] = useState(false);
   const [manualCode, setManualCode] = useState('');
+
+  // Para liberar CPU durante a digitação no modal manual
+  useEffect(() => {
+    if (isManualOpen) {
+      stopCamera();
+    } else if (!detected) {
+      startCamera();
+    }
+  }, [isManualOpen, detected]);
 
   return (
     <div className="relative flex min-h-screen flex-col" style={{ backgroundColor: '#f8f6f6' }}>
@@ -190,37 +200,11 @@ export default function QrScanner() {
 
             {/* Custom Manual Code Modal */}
             {isManualOpen && (
-              <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-6">
-                <div className="bg-white rounded-2xl w-full max-w-sm p-5 space-y-4 shadow-xl">
-                  <h3 className="text-lg font-bold text-slate-900">Digitar Código</h3>
-                  <p className="text-xs text-slate-500">Insira o código numérico fixado na sua mesa ou quiosque:</p>
-                  <input
-                    autoFocus
-                    type="text"
-                    inputMode="numeric"
-                    pattern="[0-9]*"
-                    placeholder="Ex: 502"
-                    value={manualCode}
-                    onChange={(e) => setManualCode(e.target.value)}
-                    className="w-full border border-slate-200 rounded-xl px-4 py-3 text-center text-lg font-bold tracking-wider focus:outline-none focus:ring-2 focus:ring-orange-400"
-                  />
-                  <div className="flex gap-2">
-                    <button 
-                      onClick={() => { setIsManualOpen(false); setManualCode(''); }} 
-                      className="flex-1 bg-slate-100 py-3 rounded-xl text-slate-700 font-semibold text-sm hover:bg-slate-200 transition"
-                    >
-                      Cancelar
-                    </button>
-                    <button 
-                      onClick={() => { if (manualCode) router.push(`/menu/${manualCode.trim()}`); }} 
-                      style={{ backgroundColor: P }} 
-                      className="flex-1 text-white py-3 rounded-xl font-semibold text-sm hover:opacity-90 transition"
-                    >
-                      Entrar
-                    </button>
-                  </div>
-                </div>
-              </div>
+              <ManualEntryModal 
+                onClose={() => setIsManualOpen(false)} 
+                onConfirm={(code) => router.push(`/menu/${code.trim()}`)} 
+                P={P}
+              />
             )}
           </>
         )}
@@ -248,6 +232,43 @@ export default function QrScanner() {
           </Link>
         </div>
       </nav>
+    </div>
+  );
+}
+
+function ManualEntryModal({ onClose, onConfirm, P }: { onClose: () => void; onConfirm: (code: string) => void; P: string }) {
+  const [manualCode, setManualCode] = useState('');
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-6">
+      <div className="bg-white rounded-2xl w-full max-w-sm p-5 space-y-4 shadow-xl">
+        <h3 className="text-lg font-bold text-slate-900">Digitar Código</h3>
+        <p className="text-xs text-slate-500">Insira o código numérico fixado na sua mesa ou quiosque:</p>
+        <input
+          autoFocus
+          type="text"
+          inputMode="numeric"
+          pattern="[0-9]*"
+          placeholder="Ex: 502"
+          value={manualCode}
+          onChange={(e) => setManualCode(e.target.value)}
+          className="w-full border border-slate-200 rounded-xl px-4 py-3 text-center text-lg font-bold tracking-wider focus:outline-none focus:ring-2 focus:ring-orange-400"
+        />
+        <div className="flex gap-2">
+          <button 
+            onClick={onClose} 
+            className="flex-1 bg-slate-100 py-3 rounded-xl text-slate-700 font-semibold text-sm hover:bg-slate-200 transition"
+          >
+            Cancelar
+          </button>
+          <button 
+            onClick={() => { if (manualCode) onConfirm(manualCode); }} 
+            style={{ backgroundColor: P }} 
+            className="flex-1 text-white py-3 rounded-xl font-semibold text-sm hover:opacity-90 transition"
+          >
+            Entrar
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

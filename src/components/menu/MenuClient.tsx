@@ -133,7 +133,6 @@ export default function MenuClient({ vendor, items, mesa, waitTime }: MenuClient
 
   // Custom Waiter Modal State
   const [showWaiterModal, setShowWaiterModal] = useState(false);
-  const [modalMesa, setModalMesa] = useState(mesa || '');
   const [callStatus, setCallStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
 
   const handleAddToCart = useCallback((item: MenuItem) => {
@@ -175,18 +174,17 @@ export default function MenuClient({ vendor, items, mesa, waitTime }: MenuClient
 
   const handleCallWaiter = useCallback(() => {
     setCallStatus('idle');
-    setModalMesa(mesa || '');
     setShowWaiterModal(true);
-  }, [mesa]);
+  }, []);
 
-  const confirmWaiterCall = useCallback(async () => {
-    if (!modalMesa.trim()) return;
+  const confirmWaiterCall = useCallback(async (table: string) => {
+    if (!table?.trim()) return;
     setCallStatus('loading');
 
     const supabase = createClient();
     const { error } = await supabase.from('waiter_calls').insert({
       vendor_id: vendor.id,
-      table_number: modalMesa,
+      table_number: table,
       status: 'pending'
     });
 
@@ -199,7 +197,7 @@ export default function MenuClient({ vendor, items, mesa, waitTime }: MenuClient
         setCallStatus('idle');
       }, 2500);
     }
-  }, [modalMesa, vendor.id]);
+  }, [vendor.id]);
 
   // Memoiza categorias e itens filtrados
   const categories = useMemo(
@@ -406,81 +404,95 @@ export default function MenuClient({ vendor, items, mesa, waitTime }: MenuClient
 
       {/* Custom Waiter Modal */}
       {showWaiterModal && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="w-full max-w-xs bg-white rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
-            <div className="p-6 text-center">
-              <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <span className="text-3xl">🛎️</span>
-              </div>
-
-              {callStatus === 'idle' && (
-                <>
-                  <h3 className="text-xl font-bold text-slate-900 mb-2">Chamar Garçom</h3>
-                  <p className="text-sm text-slate-500 mb-6">
-                    {mesa ? `Confirmar chamada para a mesa ${mesa}?` : 'Informe o número da sua mesa para que possamos te encontrar.'}
-                  </p>
-
-                  {!mesa && (
-                    <input
-                      type="text"
-                      inputMode="numeric"
-                      pattern="[0-9]*"
-                      value={modalMesa}
-                      onChange={(e) => setModalMesa(e.target.value)}
-                      placeholder="Ex: 12, Balcão..."
-                      className="w-full h-12 bg-slate-50 border border-slate-200 rounded-xl px-4 text-center text-lg font-bold mb-4 focus:outline-none focus:ring-2 focus:ring-orange-500/50"
-                    />
-                  )}
-
-                  <div className="grid grid-cols-2 gap-3">
-                    <button
-                      onClick={() => setShowWaiterModal(false)}
-                      className="h-12 rounded-xl font-bold text-slate-500 bg-slate-100 active:scale-95 transition-all"
-                    >
-                      Cancelar
-                    </button>
-                    <button
-                      onClick={confirmWaiterCall}
-                      disabled={!modalMesa.trim()}
-                      className="h-12 rounded-xl font-bold text-white bg-orange-500 shadow-lg shadow-orange-500/30 active:scale-95 transition-all disabled:opacity-50"
-                    >
-                      Chamar
-                    </button>
-                  </div>
-                </>
-              )}
-
-              {callStatus === 'loading' && (
-                <div className="py-8 flex flex-col items-center">
-                  <div className="w-8 h-8 border-4 border-orange-500/20 border-t-orange-500 rounded-full animate-spin mb-4" />
-                  <p className="font-bold text-slate-700">Enviando sinal...</p>
-                </div>
-              )}
-
-              {callStatus === 'success' && (
-                <div className="py-4 animate-in zoom-in duration-300">
-                  <div className="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
-                  </div>
-                  <h3 className="text-xl font-bold text-slate-900 mb-1">Solicitado!</h3>
-                  <p className="text-sm text-slate-500">O garçom já foi avisado e virá até você.</p>
-                </div>
-              )}
-
-              {callStatus === 'error' && (
-                <div className="py-4 text-center">
-                   <div className="w-16 h-16 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <span className="text-2xl font-bold">!</span>
-                  </div>
-                  <h3 className="text-lg font-bold text-slate-900">Ops!</h3>
-                  <p className="text-sm text-slate-500 mb-6">Não conseguimos chamar o garçom agora.</p>
-                  <button onClick={() => setCallStatus('idle')} className="w-full h-11 bg-slate-100 rounded-xl font-bold text-slate-700">Tentar de novo</button>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
+        <WaiterModal 
+          mesa={mesa}
+          onClose={() => setShowWaiterModal(false)}
+          onConfirm={confirmWaiterCall}
+          status={callStatus}
+          onReset={() => setCallStatus('idle')}
+        />
       )}
+    </div>
+  );
+}
+
+function WaiterModal({ mesa, onClose, onConfirm, status, onReset }: { mesa?: string; onClose: () => void; onConfirm: (m: string) => void; status: 'idle' | 'loading' | 'success' | 'error'; onReset: () => void }) {
+  const [modalMesa, setModalMesa] = useState('');
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
+      <div className="w-full max-w-xs bg-white rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+        <div className="p-6 text-center">
+          <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <span className="text-3xl">🛎️</span>
+          </div>
+
+          {status === 'idle' && (
+            <>
+              <h3 className="text-xl font-bold text-slate-900 mb-2">Chamar Garçom</h3>
+              <p className="text-sm text-slate-500 mb-6">
+                {mesa ? `Confirmar chamada para a mesa ${mesa}?` : 'Informe o número da sua mesa para que possamos te encontrar.'}
+              </p>
+
+              {!mesa && (
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  autoFocus
+                  value={modalMesa}
+                  onChange={(e) => setModalMesa(e.target.value)}
+                  placeholder="Ex: 12, Balcão..."
+                  className="w-full h-12 bg-slate-50 border border-slate-200 rounded-xl px-4 text-center text-lg font-bold mb-4 focus:outline-none focus:ring-2 focus:ring-orange-500/50"
+                />
+              )}
+
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  onClick={onClose}
+                  className="h-12 rounded-xl font-bold text-slate-500 bg-slate-100 active:scale-95 transition-all"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={() => onConfirm(mesa || modalMesa)}
+                  disabled={!mesa && !modalMesa.trim()}
+                  className="h-12 rounded-xl font-bold text-white bg-orange-500 shadow-lg shadow-orange-500/30 active:scale-95 transition-all disabled:opacity-50"
+                >
+                  Chamar
+                </button>
+              </div>
+            </>
+          )}
+
+          {status === 'loading' && (
+            <div className="py-8 flex flex-col items-center">
+              <div className="w-8 h-8 border-4 border-orange-500/20 border-t-orange-500 rounded-full animate-spin mb-4" />
+              <p className="font-bold text-slate-700">Enviando sinal...</p>
+            </div>
+          )}
+
+          {status === 'success' && (
+            <div className="py-4 animate-in zoom-in duration-300">
+              <div className="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
+              </div>
+              <h3 className="text-xl font-bold text-slate-900 mb-1">Solicitado!</h3>
+              <p className="text-sm text-slate-500">O garçom já foi avisado e virá até você.</p>
+            </div>
+          )}
+
+          {status === 'error' && (
+            <div className="py-4 text-center">
+               <div className="w-16 h-16 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                <span className="text-2xl font-bold">!</span>
+              </div>
+              <h3 className="text-lg font-bold text-slate-900">Ops!</h3>
+              <p className="text-sm text-slate-500 mb-6">Não conseguimos chamar o garçom agora.</p>
+              <button onClick={onReset} className="w-full h-11 bg-slate-100 rounded-xl font-bold text-slate-700">Tentar de novo</button>
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
