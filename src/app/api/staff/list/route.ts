@@ -9,10 +9,20 @@ export async function GET(req: NextRequest) {
   const vendor_id = req.nextUrl.searchParams.get('vendor_id');
   if (!vendor_id) return NextResponse.json({ error: 'vendor_id obrigatório.' }, { status: 400 });
 
-  // Confirma que o vendor pertence ao usuário
+  // Confirma acesso: vendor owner ou platform_admin
+  // A RLS de vendors já filtra: owner_id = auth.uid() OU platform_admin OU active=true
+  // A RLS de staff_schedules garante que só retorna dados do próprio vendor do usuário
   const { data: vendor } = await supabase
-    .from('vendors').select('id').eq('id', vendor_id).eq('owner_id', user.id).single();
+    .from('vendors').select('id, owner_id').eq('id', vendor_id).single();
   if (!vendor) return NextResponse.json({ error: 'Não autorizado.' }, { status: 403 });
+
+  const { data: profile } = await supabase
+    .from('profiles').select('role').eq('id', user.id).single();
+  const isPlatformAdmin = profile?.role === 'platform_admin';
+
+  if (!isPlatformAdmin && vendor.owner_id !== user.id) {
+    return NextResponse.json({ error: 'Não autorizado.' }, { status: 403 });
+  }
 
   const { data, error } = await supabase
     .from('staff_schedules')
