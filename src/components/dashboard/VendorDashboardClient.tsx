@@ -204,7 +204,7 @@ export default function VendorDashboardClient({
         <div className="flex gap-8 mt-5 text-center">
           <div>
             <p className="text-xl font-black text-slate-900">{validCount}</p>
-            <p className="text-[10px] text-slate-400 font-bold uppercase">Recebidos</p>
+            <p className="text-[10px] text-slate-400 font-bold uppercase">Pagos</p>
           </div>
           <div>
             <p className="text-xl font-black text-slate-900">{readyCount}</p>

@@ -24,7 +24,7 @@ export function formatDate(dateStr: string): string {
 }
 
 export const ORDER_STATUS_LABEL: Record<OrderStatus, string> = {
-  received: 'Recebido',
+  received: 'Pago',
   preparing: 'Em preparo',
   almost_ready: 'Quase pronto',
   ready: 'Pronto',

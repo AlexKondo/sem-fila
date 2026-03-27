@@ -58,7 +58,7 @@ export default function OrderPage() {
 
   const getStatusConfig = (status: string) => {
     switch(status?.toLowerCase()) {
-      case 'received': return { label: 'Recebido', color: 'bg-yellow-50 text-yellow-700 border-yellow-200', icon: Clock };
+      case 'received': return { label: 'Pago', color: 'bg-yellow-50 text-yellow-700 border-yellow-200', icon: Clock };
       case 'preparing': return { label: 'Em Preparo', color: 'bg-blue-50 text-blue-700 border-blue-200', icon: Package };
       case 'almost_ready': return { label: 'Quase Pronto', color: 'bg-orange-50 text-orange-600 border-orange-200', icon: Package };
       case 'ready': return { label: 'Pronto p/ Retirada', color: 'bg-green-50 text-green-700 border-green-200', icon: CheckCircle };
