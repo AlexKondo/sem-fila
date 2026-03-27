@@ -24,13 +24,22 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'Não autorizado.' }, { status: 403 });
   }
 
-  const { data, error } = await supabase
+  const { data: schedules, error } = await supabase
     .from('staff_schedules')
-    .select('*, profiles(id, full_name, name, role)')
+    .select('*')
     .eq('vendor_id', vendor_id)
     .eq('active', true)
     .order('created_at', { ascending: false });
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+  const userIds = (schedules || []).map((s: any) => s.user_id).filter(Boolean);
+  const { data: profiles } = userIds.length
+    ? await supabase.from('profiles').select('id, full_name, name, role').in('id', userIds)
+    : { data: [] };
+
+  const profileMap = Object.fromEntries((profiles || []).map((p: any) => [p.id, p]));
+  const data = (schedules || []).map((s: any) => ({ ...s, profiles: profileMap[s.user_id] || null }));
+
   return NextResponse.json({ data });
 }
