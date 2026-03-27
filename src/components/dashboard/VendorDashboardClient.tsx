@@ -73,48 +73,44 @@ export default function VendorDashboardClient({
         {isPending && <Loader2 className="w-5 h-5 text-orange-500 animate-spin" />}
       </div>
 
-      {/* Period Selector */}
-      <div className="flex bg-slate-100 p-1 rounded-2xl">
-        {['today', '7d', '30d'].map((p) => (
-          <button
-            key={p}
-            onClick={() => handlePeriodChange(p)}
-            className={`flex-1 py-2 text-xs font-black rounded-xl transition-all ${
-              currentPeriod === p ? 'bg-white shadow-sm text-orange-600' : 'text-slate-400'
-            }`}
-          >
-            {p === 'today' ? 'HOJE' : p.toUpperCase()}
-          </button>
-        ))}
-      </div>
-
-      {/* Custom Date Picker */}
-      <div className="bg-white rounded-3xl p-4 border border-slate-100 shadow-sm space-y-3">
-        <div className="flex items-center gap-2 text-xs font-bold text-slate-400 uppercase tracking-widest px-1">
-          <Calendar className="w-3.5 h-3.5" />
-          Período Personalizado
+      {/* Period Selectors Row */}
+      <div className="flex flex-col md:flex-row gap-3 items-center">
+        {/* Quick Period Selector (1/4 de largura no desktop) */}
+        <div className="w-full md:w-1/4 flex bg-slate-100 p-1 rounded-2xl h-12">
+          {['today', '7d', '30d'].map((p) => (
+            <button
+              key={p}
+              onClick={() => handlePeriodChange(p)}
+              className={`flex-1 py-1 text-[10px] font-black rounded-xl transition-all ${
+                currentPeriod === p ? 'bg-white shadow-sm text-orange-600' : 'text-slate-400'
+              }`}
+            >
+              {p === 'today' ? 'HOJE' : p.toUpperCase()}
+            </button>
+          ))}
         </div>
-        <div className="flex items-center gap-2">
-          <div className="flex-1">
+
+        {/* Custom Date Picker (Restante da largura) */}
+        <div className="w-full md:flex-1 bg-white rounded-3xl p-1 px-3 border border-slate-100 shadow-sm flex items-center gap-2 h-12">
+          <Calendar className="w-3.5 h-3.5 text-slate-300 hidden sm:block" />
+          <div className="flex-1 flex items-center gap-1.5">
             <input 
               type="date" 
               value={localStart}
               onChange={(e) => setLocalStart(e.target.value)}
-              className="w-full h-10 bg-slate-50 border border-slate-100 rounded-xl px-3 text-xs font-bold text-slate-600 focus:outline-none focus:ring-2 focus:ring-orange-500/20"
+              className="w-full h-8 bg-transparent text-[11px] font-bold text-slate-600 focus:outline-none"
             />
-          </div>
-          <span className="text-slate-300">→</span>
-          <div className="flex-1">
+            <span className="text-slate-300 text-xs">→</span>
             <input 
               type="date" 
               value={localEnd}
               onChange={(e) => setLocalEnd(e.target.value)}
-              className="w-full h-10 bg-slate-50 border border-slate-100 rounded-xl px-3 text-xs font-bold text-slate-600 focus:outline-none focus:ring-2 focus:ring-orange-500/20"
+              className="w-full h-8 bg-transparent text-[11px] font-bold text-slate-600 focus:outline-none"
             />
           </div>
           <button 
             onClick={handleCustomFilter}
-            className="h-10 bg-orange-500 text-white px-4 rounded-xl text-xs font-black shadow-lg shadow-orange-500/20 active:scale-95 transition-all"
+            className="h-8 bg-orange-500 text-white px-4 rounded-xl text-[10px] font-black shadow-lg shadow-orange-500/20 active:scale-95 transition-all"
           >
             OK
           </button>
