@@ -431,17 +431,17 @@ ALTER PUBLICATION supabase_realtime ADD TABLE public.waiter_calls;
 -- ==========================================
 
 INSERT INTO storage.buckets (id, name, public)
-VALUES ('menu-images', 'menu-images', true)
+VALUES ('menu-items', 'menu-items', true)
 ON CONFLICT DO NOTHING;
 
-CREATE POLICY "Menu images leitura pública"
+CREATE POLICY "Menu items leitura pública"
   ON storage.objects FOR SELECT TO anon
-  USING (bucket_id = 'menu-images');
+  USING (bucket_id = 'menu-items');
 
 CREATE POLICY "Vendor faz upload de imagem"
   ON storage.objects FOR INSERT TO authenticated
-  WITH CHECK (bucket_id = 'menu-images' AND auth.uid() IS NOT NULL);
+  WITH CHECK (bucket_id = 'menu-items' AND auth.uid() IS NOT NULL);
 
 CREATE POLICY "Vendor deleta sua imagem"
   ON storage.objects FOR DELETE TO authenticated
-  USING (bucket_id = 'menu-images' AND owner_id = auth.uid()::text);
+  USING (bucket_id = 'menu-items' AND owner_id = auth.uid()::text);

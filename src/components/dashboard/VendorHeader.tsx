@@ -10,6 +10,7 @@ const P = '#ec5b13';
 
 interface VendorHeaderProps {
   vendorName: string;
+  userName?: string;
   cnpjFormatted: string | null;
   vendorId?: string | null;
   multiVendor?: boolean;
@@ -36,7 +37,7 @@ function setOverviewCookie() {
   window.location.reload();
 }
 
-export default function VendorHeader({ vendorName, cnpjFormatted, vendorId, multiVendor, isOverview }: VendorHeaderProps) {
+export default function VendorHeader({ vendorName, userName, cnpjFormatted, vendorId, multiVendor, isOverview }: VendorHeaderProps) {
   const pathname = usePathname();
   const [pendingCalls, setPendingCalls] = React.useState(0);
   const [alertingMesa, setAlertingMesa] = React.useState<string | null>(null);
@@ -100,10 +101,13 @@ export default function VendorHeader({ vendorName, cnpjFormatted, vendorId, mult
     };
   }, [vendorId]);
 
-  let displayName: React.ReactNode = vendorName;
+  const firstName = userName ? userName.split(' ')[0] : '';
+  const fullDisplayName = firstName ? `${vendorName} ${firstName}` : vendorName;
+
+  let displayName: React.ReactNode = fullDisplayName;
   if (vendorId && !isOverview) {
     const code = getShortCode(vendorId);
-    const parts = vendorName.split(' - ');
+    const parts = fullDisplayName.split(' - ');
     if (parts.length > 1) {
       displayName = (
         <>
@@ -113,7 +117,7 @@ export default function VendorHeader({ vendorName, cnpjFormatted, vendorId, mult
     } else {
       displayName = (
         <>
-          <span className="text-orange-500 font-black pr-1">{code}</span> {vendorName}
+          <span className="text-orange-500 font-black pr-1">{code}</span> {fullDisplayName}
         </>
       );
     }

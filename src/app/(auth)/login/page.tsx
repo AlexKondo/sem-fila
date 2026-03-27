@@ -1,29 +1,60 @@
 'use client';
 
-import { useState, Suspense } from 'react';
+import { useState, useRef, memo, Suspense } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 
 const P = '#ec5b13';
 
+/* Hero estático — nunca re-renderiza */
+const LoginHero = memo(function LoginHero() {
+  return (
+    <>
+      <Link
+        href="/"
+        className="absolute top-8 left-6 z-30 flex items-center gap-2 bg-white/10 backdrop-blur-md px-4 py-2 rounded-xl text-white font-bold text-sm hover:bg-white/20 transition-all border border-white/10 active:scale-95 shadow-lg"
+      >
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+        </svg>
+        Voltar
+      </Link>
+      <div className="relative h-[40vh] w-full overflow-hidden bg-slate-800">
+        <div className="absolute inset-0 bg-gradient-to-t from-[#f8f6f6] via-transparent to-transparent z-10" />
+        <div className="h-full w-full" style={{ background: 'linear-gradient(135deg, #1e1008 0%, #3d1f0a 50%, #ec5b1320 100%)' }} />
+        <div className="absolute top-12 left-0 right-0 z-20 flex flex-col items-center">
+          <div className="p-3 rounded-xl shadow-lg mb-4" style={{ backgroundColor: P }}>
+            <svg className="w-10 h-10 text-white" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z"/>
+            </svg>
+          </div>
+          <h1 className="text-3xl font-bold tracking-tight text-white drop-shadow-md">QuickPick</h1>
+          <p className="text-white/80 text-sm font-medium drop-shadow-sm mt-1">Sem fila, só sabor</p>
+        </div>
+      </div>
+    </>
+  );
+});
+
 function LoginPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirect = searchParams.get('redirect') ?? '/dashboard/vendor';
 
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const emailRef = useRef<HTMLInputElement>(null);
+  const passwordRef = useRef<HTMLInputElement>(null);
   const [showPw, setShowPw] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
+    const email = emailRef.current?.value ?? '';
+    const password = passwordRef.current?.value ?? '';
     setError(''); setLoading(true);
     const supabase = createClient();
 
-    // 1. Faz o sign in
     const { data: authData, error: authError } = await supabase.auth.signInWithPassword({ email, password });
     if (authError || !authData.user) {
       setError('Email ou senha inválidos.');
@@ -31,7 +62,6 @@ function LoginPageContent() {
       return;
     }
 
-    // 2. Busca o perfil explicitamente para este usuário
     const { data: profile } = await supabase
       .from('profiles')
       .select('role')
@@ -40,7 +70,6 @@ function LoginPageContent() {
 
     const role = (profile as any)?.role;
 
-    // 3. Redirecionamento baseado no papel (Role) ou email do dono
     const ADMIN_EMAIL = 'alexandre.kondo@gmail.com';
     if (role === 'platform_admin' || authData.user.email === ADMIN_EMAIL) {
       router.push('/dashboard/admin');
@@ -52,42 +81,17 @@ function LoginPageContent() {
       router.push('/dashboard/deliverer');
       router.refresh();
     } else {
-      // Se for um cliente, redireciona para o login de clientes
       router.push('/login-user');
       router.refresh();
     }
   }
 
+  const ringStyle = { '--tw-ring-color': P + '80' } as React.CSSProperties;
+
   return (
     <div className="relative flex min-h-screen w-full flex-col overflow-x-hidden" style={{ backgroundColor: '#f8f6f6' }}>
-      {/* Back Button */}
-      <Link 
-        href="/"
-        className="absolute top-8 left-6 z-30 flex items-center gap-2 bg-white/10 backdrop-blur-md px-4 py-2 rounded-xl text-white font-bold text-sm hover:bg-white/20 transition-all border border-white/10 active:scale-95 shadow-lg"
-      >
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-        </svg>
-        Voltar
-      </Link>
+      <LoginHero />
 
-      {/* Hero background */}
-      <div className="relative h-[40vh] w-full overflow-hidden bg-slate-800">
-        <div className="absolute inset-0 bg-gradient-to-t from-[#f8f6f6] via-transparent to-transparent z-10" />
-        <div className="h-full w-full" style={{ background: 'linear-gradient(135deg, #1e1008 0%, #3d1f0a 50%, #ec5b1320 100%)' }} />
-        {/* Branding overlay */}
-        <div className="absolute top-12 left-0 right-0 z-20 flex flex-col items-center">
-          <div className="p-3 rounded-xl shadow-lg mb-4" style={{ backgroundColor: P }}>
-            <svg className="w-10 h-10 text-white" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z"/>
-            </svg>
-          </div>
-          <h1 className="text-3xl font-bold tracking-tight text-white drop-shadow-md">QuickPick</h1>
-          <p className="text-white/80 text-sm font-medium drop-shadow-sm mt-1">Sem fila, só sabor</p>
-        </div>
-      </div>
-
-      {/* Form container — rounded-t-[32px] como no asset */}
       <div className="flex-1 px-6 -mt-12 relative z-20 rounded-t-[32px] pt-8 shadow-2xl bg-white">
         <div className="max-w-md mx-auto">
           <div className="mb-8">
@@ -100,7 +104,6 @@ function LoginPageContent() {
           )}
 
           <form onSubmit={handleLogin} className="space-y-4">
-            {/* Email */}
             <div className="flex flex-col gap-1.5">
               <label className="text-sm font-semibold text-slate-700 ml-1">Email</label>
               <div className="relative">
@@ -108,15 +111,15 @@ function LoginPageContent() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                 </svg>
                 <input
-                  type="email" required autoComplete="email" value={email} onChange={e => setEmail(e.target.value)}
+                  ref={emailRef}
+                  type="email" required autoComplete="email"
                   placeholder="seu@email.com"
                   className="w-full pl-12 pr-4 h-14 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 transition-all"
-                  style={{ '--tw-ring-color': P + '80' } as React.CSSProperties}
+                  style={ringStyle}
                 />
               </div>
             </div>
 
-            {/* Password */}
             <div className="flex flex-col gap-1.5">
               <label className="text-sm font-semibold text-slate-700 ml-1">Senha</label>
               <div className="relative">
@@ -124,10 +127,11 @@ function LoginPageContent() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                 </svg>
                 <input
-                  type={showPw ? 'text' : 'password'} required autoComplete="current-password" value={password} onChange={e => setPassword(e.target.value)}
+                  ref={passwordRef}
+                  type={showPw ? 'text' : 'password'} required autoComplete="current-password"
                   placeholder="••••••••"
                   className="w-full pl-12 pr-12 h-14 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 transition-all"
-                  style={{ '--tw-ring-color': P + '80' } as React.CSSProperties}
+                  style={ringStyle}
                 />
                 <button type="button" onClick={() => setShowPw(!showPw)} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400">
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

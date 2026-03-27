@@ -34,10 +34,13 @@ export default async function VendorDashboardPage() {
     : vendors[0] || null;
 
   if (!vendor) {
-    const VendorOnboarding = (await import('@/components/dashboard/VendorOnboarding')).default;
-    return <VendorOnboarding userId={user.id} />;
+    return (
+      <div className="flex flex-col items-center justify-center p-12 text-center">
+        <p className="text-slate-500 font-medium">Nenhum negócio vinculado a esta conta.</p>
+        <p className="text-slate-400 text-sm mt-2">Certifique-se de que o cadastro foi concluído com sucesso.</p>
+      </div>
+    );
   }
-
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 

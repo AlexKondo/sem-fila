@@ -205,23 +205,40 @@ export default function CartSheet({ vendor, tableNumber }: CartSheetProps) {
 
   useEffect(() => {
     const supabase = createClient();
-    supabase.auth.getUser().then(({ data }) => {
-      if (data.user) {
-        setUser(data.user);
-        supabase.from('profiles').select('*').eq('id', data.user.id).single().then(({ data: p }) => {
+    
+    // 1. Initial check
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (user) {
+        setUser(user);
+        // Fallback imediato do metadata
+        const metaName = user.user_metadata?.full_name || user.user_metadata?.name || '';
+        if (metaName && !customerName) setCustomerName(metaName);
+        
+        // Busca perfil completo
+        supabase.from('profiles').select('*').eq('id', user.id).maybeSingle().then(({ data: p }) => {
           if (p) {
-            setCustomerName(p.name || '');
+            setCustomerName(p.name || metaName || '');
             setCustomerPhone(p.phone || '');
             setCpf(p.cpf || '');
-            setBirthdayDay(p.birthday_day?.toString() || '');
-            setBirthdayMonth(p.birthday_month?.toString() || '');
             setSavedCardToken(p.asaas_card_token || '');
             setSavedCardLast4(p.asaas_card_last4 || '');
           }
         });
       }
     });
-  }, []);
+
+    // 2. Listen to changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      const u = session?.user || null;
+      setUser(u);
+      if (u) {
+        const n = u.user_metadata?.full_name || u.user_metadata?.name || '';
+        if (n && !customerName) setCustomerName(n);
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [customerName]);
 
   const addItem = useCallback((item: { id: string; menuItemId?: string; name: string; price: number; extras?: Extra[] }) => {
     setItems(prev => {
@@ -270,6 +287,8 @@ export default function CartSheet({ vendor, tableNumber }: CartSheetProps) {
     setError('');
     if (!items.length) return;
     if (!paymentMethod) { setError('Por favor, selecione uma forma de pagamento.'); return; }
+    
+    // Regras de validação (PIX/Cartão)
     if (paymentMethod === 'pix' && cpf.replace(/\D/g, '').length !== 11) { setError('Informe seu CPF para pagar com PIX.'); return; }
     if (paymentMethod === 'cartão') {
       const usingSaved = savedCardToken && !cardData.useNewCard;
@@ -284,9 +303,16 @@ export default function CartSheet({ vendor, tableNumber }: CartSheetProps) {
     if (vendor.table_delivery && !mesa.trim()) { setError('Por favor, informe o número da mesa para entrega.'); return; }
 
     setLoading(true);
+    
+    // Se logado, tenta prosseguir direto
     if (user) {
-      if (customerName.trim()) placeOrder(customerName.trim(), customerPhone.trim());
-      else { setStep('identify'); setLoading(false); }
+      if (customerName.trim()) {
+        placeOrder(customerName.trim(), customerPhone.trim());
+      } else {
+        // Logado mas sem nome? Pede identificação (que será mais simples se houver user)
+        setStep('identify');
+        setLoading(false);
+      }
     } else {
       setStep('identify');
       setLoading(false);
@@ -297,6 +323,22 @@ export default function CartSheet({ vendor, tableNumber }: CartSheetProps) {
     e.preventDefault();
     setError(''); setLoading(true);
     const supabase = createClient();
+
+    // Se já estiver logado (estado local ou session), apenas atualizamos o perfil se necessário
+    if (user) {
+      if (!customerName.trim()) { setError('Por favor, informe seu nome.'); setLoading(false); return; }
+      const cleanCpf = cpf.replace(/\D/g, '');
+      
+      // Atualiza perfil antes de fechar
+      await supabase.from('profiles').update({
+        name: customerName.trim(),
+        phone: customerPhone.replace(/\D/g, ''),
+        cpf: cleanCpf || undefined
+      }).eq('id', user.id);
+      
+      placeOrder(customerName.trim(), customerPhone.trim());
+      return;
+    }
 
     if (isLogin) {
       const { data, error } = await supabase.auth.signInWithPassword({ email, password });
@@ -606,10 +648,13 @@ export default function CartSheet({ vendor, tableNumber }: CartSheetProps) {
               <form onSubmit={handleIdentify} className="flex flex-col flex-1">
                 <div className="overflow-y-auto flex-1 px-5 py-5 space-y-4 no-scrollbar">
                   <p className="text-xs text-slate-400">
-                    {isLogin ? 'Faça login para prosseguir com seu pedido.' : 'Para sua segurança, crie uma conta rápida para fazer o pedido.'}
+                    {user 
+                      ? `Você já está logado como ${user.email}. Por favor, confirme seus dados para o pedido.`
+                      : isLogin ? 'Faça login para prosseguir com seu pedido.' : 'Para sua segurança, crie uma conta rápida para fazer o pedido.'
+                    }
                   </p>
 
-                  {!isLogin && (
+                  {(!isLogin || user) && (
                     <>
                       <div>
                         <label className="block text-sm font-semibold text-slate-700 mb-1.5">Seu nome <span className="text-red-400">*</span></label>
@@ -633,54 +678,58 @@ export default function CartSheet({ vendor, tableNumber }: CartSheetProps) {
                           className="w-full bg-white border border-slate-200 rounded-xl px-4 h-12 text-sm focus:outline-none focus:ring-2" style={ringStyle} />
                       </div>
 
-                      <div className="bg-orange-50/50 p-4 rounded-2xl border border-orange-100">
-                        <label className="block text-sm font-bold text-slate-800 mb-2">🎁 Data de Aniversário</label>
-                        <div className="grid grid-cols-2 gap-3">
-                          <div>
-                            <p className="text-[10px] uppercase font-bold text-slate-400 mb-1 ml-1">Dia</p>
-                            <input type="number" min="1" max="31" value={birthdayDay} onChange={e => setBirthdayDay(e.target.value)} placeholder="01"
-                              className="w-full bg-white border border-slate-200 rounded-xl px-4 h-11 text-sm focus:outline-none" />
-                          </div>
-                          <div>
-                            <p className="text-[10px] uppercase font-bold text-slate-400 mb-1 ml-1">Mês</p>
-                            <select value={birthdayMonth} onChange={e => setBirthdayMonth(e.target.value)}
-                              className="w-full bg-white border border-slate-200 rounded-xl px-3 h-11 text-sm focus:outline-none">
-                              <option value="">Mês</option>
-                              {['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'].map((m, i) => (
-                                <option key={m} value={i+1}>{m}</option>
-                              ))}
-                            </select>
+                      {!user && (
+                        <div className="bg-orange-50/50 p-4 rounded-2xl border border-orange-100">
+                          <label className="block text-sm font-bold text-slate-800 mb-2">🎁 Data de Aniversário</label>
+                          <div className="grid grid-cols-2 gap-3">
+                            <div>
+                              <p className="text-[10px] uppercase font-bold text-slate-400 mb-1 ml-1">Dia</p>
+                              <input type="number" min="1" max="31" value={birthdayDay} onChange={e => setBirthdayDay(e.target.value)} placeholder="01"
+                                className="w-full bg-white border border-slate-200 rounded-xl px-4 h-11 text-sm focus:outline-none" />
+                            </div>
+                            <div>
+                              <p className="text-[10px] uppercase font-bold text-slate-400 mb-1 ml-1">Mês</p>
+                              <select value={birthdayMonth} onChange={e => setBirthdayMonth(e.target.value)}
+                                className="w-full bg-white border border-slate-200 rounded-xl px-3 h-11 text-sm focus:outline-none">
+                                <option value="">Mês</option>
+                                {['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'].map((m, i) => (
+                                  <option key={m} value={i+1}>{m}</option>
+                                ))}
+                              </select>
+                            </div>
                           </div>
                         </div>
-                        <p className="text-[10px] text-slate-500 mt-3 leading-relaxed">
-                          * Usaremos sua data para futuras promoções exclusivas.
-                          <span className="block font-semibold">O benefício está sujeito a comprovação com documento oficial no dia.</span>
-                        </p>
-                      </div>
+                      )}
                     </>
                   )}
 
-                  <div>
-                    <label className="block text-sm font-semibold text-slate-700 mb-1.5">E-mail <span className="text-red-400">*</span></label>
-                    <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="seu@email.com"
-                      className="w-full bg-white border border-slate-200 rounded-xl px-4 h-12 text-sm focus:outline-none focus:ring-2" style={ringStyle} />
-                  </div>
+                  {!user && (
+                    <>
+                      <div>
+                        <label className="block text-sm font-semibold text-slate-700 mb-1.5">E-mail <span className="text-red-400">*</span></label>
+                        <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="seu@email.com"
+                          className="w-full bg-white border border-slate-200 rounded-xl px-4 h-12 text-sm focus:outline-none focus:ring-2" style={ringStyle} />
+                      </div>
 
-                  <div>
-                    <label className="block text-sm font-semibold text-slate-700 mb-1.5">Senha <span className="text-red-400">*</span></label>
-                    <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="••••••••"
-                      className="w-full bg-white border border-slate-200 rounded-xl px-4 h-12 text-sm focus:outline-none focus:ring-2" style={ringStyle} />
-                  </div>
+                      <div>
+                        <label className="block text-sm font-semibold text-slate-700 mb-1.5">Senha <span className="text-red-400">*</span></label>
+                        <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="••••••••"
+                          className="w-full bg-white border border-slate-200 rounded-xl px-4 h-12 text-sm focus:outline-none focus:ring-2" style={ringStyle} />
+                      </div>
+                    </>
+                  )}
                 </div>
 
                 <div className="px-5 py-4 border-t border-slate-100 space-y-2">
                   {error && <div className="bg-red-50 text-red-700 text-xs px-3 py-2 rounded-lg">{error}</div>}
                   <button type="submit" disabled={loading} className="w-full h-14 font-bold rounded-xl text-white shadow-lg transition" style={{ backgroundColor: P }}>
-                    {loading ? 'Processando…' : isLogin ? 'Confirmar e Pagar' : 'Finalizar Cadastro'}
+                    {loading ? 'Processando…' : user ? 'Confirmar e Pagar' : isLogin ? 'Fazer login e Pagar' : 'Finalizar Cadastro'}
                   </button>
-                  <button type="button" onClick={() => setIsLogin(!isLogin)} className="w-full text-slate-600 font-bold text-xs py-1">
-                    {isLogin ? 'Não tem conta? Cadastrar-se' : 'Já tem conta? Entrar'}
-                  </button>
+                  {!user && (
+                    <button type="button" onClick={() => setIsLogin(!isLogin)} className="w-full text-slate-600 font-bold text-xs py-1">
+                      {isLogin ? 'Não tem conta? Cadastrar-se' : 'Já tem conta? Entrar'}
+                    </button>
+                  )}
                   <button type="button" onClick={() => setStep('cart')} className="w-full text-slate-400 text-xs py-1">← Voltar na sacola</button>
                 </div>
               </form>

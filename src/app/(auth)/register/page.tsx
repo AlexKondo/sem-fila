@@ -5,9 +5,15 @@ import Link from 'next/link';
 
 const P = '#ec5b13';
 
-// Máscara CNPJ: 00.000.000/0000-00
-function maskCNPJ(v: string) {
+// Máscara CPF/CNPJ: 000.000.000-00 ou 00.000.000/0000-00
+function maskCPF_CNPJ(v: string) {
   v = v.replace(/\D/g, '').slice(0, 14);
+  if (v.length <= 11) {
+    if (v.length <= 3) return v;
+    if (v.length <= 6) return `${v.slice(0,3)}.${v.slice(3)}`;
+    if (v.length <= 9) return `${v.slice(0,3)}.${v.slice(3,6)}.${v.slice(6)}`;
+    return `${v.slice(0,3)}.${v.slice(3,6)}.${v.slice(6,9)}-${v.slice(9)}`;
+  }
   if (v.length <= 2) return v;
   if (v.length <= 5) return `${v.slice(0,2)}.${v.slice(2)}`;
   if (v.length <= 8) return `${v.slice(0,2)}.${v.slice(2,5)}.${v.slice(5)}`;
@@ -25,6 +31,7 @@ function maskPhone(v: string) {
 
 export default function RegisterPage() {
   const [name, setName] = useState('');
+  const [brandName, setBrandName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [cnpj, setCnpj] = useState('');
@@ -41,14 +48,16 @@ export default function RegisterPage() {
 
     if (password.length < 8) { setError('A senha deve ter ao menos 8 caracteres.'); return; }
 
-    const rawCnpj = cnpj.replace(/\D/g, '');
-    if (rawCnpj.length > 0 && rawCnpj.length !== 14) { setError('CNPJ inválido. Verifique e tente novamente.'); return; }
+    const rawDoc = cnpj.replace(/\D/g, '');
+    if (rawDoc.length !== 11 && rawDoc.length !== 14) { setError('CPF ou CNPJ inválido.'); return; }
+
+    if (!brandName.trim()) { setError('O nome da marca é obrigatório.'); return; }
 
     setLoading(true);
     const res = await fetch('/api/register', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password, name, phone: phone.replace(/\D/g, ''), cnpj: rawCnpj, address }),
+      body: JSON.stringify({ email, password, name, brandName, phone: phone.replace(/\D/g, ''), cnpj: rawDoc, address }),
     });
     const data = await res.json();
 
@@ -142,13 +151,25 @@ export default function RegisterPage() {
               </InputIcon>
             </Field>
 
-            {/* CNPJ com máscara */}
-            <Field label="CNPJ" hint="(opcional)">
+            {/* Nome da Marca */}
+            <Field label="Nome da sua marca" required hint="Ex. Bar do Juazeiro">
+              <InputIcon icon={<svg className="w-5 h-5 font-bold" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>}>
+                <input
+                  type="text" required value={brandName} onChange={e => setBrandName(e.target.value)}
+                  placeholder="Nome do seu negócio"
+                  className="w-full pl-12 pr-4 h-14 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 text-sm font-bold"
+                  style={{ '--tw-ring-color': P + '80' } as React.CSSProperties}
+                />
+              </InputIcon>
+            </Field>
+
+            {/* CNPJ/CPF com máscara */}
+            <Field label="CPF ou CNPJ" required>
               <InputIcon icon={<DocIcon />}>
                 <input
-                  type="text" value={cnpj}
-                  onChange={e => setCnpj(maskCNPJ(e.target.value))}
-                  placeholder="00.000.000/0000-00" inputMode="numeric"
+                  type="text" required value={cnpj}
+                  onChange={e => setCnpj(maskCPF_CNPJ(e.target.value))}
+                  placeholder="000.000.000-00 ou 00.000.000/0000-00" inputMode="numeric"
                   className="w-full pl-12 pr-4 h-14 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 text-sm"
                   style={{ '--tw-ring-color': P + '80' } as React.CSSProperties}
                 />

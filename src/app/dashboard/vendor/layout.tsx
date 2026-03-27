@@ -8,7 +8,7 @@ export default async function VendorDashboardLayout({ children }: { children: Re
   if (!user) redirect('/login');
 
   const [profileRes, vendorsRes] = await Promise.all([
-    supabase.from('profiles').select('role, cnpj').eq('id', user.id).single(),
+    supabase.from('profiles').select('role, cnpj, name').eq('id', user.id).single(),
     supabase.from('vendors').select('*').eq('owner_id', user.id).eq('active', true)
   ]);
 
@@ -41,6 +41,7 @@ export default async function VendorDashboardLayout({ children }: { children: Re
     <div className="min-h-screen" style={{ backgroundColor: '#f8f6f6' }}>
       <VendorHeader
         vendorName={isOverview ? 'Visão Geral' : (vendor?.name ?? 'Meu Negócio')}
+        userName={profile?.name || ''}
         cnpjFormatted={cnpjFormatted}
         vendorId={vendor?.id ?? null}
         multiVendor={vendors.length > 1}
