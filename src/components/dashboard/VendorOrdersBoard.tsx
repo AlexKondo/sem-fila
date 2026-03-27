@@ -111,7 +111,7 @@ export default function VendorOrdersBoard({ initialOrders, vendorId }: Props) {
           if (newOrder) {
             setOrders((prev) => {
               if (prev.some(o => o.id === newOrder.id)) return prev;
-              const next = [newOrder as OrderWithItems, ...prev];
+              const next = [...prev, newOrder as any].sort((a,b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
               return next;
             });
             
@@ -130,31 +130,49 @@ export default function VendorOrdersBoard({ initialOrders, vendorId }: Props) {
           filter: `vendor_id=eq.${vendorId}`,
         },
         async (payload) => {
-          const updated = payload.new;
-          const old = payload.old as any;
+          const updated = payload.new as any;
           
-          // Se o pedido acabou de ser PAGO, dispara alerta
-          if (updated.payment_status === 'paid' && old?.payment_status !== 'paid') {
-              const { data: rpcData } = await supabase.rpc('get_vendor_orders', {
-                p_vendor_id: vendorId,
-                p_since: new Date(updated.created_at).toISOString(),
+          // Se o pedido está pago, garantimos que ele está na lista e disparamos alerta
+          if (updated.payment_status === 'paid') {
+              setOrders((prev) => {
+                  const exists = prev.some(o => o.id === updated.id);
+                  if (exists) {
+                      return prev.map(o => o.id === updated.id ? { ...o, ...updated } as any : o);
+                  }
+                  
+                  // Se não existe na lista, precisamos buscá-lo completo para adicionar
+                  // Mas como o setOrders é síncrono, faremos o fetch fora e atualizaremos de novo
+                  return prev;
               });
-              const fullOrder = (rpcData as any[] || []).find((o: any) => o.id === updated.id);
-              if (fullOrder) {
-                setAlertOrder(fullOrder as OrderWithItems);
-                playNewOrderSound();
+
+              // Verifica se já temos este pedido na lista local
+              // Se não tivermos, buscamos e disparamos o alarme
+              const alreadyInList = (await new Promise(resolve => {
+                  setOrders(prev => {
+                      resolve(prev.some(o => o.id === updated.id));
+                      return prev;
+                  });
+              }));
+
+              if (!alreadyInList) {
+                  const { data: rpcData } = await supabase.rpc('get_vendor_orders', {
+                    p_vendor_id: vendorId,
+                    p_since: new Date(updated.created_at).toISOString(),
+                  });
+                  const fullOrder = (rpcData as any[] || []).find((o: any) => o.id === updated.id);
+                  if (fullOrder) {
+                    setOrders(prev => [...prev, fullOrder as any].sort((a,b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()));
+                    setAlertOrder(fullOrder as any);
+                    playNewOrderSound();
+                  }
               }
           }
 
-          // Atualização de estado normal
+          // Atualização de estado para cancelamentos
           if (updated.status === 'cancelled') {
-            if (updated.payment_status === 'paid') {
-              setOrders((prev) => prev.map((o) => o.id === updated.id ? { ...o, ...updated } as OrderWithItems : o));
-            } else {
-              setOrders((prev) => prev.filter((o) => o.id !== updated.id));
-            }
+            setOrders((prev) => prev.filter((o) => o.id !== updated.id));
           } else {
-            setOrders((prev) => prev.map((o) => o.id === updated.id ? { ...o, ...updated } as OrderWithItems : o));
+            setOrders((prev) => prev.map((o) => o.id === updated.id ? { ...o, ...updated } as any : o));
           }
         }
       )
