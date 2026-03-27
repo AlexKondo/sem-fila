@@ -31,6 +31,27 @@ const NEXT_STATUS: Partial<Record<OrderStatus, OrderStatus>> = {
   ready: 'delivered',
 };
 
+type DateFilter = 'today' | 'yesterday' | '7days' | '30days' | 'custom';
+
+const DATE_FILTER_LABELS: Record<DateFilter, string> = {
+  today: 'Hoje',
+  yesterday: 'Ontem',
+  '7days': '7 dias',
+  '30days': '30 dias',
+  custom: 'Período',
+};
+
+function getFilterDate(filter: DateFilter, customDate?: string): Date {
+  const d = new Date();
+  switch (filter) {
+    case 'yesterday': d.setDate(d.getDate() - 1); d.setHours(0,0,0,0); return d;
+    case '7days': d.setDate(d.getDate() - 7); d.setHours(0,0,0,0); return d;
+    case '30days': d.setDate(d.getDate() - 30); d.setHours(0,0,0,0); return d;
+    case 'custom': return customDate ? new Date(customDate + 'T00:00:00') : (d.setHours(0,0,0,0), d);
+    default: d.setHours(0,0,0,0); return d;
+  }
+}
+
 interface Props {
   initialOrders: OrderWithItems[];
   vendorId: string;
@@ -38,6 +59,29 @@ interface Props {
 
 export default function VendorOrdersBoard({ initialOrders, vendorId }: Props) {
   const [orders, setOrders] = useState<OrderWithItems[]>(initialOrders);
+  const [dateFilter, setDateFilter] = useState<DateFilter>('today');
+  const [customDate, setCustomDate] = useState('');
+  const [loadingFilter, setLoadingFilter] = useState(false);
+
+  // Recarrega pedidos quando o filtro de data muda
+  useEffect(() => {
+    if (dateFilter === 'today') {
+      // "Hoje" usa os dados iniciais do server
+      return;
+    }
+    async function fetchOrders() {
+      setLoadingFilter(true);
+      const supabase = createClient();
+      const since = getFilterDate(dateFilter, customDate);
+      const { data } = await supabase.rpc('get_vendor_orders', {
+        p_vendor_id: vendorId,
+        p_since: since.toISOString(),
+      });
+      setOrders((data || []) as any[]);
+      setLoadingFilter(false);
+    }
+    fetchOrders();
+  }, [dateFilter, customDate, vendorId]);
 
   // Realtime — escuta novos pedidos e atualizações
   useEffect(() => {
@@ -143,13 +187,52 @@ export default function VendorOrdersBoard({ initialOrders, vendorId }: Props) {
       .eq('id', orderId);
   }
 
+  const filterBar = (
+    <div className="max-w-5xl mx-auto px-4 mb-4">
+      <div className="flex items-center gap-2 flex-wrap">
+        {(Object.keys(DATE_FILTER_LABELS) as DateFilter[]).filter(k => k !== 'custom').map(key => (
+          <button
+            key={key}
+            onClick={() => { setDateFilter(key); }}
+            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+              dateFilter === key
+                ? 'bg-orange-500 text-white shadow-sm'
+                : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
+            }`}
+          >
+            {DATE_FILTER_LABELS[key]}
+          </button>
+        ))}
+        <input
+          type="date"
+          value={customDate}
+          onChange={e => { setCustomDate(e.target.value); setDateFilter('custom'); }}
+          className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition-all ${
+            dateFilter === 'custom'
+              ? 'border-orange-500 bg-orange-50 text-orange-600'
+              : 'border-slate-200 bg-slate-100 text-slate-500'
+          }`}
+        />
+        {loadingFilter && (
+          <svg className="w-4 h-4 animate-spin text-orange-500" fill="none" viewBox="0 0 24 24">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
+          </svg>
+        )}
+      </div>
+    </div>
+  );
+
   if (orders.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-24 text-gray-400">
-        <p className="text-5xl mb-4">🎉</p>
-        <p className="text-lg font-medium">Fila vazia</p>
-        <p className="text-sm mt-1">Novos pedidos aparecerão aqui automaticamente.</p>
-      </div>
+      <>
+        {filterBar}
+        <div className="flex flex-col items-center justify-center py-24 text-gray-400">
+          <p className="text-5xl mb-4">🍳</p>
+          <p className="text-lg font-medium">Nenhum pedido na fila</p>
+          <p className="text-sm mt-1">Aguardando novos clientes...</p>
+        </div>
+      </>
     );
   }
 
@@ -167,6 +250,8 @@ export default function VendorOrdersBoard({ initialOrders, vendorId }: Props) {
     .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
   return (
+    <>
+    {filterBar}
     <div className="max-w-5xl mx-auto px-4 py-4">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
         {/* Coluna da Esquerda: Fila em Tempo Real */}
@@ -224,6 +309,7 @@ export default function VendorOrdersBoard({ initialOrders, vendorId }: Props) {
         </div>
       </div>
     </div>
+    </>
   );
 }
 
