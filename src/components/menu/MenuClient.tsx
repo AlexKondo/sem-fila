@@ -128,7 +128,9 @@ export default function MenuClient({ vendor, items, mesa, waitTime }: MenuClient
       })
       .subscribe();
 
-    return () => { supabase.removeChannel(channel); };
+    return () => { 
+      supabase.removeChannel(channel); 
+    };
   }, [vendor.id]);
 
   // Custom Waiter Modal State

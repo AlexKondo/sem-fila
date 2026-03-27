@@ -26,7 +26,6 @@ export default function UserOrdersDashboard() {
   const [orders, setOrders] = useState<OrderWithVendor[]>([]);
   const [loading, setLoading] = useState(true);
   const [userName, setUserName] = useState<string | null>(null);
-  const [readyOrderAlert, setReadyOrderAlert] = useState<OrderWithVendor | null>(null);
 
   useEffect(() => {
     const supabase = createClient();
@@ -66,26 +65,9 @@ export default function UserOrdersDashboard() {
     const channel = supabase
       .channel('user-orders-updates')
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'orders' }, (payload) => {
-        const updated = payload.new;
-        
-        setOrders(prev => {
-          const oldOrder = prev.find(o => o.id === updated.id);
-          // Se o status mudou para PRONTO, dispara alerta sonoro e visual
-          if (updated.status === 'ready' && oldOrder?.status !== 'ready') {
-            setReadyOrderAlert({ ...oldOrder, ...updated } as OrderWithVendor);
-            playReadySound();
-          }
-          return prev.map(o => o.id === updated.id ? { ...o, ...updated } : o);
-        });
+        setOrders(prev => prev.map(o => o.id === payload.new.id ? { ...o, ...payload.new } : o));
       })
       .subscribe();
-
-    function playReadySound() {
-      try {
-        const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
-        audio.play().catch(() => {});
-      } catch {}
-    }
 
     return () => { supabase.removeChannel(channel); };
   }, []);
@@ -206,32 +188,6 @@ export default function UserOrdersDashboard() {
         </div>
       )}
 
-      {/* Order Ready Modal (High Impact) */}
-      {readyOrderAlert && (
-        <div 
-          onClick={() => setReadyOrderAlert(null)}
-          className="fixed inset-0 z-[10000] bg-green-600 flex flex-col items-center justify-center p-8 text-white text-center cursor-pointer animate-in fade-in zoom-in duration-300"
-        >
-          <div className="w-32 h-32 bg-white/20 rounded-full flex items-center justify-center mb-8 animate-bounce">
-            <svg className="w-20 h-20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-            </svg>
-          </div>
-          <h2 className="text-4xl font-black uppercase tracking-widest mb-2 leading-none">Seu Pedido Está Pronto!</h2>
-          <p className="text-xl font-bold opacity-80 mb-10">Retire agora no balcão do quiosque.</p>
-          
-          <div className="bg-white text-green-700 w-full max-w-xs py-10 rounded-[50px] shadow-2xl space-y-2 border-b-8 border-green-800/10">
-              <p className="text-xs font-black uppercase tracking-widest opacity-40">Código de Retirada</p>
-              <p className="text-[120px] font-black leading-none italic tracking-tighter">
-                {readyOrderAlert.pickup_code}
-              </p>
-              <p className="text-xl font-black mt-4 uppercase opacity-80">{readyOrderAlert.vendors?.name || 'Quiosque'}</p>
-          </div>
-
-          <p className="mt-12 text-sm font-black uppercase tracking-widest animate-pulse opacity-60">Toque para fechar este aviso</p>
-        </div>
-      )}
-
       {/* Success Modal (Simulation) */}
       {showSuccess && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
@@ -306,7 +262,7 @@ function OrderCard({ order, isPast }: { order: OrderWithVendor; isPast?: boolean
       {!isPast && (
         <div className="mt-3 pt-3 border-t border-slate-50 flex items-center justify-between text-xs">
           <span className="text-slate-400 font-medium">Ver detalhes e código QR</span>
-          <svg className="w-4 h-4 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+          <svg className="w-48 h-48 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
         </div>
       )}
     </Link>

@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import './globals.css';
+import UserNotifications from '@/components/notifications/UserNotifications';
 
 export const metadata: Metadata = {
   title: 'QuickPick — Sem fila, só sabor',
@@ -29,6 +30,7 @@ export default function RootLayout({
     <html lang="pt-BR">
       <body style={{ backgroundColor: '#f8f6f6', color: '#0f172a' }}>
         {children}
+        <UserNotifications />
       </body>
     </html>
   );
