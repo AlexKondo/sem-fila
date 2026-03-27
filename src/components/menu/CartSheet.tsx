@@ -87,6 +87,89 @@ const CpfInput = memo(function CpfInput({ value, onChange, style }: { value: str
   );
 });
 
+/* ─── Card Payment Form (isolado — digitar não re-renderiza o cart) ─── */
+const CardPaymentForm = memo(function CardPaymentForm({
+  savedCardToken, savedCardLast4, cpf, onCpfChange, ringStyle, onCardChange,
+}: {
+  savedCardToken: string; savedCardLast4: string; cpf: string;
+  onCpfChange: (v: string) => void; ringStyle: React.CSSProperties;
+  onCardChange: (data: { cardNumber: string; cardHolder: string; cardExpiry: string; cardCvv: string; useNewCard: boolean }) => void;
+}) {
+  const [cardNumber, setCardNumber] = useState('');
+  const [cardHolder, setCardHolder] = useState('');
+  const [cardExpiry, setCardExpiry] = useState('');
+  const [cardCvv, setCardCvv] = useState('');
+  const [useNewCard, setUseNewCard] = useState(false);
+
+  // Sync card data up to parent on blur (not on every keystroke)
+  const syncUp = useCallback(() => {
+    onCardChange({ cardNumber, cardHolder, cardExpiry, cardCvv, useNewCard });
+  }, [cardNumber, cardHolder, cardExpiry, cardCvv, useNewCard, onCardChange]);
+
+  // Also sync when useNewCard toggles
+  useEffect(() => {
+    onCardChange({ cardNumber, cardHolder, cardExpiry, cardCvv, useNewCard });
+  }, [useNewCard]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  return (
+    <div className="mt-3 space-y-2">
+      {savedCardToken && !useNewCard ? (
+        <div className="flex items-center justify-between bg-slate-50 rounded-xl px-4 py-3 border border-slate-200">
+          <div className="flex items-center gap-2">
+            <span>💳</span>
+            <span className="text-sm font-semibold text-slate-700">•••• •••• •••• {savedCardLast4}</span>
+          </div>
+          <button type="button" onClick={() => setUseNewCard(true)} className="text-xs font-bold" style={{ color: P }}>Trocar</button>
+        </div>
+      ) : (
+        <>
+          {savedCardToken && (
+            <button type="button" onClick={() => setUseNewCard(false)} className="text-xs text-slate-400 mb-1">← Usar cartão salvo ••••{savedCardLast4}</button>
+          )}
+          <input
+            type="text" inputMode="numeric" value={cardNumber} placeholder="0000 0000 0000 0000" maxLength={19}
+            onChange={e => {
+              const d = e.target.value.replace(/\D/g, '').substring(0, 16);
+              setCardNumber(d.replace(/(.{4})/g, '$1 ').trim());
+            }}
+            onBlur={syncUp}
+            className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 h-11 text-sm focus:outline-none focus:ring-2"
+            style={ringStyle}
+          />
+          <input
+            type="text" value={cardHolder} placeholder="Nome impresso no cartão"
+            onChange={e => setCardHolder(e.target.value.toUpperCase())}
+            onBlur={syncUp}
+            className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 h-11 text-sm focus:outline-none focus:ring-2"
+            style={ringStyle}
+          />
+          <div className="grid grid-cols-2 gap-2">
+            <input
+              type="text" inputMode="numeric" value={cardExpiry} placeholder="MM/AA" maxLength={5}
+              onChange={e => {
+                const d = e.target.value.replace(/\D/g, '').substring(0, 4);
+                setCardExpiry(d.length > 2 ? `${d.substring(0, 2)}/${d.substring(2)}` : d);
+              }}
+              onBlur={syncUp}
+              className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 h-11 text-sm focus:outline-none focus:ring-2"
+              style={ringStyle}
+            />
+            <input
+              type="text" inputMode="numeric" value={cardCvv} placeholder="CVV" maxLength={4}
+              onChange={e => setCardCvv(e.target.value.replace(/\D/g, '').substring(0, 4))}
+              onBlur={syncUp}
+              className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 h-11 text-sm focus:outline-none focus:ring-2"
+              style={ringStyle}
+            />
+          </div>
+          <CpfInput value={cpf} onChange={onCpfChange} style={ringStyle} />
+          <p className="text-[10px] text-slate-400">🔒 Seus dados são criptografados e não armazenamos o número do cartão.</p>
+        </>
+      )}
+    </div>
+  );
+});
+
 export default function CartSheet({ vendor, tableNumber }: CartSheetProps) {
   const router = useRouter();
   const [items, setItems] = useState<CartItem[]>([]);
@@ -103,13 +186,13 @@ export default function CartSheet({ vendor, tableNumber }: CartSheetProps) {
   const [pixData, setPixData] = useState<{ payment_id: string; qr_code: string; copy_paste: string; order_id: string } | null>(null);
   const [pixCopied, setPixCopied] = useState(false);
   const [pixSimulating, setPixSimulating] = useState(false);
-  const [cardNumber, setCardNumber] = useState('');
-  const [cardHolder, setCardHolder] = useState('');
-  const [cardExpiry, setCardExpiry] = useState('');
-  const [cardCvv, setCardCvv] = useState('');
+  const [cardData, setCardData] = useState({ cardNumber: '', cardHolder: '', cardExpiry: '', cardCvv: '', useNewCard: false });
   const [savedCardToken, setSavedCardToken] = useState('');
   const [savedCardLast4, setSavedCardLast4] = useState('');
-  const [useNewCard, setUseNewCard] = useState(false);
+
+  const handleCardChange = useCallback((data: { cardNumber: string; cardHolder: string; cardExpiry: string; cardCvv: string; useNewCard: boolean }) => {
+    setCardData(data);
+  }, []);
 
   // Estados de Autenticação
   const [user, setUser] = useState<any>(null);
@@ -189,12 +272,12 @@ export default function CartSheet({ vendor, tableNumber }: CartSheetProps) {
     if (!paymentMethod) { setError('Por favor, selecione uma forma de pagamento.'); return; }
     if (paymentMethod === 'pix' && cpf.replace(/\D/g, '').length !== 11) { setError('Informe seu CPF para pagar com PIX.'); return; }
     if (paymentMethod === 'cartão') {
-      const usingSaved = savedCardToken && !useNewCard;
+      const usingSaved = savedCardToken && !cardData.useNewCard;
       if (!usingSaved) {
-        if (cardNumber.replace(/\s/g, '').length < 16) { setError('Número do cartão inválido.'); return; }
-        if (!cardHolder.trim()) { setError('Informe o nome impresso no cartão.'); return; }
-        if (cardExpiry.length < 5) { setError('Data de validade inválida (MM/AA).'); return; }
-        if (cardCvv.length < 3) { setError('CVV inválido.'); return; }
+        if (cardData.cardNumber.replace(/\s/g, '').length < 16) { setError('Número do cartão inválido.'); return; }
+        if (!cardData.cardHolder.trim()) { setError('Informe o nome impresso no cartão.'); return; }
+        if (cardData.cardExpiry.length < 5) { setError('Data de validade inválida (MM/AA).'); return; }
+        if (cardData.cardCvv.length < 3) { setError('CVV inválido.'); return; }
         if (cpf.replace(/\D/g, '').length !== 11) { setError('Informe seu CPF para pagar com cartão.'); return; }
       }
     }
@@ -275,12 +358,12 @@ export default function CartSheet({ vendor, tableNumber }: CartSheetProps) {
           customer_name: name || undefined,
           customer_cpf: cpf.replace(/\D/g, '') || undefined,
           customer_email: email || undefined,
-          use_saved_card: paymentMethod === 'cartão' && !!savedCardToken && !useNewCard,
-          card_number: paymentMethod === 'cartão' && (!savedCardToken || useNewCard) ? cardNumber.replace(/\s/g, '') : undefined,
-          card_holder: paymentMethod === 'cartão' && (!savedCardToken || useNewCard) ? cardHolder : undefined,
-          card_expiry_month: paymentMethod === 'cartão' && (!savedCardToken || useNewCard) ? cardExpiry.split('/')[0] : undefined,
-          card_expiry_year: paymentMethod === 'cartão' && (!savedCardToken || useNewCard) ? `20${cardExpiry.split('/')[1]}` : undefined,
-          card_cvv: paymentMethod === 'cartão' && (!savedCardToken || useNewCard) ? cardCvv : undefined,
+          use_saved_card: paymentMethod === 'cartão' && !!savedCardToken && !cardData.useNewCard,
+          card_number: paymentMethod === 'cartão' && (!savedCardToken || cardData.useNewCard) ? cardData.cardNumber.replace(/\s/g, '') : undefined,
+          card_holder: paymentMethod === 'cartão' && (!savedCardToken || cardData.useNewCard) ? cardData.cardHolder : undefined,
+          card_expiry_month: paymentMethod === 'cartão' && (!savedCardToken || cardData.useNewCard) ? cardData.cardExpiry.split('/')[0] : undefined,
+          card_expiry_year: paymentMethod === 'cartão' && (!savedCardToken || cardData.useNewCard) ? `20${cardData.cardExpiry.split('/')[1]}` : undefined,
+          card_cvv: paymentMethod === 'cartão' && (!savedCardToken || cardData.useNewCard) ? cardData.cardCvv : undefined,
           items: items.map(i => ({
             menu_item_id: i.menuItemId || i.id,
             quantity: i.quantity,
@@ -376,57 +459,14 @@ export default function CartSheet({ vendor, tableNumber }: CartSheetProps) {
                       )}
                     </div>
                     {paymentMethod === 'cartão' && (
-                      <div className="mt-3 space-y-2">
-                        {savedCardToken && !useNewCard ? (
-                          <div className="flex items-center justify-between bg-slate-50 rounded-xl px-4 py-3 border border-slate-200">
-                            <div className="flex items-center gap-2">
-                              <span>💳</span>
-                              <span className="text-sm font-semibold text-slate-700">•••• •••• •••• {savedCardLast4}</span>
-                            </div>
-                            <button type="button" onClick={() => setUseNewCard(true)} className="text-xs font-bold" style={{ color: P }}>Trocar</button>
-                          </div>
-                        ) : (
-                          <>
-                            {savedCardToken && (
-                              <button type="button" onClick={() => setUseNewCard(false)} className="text-xs text-slate-400 mb-1">← Usar cartão salvo ••••{savedCardLast4}</button>
-                            )}
-                            <input
-                              type="text" inputMode="numeric" value={cardNumber} placeholder="0000 0000 0000 0000" maxLength={19}
-                              onChange={e => {
-                                const d = e.target.value.replace(/\D/g, '').substring(0, 16);
-                                setCardNumber(d.replace(/(.{4})/g, '$1 ').trim());
-                              }}
-                              className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 h-11 text-sm focus:outline-none focus:ring-2"
-                              style={ringStyle}
-                            />
-                            <input
-                              type="text" value={cardHolder} placeholder="Nome impresso no cartão"
-                              onChange={e => setCardHolder(e.target.value.toUpperCase())}
-                              className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 h-11 text-sm focus:outline-none focus:ring-2"
-                              style={ringStyle}
-                            />
-                            <div className="grid grid-cols-2 gap-2">
-                              <input
-                                type="text" inputMode="numeric" value={cardExpiry} placeholder="MM/AA" maxLength={5}
-                                onChange={e => {
-                                  const d = e.target.value.replace(/\D/g, '').substring(0, 4);
-                                  setCardExpiry(d.length > 2 ? `${d.substring(0, 2)}/${d.substring(2)}` : d);
-                                }}
-                                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 h-11 text-sm focus:outline-none focus:ring-2"
-                                style={ringStyle}
-                              />
-                              <input
-                                type="text" inputMode="numeric" value={cardCvv} placeholder="CVV" maxLength={4}
-                                onChange={e => setCardCvv(e.target.value.replace(/\D/g, '').substring(0, 4))}
-                                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 h-11 text-sm focus:outline-none focus:ring-2"
-                                style={ringStyle}
-                              />
-                            </div>
-                            <CpfInput value={cpf} onChange={setCpf} style={ringStyle} />
-                            <p className="text-[10px] text-slate-400">🔒 Seus dados são criptografados e não armazenamos o número do cartão.</p>
-                          </>
-                        )}
-                      </div>
+                      <CardPaymentForm
+                        savedCardToken={savedCardToken}
+                        savedCardLast4={savedCardLast4}
+                        cpf={cpf}
+                        onCpfChange={setCpf}
+                        ringStyle={ringStyle}
+                        onCardChange={handleCardChange}
+                      />
                     )}
                     {paymentMethod === 'pix' && (
                       <div className="mt-3">
