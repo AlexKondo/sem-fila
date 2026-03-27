@@ -79,9 +79,9 @@ export default function RegisterPage() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
             </svg>
           </div>
-          <h2 className="text-xl font-bold text-slate-900 mb-2">Confirme seu email</h2>
+          <h2 className="text-xl font-bold text-slate-900 mb-2">Conta criada com sucesso!</h2>
           <p className="text-slate-500 text-sm leading-relaxed">
-            Enviamos um link de confirmação para <strong className="text-slate-700">{email}</strong>. Verifique sua caixa de entrada.
+            Seja bem-vindo ao <strong className="text-slate-700">QuickPick</strong>. Sua marca já está pronta para receber pedidos.
           </p>
           <Link href="/login" className="block mt-6 font-semibold text-sm" style={{ color: P }}>Ir para o login →</Link>
         </div>

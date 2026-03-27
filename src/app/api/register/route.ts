@@ -6,11 +6,11 @@ export async function POST(req: NextRequest) {
 
   const admin = await createAdminClient();
 
-  // 1. Criar usuário
+  // 1. Criar usuário (confirmado: true para pular verificação de email)
   const { data: authData, error: authError } = await admin.auth.admin.createUser({
     email,
     password,
-    email_confirm: false, // exige confirmação de email
+    email_confirm: true,
     user_metadata: { name, phone, cnpj, address },
   });
 
