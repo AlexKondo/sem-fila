@@ -152,29 +152,17 @@ export default function WaiterBoard({ initialReadyOrders, initialWaiterCalls, ve
       {alertingMesa && (
         <div 
           onClick={() => setAlertingMesa(null)}
-          className="fixed inset-0 z-[9999] bg-black/40 backdrop-blur-md flex items-center justify-center p-6 cursor-pointer animate-in fade-in duration-300"
+          className="fixed inset-0 z-[9999] bg-red-600 flex flex-col items-center justify-center p-8 animate-pulse text-white text-center cursor-pointer"
         >
-           <div className="bg-orange-600 w-full max-w-sm rounded-[40px] p-10 flex flex-col items-center justify-center text-white text-center shadow-3xl border-4 border-white transform transition-all animate-in zoom-in-90 duration-300 shadow-orange-500/40 relative overflow-hidden">
-             
-             {/* Efeito de brilho de fundo */}
-             <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent pointer-events-none" />
-
-             <div className="bg-white/20 p-6 rounded-full mb-6 animate-bounce">
-               <Bell className="w-16 h-16 text-white" fill="white" />
-             </div>
-             
-             <h2 className="text-2xl font-black uppercase tracking-widest opacity-80 mb-2">Chamada de Mesa</h2>
-             <h3 className="text-7xl font-black mb-6 italic tracking-tighter">MESA {alertingMesa}</h3>
-             
-             <div className="h-14 w-full bg-white/10 rounded-2xl flex items-center justify-center gap-2 border border-white/20 animate-pulse">
-                <span className="w-3 h-3 bg-white rounded-full" />
-                <span className="text-sm font-bold uppercase tracking-widest">Aguardando atendimento</span>
-             </div>
-
-             <button className="mt-8 text-xs font-bold opacity-60 uppercase tracking-widest hover:opacity-100 transition-opacity">
-               Toque para fechar
-             </button>
-           </div>
+           <Bell className="w-48 h-48 mb-8" />
+           <h2 className="text-4xl font-black uppercase tracking-widest opacity-80 mb-4">Mesa Chamando:</h2>
+           <h3 className="text-[12rem] font-black leading-none italic mb-8">
+             {alertingMesa}
+           </h3>
+           <p className="text-2xl font-bold uppercase tracking-widest bg-white text-red-600 px-8 py-2 rounded-full">
+             Aguardando Atendimento
+           </p>
+           <p className="mt-12 text-sm opacity-50 font-bold uppercase tracking-widest">Toque para fechar este alerta</p>
         </div>
       )}
 
