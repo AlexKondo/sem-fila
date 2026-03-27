@@ -1,7 +1,7 @@
-'use client';
-
 import { useRouter } from 'next/navigation';
+import { useState, useTransition } from 'react';
 import { formatCurrency } from '@/lib/utils';
+import { Calendar, Loader2 } from 'lucide-react';
 
 const P = '#ec5b13';
 
@@ -16,6 +16,8 @@ interface Props {
   validCount: number;
   chartData: { label: string; total: number; isNow?: boolean; hour?: number }[];
   currentPeriod: string;
+  startDate: string;
+  endDate: string;
 }
 
 export default function VendorDashboardClient({
@@ -29,32 +31,52 @@ export default function VendorDashboardClient({
   validCount,
   chartData,
   currentPeriod,
+  startDate,
+  endDate,
 }: Props) {
   const router = useRouter();
+  const [isPending, startTransition] = useTransition();
+  const [localStart, setLocalStart] = useState(startDate);
+  const [localEnd, setLocalEnd] = useState(endDate);
 
   const maxVal = Math.max(...chartData.map(d => d.total), 1);
   const effAngle = efficiency != null ? (efficiency / 100) * 283 : 0; 
 
-  const setPeriod = (p: string) => {
-    router.push(`/dashboard/vendor/dashboard?period=${p}`);
+  const handlePeriodChange = (p: string) => {
+    startTransition(() => {
+      router.push(`/dashboard/vendor/dashboard?period=${p}`);
+    });
+  };
+
+  const handleCustomFilter = () => {
+    startTransition(() => {
+      router.push(`/dashboard/vendor/dashboard?period=custom&start=${localStart}&end=${localEnd}`);
+    });
   };
 
   const periodLabel = {
     today: 'Hoje',
-    '7d': 'Até 7d',
-    '30d': 'Até 30d',
-    all: 'Tudo'
+    '7d': '7 Dias',
+    '30d': '30 Dias',
+    all: 'Tudo',
+    custom: 'Personalizado'
   }[currentPeriod] || 'Hoje';
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-6 space-y-5 pb-20">
+    <div className={`max-w-2xl mx-auto px-4 py-6 space-y-5 pb-20 transition-opacity duration-300 ${isPending ? 'opacity-50 pointer-events-none' : 'opacity-100'}`}>
       
+      {/* Header with loading */}
+      <div className="flex items-center justify-between">
+        <h1 className="text-xl font-black text-slate-900">{vendorName}</h1>
+        {isPending && <Loader2 className="w-5 h-5 text-orange-500 animate-spin" />}
+      </div>
+
       {/* Period Selector */}
       <div className="flex bg-slate-100 p-1 rounded-2xl">
         {['today', '7d', '30d'].map((p) => (
           <button
             key={p}
-            onClick={() => setPeriod(p)}
+            onClick={() => handlePeriodChange(p)}
             className={`flex-1 py-2 text-xs font-black rounded-xl transition-all ${
               currentPeriod === p ? 'bg-white shadow-sm text-orange-600' : 'text-slate-400'
             }`}
@@ -64,10 +86,43 @@ export default function VendorDashboardClient({
         ))}
       </div>
 
+      {/* Custom Date Picker */}
+      <div className="bg-white rounded-3xl p-4 border border-slate-100 shadow-sm space-y-3">
+        <div className="flex items-center gap-2 text-xs font-bold text-slate-400 uppercase tracking-widest px-1">
+          <Calendar className="w-3.5 h-3.5" />
+          Período Personalizado
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="flex-1">
+            <input 
+              type="date" 
+              value={localStart}
+              onChange={(e) => setLocalStart(e.target.value)}
+              className="w-full h-10 bg-slate-50 border border-slate-100 rounded-xl px-3 text-xs font-bold text-slate-600 focus:outline-none focus:ring-2 focus:ring-orange-500/20"
+            />
+          </div>
+          <span className="text-slate-300">→</span>
+          <div className="flex-1">
+            <input 
+              type="date" 
+              value={localEnd}
+              onChange={(e) => setLocalEnd(e.target.value)}
+              className="w-full h-10 bg-slate-50 border border-slate-100 rounded-xl px-3 text-xs font-bold text-slate-600 focus:outline-none focus:ring-2 focus:ring-orange-500/20"
+            />
+          </div>
+          <button 
+            onClick={handleCustomFilter}
+            className="h-10 bg-orange-500 text-white px-4 rounded-xl text-xs font-black shadow-lg shadow-orange-500/20 active:scale-95 transition-all"
+          >
+            OK
+          </button>
+        </div>
+      </div>
+
       {/* KPI Cards */}
       <div className="grid grid-cols-2 gap-3">
         <KpiCard
-          label={`Receita ${periodLabel}`}
+          label={`Receita (${periodLabel})`}
           value={formatCurrency(revenue)}
           sub="No período selecionado"
           icon="💰"
@@ -109,7 +164,8 @@ export default function VendorDashboardClient({
         <div className="flex items-end gap-1 h-28">
           {chartData.map((d, i) => {
             const pct = d.total / maxVal;
-            const showLabel = currentPeriod === 'today' ? (d.hour ?? 0) % 3 === 0 : i % (currentPeriod === '30d' ? 5 : 1) === 0;
+            const isToday = currentPeriod === 'today' || (startDate === endDate);
+            const showLabel = isToday ? (d.hour ?? 0) % 3 === 0 : i % Math.max(1, Math.floor(chartData.length / 6)) === 0;
             return (
               <div key={i} className="flex-1 flex flex-col items-center gap-0.5">
                 <div

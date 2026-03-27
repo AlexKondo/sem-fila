@@ -5,11 +5,15 @@ import { formatCurrency } from '@/lib/utils';
 import VendorDashboardClient from '@/components/dashboard/VendorDashboardClient';
 
 interface Props {
-  searchParams: Promise<{ period?: string }>;
+  searchParams: Promise<{ period?: string; start?: string; end?: string }>;
 }
 
 export default async function VendorDashboardPage({ searchParams }: Props) {
-  const { period = 'today' } = await searchParams;
+  const params = await searchParams;
+  const period = params.period || 'today';
+  const customStart = params.start;
+  const customEnd = params.end;
+
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect('/login');
@@ -31,20 +35,22 @@ export default async function VendorDashboardPage({ searchParams }: Props) {
 
   // Cálculo do Início do Período
   const now = new Date();
-  const startDate = new Date();
+  let startDate = new Date();
   startDate.setHours(0, 0, 0, 0);
+  let endDate = new Date();
+  endDate.setHours(23, 59, 59, 999);
 
-  if (period === '7d') startDate.setDate(now.getDate() - 6);
-  else if (period === '30d') startDate.setDate(now.getDate() - 29);
-  else if (period === 'all') startDate.setFullYear(2020); // Data genérica antiga
+  if (customStart && customEnd) {
+    startDate = new Date(customStart + 'T00:00:00');
+    endDate = new Date(customEnd + 'T23:59:59');
+  } else {
+    if (period === '7d') startDate.setDate(now.getDate() - 6);
+    else if (period === '30d') startDate.setDate(now.getDate() - 29);
+    else if (period === 'all') startDate.setFullYear(2020);
+  }
 
-  // No caso de "hoje", usamos o hojeStart real. Para outros, o startDate calculado.
   const periodStart = startDate.toISOString();
-
-  // Para o gráfico de histórico (últimos 7 dias fixos ou conforme período)
-  const weekStart = new Date();
-  weekStart.setDate(now.getDate() - 6);
-  weekStart.setHours(0, 0, 0, 0);
+  const periodEnd = endDate.toISOString();
 
   const [periodRes, customersRes] = await Promise.all([
     supabase
@@ -52,6 +58,7 @@ export default async function VendorDashboardPage({ searchParams }: Props) {
       .select('id, total_price, status, created_at, updated_at')
       .eq('vendor_id', vendor.id)
       .gte('created_at', periodStart)
+      .lte('created_at', periodEnd)
       .order('created_at', { ascending: true }),
     supabase
       .from('orders')
@@ -61,12 +68,10 @@ export default async function VendorDashboardPage({ searchParams }: Props) {
   ]);
 
   const periodOrders = periodRes.data ?? [];
-
   const revenue = periodOrders.reduce((s, o) => s + Number(o.total_price || 0), 0);
   const activeCount = periodOrders.filter(o => !['delivered', 'cancelled'].includes(o.status)).length;
   const uniqueCustomers = new Set(customersRes.data?.map(o => o.user_id)).size;
 
-  // Tempo médio por pedido (delivered) no período
   const delivered = periodOrders.filter(o => o.status === 'delivered' && o.updated_at);
   const avgMinutes = delivered.length > 0
     ? Math.round(
@@ -77,25 +82,28 @@ export default async function VendorDashboardPage({ searchParams }: Props) {
       )
     : null;
 
-  // Eficiência: prontos / total (excluindo cancelados) no período
   const validOrders = periodOrders.filter(o => o.status !== 'cancelled');
   const readyOrders = validOrders.filter(o => ['ready', 'delivered'].includes(o.status));
   const efficiency = validOrders.length > 0 ? Math.round((readyOrders.length / validOrders.length) * 100) : null;
 
-  // Dados para o gráfico de barras (Receita por hora se for HOJE, ou por dia se for período maior)
-  let chartData: { label: string; total: number; isNow?: boolean }[] = [];
+  // CHART LOGIC
+  let chartData: { label: string; total: number; isNow?: boolean; hour?: number }[] = [];
+  const isSingleDay = startDate.toDateString() === endDate.toDateString();
 
-  if (period === 'today') {
+  if (isSingleDay) {
     chartData = Array.from({ length: 24 }, (_, h) => {
       const total = periodOrders
         .filter(o => new Date(o.created_at).getHours() === h && o.status !== 'cancelled')
         .reduce((s, o) => s + Number(o.total_price || 0), 0);
-      return { label: `${h}h`, total, isNow: now.getHours() === h, hour: h } as any;
+      return { label: `${h}h`, total, isNow: now.getHours() === h && now.toDateString() === startDate.toDateString(), hour: h };
     });
   } else {
-    // Agrupar por dia para períodos longos
-    const daysCount = period === '7d' ? 7 : 30;
-    chartData = Array.from({ length: daysCount }, (_, i) => {
+    // Calculando diferença de dias
+    const diffTime = Math.abs(endDate.getTime() - startDate.getTime());
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    const maxChartPoints = 31; // Limite para não explodir o gráfico
+    
+    chartData = Array.from({ length: Math.min(diffDays, maxChartPoints) }, (_, i) => {
       const d = new Date(startDate);
       d.setDate(d.getDate() + i);
       const label = d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
@@ -121,6 +129,8 @@ export default async function VendorDashboardPage({ searchParams }: Props) {
       validCount={validOrders.length}
       chartData={chartData}
       currentPeriod={period}
+      startDate={startDate.toISOString().split('T')[0]}
+      endDate={endDate.toISOString().split('T')[0]}
     />
   );
 }
