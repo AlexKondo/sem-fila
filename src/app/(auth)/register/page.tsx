@@ -173,7 +173,7 @@ export default function RegisterPage() {
                 <input
                   type="text" required value={cnpj}
                   onChange={e => setCnpj(maskCPF_CNPJ(e.target.value))}
-                  placeholder="000.000.000-00 ou 00.000.000/0000-00" inputMode="numeric"
+                  inputMode="numeric"
                   className="w-full pl-12 pr-4 h-14 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 text-sm"
                   style={{ '--tw-ring-color': P + '80' } as React.CSSProperties}
                 />
