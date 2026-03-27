@@ -41,7 +41,7 @@ export async function POST(req: NextRequest) {
   // Atualiza o profile com role e vendor_id
   await admin
     .from('profiles')
-    .update({ role, name, phone: phone || null, vendor_id })
+    .update({ role, name, full_name: name, phone: phone || null, vendor_id })
     .eq('id', authData.user.id);
 
   // Cria o schedule de staff vinculando ao vendor
