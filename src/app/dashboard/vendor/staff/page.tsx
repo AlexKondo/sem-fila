@@ -4,26 +4,11 @@ import { useEffect, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import type { StaffSchedule } from '@/types/database';
 
-const DAYS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
-
-const ALL_PERMISSIONS = [
-  { key: 'view_orders',    label: 'Ver Pedidos' },
-  { key: 'manage_menu',    label: 'Gerenciar Cardápio' },
-  { key: 'call_waiter',    label: 'Atender Chamados' },
-  { key: 'deliver_orders', label: 'Entregar Pedidos' },
-];
-
 const ROLE_OPTIONS = [
-  { value: 'waitstaff',  label: '🍽️ Garçom / Atendente' },
-  { value: 'deliverer',  label: '🛵 Entregador' },
-  { value: 'org_admin',  label: '🛡️ Admin (acesso total)' },
+  { value: 'waitstaff', label: 'Garçom / Atendente', emoji: '🍽️', color: 'bg-blue-50 text-blue-600' },
+  { value: 'deliverer', label: 'Entregador',          emoji: '🛵', color: 'bg-green-50 text-green-600' },
+  { value: 'org_admin', label: 'Admin',               emoji: '🛡️', color: 'bg-purple-50 text-purple-600' },
 ];
-
-const DEFAULT_PERMS: Record<string, string[]> = {
-  waitstaff:  ['view_orders', 'call_waiter'],
-  deliverer:  ['view_orders', 'deliver_orders'],
-  org_admin:  ['view_orders', 'manage_menu', 'call_waiter', 'deliver_orders'],
-};
 
 type StaffWithProfile = StaffSchedule & {
   profiles: { full_name: string | null; name: string | null; role: string; id: string } | null;
@@ -33,16 +18,13 @@ export default function StaffPage() {
   const [vendorId, setVendorId] = useState<string | null>(null);
   const [staff, setStaff] = useState<StaffWithProfile[]>([]);
   const [loading, setLoading] = useState(true);
+  const [filterRole, setFilterRole] = useState<string>('all');
 
   const [showModal, setShowModal] = useState(false);
   const [form, setForm] = useState({ name: '', email: '', phone: '', password: '', role: 'waitstaff' });
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState('');
-
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [editPerms, setEditPerms] = useState<string[]>([]);
-  const [editDays, setEditDays] = useState<number[]>([]);
-  const [editRole, setEditRole] = useState('waitstaff');
+  const [removing, setRemoving] = useState<string | null>(null);
 
   useEffect(() => {
     const supabase = createClient();
@@ -50,19 +32,22 @@ export default function StaffPage() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      const { data: vendorData } = await supabase
-        .from('vendors').select('id').eq('owner_id', user.id).eq('active', true).limit(1).single();
-      if (!vendorData) { setLoading(false); return; }
-      setVendorId(vendorData.id);
+      const cookieVendorId = document.cookie
+        .split('; ').find(c => c.startsWith('selected_vendor_id='))?.split('=')[1];
 
-      const { data } = await supabase
-        .from('staff_schedules')
-        .select('*, profiles(id, full_name, name, role)')
-        .eq('vendor_id', vendorData.id)
-        .eq('active', true)
-        .order('created_at', { ascending: false });
+      const { data: vendorsData } = await supabase
+        .from('vendors').select('id').eq('owner_id', user.id).eq('active', true);
+      if (!vendorsData?.length) { setLoading(false); return; }
 
-      if (data) setStaff(data as StaffWithProfile[]);
+      const vid = (cookieVendorId && cookieVendorId !== 'all' && vendorsData.find(v => v.id === cookieVendorId))
+        ? cookieVendorId
+        : vendorsData[0].id;
+      setVendorId(vid);
+
+      // API route usa admin client para bypassar RLS da staff_schedules
+      const res = await fetch(`/api/staff/list?vendor_id=${vid}`);
+      const json = await res.json();
+      if (json.data) setStaff(json.data as StaffWithProfile[]);
       setLoading(false);
     }
     load();
@@ -89,45 +74,21 @@ export default function StaffPage() {
       return;
     }
 
-    // Recarrega a lista
-    const supabase = createClient();
-    const { data } = await supabase
-      .from('staff_schedules')
-      .select('*, profiles(id, full_name, name, role)')
-      .eq('vendor_id', vendorId)
-      .eq('active', true)
-      .order('created_at', { ascending: false });
-    if (data) setStaff(data as StaffWithProfile[]);
+    const listRes = await fetch(`/api/staff/list?vendor_id=${vendorId}`);
+    const listJson = await listRes.json();
+    if (listJson.data) setStaff(listJson.data as StaffWithProfile[]);
 
     setForm({ name: '', email: '', phone: '', password: '', role: 'waitstaff' });
     setShowModal(false);
     setSaving(false);
   }
 
-  async function savePermissions(scheduleId: string) {
-    const supabase = createClient();
-    await supabase
-      .from('staff_schedules')
-      .update({ permissions: editPerms, days_of_week: editDays })
-      .eq('id', scheduleId);
-
-    // Atualiza role no profile
-    const member = staff.find(s => s.id === scheduleId);
-    if (member?.profiles?.id) {
-      await supabase.from('profiles').update({ role: editRole }).eq('id', member.profiles.id);
-    }
-
-    setStaff(prev => prev.map(s => s.id === scheduleId
-      ? { ...s, permissions: editPerms, days_of_week: editDays, profiles: s.profiles ? { ...s.profiles, role: editRole } : null }
-      : s
-    ));
-    setEditingId(null);
-  }
-
   async function removeStaff(scheduleId: string) {
+    setRemoving(scheduleId);
     const supabase = createClient();
     await supabase.from('staff_schedules').update({ active: false }).eq('id', scheduleId);
     setStaff(prev => prev.filter(s => s.id !== scheduleId));
+    setRemoving(null);
   }
 
   if (loading) return (
@@ -136,9 +97,20 @@ export default function StaffPage() {
     </div>
   );
 
+  const tabs = [
+    { key: 'all',       label: 'Todos' },
+    { key: 'waitstaff', label: 'Atendentes' },
+    { key: 'deliverer', label: 'Entregadores' },
+    { key: 'org_admin', label: 'Gerentes' },
+  ];
+
+  const filtered = filterRole === 'all'
+    ? staff
+    : staff.filter(m => (m.profiles?.role ?? 'waitstaff') === filterRole);
+
   return (
     <main className="min-h-screen bg-[#f8f6f6] pb-20">
-      <div className="max-w-2xl mx-auto px-4 py-6 space-y-6">
+      <div className="max-w-2xl mx-auto px-4 py-6 space-y-5">
 
         {/* Header */}
         <div className="flex items-center justify-between">
@@ -148,160 +120,98 @@ export default function StaffPage() {
           </div>
           <button
             onClick={() => { setShowModal(true); setFormError(''); }}
-            className="bg-orange-500 text-white text-sm font-bold px-4 py-2.5 rounded-xl hover:bg-orange-600 transition shadow-sm"
+            className="bg-orange-500 text-white text-sm font-bold px-4 py-2.5 rounded-xl hover:bg-orange-600 transition shadow-sm active:scale-95"
           >
             + Cadastrar
           </button>
         </div>
 
-        {/* Staff List */}
-        {staff.length === 0 ? (
-          <div className="bg-white rounded-3xl p-10 text-center border border-slate-100 shadow-sm">
-            <p className="text-4xl mb-3">👥</p>
-            <p className="text-slate-400 text-sm">Nenhum funcionário cadastrado ainda.</p>
-          </div>
-        ) : (
-          <div className="grid gap-4">
-            {staff.map(member => {
-              const name = member.profiles?.full_name || member.profiles?.name || 'Funcionário';
-              const role = member.profiles?.role ?? 'waitstaff';
-              const roleInfo = ROLE_OPTIONS.find(r => r.value === role);
-              const isEditing = editingId === member.id;
+        {/* Tabs filtro */}
+        <div className="flex gap-1 bg-white rounded-2xl p-1 border border-slate-100 shadow-sm overflow-x-auto no-scrollbar">
+          {tabs.map(t => (
+            <button
+              key={t.key}
+              onClick={() => setFilterRole(t.key)}
+              className={`flex-1 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition ${
+                filterRole === t.key ? 'bg-orange-500 text-white shadow' : 'text-slate-400 hover:text-slate-600'
+              }`}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
 
-              return (
-                <div key={member.id} className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
-                  <div className="p-4 flex items-start justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="w-11 h-11 rounded-xl bg-orange-50 text-orange-500 flex items-center justify-center font-black text-lg">
-                        {name.charAt(0).toUpperCase()}
+        {/* Tabela */}
+        <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+          {/* Cabeçalho */}
+          <div className="grid grid-cols-[1fr_auto_auto] gap-4 px-4 py-3 border-b border-slate-50">
+            <span className="text-[11px] font-black text-slate-400 uppercase tracking-wider">Funcionário</span>
+            <span className="text-[11px] font-black text-slate-400 uppercase tracking-wider">Cargo</span>
+            <span className="text-[11px] font-black text-slate-400 uppercase tracking-wider">Ações</span>
+          </div>
+
+          {filtered.length === 0 ? (
+            <div className="py-12 text-center">
+              <p className="text-3xl mb-2">👥</p>
+              <p className="text-slate-400 text-sm">Nenhum funcionário encontrado.</p>
+            </div>
+          ) : (
+            <div className="divide-y divide-slate-50">
+              {filtered.map(member => {
+                const name = member.profiles?.full_name || member.profiles?.name || 'Funcionário';
+                const role = member.profiles?.role ?? 'waitstaff';
+                const roleInfo = ROLE_OPTIONS.find(r => r.value === role) ?? ROLE_OPTIONS[0];
+                const initials = name.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase();
+
+                return (
+                  <div key={member.id} className="grid grid-cols-[1fr_auto_auto] gap-4 items-center px-4 py-3.5 hover:bg-slate-50/50 transition">
+                    {/* Funcionário */}
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="w-10 h-10 rounded-full bg-orange-50 text-orange-500 flex items-center justify-center font-black text-sm flex-shrink-0 border-2 border-orange-100">
+                        {initials}
                       </div>
-                      <div>
-                        <p className="font-bold text-slate-900 text-sm leading-none mb-1">{name}</p>
-                        <span className="text-xs text-slate-400">{roleInfo?.label ?? role}</span>
+                      <div className="min-w-0">
+                        <p className="font-bold text-slate-900 text-sm leading-none mb-0.5 truncate">{name}</p>
+                        <p className="text-[11px] text-slate-400 truncate">{roleInfo.emoji} {roleInfo.label}</p>
                       </div>
                     </div>
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => {
-                          if (isEditing) { setEditingId(null); return; }
-                          setEditingId(member.id);
-                          setEditPerms(member.permissions ?? []);
-                          setEditDays(member.days_of_week ?? [1, 2, 3, 4, 5]);
-                          setEditRole(role);
-                        }}
-                        className="text-xs font-bold text-orange-600 bg-orange-50 px-3 py-1.5 rounded-xl hover:bg-orange-100 transition"
-                      >
-                        {isEditing ? 'Cancelar' : 'Editar'}
-                      </button>
-                      <button
-                        onClick={() => removeStaff(member.id)}
-                        className="text-xs font-bold text-red-500 bg-red-50 px-3 py-1.5 rounded-xl hover:bg-red-100 transition"
-                      >
-                        Remover
-                      </button>
-                    </div>
+
+                    {/* Cargo badge */}
+                    <span className={`text-[11px] font-black px-2.5 py-1 rounded-full whitespace-nowrap ${roleInfo.color}`}>
+                      {roleInfo.label}
+                    </span>
+
+                    {/* Ações */}
+                    <button
+                      onClick={() => removeStaff(member.id)}
+                      disabled={removing === member.id}
+                      title="Remover funcionário"
+                      className="w-8 h-8 flex items-center justify-center rounded-xl text-slate-300 hover:text-red-500 hover:bg-red-50 transition disabled:opacity-40"
+                    >
+                      {removing === member.id ? (
+                        <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
+                        </svg>
+                      ) : (
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                      )}
+                    </button>
                   </div>
+                );
+              })}
+            </div>
+          )}
 
-                  {!isEditing ? (
-                    <div className="px-4 pb-4 space-y-2">
-                      <div className="flex flex-wrap gap-1.5">
-                        {(member.days_of_week ?? []).map(d => (
-                          <span key={d} className="text-xs bg-slate-50 border border-slate-100 text-slate-600 px-2 py-0.5 rounded-full font-medium">
-                            {DAYS[d]}
-                          </span>
-                        ))}
-                      </div>
-                      <div className="flex flex-wrap gap-1.5">
-                        {(member.permissions ?? []).map(p => {
-                          const perm = ALL_PERMISSIONS.find(x => x.key === p);
-                          return (
-                            <span key={p} className="text-xs bg-orange-50 text-orange-600 px-2 py-0.5 rounded-full font-medium">
-                              {perm?.label ?? p}
-                            </span>
-                          );
-                        })}
-                        {(member.permissions ?? []).length === 0 && (
-                          <span className="text-xs text-slate-300">Sem permissões definidas</span>
-                        )}
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="px-4 pb-4 border-t border-slate-50 pt-4 space-y-4">
-                      {/* Role */}
-                      <div>
-                        <p className="text-xs font-bold text-slate-500 mb-2">Função</p>
-                        <div className="grid grid-cols-3 gap-2">
-                          {ROLE_OPTIONS.map(r => (
-                            <button
-                              key={r.value}
-                              onClick={() => {
-                                setEditRole(r.value);
-                                setEditPerms(DEFAULT_PERMS[r.value] ?? []);
-                              }}
-                              className={`py-2 px-2 rounded-xl text-xs font-bold transition border ${
-                                editRole === r.value
-                                  ? 'bg-orange-500 text-white border-orange-500'
-                                  : 'bg-white text-slate-500 border-slate-200'
-                              }`}
-                            >
-                              {r.label}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                      {/* Days */}
-                      <div>
-                        <p className="text-xs font-bold text-slate-500 mb-2">Dias de trabalho</p>
-                        <div className="flex flex-wrap gap-2">
-                          {DAYS.map((day, idx) => (
-                            <button
-                              key={idx}
-                              onClick={() => setEditDays(prev =>
-                                prev.includes(idx) ? prev.filter(d => d !== idx) : [...prev, idx]
-                              )}
-                              className={`w-10 h-10 rounded-xl text-xs font-bold transition ${
-                                editDays.includes(idx)
-                                  ? 'bg-orange-500 text-white'
-                                  : 'bg-slate-50 text-slate-400 border border-slate-100'
-                              }`}
-                            >
-                              {day}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                      {/* Permissions */}
-                      <div>
-                        <p className="text-xs font-bold text-slate-500 mb-2">Permissões</p>
-                        <div className="grid grid-cols-2 gap-2">
-                          {ALL_PERMISSIONS.map(perm => (
-                            <label key={perm.key} className="flex items-center gap-2 cursor-pointer p-2 rounded-xl hover:bg-slate-50 transition">
-                              <input
-                                type="checkbox"
-                                checked={editPerms.includes(perm.key)}
-                                onChange={e => setEditPerms(prev =>
-                                  e.target.checked ? [...prev, perm.key] : prev.filter(p => p !== perm.key)
-                                )}
-                                className="w-4 h-4 accent-orange-500"
-                              />
-                              <span className="text-sm text-slate-700">{perm.label}</span>
-                            </label>
-                          ))}
-                        </div>
-                      </div>
-                      <button
-                        onClick={() => savePermissions(member.id)}
-                        className="w-full bg-orange-500 text-white text-sm font-bold py-2.5 rounded-xl hover:bg-orange-600 transition"
-                      >
-                        Salvar Alterações
-                      </button>
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        )}
+          {/* Footer */}
+          {staff.length > 0 && (
+            <div className="px-4 py-3 border-t border-slate-50">
+              <p className="text-xs text-slate-400">Mostrando {filtered.length} de {staff.length} funcionário(s)</p>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Modal de Cadastro */}
@@ -310,7 +220,7 @@ export default function StaffPage() {
           <div className="bg-white rounded-t-[32px] sm:rounded-[32px] p-6 w-full max-w-md">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-lg font-black text-slate-900">Cadastrar Funcionário</h2>
-              <button onClick={() => setShowModal(false)} className="text-slate-400 font-bold p-1 text-xl">✕</button>
+              <button onClick={() => setShowModal(false)} className="text-slate-400 font-bold p-1 text-xl leading-none">✕</button>
             </div>
 
             <div className="space-y-3">
@@ -328,7 +238,7 @@ export default function StaffPage() {
                           : 'bg-white text-slate-500 border-slate-200'
                       }`}
                     >
-                      {r.label}
+                      {r.emoji} {r.label}
                     </button>
                   ))}
                 </div>

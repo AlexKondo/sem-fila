@@ -28,7 +28,14 @@ export async function POST(req: NextRequest) {
   });
 
   if (authError || !authData.user) {
-    return NextResponse.json({ error: authError?.message ?? 'Erro ao criar conta.' }, { status: 400 });
+    const msg = authError?.message ?? '';
+    const translated =
+      msg.includes('already been registered') || msg.includes('already registered')
+        ? 'Este email já está cadastrado no sistema.'
+        : msg.includes('invalid email') ? 'Email inválido.'
+        : msg.includes('password') ? 'A senha deve ter pelo menos 6 caracteres.'
+        : 'Erro ao criar conta. Tente novamente.';
+    return NextResponse.json({ error: translated }, { status: 400 });
   }
 
   // Atualiza o profile com role e vendor_id
