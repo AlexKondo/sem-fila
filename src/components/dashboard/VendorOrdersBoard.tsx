@@ -131,48 +131,47 @@ export default function VendorOrdersBoard({ initialOrders, vendorId }: Props) {
         },
         async (payload) => {
           const updated = payload.new as any;
+          const old = payload.old as any;
           
-          // Se o pedido está pago, garantimos que ele está na lista e disparamos alerta
+          // 1. Se o pedido foi CANCELADO
+          if (updated.status === 'cancelled') {
+            setOrders(prev => prev.filter(o => o.id !== updated.id));
+            return;
+          }
+
+          // 2. Se o pedido mudou para PAGO (Pix/Cartão confirmado)
+          // Ou se já nasceu PAGO mas o INSERT não pegou
           if (updated.payment_status === 'paid') {
-              setOrders((prev) => {
+              // Verifica se já temos na lista de forma síncrona
+              setOrders(prev => {
                   const exists = prev.some(o => o.id === updated.id);
                   if (exists) {
+                      // Se existe, só atualiza status
                       return prev.map(o => o.id === updated.id ? { ...o, ...updated } as any : o);
                   }
                   
-                  // Se não existe na lista, precisamos buscá-lo completo para adicionar
-                  // Mas como o setOrders é síncrono, faremos o fetch fora e atualizaremos de novo
-                  return prev;
-              });
-
-              // Verifica se já temos este pedido na lista local
-              // Se não tivermos, buscamos e disparamos o alarme
-              const alreadyInList = (await new Promise(resolve => {
-                  setOrders(prev => {
-                      resolve(prev.some(o => o.id === updated.id));
-                      return prev;
-                  });
-              }));
-
-              if (!alreadyInList) {
-                  const { data: rpcData } = await supabase.rpc('get_vendor_orders', {
+                  // Se não existe, precisamos buscar completo via RPC e adicionar agora
+                  // Buscamos em background para não bloquear o setOrders síncrono
+                  supabase.rpc('get_vendor_orders', {
                     p_vendor_id: vendorId,
                     p_since: new Date(updated.created_at).toISOString(),
+                  }).then(({ data: rpcData }) => {
+                      const fullOrder = (rpcData as any[] || []).find((o: any) => o.id === updated.id);
+                      if (fullOrder) {
+                          setOrders(current => {
+                              if (current.some(c => c.id === fullOrder.id)) return current;
+                              const next = [...current, fullOrder as any].sort((a,b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+                              return next;
+                          });
+                          setAlertOrder(fullOrder as any);
+                          playNewOrderSound();
+                      }
                   });
-                  const fullOrder = (rpcData as any[] || []).find((o: any) => o.id === updated.id);
-                  if (fullOrder) {
-                    setOrders(prev => [...prev, fullOrder as any].sort((a,b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()));
-                    setAlertOrder(fullOrder as any);
-                    playNewOrderSound();
-                  }
-              }
-          }
-
-          // Atualização de estado para cancelamentos
-          if (updated.status === 'cancelled') {
-            setOrders((prev) => prev.filter((o) => o.id !== updated.id));
+                  return prev;
+              });
           } else {
-            setOrders((prev) => prev.map((o) => o.id === updated.id ? { ...o, ...updated } as any : o));
+              // Se não for pago (e não for cancelado), apenas atualiza o estado local (se existir)
+              setOrders(prev => prev.map(o => o.id === updated.id ? { ...o, ...updated } as any : o));
           }
         }
       )
