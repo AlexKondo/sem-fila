@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useCallback, memo } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { formatCurrency } from '@/lib/utils';
@@ -19,14 +19,58 @@ interface MenuClientProps {
 
 interface Extra { name: string; price: number; }
 
+/* ─── Menu Item Card (memoizado) ─── */
+const MenuItemCard = memo(function MenuItemCard({ item, waitTime, onAdd }: { item: MenuItem; waitTime: string; onAdd: (item: MenuItem) => void }) {
+  return (
+    <div className="flex gap-4 p-3 bg-white rounded-2xl shadow-sm border border-slate-100">
+      <div className="relative w-28 h-28 shrink-0 rounded-xl overflow-hidden">
+        {item.image_url ? (
+          <Image src={item.image_url} alt={item.name} fill className="object-cover" />
+        ) : (
+          <div className="w-full h-full bg-slate-100 flex items-center justify-center text-3xl">🍴</div>
+        )}
+      </div>
+
+      <div className="flex flex-col flex-1 justify-between">
+        <div>
+          <div className="flex justify-between items-start gap-2">
+            <h4 className="font-bold text-slate-900 leading-tight">{item.name}</h4>
+            <span className="font-bold flex-shrink-0" style={{ color: P }}>{formatCurrency(item.price)}</span>
+          </div>
+          {item.description && (
+            <p className="text-xs text-slate-500 line-clamp-2 mt-1">{item.description}</p>
+          )}
+          <div className="flex items-center gap-1.5 mt-2">
+            <svg className="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span className="text-[11px] text-slate-500">{waitTime}</span>
+          </div>
+        </div>
+        <div className="flex justify-end mt-2">
+          <button
+            onClick={() => onAdd(item)}
+            className="px-4 py-1.5 text-xs font-bold rounded-full flex items-center gap-1 transition-colors hover:opacity-90"
+            style={{ backgroundColor: '#ec5b131a', color: '#ec5b13' }}
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
+            Adicionar
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+});
+
 export default function MenuClient({ vendor, items, mesa, waitTime }: MenuClientProps) {
   const [selectedCat, setSelectedCat] = useState('Todos');
   const [searchQuery, setSearchQuery] = useState('');
   const [customerName, setCustomerName] = useState<string | null>(null);
-  
+
   // Extras Modal State
   const [extrasModal, setExtrasModal] = useState<MenuItem | null>(null);
-  // Map of extra name -> quantity
   const [extraQty, setExtraQty] = useState<Record<string, number>>({});
 
   const [liveItems, setLiveItems] = useState<MenuItem[]>(items);
@@ -34,7 +78,6 @@ export default function MenuClient({ vendor, items, mesa, waitTime }: MenuClient
   useEffect(() => {
     const supabase = createClient();
 
-    // 1. Sincronização do nome do Usuário
     supabase.auth.getUser().then(({ data }) => {
       if (data.user) {
         supabase.from('profiles').select('name, role').eq('id', data.user.id).single().then(({ data: p }) => {
@@ -45,16 +88,14 @@ export default function MenuClient({ vendor, items, mesa, waitTime }: MenuClient
       }
     });
 
-    // 2. Realtime para o Cardápio (Aparecer itens rápido)
     const channel = supabase
       .channel(`menu-${vendor.id}`)
-      .on('postgres_changes', { 
-        event: '*', 
-        schema: 'public', 
-        table: 'menu_items', 
-        filter: `vendor_id=eq.${vendor.id}` 
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'menu_items',
+        filter: `vendor_id=eq.${vendor.id}`
       }, async () => {
-        // Quando houver qualquer mudança, recarregamos a lista de itens
         const { data } = await supabase
           .from('menu_items')
           .select('*')
@@ -73,8 +114,7 @@ export default function MenuClient({ vendor, items, mesa, waitTime }: MenuClient
   const [modalMesa, setModalMesa] = useState(mesa || '');
   const [callStatus, setCallStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
 
-  // Intercepts the add-to-cart click to show extras modal if needed
-  function handleAddToCart(item: MenuItem) {
+  const handleAddToCart = useCallback((item: MenuItem) => {
     const extras = (item as any).extras as Extra[] | undefined;
     if (extras && extras.length > 0) {
       setExtraQty({});
@@ -82,12 +122,11 @@ export default function MenuClient({ vendor, items, mesa, waitTime }: MenuClient
     } else {
       document.dispatchEvent(new CustomEvent('add-to-cart', { detail: { id: item.id, menuItemId: item.id, name: item.name, price: item.price } }));
     }
-  }
+  }, []);
 
-  function confirmExtras() {
+  const confirmExtras = useCallback(() => {
     if (!extrasModal) return;
     const allExtras = (extrasModal as any).extras as Extra[];
-    // Build flat array of extras from quantities map
     const chosenExtras: Extra[] = [];
     allExtras.forEach(e => {
       const qty = extraQty[e.name] || 0;
@@ -95,42 +134,40 @@ export default function MenuClient({ vendor, items, mesa, waitTime }: MenuClient
     });
     const extrasTotal = chosenExtras.reduce((s, e) => s + e.price, 0);
     document.dispatchEvent(new CustomEvent('add-to-cart', { detail: {
-      // Unique cart ID (includes extras for deduplication)
       id: extrasModal.id + (chosenExtras.length ? '-' + Object.entries(extraQty).filter(([,q])=>q>0).map(([n,q])=>`${n}x${q}`).join('_') : ''),
-      // Original UUID for the API
       menuItemId: extrasModal.id,
       name: extrasModal.name,
       price: extrasModal.price + extrasTotal,
       extras: chosenExtras,
     }}));
     setExtrasModal(null);
-  }
+  }, [extrasModal, extraQty]);
 
-  function changeExtraQty(extra: Extra, delta: number) {
+  const changeExtraQty = useCallback((extra: Extra, delta: number) => {
     setExtraQty(prev => {
       const cur = prev[extra.name] || 0;
       const next = Math.max(0, cur + delta);
       return { ...prev, [extra.name]: next };
     });
-  }
+  }, []);
 
-  async function handleCallWaiter() {
+  const handleCallWaiter = useCallback(() => {
     setCallStatus('idle');
     setModalMesa(mesa || '');
     setShowWaiterModal(true);
-  }
+  }, [mesa]);
 
-  async function confirmWaiterCall() {
+  const confirmWaiterCall = useCallback(async () => {
     if (!modalMesa.trim()) return;
     setCallStatus('loading');
-    
+
     const supabase = createClient();
     const { error } = await supabase.from('waiter_calls').insert({
       vendor_id: vendor.id,
       table_number: modalMesa,
       status: 'pending'
     });
-    
+
     if (error) {
       setCallStatus('error');
     } else {
@@ -140,19 +177,35 @@ export default function MenuClient({ vendor, items, mesa, waitTime }: MenuClient
         setCallStatus('idle');
       }, 2500);
     }
-  }
+  }, [modalMesa, vendor.id]);
 
-  // Extrai categorias únicas cadastradas nos itens do cardápio
-  const categories = ['Todos', ...Array.from(new Set(liveItems.map(i => i.category).filter((c): c is string => !!c)))];
+  // Memoiza categorias e itens filtrados
+  const categories = useMemo(
+    () => ['Todos', ...Array.from(new Set(liveItems.map(i => i.category).filter((c): c is string => !!c)))],
+    [liveItems]
+  );
 
-  const filteredItems = searchQuery.trim()
-    ? liveItems.filter(i =>
-        i.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (i.description ?? '').toLowerCase().includes(searchQuery.toLowerCase())
-      )
-    : selectedCat === 'Todos'
+  const filteredItems = useMemo(() => {
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      return liveItems.filter(i =>
+        i.name.toLowerCase().includes(q) ||
+        (i.description ?? '').toLowerCase().includes(q)
+      );
+    }
+    return selectedCat === 'Todos'
       ? liveItems
       : liveItems.filter(i => i.category === selectedCat);
+  }, [liveItems, searchQuery, selectedCat]);
+
+  // Total dos extras para o modal
+  const extrasModalTotal = useMemo(() => {
+    if (!extrasModal) return 0;
+    return extrasModal.price + Object.entries(extraQty).reduce((s, [name, qty]) => {
+      const ex = ((extrasModal as any).extras as Extra[]).find(e => e.name === name);
+      return s + (ex ? ex.price * qty : 0);
+    }, 0);
+  }, [extrasModal, extraQty]);
 
   return (
     <div className="relative flex min-h-screen w-full flex-col max-w-md mx-auto pb-24" style={{ backgroundColor: '#f8f6f6' }}>
@@ -203,9 +256,9 @@ export default function MenuClient({ vendor, items, mesa, waitTime }: MenuClient
             <svg className="w-5 h-5 text-slate-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
-            <input 
-              type="text" 
-              placeholder="Buscar no cardápio…" 
+            <input
+              type="text"
+              placeholder="Buscar no cardápio…"
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
               className="bg-transparent border-none outline-none text-slate-800 w-full text-base"
@@ -218,7 +271,7 @@ export default function MenuClient({ vendor, items, mesa, waitTime }: MenuClient
           </div>
 
           {vendor.allow_waiter_calls && (
-            <button 
+            <button
               onClick={handleCallWaiter}
               disabled={callStatus === 'loading'}
               className="h-14 w-48 shrink-0 bg-white border border-slate-200 rounded-2xl flex flex-col items-center justify-center gap-0.5 text-[11px] font-bold text-slate-500 hover:text-orange-600 hover:border-orange-200 transition-all active:scale-95 shadow-md disabled:opacity-50"
@@ -259,45 +312,7 @@ export default function MenuClient({ vendor, items, mesa, waitTime }: MenuClient
           </div>
         ) : (
           filteredItems.map((item: MenuItem) => (
-            <div key={item.id} className="flex gap-4 p-3 bg-white rounded-2xl shadow-sm border border-slate-100">
-              <div className="relative w-28 h-28 shrink-0 rounded-xl overflow-hidden">
-                {item.image_url ? (
-                  <Image src={item.image_url} alt={item.name} fill className="object-cover" />
-                ) : (
-                  <div className="w-full h-full bg-slate-100 flex items-center justify-center text-3xl">🍴</div>
-                )}
-              </div>
-
-              <div className="flex flex-col flex-1 justify-between">
-                <div>
-                  <div className="flex justify-between items-start gap-2">
-                    <h4 className="font-bold text-slate-900 leading-tight">{item.name}</h4>
-                    <span className="font-bold flex-shrink-0" style={{ color: P }}>{formatCurrency(item.price)}</span>
-                  </div>
-                  {item.description && (
-                    <p className="text-xs text-slate-500 line-clamp-2 mt-1">{item.description}</p>
-                  )}
-                  <div className="flex items-center gap-1.5 mt-2">
-                    <svg className="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    <span className="text-[11px] text-slate-500">{waitTime}</span>
-                  </div>
-                </div>
-                <div className="flex justify-end mt-2">
-                  <button
-                    onClick={() => handleAddToCart(item)}
-                    className="px-4 py-1.5 text-xs font-bold rounded-full flex items-center gap-1 transition-colors hover:opacity-90"
-                    style={{ backgroundColor: '#ec5b131a', color: '#ec5b13' }}
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                    </svg>
-                    Adicionar
-                  </button>
-                </div>
-              </div>
-            </div>
+            <MenuItemCard key={item.id} item={item} waitTime={waitTime} onAdd={handleAddToCart} />
           ))
         )}
       </main>
@@ -368,10 +383,7 @@ export default function MenuClient({ vendor, items, mesa, waitTime }: MenuClient
               >
                 <span>Adicionar ao carrinho</span>
                 <span className="font-black text-lg">
-                  {formatCurrency(extrasModal.price + Object.entries(extraQty).reduce((s, [name, qty]) => {
-                    const ex = ((extrasModal as any).extras as Extra[]).find(e => e.name === name);
-                    return s + (ex ? ex.price * qty : 0);
-                  }, 0))}
+                  {formatCurrency(extrasModalTotal)}
                 </span>
               </button>
             </div>
@@ -387,14 +399,14 @@ export default function MenuClient({ vendor, items, mesa, waitTime }: MenuClient
               <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <span className="text-3xl">🛎️</span>
               </div>
-              
+
               {callStatus === 'idle' && (
                 <>
                   <h3 className="text-xl font-bold text-slate-900 mb-2">Chamar Garçom</h3>
                   <p className="text-sm text-slate-500 mb-6">
                     {mesa ? `Confirmar chamada para a mesa ${mesa}?` : 'Informe o número da sua mesa para que possamos te encontrar.'}
                   </p>
-                  
+
                   {!mesa && (
                     <input
                       type="text"
@@ -406,15 +418,15 @@ export default function MenuClient({ vendor, items, mesa, waitTime }: MenuClient
                       className="w-full h-12 bg-slate-50 border border-slate-200 rounded-xl px-4 text-center text-lg font-bold mb-4 focus:outline-none focus:ring-2 focus:ring-orange-500/50"
                     />
                   )}
-                  
+
                   <div className="grid grid-cols-2 gap-3">
-                    <button 
+                    <button
                       onClick={() => setShowWaiterModal(false)}
                       className="h-12 rounded-xl font-bold text-slate-500 bg-slate-100 active:scale-95 transition-all"
                     >
                       Cancelar
                     </button>
-                    <button 
+                    <button
                       onClick={confirmWaiterCall}
                       disabled={!modalMesa.trim()}
                       className="h-12 rounded-xl font-bold text-white bg-orange-500 shadow-lg shadow-orange-500/30 active:scale-95 transition-all disabled:opacity-50"

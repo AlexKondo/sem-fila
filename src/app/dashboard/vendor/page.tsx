@@ -41,17 +41,13 @@ export default async function VendorDashboardPage() {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
-  const [, activeRes] = await Promise.all([
-    supabase.from('orders').select('id').eq('vendor_id', vendor.id).gte('created_at', today.toISOString()).limit(1),
-    supabase.from('orders')
-      .select('*, order_items(id, quantity, unit_price, menu_items(id, name))')
-      .eq('vendor_id', vendor.id)
-      .in('status', ['received', 'preparing', 'almost_ready', 'ready', 'delivered', 'cancelled'])
-      .gte('created_at', today.toISOString())
-      .order('created_at', { ascending: true })
-  ]);
+  // Usa RPC SECURITY DEFINER para evitar bloqueio recursivo de RLS
+  const { data: rpcOrders } = await supabase.rpc('get_vendor_orders', {
+    p_vendor_id: vendor.id,
+    p_since: today.toISOString(),
+  });
 
-  const activeOrders = (activeRes.data || []).filter((o: any) => o.status !== 'cancelled' || o.payment_status === 'paid');
+  const activeOrders = (rpcOrders || []) as any[];
 
   return (
     <>

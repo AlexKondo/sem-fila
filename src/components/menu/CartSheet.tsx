@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo, memo } from 'react';
 import { useRouter } from 'next/navigation';
 import { formatCurrency } from '@/lib/utils';
 import type { Vendor } from '@/types/database';
@@ -15,6 +15,78 @@ interface CartItem { id: string; menuItemId: string; name: string; price: number
 interface CartSheetProps { vendor: Vendor; tableNumber?: string; }
 type Step = 'cart' | 'identify' | 'pix';
 
+/* ─── Cart Item Row (memoizado) ─── */
+const CartItemRow = memo(function CartItemRow({ item, onUpdateQty, onRemove }: {
+  item: CartItem;
+  onUpdateQty: (id: string, d: number) => void;
+  onRemove: (id: string) => void;
+}) {
+  return (
+    <div className="flex items-start gap-3">
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-semibold text-slate-900 leading-tight">{item.name}</p>
+        {item.extras && item.extras.length > 0 && (() => {
+          const grouped: Record<string, { price: number; qty: number }> = {};
+          item.extras.forEach(e => {
+            if (grouped[e.name]) grouped[e.name].qty++;
+            else grouped[e.name] = { price: e.price, qty: 1 };
+          });
+          const extrasTotal = item.extras.reduce((s, e) => s + e.price, 0);
+          const basePrice = item.price - extrasTotal;
+          return (
+            <div className="flex flex-col gap-0.5 mt-1">
+              <span className="text-[10px] font-bold text-slate-500">
+                🍽 Prato {formatCurrency(basePrice)}
+              </span>
+              {Object.entries(grouped).map(([name, { price, qty }]) => (
+                <span key={name} className="text-[10px] font-bold text-orange-600">
+                  {qty > 1 ? `${qty}x ` : '+'}{name} {formatCurrency(price)}{qty > 1 ? ` = ${formatCurrency(price * qty)}` : ''}
+                </span>
+              ))}
+            </div>
+          );
+        })()}
+        <p className="text-xs text-slate-400 mt-0.5">{formatCurrency(item.price)} cada</p>
+      </div>
+      <div className="flex items-center gap-2">
+        <button onClick={() => onUpdateQty(item.id, -1)} className="w-7 h-7 rounded-lg border border-slate-200 flex items-center justify-center text-slate-600 hover:bg-slate-50">
+          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M20 12H4" /></svg>
+        </button>
+        <span className="text-sm font-bold text-slate-900 w-5 text-center">{item.quantity}</span>
+        <button onClick={() => onUpdateQty(item.id, 1)} className="w-7 h-7 rounded-lg flex items-center justify-center text-white" style={{ backgroundColor: P }}>
+          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" /></svg>
+        </button>
+      </div>
+      <span className="text-sm font-bold text-slate-900 w-16 text-right">{formatCurrency(item.price * item.quantity)}</span>
+      <button onClick={() => onRemove(item.id)} className="text-slate-300 hover:text-red-400 transition">
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+      </button>
+    </div>
+  );
+});
+
+/* ─── CPF Input (isolado para nao re-renderizar o cart inteiro) ─── */
+const CpfInput = memo(function CpfInput({ value, onChange, style }: { value: string; onChange: (v: string) => void; style?: React.CSSProperties }) {
+  return (
+    <input
+      type="text"
+      inputMode="numeric"
+      value={value}
+      onChange={e => {
+        const d = e.target.value.replace(/\D/g, '').substring(0, 11);
+        let f = d;
+        if (f.length > 9) f = `${f.substring(0, 3)}.${f.substring(3, 6)}.${f.substring(6, 9)}-${f.substring(9)}`;
+        else if (f.length > 6) f = `${f.substring(0, 3)}.${f.substring(3, 6)}.${f.substring(6)}`;
+        else if (f.length > 3) f = `${f.substring(0, 3)}.${f.substring(3)}`;
+        onChange(f);
+      }}
+      placeholder="000.000.000-00"
+      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 h-11 text-sm focus:outline-none focus:ring-2"
+      style={style}
+    />
+  );
+});
+
 export default function CartSheet({ vendor, tableNumber }: CartSheetProps) {
   const router = useRouter();
   const [items, setItems] = useState<CartItem[]>([]);
@@ -26,7 +98,7 @@ export default function CartSheet({ vendor, tableNumber }: CartSheetProps) {
   const [customerName, setCustomerName] = useState('');
   const [customerPhone, setCustomerPhone] = useState('');
   const [mesa, setMesa] = useState(tableNumber || '');
-  
+
   const [paymentMethod, setPaymentMethod] = useState<'pix' | 'cartão' | 'dinheiro' | ''>('');
   const [pixData, setPixData] = useState<{ payment_id: string; qr_code: string; copy_paste: string; order_id: string } | null>(null);
   const [pixCopied, setPixCopied] = useState(false);
@@ -41,7 +113,7 @@ export default function CartSheet({ vendor, tableNumber }: CartSheetProps) {
 
   // Estados de Autenticação
   const [user, setUser] = useState<any>(null);
-  const [isLogin, setIsLogin] = useState(true); // Alterna entre Cadastro e Login
+  const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [cpf, setCpf] = useState('');
@@ -54,7 +126,7 @@ export default function CartSheet({ vendor, tableNumber }: CartSheetProps) {
       if (data.user) {
         setUser(data.user);
         supabase.from('profiles').select('*').eq('id', data.user.id).single().then(({ data: p }) => {
-          if (p) { 
+          if (p) {
             setCustomerName(p.name || '');
             setCustomerPhone(p.phone || '');
             setCpf(p.cpf || '');
@@ -65,6 +137,14 @@ export default function CartSheet({ vendor, tableNumber }: CartSheetProps) {
           }
         });
       }
+    });
+  }, []);
+
+  const addItem = useCallback((item: { id: string; menuItemId?: string; name: string; price: number; extras?: Extra[] }) => {
+    setItems(prev => {
+      const ex = prev.find(i => i.id === item.id);
+      if (ex) return prev.map(i => i.id === item.id ? { ...i, quantity: i.quantity + 1 } : i);
+      return [...prev, { ...item, menuItemId: item.menuItemId ?? item.id, quantity: 1, extras: item.extras ?? [] }];
     });
   }, []);
 
@@ -83,25 +163,24 @@ export default function CartSheet({ vendor, tableNumber }: CartSheetProps) {
       document.removeEventListener('click', onAddToCart);
       document.removeEventListener('add-to-cart', onCustomAddToCart);
     };
-  }, []);
+  }, [addItem]);
 
-  const addItem = useCallback((item: { id: string; menuItemId?: string; name: string; price: number; extras?: Extra[] }) => {
-    setItems(prev => {
-      const ex = prev.find(i => i.id === item.id);
-      if (ex) return prev.map(i => i.id === item.id ? { ...i, quantity: i.quantity + 1 } : i);
-      return [...prev, { ...item, menuItemId: item.menuItemId ?? item.id, quantity: 1, extras: item.extras ?? [] }];
-    });
-  }, []);
-
-  function updateQty(id: string, d: number) {
+  const updateQty = useCallback((id: string, d: number) => {
     setItems(prev => prev.map(i => i.id === id ? { ...i, quantity: i.quantity + d } : i).filter(i => i.quantity > 0));
-  }
+  }, []);
 
-  const subtotal = items.reduce((s, i) => s + i.price * i.quantity, 0);
-  const count = items.reduce((s, i) => s + i.quantity, 0);
-  const serviceFee = items.length > 0 ? (subtotal * ((vendor as any).service_fee_percentage || 0)) / 100 : 0;
-  const couvertFee = items.length > 0 ? Number((vendor as any).couvert_fee || 0) : 0;
-  const total = subtotal + serviceFee + couvertFee;
+  const removeItem = useCallback((id: string) => {
+    setItems(prev => prev.filter(i => i.id !== id));
+  }, []);
+
+  // Memoiza calculos de totais
+  const { subtotal, count, serviceFee, couvertFee, total } = useMemo(() => {
+    const sub = items.reduce((s, i) => s + i.price * i.quantity, 0);
+    const cnt = items.reduce((s, i) => s + i.quantity, 0);
+    const svc = items.length > 0 ? (sub * ((vendor as any).service_fee_percentage || 0)) / 100 : 0;
+    const cvt = items.length > 0 ? Number((vendor as any).couvert_fee || 0) : 0;
+    return { subtotal: sub, count: cnt, serviceFee: svc, couvertFee: cvt, total: sub + svc + cvt };
+  }, [items, vendor]);
 
   function handleConfirm() {
     if (loading) return;
@@ -120,8 +199,8 @@ export default function CartSheet({ vendor, tableNumber }: CartSheetProps) {
       }
     }
     if (vendor.table_delivery && !mesa.trim()) { setError('Por favor, informe o número da mesa para entrega.'); return; }
-    
-    setLoading(true); // Trava instantânea
+
+    setLoading(true);
     if (user) {
       if (customerName.trim()) placeOrder(customerName.trim(), customerPhone.trim());
       else { setStep('identify'); setLoading(false); }
@@ -137,23 +216,21 @@ export default function CartSheet({ vendor, tableNumber }: CartSheetProps) {
     const supabase = createClient();
 
     if (isLogin) {
-      // Fluxo Login
       const { data, error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) { setError(error.message); setLoading(false); return; }
-      
+
       const { data: p } = await supabase.from('profiles').select('*').eq('id', data.user.id).single();
       if (p) { setCustomerName(p.name); setCustomerPhone(p.phone); setCpf(p.cpf || ''); }
       setUser(data.user);
       placeOrder(p?.name || '', p?.phone || '');
     } else {
-      // Fluxo Cadastro
       if (!customerName.trim()) { setError('Por favor, informe seu nome.'); setLoading(false); return; }
       const cleanCpf = cpf.replace(/\D/g, '');
       if (cleanCpf.length !== 11) { setError('CPF inválido. Digite os 11 números.'); setLoading(false); return; }
       if (!email.trim() || !password.trim()) { setError('E-mail e Senha são obrigatórios.'); setLoading(false); return; }
 
       const { data, error } = await supabase.auth.signUp({
-        email, 
+        email,
         password,
         options: { data: { name: customerName.trim() } }
       });
@@ -181,9 +258,9 @@ export default function CartSheet({ vendor, tableNumber }: CartSheetProps) {
     if (!items.length) return;
     setError(''); setLoading(true);
     const notesStr = [
-      name ? `Cliente: ${name}` : '', 
-      phone ? `Tel: ${phone}` : '', 
-      `Pagamento: ${paymentMethod.toUpperCase()}`, 
+      name ? `Cliente: ${name}` : '',
+      phone ? `Tel: ${phone}` : '',
+      `Pagamento: ${paymentMethod.toUpperCase()}`,
       notes.trim()
     ].filter(Boolean).join(' | ');
 
@@ -214,7 +291,6 @@ export default function CartSheet({ vendor, tableNumber }: CartSheetProps) {
       const data = await res.json();
       if (!res.ok) { setError(data.error ?? 'Erro ao fazer pedido.'); setLoading(false); return; }
 
-      // PIX → exibe QR code
       if (data.pix) {
         setPixData({ ...data.pix, order_id: data.order_id });
         setStep('pix');
@@ -222,7 +298,6 @@ export default function CartSheet({ vendor, tableNumber }: CartSheetProps) {
         return;
       }
 
-      // Pagamento físico → redireciona direto
       router.push(`/profile/orders?payment=success&new_order=${data.order_id}`);
     } catch (err: any) {
       setError('Problema na conexão. Tente novamente.');
@@ -232,9 +307,11 @@ export default function CartSheet({ vendor, tableNumber }: CartSheetProps) {
 
   if (count === 0) return null;
 
+  const ringStyle = { '--tw-ring-color': P } as React.CSSProperties;
+
   return (
     <>
-      {/* Floating cart button — laranja como no asset */}
+      {/* Floating cart button */}
       {!isOpen && (
         <div className="fixed bottom-6 left-0 right-0 px-4 flex justify-center z-40 max-w-md mx-auto">
           <button
@@ -255,8 +332,6 @@ export default function CartSheet({ vendor, tableNumber }: CartSheetProps) {
           </button>
         </div>
       )}
-
-
 
       {/* Sheet */}
       {isOpen && (
@@ -279,54 +354,14 @@ export default function CartSheet({ vendor, tableNumber }: CartSheetProps) {
               <>
                 <div className="overflow-y-auto flex-1 px-5 py-4 space-y-3">
                   {items.map(item => (
-                    <div key={item.id} className="flex items-start gap-3">
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold text-slate-900 leading-tight">{item.name}</p>
-                        {item.extras && item.extras.length > 0 && (() => {
-                          // Agrupa extras por nome e calcula preço base
-                          const grouped: Record<string, { price: number; qty: number }> = {};
-                          item.extras.forEach(e => {
-                            if (grouped[e.name]) grouped[e.name].qty++;
-                            else grouped[e.name] = { price: e.price, qty: 1 };
-                          });
-                          const extrasTotal = item.extras.reduce((s, e) => s + e.price, 0);
-                          const basePrice = item.price - extrasTotal;
-                          return (
-                            <div className="flex flex-col gap-0.5 mt-1">
-                              <span className="text-[10px] font-bold text-slate-500">
-                                🍽 Prato {formatCurrency(basePrice)}
-                              </span>
-                              {Object.entries(grouped).map(([name, { price, qty }]) => (
-                                <span key={name} className="text-[10px] font-bold text-orange-600">
-                                  {qty > 1 ? `${qty}x ` : '+'}{name} {formatCurrency(price)}{qty > 1 ? ` = ${formatCurrency(price * qty)}` : ''}
-                                </span>
-                              ))}
-                            </div>
-                          );
-                        })()}
-                        <p className="text-xs text-slate-400 mt-0.5">{formatCurrency(item.price)} cada</p>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <button onClick={() => updateQty(item.id, -1)} className="w-7 h-7 rounded-lg border border-slate-200 flex items-center justify-center text-slate-600 hover:bg-slate-50">
-                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M20 12H4" /></svg>
-                        </button>
-                        <span className="text-sm font-bold text-slate-900 w-5 text-center">{item.quantity}</span>
-                        <button onClick={() => updateQty(item.id, 1)} className="w-7 h-7 rounded-lg flex items-center justify-center text-white" style={{ backgroundColor: P }}>
-                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" /></svg>
-                        </button>
-                      </div>
-                      <span className="text-sm font-bold text-slate-900 w-16 text-right">{formatCurrency(item.price * item.quantity)}</span>
-                      <button onClick={() => setItems(prev => prev.filter(i => i.id !== item.id))} className="text-slate-300 hover:text-red-400 transition">
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-                      </button>
-                    </div>
+                    <CartItemRow key={item.id} item={item} onUpdateQty={updateQty} onRemove={removeItem} />
                   ))}
                   <div className="pt-1">
                     <label className="block text-xs font-semibold text-slate-500 mb-1.5">Observações (opcional)</label>
                     <textarea value={notes} onChange={e => setNotes(e.target.value)} maxLength={500} rows={2} placeholder="Ex: sem cebola, bem passado…"
-                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2" style={{ '--tw-ring-color': P } as React.CSSProperties} />
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2" style={ringStyle} />
                   </div>
-                  
+
                   <div className="pt-2">
                     <label className="block text-xs font-semibold text-slate-500 mb-1.5">Forma de pagamento <span className="text-red-500">*</span></label>
                     <div className="grid grid-cols-3 gap-2">
@@ -362,13 +397,13 @@ export default function CartSheet({ vendor, tableNumber }: CartSheetProps) {
                                 setCardNumber(d.replace(/(.{4})/g, '$1 ').trim());
                               }}
                               className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 h-11 text-sm focus:outline-none focus:ring-2"
-                              style={{ '--tw-ring-color': P } as React.CSSProperties}
+                              style={ringStyle}
                             />
                             <input
                               type="text" value={cardHolder} placeholder="Nome impresso no cartão"
                               onChange={e => setCardHolder(e.target.value.toUpperCase())}
                               className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 h-11 text-sm focus:outline-none focus:ring-2"
-                              style={{ '--tw-ring-color': P } as React.CSSProperties}
+                              style={ringStyle}
                             />
                             <div className="grid grid-cols-2 gap-2">
                               <input
@@ -378,28 +413,16 @@ export default function CartSheet({ vendor, tableNumber }: CartSheetProps) {
                                   setCardExpiry(d.length > 2 ? `${d.substring(0, 2)}/${d.substring(2)}` : d);
                                 }}
                                 className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 h-11 text-sm focus:outline-none focus:ring-2"
-                                style={{ '--tw-ring-color': P } as React.CSSProperties}
+                                style={ringStyle}
                               />
                               <input
                                 type="text" inputMode="numeric" value={cardCvv} placeholder="CVV" maxLength={4}
                                 onChange={e => setCardCvv(e.target.value.replace(/\D/g, '').substring(0, 4))}
                                 className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 h-11 text-sm focus:outline-none focus:ring-2"
-                                style={{ '--tw-ring-color': P } as React.CSSProperties}
+                                style={ringStyle}
                               />
                             </div>
-                            <input
-                              type="text" inputMode="numeric" value={cpf} placeholder="CPF do titular (000.000.000-00)"
-                              onChange={e => {
-                                const d = e.target.value.replace(/\D/g, '').substring(0, 11);
-                                let f = d;
-                                if (f.length > 9) f = `${f.substring(0, 3)}.${f.substring(3, 6)}.${f.substring(6, 9)}-${f.substring(9)}`;
-                                else if (f.length > 6) f = `${f.substring(0, 3)}.${f.substring(3, 6)}.${f.substring(6)}`;
-                                else if (f.length > 3) f = `${f.substring(0, 3)}.${f.substring(3)}`;
-                                setCpf(f);
-                              }}
-                              className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 h-11 text-sm focus:outline-none focus:ring-2"
-                              style={{ '--tw-ring-color': P } as React.CSSProperties}
-                            />
+                            <CpfInput value={cpf} onChange={setCpf} style={ringStyle} />
                             <p className="text-[10px] text-slate-400">🔒 Seus dados são criptografados e não armazenamos o número do cartão.</p>
                           </>
                         )}
@@ -408,22 +431,7 @@ export default function CartSheet({ vendor, tableNumber }: CartSheetProps) {
                     {paymentMethod === 'pix' && (
                       <div className="mt-3">
                         <label className="block text-xs font-semibold text-slate-500 mb-1.5">CPF <span className="text-red-500">*</span> <span className="font-normal text-slate-400">(obrigatório para PIX)</span></label>
-                        <input
-                          type="text"
-                          inputMode="numeric"
-                          value={cpf}
-                          onChange={e => {
-                            const digits = e.target.value.replace(/\D/g, '').substring(0, 11);
-                            let f = digits;
-                            if (f.length > 9) f = `${f.substring(0, 3)}.${f.substring(3, 6)}.${f.substring(6, 9)}-${f.substring(9)}`;
-                            else if (f.length > 6) f = `${f.substring(0, 3)}.${f.substring(3, 6)}.${f.substring(6)}`;
-                            else if (f.length > 3) f = `${f.substring(0, 3)}.${f.substring(3)}`;
-                            setCpf(f);
-                          }}
-                          placeholder="000.000.000-00"
-                          className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 h-11 text-sm focus:outline-none focus:ring-2"
-                          style={{ '--tw-ring-color': P } as React.CSSProperties}
-                        />
+                        <CpfInput value={cpf} onChange={setCpf} style={ringStyle} />
                       </div>
                     )}
                   </div>
@@ -463,7 +471,7 @@ export default function CartSheet({ vendor, tableNumber }: CartSheetProps) {
                 </div>
                 <div className="px-5 py-4 border-t border-slate-100 space-y-3">
                   {error && <div className="bg-red-50 text-red-700 text-xs px-3 py-2 rounded-lg">{error}</div>}
-                  
+
                   {(serviceFee > 0 || couvertFee > 0) && (
                     <div className="flex items-center justify-between">
                       <span className="text-sm font-semibold text-slate-700">Subtotal dos produtos</span>
@@ -529,7 +537,6 @@ export default function CartSheet({ vendor, tableNumber }: CartSheetProps) {
                   Após o pagamento, seu pedido será confirmado automaticamente.
                 </p>
 
-                {/* Botão visível apenas no sandbox */}
                 <button
                   onClick={async () => {
                     setPixSimulating(true);
@@ -538,7 +545,6 @@ export default function CartSheet({ vendor, tableNumber }: CartSheetProps) {
                       headers: { 'Content-Type': 'application/json' },
                       body: JSON.stringify({ payment_id: pixData.payment_id }),
                     });
-                    // Aguarda o webhook processar e redireciona
                     setTimeout(() => {
                       router.push(`/profile/orders?payment=success&new_order=${pixData.order_id}`);
                     }, 1500);
@@ -563,19 +569,11 @@ export default function CartSheet({ vendor, tableNumber }: CartSheetProps) {
                       <div>
                         <label className="block text-sm font-semibold text-slate-700 mb-1.5">Seu nome <span className="text-red-400">*</span></label>
                         <input type="text" value={customerName} onChange={e => setCustomerName(e.target.value)} placeholder="Como você se chama?" autoFocus
-                          className="w-full bg-white border border-slate-200 rounded-xl px-4 h-12 text-sm focus:outline-none focus:ring-2" style={{ '--tw-ring-color': P } as React.CSSProperties} />
+                          className="w-full bg-white border border-slate-200 rounded-xl px-4 h-12 text-sm focus:outline-none focus:ring-2" style={ringStyle} />
                       </div>
                       <div>
                         <label className="block text-sm font-semibold text-slate-700 mb-1.5">CPF <span className="text-red-400">*</span></label>
-                        <input type="text" value={cpf} onChange={e => {
-                          const digits = e.target.value.replace(/\D/g, '').substring(0, 11);
-                          let f = digits;
-                          if (f.length > 9) f = `${f.substring(0, 3)}.${f.substring(3, 6)}.${f.substring(6, 9)}-${f.substring(9)}`;
-                          else if (f.length > 6) f = `${f.substring(0, 3)}.${f.substring(3, 6)}.${f.substring(6)}`;
-                          else if (f.length > 3) f = `${f.substring(0, 3)}.${f.substring(3)}`;
-                          setCpf(f);
-                        }} placeholder="000.000.000-00"
-                          className="w-full bg-white border border-slate-200 rounded-xl px-4 h-12 text-sm focus:outline-none focus:ring-2" style={{ '--tw-ring-color': P } as React.CSSProperties} />
+                        <CpfInput value={cpf} onChange={setCpf} style={ringStyle} />
                       </div>
                       <div>
                         <label className="block text-sm font-semibold text-slate-700 mb-1.5">Telefone <span className="text-slate-400 font-normal">(opcional)</span></label>
@@ -587,7 +585,7 @@ export default function CartSheet({ vendor, tableNumber }: CartSheetProps) {
                           else if (f.length > 2) f = `(${f.substring(0, 2)}) ${f.substring(2)}`;
                           setCustomerPhone(f);
                         }} placeholder="(11) 99999-9999"
-                          className="w-full bg-white border border-slate-200 rounded-xl px-4 h-12 text-sm focus:outline-none focus:ring-2" style={{ '--tw-ring-color': P } as React.CSSProperties} />
+                          className="w-full bg-white border border-slate-200 rounded-xl px-4 h-12 text-sm focus:outline-none focus:ring-2" style={ringStyle} />
                       </div>
 
                       <div className="bg-orange-50/50 p-4 rounded-2xl border border-orange-100">
@@ -610,7 +608,7 @@ export default function CartSheet({ vendor, tableNumber }: CartSheetProps) {
                           </div>
                         </div>
                         <p className="text-[10px] text-slate-500 mt-3 leading-relaxed">
-                          * Usaremos sua data para futuras promoções exclusivas. 
+                          * Usaremos sua data para futuras promoções exclusivas.
                           <span className="block font-semibold">O benefício está sujeito a comprovação com documento oficial no dia.</span>
                         </p>
                       </div>
@@ -620,13 +618,13 @@ export default function CartSheet({ vendor, tableNumber }: CartSheetProps) {
                   <div>
                     <label className="block text-sm font-semibold text-slate-700 mb-1.5">E-mail <span className="text-red-400">*</span></label>
                     <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="seu@email.com"
-                      className="w-full bg-white border border-slate-200 rounded-xl px-4 h-12 text-sm focus:outline-none focus:ring-2" style={{ '--tw-ring-color': P } as React.CSSProperties} />
+                      className="w-full bg-white border border-slate-200 rounded-xl px-4 h-12 text-sm focus:outline-none focus:ring-2" style={ringStyle} />
                   </div>
 
                   <div>
                     <label className="block text-sm font-semibold text-slate-700 mb-1.5">Senha <span className="text-red-400">*</span></label>
                     <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="••••••••"
-                      className="w-full bg-white border border-slate-200 rounded-xl px-4 h-12 text-sm focus:outline-none focus:ring-2" style={{ '--tw-ring-color': P } as React.CSSProperties} />
+                      className="w-full bg-white border border-slate-200 rounded-xl px-4 h-12 text-sm focus:outline-none focus:ring-2" style={ringStyle} />
                   </div>
                 </div>
 
