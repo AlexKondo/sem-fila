@@ -64,12 +64,10 @@ export default function VendorOrdersBoard({ initialOrders, vendorId }: Props) {
   const [loadingFilter, setLoadingFilter] = useState(false);
   const [alertOrder, setAlertOrder] = useState<OrderWithItems | null>(null);
 
-  // Recarrega pedidos quando o filtro de data muda
+  // Recarrega pedidos imediatamente quando o filtro de data muda
   useEffect(() => {
-    if (dateFilter === 'today') {
-      // "Hoje" usa os dados iniciais do server
-      return;
-    }
+    if (dateFilter === 'today') return; // initialOrders já cobre "Hoje"
+    let cancelled = false;
     async function fetchOrders() {
       setLoadingFilter(true);
       const supabase = createClient();
@@ -78,73 +76,19 @@ export default function VendorOrdersBoard({ initialOrders, vendorId }: Props) {
         p_vendor_id: vendorId,
         p_since: since.toISOString(),
       });
-      setOrders((data || []) as any[]);
-      setLoadingFilter(false);
+      if (!cancelled) {
+        setOrders((data || []) as any[]);
+        setLoadingFilter(false);
+      }
     }
     fetchOrders();
+    return () => { cancelled = true; };
   }, [dateFilter, customDate, vendorId]);
 
-  // Realtime — escuta novos pedidos e atualizações
+  // Realtime + Polling de segurança
   useEffect(() => {
     const supabase = createClient();
-
-    const channel = supabase
-      .channel(`vendor-orders-${vendorId}`)
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'orders',
-          filter: `vendor_id=eq.${vendorId}`,
-        },
-        async (payload) => {
-          const updated = payload.new as any;
-          
-          if (payload.eventType === 'DELETE') {
-            setOrders(prev => prev.filter(o => o.id === (payload.old as any).id));
-            return;
-          }
-
-          // Se o pedido foi CANCELADO
-          if (updated.status === 'cancelled') {
-            setOrders(prev => prev.filter(o => o.id !== updated.id));
-            return;
-          }
-
-          // Se o pedido é PAGO (novo ou atualizado)
-          if (updated.payment_status === 'paid') {
-              const currentOrders = await new Promise<any[]>(r => setOrders(p => { r(p); return p; }));
-              const alreadyExists = currentOrders.some(o => o.id === updated.id);
-
-              if (!alreadyExists) {
-                  // NOVO PEDIDO CONFIRMADO (Veio de pending -> paid ou já nasceu paid)
-                  // Usamos um intervalo de 1 hora atrás para garantir que o pedido seja encontrado
-                  const safeSince = new Date(new Date(updated.created_at).getTime() - 60 * 60 * 1000).toISOString();
-                  const { data: rpcData } = await supabase.rpc('get_vendor_orders', {
-                    p_vendor_id: vendorId,
-                    p_since: safeSince,
-                  });
-                  const fullOrder = (rpcData as any[] || []).find((o: any) => o.id === updated.id);
-                  if (fullOrder) {
-                    setOrders(prev => {
-                        if (prev.some(o => o.id === fullOrder.id)) return prev;
-                        return [...prev, fullOrder as any].sort((a,b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
-                    });
-                    setAlertOrder(fullOrder as any);
-                    playNewOrderSound();
-                  }
-              } else {
-                  // APENAS ATUALIZAÇÃO (Já estava na lista)
-                  setOrders(prev => prev.map(o => o.id === updated.id ? { ...o, ...updated } as any : o));
-              }
-          } else {
-              // Não pago (e não cancelado), mantém ou atualiza se já existir
-              setOrders(prev => prev.map(o => o.id === updated.id ? { ...o, ...updated } as any : o));
-          }
-        }
-      )
-      .subscribe();
+    let pollTimer: ReturnType<typeof setInterval> | null = null;
 
     function playNewOrderSound() {
       try {
@@ -157,8 +101,97 @@ export default function VendorOrdersBoard({ initialOrders, vendorId }: Props) {
       } catch {}
     }
 
-    return () => { supabase.removeChannel(channel); };
-  }, [vendorId]);
+    // Busca pedidos via RPC (bypassa RLS) e sincroniza com o estado local
+    async function syncOrders() {
+      const since = getFilterDate(dateFilter, customDate);
+      const { data } = await supabase.rpc('get_vendor_orders', {
+        p_vendor_id: vendorId,
+        p_since: since.toISOString(),
+      });
+      if (!data) return;
+      const fresh = data as OrderWithItems[];
+
+      setOrders(prev => {
+        const prevIds = new Set(prev.map(o => o.id));
+        // Detecta pedidos novos que não existiam no estado anterior
+        const newOrders = fresh.filter(o =>
+          !prevIds.has(o.id) &&
+          !['delivered', 'cancelled'].includes(o.status)
+        );
+        // Alerta para pedidos novos
+        if (newOrders.length > 0) {
+          setAlertOrder(newOrders[0]);
+          playNewOrderSound();
+        }
+        return fresh;
+      });
+    }
+
+    // Realtime: escuta mudanças com filtro no vendor_id
+    const channel = supabase
+      .channel(`vendor-orders-${vendorId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'orders',
+          filter: `vendor_id=eq.${vendorId}`,
+        },
+        async (payload) => {
+          const eventType = payload.eventType;
+
+          if (eventType === 'DELETE') {
+            setOrders(prev => prev.filter(o => o.id !== (payload.old as any).id));
+            return;
+          }
+
+          const updated = payload.new as any;
+
+          // UPDATE de status (preparando → pronto, etc) — atualiza localmente
+          if (eventType === 'UPDATE') {
+            if (updated.status === 'cancelled' || updated.payment_status === 'failed') {
+              setOrders(prev => prev.filter(o => o.id !== updated.id));
+              return;
+            }
+
+            // Verifica se é um pedido novo ficando pago (ou qualquer mudança relevante)
+            let needsFullSync = false;
+            setOrders(prev => {
+              const exists = prev.some(o => o.id === updated.id);
+              if (!exists && updated.payment_status === 'paid') {
+                needsFullSync = true;
+                return prev; // syncOrders vai preencher
+              }
+              return prev.map(o => o.id === updated.id ? { ...o, ...updated } : o);
+            });
+
+            if (needsFullSync) {
+              await syncOrders();
+            }
+            return;
+          }
+
+          // INSERT — busca dados completos via RPC (Realtime não traz order_items)
+          if (eventType === 'INSERT') {
+            // Só adiciona se está pago (ou se o vendor aceita dinheiro/pedidos sem pagamento online)
+            if (updated.payment_status === 'paid' || updated.status === 'received') {
+              await syncOrders();
+            }
+          }
+        }
+      )
+      .subscribe();
+
+    // Polling de segurança a cada 10s — garante que pedidos apareçam
+    // mesmo se Realtime falhar (RLS, reconexão, WAL delay)
+    pollTimer = setInterval(syncOrders, 10000);
+
+    return () => {
+      supabase.removeChannel(channel);
+      if (pollTimer) clearInterval(pollTimer);
+    };
+  }, [vendorId, dateFilter, customDate]);
 
   async function advanceStatus(orderId: string, nextStatus: OrderStatus) {
     // Atualiza a UI imediatamente (otimista) para resposta instantânea
