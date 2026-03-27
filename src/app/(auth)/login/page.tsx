@@ -92,7 +92,7 @@ function LoginPageContent() {
         <div className="max-w-md mx-auto">
           <div className="mb-8">
             <h2 className="text-2xl font-bold text-slate-900">Bem-vindo de volta</h2>
-            <p className="text-slate-500 mt-1">Acesse o painel da sua barraca</p>
+            <p className="text-slate-500 mt-1">Acesse o painel do seu negócio.</p>
           </div>
 
           {error && (

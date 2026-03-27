@@ -89,7 +89,7 @@ function LoginUserContent() {
             <div className="bg-blue-50 border border-blue-200 rounded-2xl px-4 py-4 mb-4 space-y-2">
               <p className="text-sm font-bold text-blue-800">Essa conta é de fornecedor</p>
               <p className="text-sm text-blue-700 leading-relaxed">
-                Para acessar o painel da sua barraca, use a{' '}
+                Para acessar o painel do seu negócio, use a{' '}
                 <Link href="/login" className="font-bold underline" style={{ color: P }}>tela de login de fornecedor</Link>.
               </p>
             </div>
@@ -159,7 +159,7 @@ function LoginUserContent() {
             </p>
             <p className="text-slate-400 text-xs">
               É fornecedor?{' '}
-              <Link href="/login" className="font-semibold hover:underline text-slate-500">Acessar painel da barraca</Link>
+              <Link href="/login" className="font-semibold hover:underline text-slate-500">Acessar painel do seu negócio</Link>
             </p>
           </div>
         </div>

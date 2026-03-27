@@ -98,7 +98,7 @@ export default function PaymentsPage() {
               <div className="space-y-1">
                 <p className="text-sm font-bold text-slate-800">Pagamento Tokenizado</p>
                 <p className="text-xs text-slate-500 leading-relaxed">
-                  Para sua segurança, os dados sensíveis do cartão não são salvos em nosso sistema. Usamos apenas o token seguro gerado pelo <strong>Asaas</strong>.
+                  Para sua segurança, os dados sensíveis do cartão não são salvos em nosso sistema. Usamos apenas o token seguro gerado pelo nosso processador de pagamentos certificado.
                 </p>
               </div>
             </div>
@@ -123,7 +123,7 @@ export default function PaymentsPage() {
             <p className="text-sm text-slate-400 leading-relaxed mb-8">
               {removed
                 ? 'Seu cartão foi removido com sucesso. Você pode cadastrar um novo token de pagamento na sua próxima compra.'
-                : 'Pague com 1 clique nas próximas vezes. Ao finalizar um pedido com cartão, você poderá salvá-lo com total segurança via Asaas.'}
+                : 'Pague com 1 clique nas próximas vezes. Ao finalizar um pedido com cartão, você poderá salvá-lo com total segurança.'}
             </p>
             <Link
               href="/"
