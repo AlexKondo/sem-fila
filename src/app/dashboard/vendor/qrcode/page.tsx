@@ -19,10 +19,7 @@ export default async function QrCodePage() {
     .eq('id', user.id)
     .single();
 
-  const { createAdminClient } = await import('@/lib/supabase/server');
-  const adminSupabase = await createAdminClient();
-
-  const { data: vendors } = await adminSupabase
+  const { data: vendors } = await supabase
     .from('vendors')
     .select('id, name')
     .eq('owner_id', user.id)

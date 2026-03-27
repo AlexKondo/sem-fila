@@ -7,10 +7,7 @@ export default async function VendorSettingsPage() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect('/login');
 
-  const { createAdminClient } = await import('@/lib/supabase/server');
-  const adminSupabase = await createAdminClient();
-
-  const { data: vendors } = await adminSupabase
+  const { data: vendors } = await supabase
     .from('vendors')
     .select('*')
     .eq('owner_id', user.id)

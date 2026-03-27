@@ -11,10 +11,7 @@ export default async function VendorMenuPage() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect('/login');
 
-  const { createAdminClient } = await import('@/lib/supabase/server');
-  const adminSupabase = await createAdminClient();
-
-  const { data: vendors } = await adminSupabase
+  const { data: vendors } = await supabase
     .from('vendors')
     .select('id, name')
     .eq('owner_id', user.id)
@@ -24,13 +21,13 @@ export default async function VendorMenuPage() {
   const cookieStore = await cookies();
   const selectedId = cookieStore.get('selected_vendor_id')?.value;
 
-  const vendor = selectedId 
+  const vendor = selectedId
     ? vendors?.find(v => v.id === selectedId) || vendors?.[0]
     : vendors?.[0] || null;
 
   if (!vendor) redirect('/dashboard/vendor');
 
-  const { data: items } = await adminSupabase
+  const { data: items } = await supabase
     .from('menu_items')
     .select('*')
     .eq('vendor_id', vendor.id)

@@ -1,6 +1,6 @@
 // API Route — Atualização de status do pedido pelo vendor
 import { NextResponse } from 'next/server';
-import { createClient, createAdminClient } from '@/lib/supabase/server';
+import { createClient } from '@/lib/supabase/server';
 import { UpdateOrderStatusSchema } from '@/lib/validations/order';
 
 export async function PATCH(request: Request) {
@@ -24,11 +24,8 @@ export async function PATCH(request: Request) {
 
   const { order_id, status } = parsed.data;
 
-  // Usa admin client para bypassar RLS
-  const supabase = await createAdminClient();
-
   // Verifica se o pedido pertence a um vendor do usuário autenticado
-  const { data: order } = await supabase
+  const { data: order } = await userClient
     .from('orders')
     .select('id, vendor_id, vendors!inner(owner_id)')
     .eq('id', order_id)
@@ -44,7 +41,7 @@ export async function PATCH(request: Request) {
   }
 
   // Atualiza o status
-  const { error } = await supabase
+  const { error } = await userClient
     .from('orders')
     .update({ status })
     .eq('id', order_id);

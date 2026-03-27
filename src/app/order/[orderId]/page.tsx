@@ -2,7 +2,7 @@
 // Usa Supabase Realtime para atualizar o status sem recarregar a página
 
 import { notFound } from 'next/navigation';
-import { createAdminClient } from '@/lib/supabase/server';
+import { createClient } from '@/lib/supabase/server';
 import OrderTracker from '@/components/orders/OrderTracker';
 
 interface Props {
@@ -11,7 +11,7 @@ interface Props {
 
 export default async function OrderPage({ params }: Props) {
   const { orderId } = await params;
-  const supabase = await createAdminClient();
+  const supabase = await createClient();
 
   const { data: order, error } = await supabase
     .from('orders')

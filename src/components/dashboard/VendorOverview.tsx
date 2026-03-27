@@ -1,4 +1,4 @@
-import { createAdminClient } from '@/lib/supabase/server';
+import { createClient } from '@/lib/supabase/server';
 import BrandSwitchButton from '@/components/dashboard/BrandSwitchButton';
 
 interface Vendor {
@@ -16,19 +16,19 @@ interface Props {
 const P = '#ec5b13';
 
 export default async function VendorOverview({ vendors, userId }: Props) {
-  const admin = await createAdminClient();
+  const supabase = await createClient();
   const vendorIds = vendors.map(v => v.id);
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
   // Busca pedidos de todos os vendors
-  const { data: allOrders } = await admin
+  const { data: allOrders } = await supabase
     .from('orders')
     .select('id, vendor_id, total_price, status, payment_status, created_at')
     .in('vendor_id', vendorIds);
 
-  const { data: allOrderItems } = await admin
+  const { data: allOrderItems } = await supabase
     .from('order_items')
     .select('quantity, unit_price, menu_items(name), orders!inner(vendor_id)')
     .in('orders.vendor_id', vendorIds);

@@ -22,3 +22,11 @@ These defaults are optimized for AI coding agents (and humans) working on apps t
   needed. Always curl https://ai-gateway.vercel.sh/v1/models first; never trust model IDs from memory
 - For durable agent loops or untrusted code: use Workflow (pause/resume/state) + Sandbox; use Vercel MCP for secure infra access
 <!-- VERCEL BEST PRACTICES END -->
+
+## Regras do Projeto QuickPick
+
+### Supabase RLS (Row Level Security)
+- **NUNCA** use `createAdminClient` / service role para contornar políticas RLS como workaround de frontend.
+- Quando uma query falhar por RLS, **sempre peça ao usuário para rodar o SQL correto no Supabase** e escreva a migration adequada em `supabase/migrations/`.
+- Políticas RLS devem ser as mais restritivas e corretas possíveis para evitar vazamento de dados.
+- O uso do `createAdminClient` é permitido apenas em API routes de operações administrativas legítimas (criar usuário, deletar conta, etc.), nunca para leitura de dados que deveriam ser protegidos por RLS.

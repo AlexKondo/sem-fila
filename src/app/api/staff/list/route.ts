@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createAdminClient, createClient } from '@/lib/supabase/server';
+import { createClient } from '@/lib/supabase/server';
 
 export async function GET(req: NextRequest) {
   const supabase = await createClient();
@@ -14,9 +14,7 @@ export async function GET(req: NextRequest) {
     .from('vendors').select('id').eq('id', vendor_id).eq('owner_id', user.id).single();
   if (!vendor) return NextResponse.json({ error: 'Não autorizado.' }, { status: 403 });
 
-  // Usa admin client para bypassar RLS
-  const admin = await createAdminClient();
-  const { data, error } = await admin
+  const { data, error } = await supabase
     .from('staff_schedules')
     .select('*, profiles(id, full_name, name, role)')
     .eq('vendor_id', vendor_id)
