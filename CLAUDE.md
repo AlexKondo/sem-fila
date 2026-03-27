@@ -34,3 +34,8 @@ These defaults are optimized for AI coding agents (and humans) working on apps t
 - **Memoização**: Sempre use `React.memo` para componentes de cartão em listas grandes (ex: `MenuItemCard`) e `useCallback` para as funções passadas a eles.
 - **Renderização**: Evite lógica pesada síncrona dentro do loop de renderização. Mova cálculos complexos para `useMemo`.
 - **Imagens**: Limite o carregamento de imagens pesadas e use as propriedades de otimização do Next.js.
+
+### Escalabilidade de Dados (Postgres/Supabase)
+- **Índices**: Sempre carregue índices para Colunas de Chave Estrangeira (FKs) e colunas usadas frequentemente em filtros (`WHERE`) e ordenações (`ORDER BY`).
+- **RLS Otimizado**: Mantenha as políticas simples e use funções `SECURITY DEFINER` para evitar loops de recursão no banco.
+- **Paginação**: Nunca retorne listas completas do Supabase se o volume de dados esperado for grande. Use `.range(from, to)` para carregar os dados sob demanda.

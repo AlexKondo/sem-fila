@@ -65,6 +65,26 @@ const MenuItemCard = memo(function MenuItemCard({ item, waitTime, onAdd }: { ite
   );
 });
 
+/* ─── Menu Items List (memoizado) ─── */
+const ItemList = memo(function ItemList({ items, waitTime, onAdd }: { items: MenuItem[]; waitTime: string; onAdd: (item: MenuItem) => void }) {
+  if (items.length === 0) {
+    return (
+      <div className="bg-white rounded-2xl border border-slate-100 p-12 text-center shadow-sm">
+        <p className="text-4xl mb-3">🍽️</p>
+        <p className="text-slate-400 text-sm">Nenhum item disponível nesta categoria.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      {items.map((item) => (
+        <MenuItemCard key={item.id} item={item} waitTime={waitTime} onAdd={onAdd} />
+      ))}
+    </div>
+  );
+});
+
 export default function MenuClient({ vendor, items, mesa, waitTime }: MenuClientProps) {
   const [selectedCat, setSelectedCat] = useState('Todos');
   const [searchQuery, setSearchQuery] = useState('');
@@ -307,16 +327,7 @@ export default function MenuClient({ vendor, items, mesa, waitTime }: MenuClient
       <main className="px-4 py-6 space-y-6">
         <h3 className="text-lg font-bold text-slate-900">{selectedCat === 'Todos' ? 'Cardápio Completo' : selectedCat}</h3>
 
-        {filteredItems.length === 0 ? (
-          <div className="bg-white rounded-2xl border border-slate-100 p-12 text-center shadow-sm">
-            <p className="text-4xl mb-3">🍽️</p>
-            <p className="text-slate-400 text-sm">Nenhum item disponível nesta categoria.</p>
-          </div>
-        ) : (
-          filteredItems.map((item: MenuItem) => (
-            <MenuItemCard key={item.id} item={item} waitTime={waitTime} onAdd={handleAddToCart} />
-          ))
-        )}
+        <ItemList items={filteredItems} waitTime={waitTime} onAdd={handleAddToCart} />
       </main>
 
       <CartSheet vendor={vendor} tableNumber={mesa} />
