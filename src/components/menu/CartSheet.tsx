@@ -374,6 +374,10 @@ export default function CartSheet({ vendor, tableNumber }: CartSheetProps) {
       const data = await res.json();
       if (!res.ok) { setError(data.error ?? 'Erro ao fazer pedido.'); setLoading(false); return; }
 
+      // Pedido criado com sucesso — limpa o carrinho para evitar duplicatas
+      setItems([]);
+      setNotes('');
+
       if (data.pix) {
         setPixData({ ...data.pix, order_id: data.order_id });
         setStep('pix');
@@ -388,7 +392,8 @@ export default function CartSheet({ vendor, tableNumber }: CartSheetProps) {
     }
   }
 
-  if (count === 0) return null;
+  // Esconde o botão flutuante se carrinho vazio E não está mostrando PIX
+  if (count === 0 && !pixData) return null;
 
   const ringStyle = { '--tw-ring-color': P } as React.CSSProperties;
 
