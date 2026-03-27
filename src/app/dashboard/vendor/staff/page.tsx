@@ -26,6 +26,11 @@ export default function StaffPage() {
   const [formError, setFormError] = useState('');
   const [removing, setRemoving] = useState<string | null>(null);
 
+  const [editingMember, setEditingMember] = useState<StaffWithProfile | null>(null);
+  const [editForm, setEditForm] = useState({ name: '', role: 'waitstaff' });
+  const [editSaving, setEditSaving] = useState(false);
+  const [editError, setEditError] = useState('');
+
   useEffect(() => {
     const supabase = createClient();
     async function load() {
@@ -92,6 +97,46 @@ export default function StaffPage() {
     setForm({ name: '', email: '', phone: '', password: '', role: 'waitstaff' });
     setShowModal(false);
     setSaving(false);
+  }
+
+  function openEdit(member: StaffWithProfile) {
+    setEditingMember(member);
+    setEditForm({
+      name: member.profiles?.full_name || member.profiles?.name || '',
+      role: member.profiles?.role ?? 'waitstaff',
+    });
+    setEditError('');
+  }
+
+  async function saveEdit() {
+    if (!editingMember || !editForm.name.trim()) {
+      setEditError('Nome é obrigatório.');
+      return;
+    }
+    setEditSaving(true);
+    setEditError('');
+
+    const supabase = createClient();
+    const { error } = await supabase
+      .from('profiles')
+      .update({ full_name: editForm.name, name: editForm.name, role: editForm.role })
+      .eq('id', editingMember.user_id);
+
+    if (error) {
+      setEditError(error.message);
+      setEditSaving(false);
+      return;
+    }
+
+    setStaff(prev =>
+      prev.map(s =>
+        s.id === editingMember.id
+          ? { ...s, profiles: { ...s.profiles!, full_name: editForm.name, name: editForm.name, role: editForm.role } }
+          : s
+      )
+    );
+    setEditingMember(null);
+    setEditSaving(false);
   }
 
   async function removeStaff(scheduleId: string) {
@@ -193,23 +238,34 @@ export default function StaffPage() {
                     </span>
 
                     {/* Ações */}
-                    <button
-                      onClick={() => removeStaff(member.id)}
-                      disabled={removing === member.id}
-                      title="Remover funcionário"
-                      className="w-8 h-8 flex items-center justify-center rounded-xl text-slate-300 hover:text-red-500 hover:bg-red-50 transition disabled:opacity-40"
-                    >
-                      {removing === member.id ? (
-                        <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
-                        </svg>
-                      ) : (
+                    <div className="flex items-center gap-1">
+                      <button
+                        onClick={() => openEdit(member)}
+                        title="Editar funcionário"
+                        className="w-8 h-8 flex items-center justify-center rounded-xl text-slate-300 hover:text-orange-500 hover:bg-orange-50 transition"
+                      >
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
                         </svg>
-                      )}
-                    </button>
+                      </button>
+                      <button
+                        onClick={() => removeStaff(member.id)}
+                        disabled={removing === member.id}
+                        title="Remover funcionário"
+                        className="w-8 h-8 flex items-center justify-center rounded-xl text-slate-300 hover:text-red-500 hover:bg-red-50 transition disabled:opacity-40"
+                      >
+                        {removing === member.id ? (
+                          <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
+                          </svg>
+                        ) : (
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
+                        )}
+                      </button>
+                    </div>
                   </div>
                 );
               })}
@@ -224,6 +280,63 @@ export default function StaffPage() {
           )}
         </div>
       </div>
+
+      {/* Modal de Edição */}
+      {editingMember && (
+        <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="bg-white rounded-t-[32px] sm:rounded-[32px] p-6 w-full max-w-md">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-lg font-black text-slate-900">Editar Funcionário</h2>
+              <button onClick={() => setEditingMember(null)} className="text-slate-400 font-bold p-1 text-xl leading-none">✕</button>
+            </div>
+
+            <div className="space-y-3">
+              {/* Função */}
+              <div>
+                <label className="text-xs font-bold text-slate-500 block mb-2">Função</label>
+                <div className="grid grid-cols-3 gap-2">
+                  {ROLE_OPTIONS.map(r => (
+                    <button
+                      key={r.value}
+                      onClick={() => setEditForm(f => ({ ...f, role: r.value }))}
+                      className={`py-2.5 rounded-xl text-xs font-bold transition border ${
+                        editForm.role === r.value
+                          ? 'bg-orange-500 text-white border-orange-500 shadow'
+                          : 'bg-white text-slate-500 border-slate-200'
+                      }`}
+                    >
+                      {r.emoji} {r.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Nome */}
+              <div>
+                <label className="text-xs font-bold text-slate-500 block mb-1">Nome completo *</label>
+                <input
+                  type="text"
+                  value={editForm.name}
+                  onChange={e => setEditForm(f => ({ ...f, name: e.target.value }))}
+                  className="w-full border border-slate-200 rounded-xl px-4 h-12 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/30"
+                />
+              </div>
+
+              {editError && (
+                <div className="bg-red-50 border border-red-200 text-red-700 text-sm px-4 py-3 rounded-xl">{editError}</div>
+              )}
+
+              <button
+                onClick={saveEdit}
+                disabled={editSaving}
+                className="w-full bg-orange-500 text-white font-bold py-3.5 rounded-xl hover:bg-orange-600 transition disabled:opacity-50 mt-2"
+              >
+                {editSaving ? 'Salvando…' : 'Salvar Alterações'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Modal de Cadastro */}
       {showModal && (
