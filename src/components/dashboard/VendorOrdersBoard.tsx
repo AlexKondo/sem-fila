@@ -377,6 +377,11 @@ function OrderCard({
             <p className="text-xs text-gray-400">
               Criado às {new Date(order.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
             </p>
+            {order.pickup_code && (
+              <span className="text-[10px] font-mono font-bold text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded">
+                {order.pickup_code}
+              </span>
+            )}
             {isDelivered && timeDiffSec !== null && (
               <span className="text-xs font-mono font-bold text-slate-500 bg-slate-200/50 px-1.5 rounded" title="Tempo total de preparo">
                 ⏱️ {mins}m {secs}s
