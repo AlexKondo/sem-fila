@@ -15,6 +15,9 @@ interface VendorSummary {
   active: number;
   avgPrepTime: number | null;
   customers: number;
+  efficiency: number | null;
+  readyCount: number;
+  validCount: number;
 }
 
 interface GlobalSummary {
@@ -273,36 +276,102 @@ export default function VendorDashboardClient({
             );
           })}
         </div>
+
+        {/* Breakdown por vendor */}
+        {globalSummary && globalSummary.vendors.length > 1 && (
+          <div className="mt-4 pt-4 border-t border-slate-50 space-y-2">
+            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Receita por Marca</p>
+            {globalSummary.vendors.map((v, i) => {
+              const maxRev = Math.max(...globalSummary.vendors.map(x => x.revenue), 1);
+              return (
+                <div key={v.id} className="flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: VENDOR_COLORS[i % VENDOR_COLORS.length] }} />
+                  <span className="text-[11px] font-bold text-slate-600 truncate w-28">{v.name}</span>
+                  <div className="flex-1 h-2.5 bg-slate-50 rounded-full overflow-hidden">
+                    <div
+                      className="h-full rounded-full transition-all duration-500"
+                      style={{
+                        width: `${Math.max((v.revenue / maxRev) * 100, v.revenue > 0 ? 6 : 0)}%`,
+                        backgroundColor: VENDOR_COLORS[i % VENDOR_COLORS.length],
+                      }}
+                    />
+                  </div>
+                  <span className="text-[10px] font-black text-slate-500 shrink-0">{formatCurrency(v.revenue)}</span>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       {/* Eficiência */}
-      <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm flex flex-col items-center justify-center">
-        <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Eficiência do Período</p>
-        <div className="relative w-32 h-32">
-          <svg className="w-32 h-32 -rotate-90" viewBox="0 0 100 100">
-            <circle cx="50" cy="50" r="45" fill="none" stroke="#f1f5f9" strokeWidth="10" />
-            <circle
-              cx="50" cy="50" r="45" fill="none"
-              stroke={P} strokeWidth="10"
-              strokeLinecap="round"
-              strokeDasharray={`${effAngle} 283`}
-              style={{ transition: 'stroke-dasharray 1s ease' }}
-            />
-          </svg>
-          <div className="absolute inset-0 flex flex-col items-center justify-center">
-            <span className="text-2xl font-black text-slate-900">{efficiency != null ? `${efficiency}%` : '–'}</span>
-            <span className="text-[10px] text-slate-400 font-bold">READY RATE</span>
+      <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm">
+        <div className={globalSummary && globalSummary.vendors.length > 1 ? 'flex flex-col md:flex-row gap-6' : 'flex flex-col items-center'}>
+          {/* Lado esquerdo: ring + totais */}
+          <div className="flex flex-col items-center">
+            <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Eficiência do Período</p>
+            <div className="relative w-32 h-32">
+              <svg className="w-32 h-32 -rotate-90" viewBox="0 0 100 100">
+                <circle cx="50" cy="50" r="45" fill="none" stroke="#f1f5f9" strokeWidth="10" />
+                <circle
+                  cx="50" cy="50" r="45" fill="none"
+                  stroke={P} strokeWidth="10"
+                  strokeLinecap="round"
+                  strokeDasharray={`${effAngle} 283`}
+                  style={{ transition: 'stroke-dasharray 1s ease' }}
+                />
+              </svg>
+              <div className="absolute inset-0 flex flex-col items-center justify-center">
+                <span className="text-2xl font-black text-slate-900">{efficiency != null ? `${efficiency}%` : '–'}</span>
+                <span className="text-[10px] text-slate-400 font-bold">READY RATE</span>
+              </div>
+            </div>
+            <div className="flex gap-8 mt-5 text-center">
+              <div>
+                <p className="text-xl font-black text-slate-900">{validCount}</p>
+                <p className="text-[10px] text-slate-400 font-bold uppercase">Pagos</p>
+              </div>
+              <div>
+                <p className="text-xl font-black text-slate-900">{readyCount}</p>
+                <p className="text-[10px] text-slate-400 font-bold uppercase">Prontos</p>
+              </div>
+            </div>
           </div>
-        </div>
-        <div className="flex gap-8 mt-5 text-center">
-          <div>
-            <p className="text-xl font-black text-slate-900">{validCount}</p>
-            <p className="text-[10px] text-slate-400 font-bold uppercase">Pagos</p>
-          </div>
-          <div>
-            <p className="text-xl font-black text-slate-900">{readyCount}</p>
-            <p className="text-[10px] text-slate-400 font-bold uppercase">Prontos</p>
-          </div>
+
+          {/* Lado direito: breakdown por vendor */}
+          {globalSummary && globalSummary.vendors.length > 1 && (
+            <div className="flex-1 flex flex-col justify-center min-w-0">
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Eficiência por Marca</p>
+              <div className="space-y-3">
+                {globalSummary.vendors.map((v, i) => (
+                  <div key={v.id}>
+                    <div className="flex items-center justify-between mb-1">
+                      <div className="flex items-center gap-1.5">
+                        <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: VENDOR_COLORS[i % VENDOR_COLORS.length] }} />
+                        <span className="text-[11px] font-bold text-slate-600 truncate">{v.name}</span>
+                      </div>
+                      <span className="text-[11px] font-black" style={{ color: VENDOR_COLORS[i % VENDOR_COLORS.length] }}>
+                        {v.efficiency != null ? `${v.efficiency}%` : '–'}
+                      </span>
+                    </div>
+                    <div className="h-2.5 bg-slate-50 rounded-full overflow-hidden">
+                      <div
+                        className="h-full rounded-full transition-all duration-500"
+                        style={{
+                          width: `${v.efficiency ?? 0}%`,
+                          backgroundColor: VENDOR_COLORS[i % VENDOR_COLORS.length],
+                        }}
+                      />
+                    </div>
+                    <div className="flex justify-between mt-0.5">
+                      <span className="text-[9px] text-slate-300">{v.readyCount} prontos</span>
+                      <span className="text-[9px] text-slate-300">{v.validCount} pagos</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
@@ -333,6 +402,41 @@ export default function VendorDashboardClient({
           <span style={{ color: P }}>Bom &lt;20</span>
           <span className="text-red-300">30+ min</span>
         </div>
+
+        {/* Breakdown por vendor */}
+        {globalSummary && globalSummary.vendors.length > 1 && (
+          <div className="mt-4 pt-4 border-t border-slate-50 space-y-2.5">
+            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Tempo por Marca</p>
+            {globalSummary.vendors.map((v, i) => {
+              const prepColor = v.avgPrepTime == null ? '#94a3b8'
+                : v.avgPrepTime <= 10 ? '#22c55e'
+                : v.avgPrepTime <= 20 ? VENDOR_COLORS[i % VENDOR_COLORS.length]
+                : '#ef4444';
+              return (
+                <div key={v.id}>
+                  <div className="flex items-center justify-between mb-1">
+                    <div className="flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: VENDOR_COLORS[i % VENDOR_COLORS.length] }} />
+                      <span className="text-[11px] font-bold text-slate-600 truncate">{v.name}</span>
+                    </div>
+                    <span className="text-[11px] font-black" style={{ color: prepColor }}>
+                      {v.avgPrepTime != null ? `${v.avgPrepTime} min` : '–'}
+                    </span>
+                  </div>
+                  <div className="h-2.5 bg-slate-50 rounded-full overflow-hidden">
+                    <div
+                      className="h-full rounded-full transition-all duration-500"
+                      style={{
+                        width: v.avgPrepTime != null ? `${Math.min((v.avgPrepTime / 30) * 100, 100)}%` : '0%',
+                        backgroundColor: prepColor,
+                      }}
+                    />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
     </div>
   );

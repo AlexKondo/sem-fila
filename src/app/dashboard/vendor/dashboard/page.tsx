@@ -153,7 +153,10 @@ export default async function VendorDashboardPage({ searchParams }: Props) {
         const vCustomers = new Set(
           (allCustomersRes.data ?? []).filter(c => c.vendor_id === v.id).map(c => c.user_id)
         ).size;
-        return { id: v.id, name: v.name, revenue: vRevenue, orders: vOrders.length, active: vActive, avgPrepTime: vAvgPrep, customers: vCustomers };
+        const vValid = vOrders.filter(o => o.status !== 'cancelled');
+        const vReady = vValid.filter(o => ['ready', 'delivered'].includes(o.status));
+        const vEfficiency = vValid.length > 0 ? Math.round((vReady.length / vValid.length) * 100) : null;
+        return { id: v.id, name: v.name, revenue: vRevenue, orders: vOrders.length, active: vActive, avgPrepTime: vAvgPrep, customers: vCustomers, efficiency: vEfficiency, readyCount: vReady.length, validCount: vValid.length };
       })
     : null;
 
