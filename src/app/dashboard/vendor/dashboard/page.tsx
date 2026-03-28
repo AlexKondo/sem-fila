@@ -51,7 +51,9 @@ export default async function VendorDashboardPage({ searchParams }: Props) {
   const periodStart = startDate.toISOString();
   const periodEnd = endDate.toISOString();
 
-  const [periodRes, customersRes] = await Promise.all([
+  const allVendorIds = vendors.map(v => v.id);
+
+  const [periodRes, customersRes, allPeriodRes, allCustomersRes] = await Promise.all([
     supabase
       .from('orders')
       .select('id, total_price, status, created_at, updated_at')
@@ -63,6 +65,18 @@ export default async function VendorDashboardPage({ searchParams }: Props) {
       .from('orders')
       .select('user_id')
       .eq('vendor_id', vendor.id)
+      .not('user_id', 'is', null),
+    // Dados agregados de TODOS os negócios
+    supabase
+      .from('orders')
+      .select('id, total_price, status, vendor_id')
+      .in('vendor_id', allVendorIds)
+      .gte('created_at', periodStart)
+      .lte('created_at', periodEnd),
+    supabase
+      .from('orders')
+      .select('user_id')
+      .in('vendor_id', allVendorIds)
       .not('user_id', 'is', null),
   ]);
 
@@ -116,6 +130,23 @@ export default async function VendorDashboardPage({ searchParams }: Props) {
     });
   }
 
+  // Sumário geral de TODOS os negócios (só mostra se tiver mais de 1)
+  const allOrders = allPeriodRes.data ?? [];
+  const allRevenue = allOrders.reduce((s, o) => s + Number(o.total_price || 0), 0);
+  const allActive = allOrders.filter(o => !['delivered', 'cancelled'].includes(o.status)).length;
+  const allCustomers = new Set(allCustomersRes.data?.map(o => o.user_id)).size;
+  const allOrdersCount = allOrders.length;
+
+  // Resumo por vendor
+  const vendorsSummary = vendors.length > 1
+    ? vendors.map(v => {
+        const vOrders = allOrders.filter(o => o.vendor_id === v.id);
+        const vRevenue = vOrders.reduce((s, o) => s + Number(o.total_price || 0), 0);
+        const vActive = vOrders.filter(o => !['delivered', 'cancelled'].includes(o.status)).length;
+        return { id: v.id, name: v.name, revenue: vRevenue, orders: vOrders.length, active: vActive };
+      })
+    : null;
+
   return (
     <VendorDashboardClient
       vendorName={vendor.name}
@@ -130,6 +161,13 @@ export default async function VendorDashboardPage({ searchParams }: Props) {
       currentPeriod={period}
       startDate={startDate.toISOString().split('T')[0]}
       endDate={endDate.toISOString().split('T')[0]}
+      globalSummary={vendors.length > 1 ? {
+        totalRevenue: allRevenue,
+        totalOrders: allOrdersCount,
+        totalActive: allActive,
+        totalCustomers: allCustomers,
+        vendors: vendorsSummary!,
+      } : undefined}
     />
   );
 }

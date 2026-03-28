@@ -7,6 +7,22 @@ import { Calendar, Loader2 } from 'lucide-react';
 
 const P = '#ec5b13';
 
+interface VendorSummary {
+  id: string;
+  name: string;
+  revenue: number;
+  orders: number;
+  active: number;
+}
+
+interface GlobalSummary {
+  totalRevenue: number;
+  totalOrders: number;
+  totalActive: number;
+  totalCustomers: number;
+  vendors: VendorSummary[];
+}
+
 interface Props {
   vendorName: string;
   revenue: number;
@@ -20,6 +36,7 @@ interface Props {
   currentPeriod: string;
   startDate: string;
   endDate: string;
+  globalSummary?: GlobalSummary;
 }
 
 export default function VendorDashboardClient({
@@ -35,6 +52,7 @@ export default function VendorDashboardClient({
   currentPeriod,
   startDate,
   endDate,
+  globalSummary,
 }: Props) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -67,6 +85,59 @@ export default function VendorDashboardClient({
   return (
     <div className={`max-w-2xl mx-auto px-4 py-6 space-y-5 pb-20 transition-opacity duration-300 ${isPending ? 'opacity-50 pointer-events-none' : 'opacity-100'}`}>
       
+      {/* Sumário Geral — todos os negócios */}
+      {globalSummary && (
+        <div className="bg-gradient-to-br from-slate-900 to-slate-800 rounded-3xl p-5 text-white shadow-lg">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Visão Geral</p>
+              <h2 className="text-base font-black text-white leading-tight">Todos os Negócios</h2>
+            </div>
+            <span className="text-[10px] font-black bg-white/10 px-3 py-1 rounded-full text-slate-300">{periodLabel}</span>
+          </div>
+
+          <div className="grid grid-cols-3 gap-3 mb-4">
+            <div className="bg-white/5 rounded-2xl p-3 text-center">
+              <p className="text-lg font-black text-white">{formatCurrency(globalSummary.totalRevenue)}</p>
+              <p className="text-[9px] text-slate-400 font-bold uppercase">Receita Total</p>
+            </div>
+            <div className="bg-white/5 rounded-2xl p-3 text-center">
+              <p className="text-lg font-black text-white">{globalSummary.totalOrders}</p>
+              <p className="text-[9px] text-slate-400 font-bold uppercase">Pedidos</p>
+            </div>
+            <div className="bg-white/5 rounded-2xl p-3 text-center">
+              <p className="text-lg font-black text-white">{globalSummary.totalCustomers}</p>
+              <p className="text-[9px] text-slate-400 font-bold uppercase">Clientes</p>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            {globalSummary.vendors.map(v => {
+              const pct = globalSummary.totalRevenue > 0
+                ? Math.round((v.revenue / globalSummary.totalRevenue) * 100)
+                : 0;
+              return (
+                <div key={v.id} className="flex items-center gap-3">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between mb-0.5">
+                      <p className="text-[11px] font-bold text-white truncate">{v.name}</p>
+                      <p className="text-[10px] font-black text-orange-400 ml-2 shrink-0">{formatCurrency(v.revenue)}</p>
+                    </div>
+                    <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
+                      <div
+                        className="h-full rounded-full transition-all duration-500"
+                        style={{ width: `${pct}%`, backgroundColor: P }}
+                      />
+                    </div>
+                  </div>
+                  <span className="text-[9px] font-bold text-slate-500 w-8 text-right">{pct}%</span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       {/* Header with loading */}
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-black text-slate-900">{vendorName}</h1>
