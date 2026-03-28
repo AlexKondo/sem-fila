@@ -2,6 +2,8 @@
 
 import { useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
+import { Sparkles } from 'lucide-react';
+import VendorPlansModal from './VendorPlansModal';
 
 const P = '#ec5b13';
 
@@ -16,6 +18,7 @@ export default function VendorSettingsForm({ vendor }: { vendor: any }) {
   const [couponDiscount, setCouponDiscount] = useState(vendor.discount_percentage || 0);
   const [allowWaiterCalls, setAllowWaiterCalls] = useState(vendor.allow_waiter_calls || false);
   const [alertsEnabled, setAlertsEnabled] = useState(true);
+  const [isPlansModalOpen, setIsPlansModalOpen] = useState(false);
 
   // Carrega preferência local de som
   useState(() => {
@@ -76,6 +79,27 @@ export default function VendorSettingsForm({ vendor }: { vendor: any }) {
   return (
     <form onSubmit={handleSave} className="space-y-6">
       
+      {/* Bloco 0: Plano e Assinatura */}
+      <section className="bg-gradient-to-br from-slate-900 to-slate-800 p-6 rounded-3xl shadow-xl border border-slate-700 relative overflow-hidden group">
+        <Sparkles className="absolute -right-4 -top-4 w-24 h-24 text-white/5 rotate-12 group-hover:scale-110 transition-transform" />
+        <div className="relative z-10 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div>
+            <div className="inline-flex items-center gap-2 px-2 py-0.5 rounded bg-orange-500 text-white text-[10px] font-black uppercase tracking-widest mb-2">
+              Plano Atual: Grátis
+            </div>
+            <h3 className="text-white font-black text-lg tracking-tight">Migrar para o Plano Pro</h3>
+            <p className="text-slate-400 text-xs font-medium">Libere pedidos ilimitados, IA de imagens e suporte prioritário.</p>
+          </div>
+          <button 
+            type="button" 
+            onClick={() => setIsPlansModalOpen(true)}
+            className="whitespace-nowrap bg-white text-slate-900 px-6 py-2.5 rounded-xl font-black text-[11px] uppercase tracking-widest hover:bg-orange-500 hover:text-white transition-all shadow-lg shadow-black/20"
+          >
+            Ver Planos
+          </button>
+        </div>
+      </section>
+
       {/* Bloco 1: Operação e Logística */}
       <section className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100">
         <h2 className="text-sm font-bold text-gray-900 mb-4 pb-2 border-b border-gray-100 uppercase tracking-wide">1. Operação e Logística</h2>
@@ -255,6 +279,8 @@ export default function VendorSettingsForm({ vendor }: { vendor: any }) {
         {loading ? 'Salvando...' : 'Salvar Alterações'}
       </button>
 
+
+      <VendorPlansModal isOpen={isPlansModalOpen} onClose={() => setIsPlansModalOpen(false)} />
     </form>
   );
 }

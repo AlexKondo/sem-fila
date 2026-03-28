@@ -7,6 +7,7 @@ import { formatCurrency, getItemImage } from '@/lib/utils';
 import { MenuItemSchema } from '@/lib/validations/menu';
 import { Plus, Edit2, Trash2, ToggleLeft, ToggleRight } from 'lucide-react';
 import type { MenuItem } from '@/types/database';
+import VendorPlansModal from './VendorPlansModal';
 
 interface MenuManagerProps {
   initialItems: MenuItem[];
@@ -17,6 +18,7 @@ export default function MenuManager({ initialItems, vendorId }: MenuManagerProps
   const [items, setItems] = useState<MenuItem[]>(initialItems);
   const [editingItem, setEditingItem] = useState<Partial<MenuItem> | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [isPlansModalOpen, setIsPlansModalOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState('');
 
@@ -269,7 +271,7 @@ export default function MenuManager({ initialItems, vendorId }: MenuManagerProps
                   <p className="text-[10px] text-slate-500 leading-snug">
                     Ajuste automático de brilho, foco e remoção de fundo para fotos mais atraentes.
                   </p>
-                  <button type="button" onClick={() => setFormError('O serviço de IA está bloqueado. Assine o Plano Pro na aba de ajustes do Painel.')} className="mt-2 text-[11px] font-bold text-orange-500 hover:underline">
+                  <button type="button" onClick={() => setIsPlansModalOpen(true)} className="mt-2 text-[11px] font-bold text-orange-500 hover:underline">
                     Habilitar Serviço Extra →
                   </button>
                 </div>
@@ -411,6 +413,7 @@ export default function MenuManager({ initialItems, vendorId }: MenuManagerProps
           </div>
         </div>
       )}
+      <VendorPlansModal isOpen={isPlansModalOpen} onClose={() => setIsPlansModalOpen(false)} />
     </div>
   );
 }
