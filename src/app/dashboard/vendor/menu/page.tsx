@@ -13,7 +13,7 @@ export default async function VendorMenuPage() {
 
   const { data: vendors } = await supabase
     .from('vendors')
-    .select('id, name, ai_photo_enabled, ai_photo_credits')
+    .select('*')
     .eq('owner_id', user.id);
 
   const { cookies } = await import('next/headers');

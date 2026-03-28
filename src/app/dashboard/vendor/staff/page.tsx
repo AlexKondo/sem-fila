@@ -45,7 +45,7 @@ export default function StaffPage() {
       const isPlatformAdmin = profileData?.role === 'platform_admin';
 
       const { data: vendorsData } = await supabase
-        .from('vendors').select('id').eq('owner_id', user.id).eq('active', true);
+        .from('vendors').select('id').eq('owner_id', user.id);
 
       let vid: string | null = null;
 

@@ -24,8 +24,7 @@ export default async function VendorDashboardPage({ searchParams }: Props) {
   const { data: vendors } = await supabase
     .from('vendors')
     .select('id, name')
-    .eq('owner_id', user.id)
-    .eq('active', true);
+    .eq('owner_id', user.id);
 
   if (!vendors?.length) redirect('/dashboard/vendor');
 

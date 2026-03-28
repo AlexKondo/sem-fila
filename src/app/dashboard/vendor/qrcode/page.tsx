@@ -22,8 +22,7 @@ export default async function QrCodePage() {
   const { data: vendors } = await supabase
     .from('vendors')
     .select('id, name')
-    .eq('owner_id', user.id)
-    .eq('active', true);
+    .eq('owner_id', user.id);
 
   const { cookies } = await import('next/headers');
   const cookieStore = await cookies();
