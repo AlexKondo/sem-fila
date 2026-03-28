@@ -1,30 +1,28 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { findOrCreateCustomer } from '@/lib/asaas';
-
-const BASE_URL = process.env.ASAAS_API_KEY?.startsWith('$aact_hmlg')
-  ? 'https://sandbox.asaas.com/api/v3'
-  : 'https://api.asaas.com/api/v3';
-
-const h = {
-  'access_token': process.env.ASAAS_API_KEY!,
-  'Content-Type': 'application/json',
-};
+import { findOrCreateCustomer, createPixCharge, createCreditCardCharge } from '@/lib/asaas';
 
 export async function POST(request: Request) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: 'Não autenticado.' }, { status: 401 });
 
-  let body: { type: 'plan' | 'ai_package'; planId?: string; vendorId: string };
+  let body: {
+    type: 'plan' | 'ai_package';
+    planId?: string;
+    vendorId: string;
+    paymentMethod: 'pix' | 'credit_card';
+    card?: { number: string; holder: string; expiryMonth: string; expiryYear: string; cvv: string };
+  };
   try {
     body = await request.json();
   } catch {
     return NextResponse.json({ error: 'Payload inválido.' }, { status: 400 });
   }
 
-  const { type, planId, vendorId } = body;
+  const { type, planId, vendorId, paymentMethod, card } = body;
   if (!vendorId) return NextResponse.json({ error: 'vendorId obrigatório.' }, { status: 400 });
+  if (!paymentMethod) return NextResponse.json({ error: 'Forma de pagamento obrigatória.' }, { status: 400 });
 
   // Verifica que o vendor pertence ao usuário
   const { data: vendor } = await supabase
@@ -34,9 +32,9 @@ export async function POST(request: Request) {
     .eq('owner_id', user.id)
     .single();
 
-  if (!vendor) return NextResponse.json({ error: 'Vendor não encontrado.' }, { status: 404 });
+  if (!vendor) return NextResponse.json({ error: 'Estabelecimento não encontrado.' }, { status: 404 });
 
-  // Busca perfil do dono para criar customer no Asaas
+  // Busca perfil do dono
   const { data: profile } = await supabase
     .from('profiles')
     .select('name, cnpj, phone')
@@ -45,9 +43,12 @@ export async function POST(request: Request) {
 
   const cpfCnpj = profile?.cnpj?.replace(/\D/g, '');
   if (!cpfCnpj) {
-    return NextResponse.json({ error: 'CNPJ não cadastrado no perfil. Atualize em Configurações.' }, { status: 400 });
+    return NextResponse.json({
+      error: 'CPF/CNPJ não cadastrado no seu perfil. Atualize em Configurações antes de prosseguir.',
+    }, { status: 400 });
   }
 
+  // Resolve produto e valor
   let value: number;
   let description: string;
   let externalReference: string;
@@ -68,7 +69,6 @@ export async function POST(request: Request) {
     description = `Plano ${plan.name} — ${vendor.name}`;
     externalReference = `vendor_plan:${vendorId}:${planId}`;
   } else if (type === 'ai_package') {
-    // Busca preço do pacote IA na config
     const { data: configs } = await supabase
       .from('platform_config')
       .select('key, value');
@@ -87,50 +87,75 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Plano gratuito — não requer pagamento.' }, { status: 400 });
   }
 
+  // Cria customer no Asaas
+  let customerId: string;
   try {
-    // Cria/busca customer no Asaas
-    let customerId: string;
-    try {
-      customerId = await findOrCreateCustomer({
-        name: profile?.name || vendor.name,
-        cpfCnpj,
-        email: user.email,
-      });
-    } catch {
-      return NextResponse.json({
-        error: 'O CPF/CNPJ cadastrado no seu perfil é inválido. Atualize em Configurações antes de prosseguir.',
-      }, { status: 400 });
-    }
-
-    // Cria cobrança com todas as formas de pagamento
-    const due = new Date();
-    due.setDate(due.getDate() + 3);
-    const dueDate = due.toISOString().split('T')[0];
-
-    const res = await fetch(`${BASE_URL}/payments`, {
-      method: 'POST',
-      headers: h,
-      body: JSON.stringify({
-        customer: customerId,
-        billingType: 'UNDEFINED', // permite PIX, boleto e cartão no checkout
-        value,
-        dueDate,
-        description,
-        externalReference,
-      }),
+    customerId = await findOrCreateCustomer({
+      name: profile?.name || vendor.name,
+      cpfCnpj,
+      email: user.email,
     });
-
-    const payment = await res.json();
-    if (!payment.id) {
-      return NextResponse.json({
-        error: 'Não foi possível gerar o checkout. Tente novamente em alguns instantes.',
-      }, { status: 500 });
-    }
-
-    return NextResponse.json({ invoiceUrl: payment.invoiceUrl, paymentId: payment.id });
   } catch {
     return NextResponse.json({
-      error: 'Ocorreu um erro inesperado. Tente novamente.',
-    }, { status: 500 });
+      error: 'O CPF/CNPJ cadastrado no seu perfil é inválido. Atualize em Configurações antes de prosseguir.',
+    }, { status: 400 });
+  }
+
+  try {
+    if (paymentMethod === 'pix') {
+      const pix = await createPixCharge({
+        customerId,
+        value,
+        orderId: externalReference,
+        description,
+      });
+
+      return NextResponse.json({
+        paymentId: pix.paymentId,
+        pix: {
+          qr_code: pix.pixQrCode,
+          copy_paste: pix.pixCopyPaste,
+        },
+      });
+    }
+
+    if (paymentMethod === 'credit_card') {
+      if (!card || !card.number || !card.holder || !card.expiryMonth || !card.expiryYear || !card.cvv) {
+        return NextResponse.json({ error: 'Dados do cartão incompletos.' }, { status: 400 });
+      }
+
+      const result = await createCreditCardCharge({
+        customerId,
+        value,
+        orderId: externalReference,
+        description,
+        card: {
+          holderName: card.holder,
+          number: card.number,
+          expiryMonth: card.expiryMonth,
+          expiryYear: card.expiryYear,
+          ccv: card.cvv,
+        },
+        holderInfo: {
+          name: profile?.name || vendor.name,
+          cpfCnpj,
+          email: user.email || undefined,
+          phone: profile?.phone || undefined,
+        },
+        remoteIp: request.headers.get('x-forwarded-for') || '127.0.0.1',
+      });
+
+      return NextResponse.json({
+        paymentId: result.paymentId,
+        paid: true,
+      });
+    }
+
+    return NextResponse.json({ error: 'Forma de pagamento inválida.' }, { status: 400 });
+  } catch (err: any) {
+    const msg = err?.message?.includes('UNAUTHORIZED') || err?.message?.includes('card')
+      ? 'Cartão recusado. Verifique os dados e tente novamente.'
+      : 'Não foi possível processar o pagamento. Tente novamente.';
+    return NextResponse.json({ error: msg }, { status: 402 });
   }
 }
