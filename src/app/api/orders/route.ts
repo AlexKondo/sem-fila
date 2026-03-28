@@ -68,6 +68,72 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Barraca não encontrada ou inativa.' }, { status: 404 });
   }
 
+  // Verifica limite de pedidos do plano (bloqueia apenas se excedeu no dia anterior)
+  const { data: vendorOwner } = await supabase
+    .from('vendors')
+    .select('owner_id')
+    .eq('id', vendor_id)
+    .single();
+
+  if (vendorOwner?.owner_id) {
+    const { data: ownerProfile } = await supabase
+      .from('profiles')
+      .select('plan_id')
+      .eq('id', vendorOwner.owner_id)
+      .single();
+
+    // Busca o plano (null = gratuito)
+    let planLimit = 50;
+    if (ownerProfile?.plan_id) {
+      const { data: plan } = await supabase
+        .from('subscription_plans')
+        .select('order_limit')
+        .eq('id', ownerProfile.plan_id)
+        .single();
+      if (plan) planLimit = plan.order_limit;
+    } else {
+      const { data: freePlan } = await supabase
+        .from('subscription_plans')
+        .select('order_limit')
+        .eq('price', 0)
+        .limit(1)
+        .single();
+      if (freePlan) planLimit = freePlan.order_limit;
+    }
+
+    // Conta pedidos do mês até ONTEM (bloqueia só no dia seguinte)
+    const { data: ownerVendors } = await supabase
+      .from('vendors')
+      .select('id')
+      .eq('owner_id', vendorOwner.owner_id);
+
+    if (ownerVendors && ownerVendors.length > 0) {
+      const now = new Date();
+      const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+      const yesterday = new Date(now);
+      yesterday.setDate(yesterday.getDate() - 1);
+      yesterday.setHours(23, 59, 59, 999);
+      const yesterdayEnd = yesterday.toISOString();
+
+      // Só bloqueia se ontem já era neste mês
+      if (yesterday.getMonth() === now.getMonth()) {
+        const { count } = await supabase
+          .from('orders')
+          .select('id', { count: 'exact', head: true })
+          .in('vendor_id', ownerVendors.map(v => v.id))
+          .gte('created_at', monthStart)
+          .lte('created_at', yesterdayEnd)
+          .neq('status', 'cancelled');
+
+        if ((count || 0) > planLimit && planLimit < 99999) {
+          return NextResponse.json({
+            error: 'Limite de pedidos do plano excedido. O proprietário precisa fazer upgrade do plano para continuar recebendo pedidos.',
+          }, { status: 403 });
+        }
+      }
+    }
+  }
+
   // Busca os menu_items para calcular preço real no servidor (NUNCA confie no preço do cliente)
   const menuItemIds = items.map((i) => i.menu_item_id);
   const { data: menuItems, error: menuError } = await supabase

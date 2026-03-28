@@ -28,6 +28,12 @@ interface GlobalSummary {
   vendors: VendorSummary[];
 }
 
+interface OrderLimitAlert {
+  planName: string;
+  ordersThisMonth: number;
+  orderLimit: number;
+}
+
 interface Props {
   vendorName: string;
   revenue: number;
@@ -42,6 +48,7 @@ interface Props {
   startDate: string;
   endDate: string;
   globalSummary?: GlobalSummary;
+  orderLimitAlert?: OrderLimitAlert;
 }
 
 export default function VendorDashboardClient({
@@ -58,6 +65,7 @@ export default function VendorDashboardClient({
   startDate,
   endDate,
   globalSummary,
+  orderLimitAlert,
 }: Props) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -89,7 +97,29 @@ export default function VendorDashboardClient({
 
   return (
     <div className={`max-w-2xl mx-auto px-4 py-6 space-y-5 pb-20 transition-opacity duration-300 ${isPending ? 'opacity-50 pointer-events-none' : 'opacity-100'}`}>
-      
+
+      {/* Alerta de limite de pedidos excedido */}
+      {orderLimitAlert && (
+        <div className="bg-red-50 border-2 border-red-200 rounded-2xl p-4 flex items-start gap-3 animate-in fade-in slide-in-from-top-2 duration-500">
+          <div className="w-10 h-10 rounded-xl bg-red-100 flex items-center justify-center shrink-0">
+            <svg className="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" /></svg>
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-black text-red-700">Limite de pedidos excedido!</p>
+            <p className="text-xs text-red-600 font-medium mt-0.5">
+              Plano {orderLimitAlert.planName}: {orderLimitAlert.ordersThisMonth} pedidos usados de {orderLimitAlert.orderLimit >= 99999 ? 'ilimitado' : orderLimitAlert.orderLimit}.
+              Novos pedidos serão bloqueados a partir de amanhã.
+            </p>
+            <a
+              href="/dashboard/vendor/settings"
+              className="inline-flex items-center gap-1 mt-2 px-3 py-1.5 bg-red-600 text-white text-[10px] font-black uppercase tracking-widest rounded-lg hover:bg-red-700 transition"
+            >
+              Fazer Upgrade
+            </a>
+          </div>
+        </div>
+      )}
+
       {/* Sumário Geral — todos os negócios */}
       {globalSummary && (
         <div className="bg-gradient-to-br from-slate-900 to-slate-800 rounded-3xl p-5 text-white shadow-lg">

@@ -100,12 +100,28 @@ async function handleVendorPayment(supabase: any, ref: string, asaasPaymentId?: 
 
     if (!plan) return;
 
-    const updates: Record<string, any> = {};
+    const vendorUpdates: Record<string, any> = {};
     if (plan.ia_included) {
-      updates.ai_photo_enabled = true;
+      vendorUpdates.ai_photo_enabled = true;
     }
-    if (Object.keys(updates).length > 0) {
-      await supabase.from('vendors').update(updates).eq('id', vendorId);
+    if (Object.keys(vendorUpdates).length > 0) {
+      await supabase.from('vendors').update(vendorUpdates).eq('id', vendorId);
+    }
+
+    // Salva o plano no PERFIL do usuário (vale para todas as marcas)
+    const { data: vendor } = await supabase
+      .from('vendors')
+      .select('owner_id')
+      .eq('id', vendorId)
+      .single();
+
+    if (vendor?.owner_id) {
+      const expiresAt = new Date();
+      expiresAt.setMonth(expiresAt.getMonth() + 1);
+      await supabase.from('profiles').update({
+        plan_id: planId,
+        plan_expires_at: expiresAt.toISOString(),
+      }).eq('id', vendor.owner_id);
     }
 
   } else if (parts[0] === 'vendor_ai') {

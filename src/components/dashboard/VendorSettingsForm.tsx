@@ -8,7 +8,22 @@ import VendorPlansModal from './VendorPlansModal';
 
 const P = '#ec5b13';
 
-export default function VendorSettingsForm({ vendor }: { vendor: any }) {
+interface SubscriptionData {
+  plan: {
+    name: string;
+    price: number;
+    orderLimit: number;
+    features: string[];
+    iaIncluded: boolean;
+  } | null;
+  isPaid: boolean;
+  ordersThisMonth: number;
+  orderLimit: number;
+  exceeded: boolean;
+  expiresAt: string | null;
+}
+
+export default function VendorSettingsForm({ vendor, subscription }: { vendor: any; subscription: SubscriptionData }) {
   const [businessType, setBusinessType] = useState(vendor.business_type || 'kiosk');
   const [deliversToTable, setDeliversToTable] = useState(vendor.table_delivery || false);
   const [serviceFee, setServiceFee] = useState(vendor.service_fee_percentage || 0);
@@ -126,27 +141,6 @@ export default function VendorSettingsForm({ vendor }: { vendor: any }) {
   return (
     <form onSubmit={handleSave} className="space-y-6">
       
-      {/* Bloco 0: Plano e Assinatura */}
-      <section className="bg-gradient-to-br from-slate-900 to-slate-800 p-6 rounded-3xl shadow-xl border border-slate-700 relative overflow-hidden group">
-        <Sparkles className="absolute -right-4 -top-4 w-24 h-24 text-white/5 rotate-12 group-hover:scale-110 transition-transform" />
-        <div className="relative z-10 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div>
-            <div className="inline-flex items-center gap-2 px-2 py-0.5 rounded bg-orange-500 text-white text-[10px] font-black uppercase tracking-widest mb-2">
-              Plano Atual: Grátis
-            </div>
-            <h3 className="text-white font-black text-lg tracking-tight">Migrar para o Plano Pro</h3>
-            <p className="text-slate-400 text-xs font-medium">Libere pedidos ilimitados, IA de imagens e suporte prioritário.</p>
-          </div>
-          <button 
-            type="button" 
-            onClick={() => setIsPlansModalOpen(true)}
-            className="whitespace-nowrap bg-white text-slate-900 px-6 py-2.5 rounded-xl font-black text-[11px] uppercase tracking-widest hover:bg-orange-500 hover:text-white transition-all shadow-lg shadow-black/20"
-          >
-            Ver Planos
-          </button>
-        </div>
-      </section>
-
       {/* Bloco 1: Operação e Logística */}
       <section className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100">
         <h2 className="text-sm font-bold text-gray-900 mb-4 pb-2 border-b border-gray-100 uppercase tracking-wide">1. Operação e Logística</h2>
@@ -403,9 +397,142 @@ export default function VendorSettingsForm({ vendor }: { vendor: any }) {
         )}
       </section>
 
-      {/* Bloco 5: Zona de Perigo — Apagar Marca */}
+      {/* Bloco 5: Plano e Consumo */}
+      {subscription.isPaid && subscription.plan ? (
+        // Plano pago: mostra detalhes e barra de consumo
+        <section className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 relative overflow-hidden">
+          <div className="flex items-center justify-between mb-4 pb-2 border-b border-gray-100">
+            <h2 className="text-sm font-bold text-gray-900 uppercase tracking-wide">5. Meu Plano</h2>
+            <div className="px-2 py-0.5 rounded text-[10px] font-black uppercase bg-green-100 text-green-700">
+              Ativo
+            </div>
+          </div>
+
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-5">
+            <div>
+              <h3 className="text-lg font-black text-slate-900">Plano {subscription.plan.name}</h3>
+              <p className="text-xs text-slate-400 font-medium">
+                R$ {subscription.plan.price.toFixed(2)}/mês
+                {subscription.expiresAt && (
+                  <> — Renova em {new Date(subscription.expiresAt).toLocaleDateString('pt-BR')}</>
+                )}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setIsPlansModalOpen(true)}
+              className="px-4 py-2 bg-slate-100 text-slate-600 rounded-xl text-xs font-bold hover:bg-slate-200 transition"
+            >
+              Trocar Plano
+            </button>
+          </div>
+
+          {/* Barra de consumo */}
+          <div className="bg-slate-50 rounded-xl p-4">
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-xs font-bold text-slate-600">Pedidos este mês</p>
+              <p className="text-xs font-black" style={{ color: subscription.exceeded ? '#ef4444' : P }}>
+                {subscription.ordersThisMonth} / {subscription.orderLimit >= 99999 ? '∞' : subscription.orderLimit}
+              </p>
+            </div>
+            <div className="h-3 bg-slate-200 rounded-full overflow-hidden">
+              <div
+                className="h-full rounded-full transition-all duration-700"
+                style={{
+                  width: subscription.orderLimit >= 99999
+                    ? '100%'
+                    : `${Math.min((subscription.ordersThisMonth / subscription.orderLimit) * 100, 100)}%`,
+                  backgroundColor: subscription.exceeded
+                    ? '#ef4444'
+                    : subscription.ordersThisMonth / subscription.orderLimit > 0.8
+                    ? '#f59e0b'
+                    : P,
+                }}
+              />
+            </div>
+            {subscription.exceeded && (
+              <div className="mt-3 flex items-center gap-2 bg-red-50 text-red-600 px-3 py-2 rounded-xl">
+                <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" /></svg>
+                <p className="text-[11px] font-bold">
+                  Limite excedido! Novos pedidos serão bloqueados a partir de amanhã.{' '}
+                  <button type="button" onClick={() => setIsPlansModalOpen(true)} className="underline hover:text-red-700">Fazer upgrade</button>
+                </p>
+              </div>
+            )}
+            {!subscription.exceeded && subscription.ordersThisMonth / subscription.orderLimit > 0.8 && (
+              <p className="text-[10px] text-amber-600 font-bold mt-2">
+                Você está próximo do limite. Considere fazer upgrade para não perder vendas.
+              </p>
+            )}
+          </div>
+
+          {/* Features do plano */}
+          {subscription.plan.features && subscription.plan.features.length > 0 && (
+            <div className="mt-4 flex flex-wrap gap-2">
+              {subscription.plan.features.map((f, i) => (
+                <span key={i} className="text-[10px] font-bold text-slate-500 bg-slate-50 px-2 py-1 rounded-lg border border-slate-100">
+                  {f}
+                </span>
+              ))}
+            </div>
+          )}
+
+          <p className="text-[10px] text-slate-400 mt-3">
+            O plano vale para todas as suas marcas. O consumo é a soma de pedidos de todos os negócios.
+          </p>
+        </section>
+      ) : (
+        // Plano gratuito: mostra CTA de upgrade
+        <section className="bg-gradient-to-br from-slate-900 to-slate-800 p-6 rounded-3xl shadow-xl border border-slate-700 relative overflow-hidden group">
+          <Sparkles className="absolute -right-4 -top-4 w-24 h-24 text-white/5 rotate-12 group-hover:scale-110 transition-transform" />
+          <div className="relative z-10">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-4">
+              <div>
+                <div className="inline-flex items-center gap-2 px-2 py-0.5 rounded bg-orange-500 text-white text-[10px] font-black uppercase tracking-widest mb-2">
+                  Plano Atual: Grátis
+                </div>
+                <h3 className="text-white font-black text-lg tracking-tight">Faça Upgrade e Venda Mais</h3>
+                <p className="text-slate-400 text-xs font-medium">Libere mais pedidos, IA de imagens e suporte prioritário.</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsPlansModalOpen(true)}
+                className="whitespace-nowrap bg-white text-slate-900 px-6 py-2.5 rounded-xl font-black text-[11px] uppercase tracking-widest hover:bg-orange-500 hover:text-white transition-all shadow-lg shadow-black/20"
+              >
+                Ver Planos
+              </button>
+            </div>
+
+            {/* Barra de consumo do plano gratuito */}
+            <div className="bg-white/10 rounded-xl p-3 mt-2">
+              <div className="flex items-center justify-between mb-1.5">
+                <p className="text-[11px] font-bold text-slate-300">Pedidos este mês</p>
+                <p className="text-[11px] font-black" style={{ color: subscription.exceeded ? '#ef4444' : '#fb923c' }}>
+                  {subscription.ordersThisMonth} / {subscription.orderLimit}
+                </p>
+              </div>
+              <div className="h-2.5 bg-white/10 rounded-full overflow-hidden">
+                <div
+                  className="h-full rounded-full transition-all duration-700"
+                  style={{
+                    width: `${Math.min((subscription.ordersThisMonth / subscription.orderLimit) * 100, 100)}%`,
+                    backgroundColor: subscription.exceeded ? '#ef4444' : '#fb923c',
+                  }}
+                />
+              </div>
+              {subscription.exceeded && (
+                <p className="text-[10px] text-red-400 font-bold mt-2">
+                  Limite excedido! Novos pedidos serão bloqueados amanhã. Faça upgrade agora.
+                </p>
+              )}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Bloco 6: Zona de Perigo — Apagar Marca */}
       <section className="bg-white p-5 rounded-2xl shadow-sm border border-red-100">
-        <h2 className="text-sm font-bold text-red-600 mb-3 pb-2 border-b border-red-50 uppercase tracking-wide">5. Zona de Perigo</h2>
+        <h2 className="text-sm font-bold text-red-600 mb-3 pb-2 border-b border-red-50 uppercase tracking-wide">6. Zona de Perigo</h2>
         <p className="text-xs text-slate-500 mb-4">Ao apagar esta marca, todos os pedidos, itens do cardápio, configurações e dados associados serão permanentemente removidos.</p>
 
         <label className="flex items-center gap-3 p-3 border border-red-100 rounded-xl cursor-pointer hover:bg-red-50/30 transition mb-3">

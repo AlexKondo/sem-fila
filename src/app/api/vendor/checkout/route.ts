@@ -171,6 +171,13 @@ export async function POST(request: Request) {
         if (planData?.ia_included) {
           await admin.from('vendors').update({ ai_photo_enabled: true }).eq('id', vendorId);
         }
+        // Salva plano no perfil do usuário (vale para todas as marcas)
+        const expiresAt = new Date();
+        expiresAt.setMonth(expiresAt.getMonth() + 1);
+        await admin.from('profiles').update({
+          plan_id: planId,
+          plan_expires_at: expiresAt.toISOString(),
+        }).eq('id', user.id);
       }
 
       // Registra para idempotência (webhook não vai creditar de novo)

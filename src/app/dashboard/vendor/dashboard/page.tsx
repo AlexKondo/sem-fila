@@ -137,6 +137,46 @@ export default async function VendorDashboardPage({ searchParams }: Props) {
   const allCustomers = new Set(allCustomersRes.data?.map(o => o.user_id)).size;
   const allOrdersCount = allOrders.length;
 
+  // Plano do usuário e consumo do mês (para alerta de limite)
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('plan_id, plan_expires_at')
+    .eq('id', user.id)
+    .single();
+
+  let userPlan: { name: string; order_limit: number } | null = null;
+  if (profile?.plan_id) {
+    const { data } = await supabase
+      .from('subscription_plans')
+      .select('name, order_limit')
+      .eq('id', profile.plan_id)
+      .single();
+    userPlan = data;
+  }
+  if (!userPlan) {
+    const { data } = await supabase
+      .from('subscription_plans')
+      .select('name, order_limit')
+      .eq('price', 0)
+      .limit(1)
+      .single();
+    userPlan = data;
+  }
+
+  const mStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+  const mEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59).toISOString();
+  const { count: monthlyOrderCount } = await supabase
+    .from('orders')
+    .select('id', { count: 'exact', head: true })
+    .in('vendor_id', allVendorIds)
+    .gte('created_at', mStart)
+    .lte('created_at', mEnd)
+    .neq('status', 'cancelled');
+
+  const orderLimit = userPlan?.order_limit || 50;
+  const ordersThisMonth = monthlyOrderCount || 0;
+  const limitExceeded = ordersThisMonth > orderLimit;
+
   // Resumo por vendor
   const vendorsSummary = vendors.length > 1
     ? vendors.map(v => {
@@ -180,6 +220,11 @@ export default async function VendorDashboardPage({ searchParams }: Props) {
         totalActive: allActive,
         totalCustomers: allCustomers,
         vendors: vendorsSummary!,
+      } : undefined}
+      orderLimitAlert={limitExceeded ? {
+        planName: userPlan?.name || 'Iniciante',
+        ordersThisMonth,
+        orderLimit,
       } : undefined}
     />
   );
