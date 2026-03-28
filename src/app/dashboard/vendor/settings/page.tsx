@@ -78,7 +78,7 @@ export default async function VendorSettingsPage() {
 
         {/* Bloco 2: Minha Conta */}
         <div className="mb-10">
-          <VendorAccountForm profile={profile} />
+          <VendorAccountForm profile={{ ...profile, email: user.email }} />
         </div>
 
         {/* Bloco 3: Configurações da Marca Selecionada */}

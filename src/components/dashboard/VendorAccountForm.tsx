@@ -34,6 +34,7 @@ export default function VendorAccountForm({ profile }: { profile: any }) {
   const [name, setName] = useState(profile.name || '');
   const [phone, setPhone] = useState(maskPhone(profile.phone || ''));
   const [cnpj, setCnpj] = useState(maskCPF_CNPJ(profile.cnpj || ''));
+  const [address, setAddress] = useState(profile.address || '');
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState({ text: '', type: '' });
 
@@ -47,7 +48,8 @@ export default function VendorAccountForm({ profile }: { profile: any }) {
       .update({
         name: name.trim(),
         phone: phone.replace(/\D/g, ''),
-        cnpj: cnpj.replace(/\D/g, '')
+        cnpj: cnpj.replace(/\D/g, ''),
+        address: address.trim() || null,
       })
       .eq('id', profile.id);
 
@@ -56,7 +58,7 @@ export default function VendorAccountForm({ profile }: { profile: any }) {
       setMsg({ text: `Erro: ${error.message}`, type: 'error' });
     } else {
       setMsg({ text: 'Perfil atualizado com sucesso!', type: 'success' });
-      window.location.reload(); // Recarrega para atualizar o header
+      window.location.reload();
     }
   }
 
@@ -75,27 +77,46 @@ export default function VendorAccountForm({ profile }: { profile: any }) {
       <form onSubmit={handleUpdateProfile} className="space-y-4">
         <div>
           <label className="block text-xs font-bold text-slate-500 mb-1 ml-1 uppercase tracking-widest">Nome Completo</label>
-          <input 
+          <input
             value={name} onChange={e => setName(e.target.value)}
             className="w-full h-12 bg-slate-50 border border-slate-200 rounded-xl px-4 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/50"
           />
         </div>
 
+        <div>
+          <label className="block text-xs font-bold text-slate-500 mb-1 ml-1 uppercase tracking-widest">Email</label>
+          <input
+            value={profile.email || ''}
+            disabled
+            className="w-full h-12 bg-slate-100 border border-slate-200 rounded-xl px-4 text-sm text-slate-400 cursor-not-allowed"
+          />
+          <p className="text-[10px] text-slate-400 mt-1 ml-1">O email não pode ser alterado.</p>
+        </div>
+
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label className="block text-xs font-bold text-slate-500 mb-1 ml-1 uppercase tracking-widest">Celular</label>
-            <input 
+            <input
               value={phone} onChange={e => setPhone(maskPhone(e.target.value))}
               className="w-full h-12 bg-slate-50 border border-slate-200 rounded-xl px-4 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/50"
             />
           </div>
           <div>
             <label className="block text-xs font-bold text-slate-500 mb-1 ml-1 uppercase tracking-widest">CPF ou CNPJ</label>
-            <input 
+            <input
               value={cnpj} onChange={e => setCnpj(maskCPF_CNPJ(e.target.value))}
               className="w-full h-12 bg-slate-50 border border-slate-200 rounded-xl px-4 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/50"
             />
           </div>
+        </div>
+
+        <div>
+          <label className="block text-xs font-bold text-slate-500 mb-1 ml-1 uppercase tracking-widest">Endereço <span className="text-slate-300 font-normal normal-case">(opcional)</span></label>
+          <input
+            value={address} onChange={e => setAddress(e.target.value)}
+            placeholder="Rua, número, cidade"
+            className="w-full h-12 bg-slate-50 border border-slate-200 rounded-xl px-4 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/50"
+          />
         </div>
 
         {msg.text && (
