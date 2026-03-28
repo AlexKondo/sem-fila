@@ -74,8 +74,8 @@ export async function POST(request: Request) {
       descriptions.push(desc);
     }
 
-    // Busca fotos reais no Pexels
-    images = await searchPexelsImages(
+    // Busca fotos reais no Pexels + Unsplash
+    images = await searchImages(
       menuItemName || category || 'prato comida',
       imagesPerCredit,
     );
@@ -166,14 +166,30 @@ Regras:
   return `${itemName} preparado com ingredientes selecionados e todo o carinho da casa.`;
 }
 
-async function searchPexelsImages(query: string, count: number): Promise<string[]> {
+async function searchImages(query: string, count: number): Promise<string[]> {
+  // Busca em paralelo no Pexels e Unsplash para combinar resultados
+  const [pexels, unsplash] = await Promise.all([
+    searchPexels(query, count),
+    searchUnsplash(query, count),
+  ]);
+
+  // Intercala resultados das duas fontes para variedade
+  const combined: string[] = [];
+  const maxLen = Math.max(pexels.length, unsplash.length);
+  for (let i = 0; i < maxLen && combined.length < count; i++) {
+    if (i < pexels.length) combined.push(pexels[i]);
+    if (i < unsplash.length && combined.length < count) combined.push(unsplash[i]);
+  }
+
+  return combined;
+}
+
+async function searchPexels(query: string, count: number): Promise<string[]> {
   const apiKey = process.env.PEXELS_API_KEY;
   if (!apiKey) return [];
 
   try {
-    // Busca em português primeiro, com fallback para termo genérico
-    const searchQuery = `${query} food`;
-    const url = `https://api.pexels.com/v1/search?query=${encodeURIComponent(searchQuery)}&per_page=${count}&orientation=square&size=small`;
+    const url = `https://api.pexels.com/v1/search?query=${encodeURIComponent(query)}&per_page=${count}&orientation=square&size=small`;
 
     const res = await fetch(url, {
       headers: { Authorization: apiKey },
@@ -190,6 +206,32 @@ async function searchPexelsImages(query: string, count: number): Promise<string[
     return photos.map(p => p.src.medium);
   } catch (err: any) {
     console.error('[Pexels Search Error]', err?.message);
+    return [];
+  }
+}
+
+async function searchUnsplash(query: string, count: number): Promise<string[]> {
+  const accessKey = process.env.UNSPLASH_ACCESS_KEY;
+  if (!accessKey) return [];
+
+  try {
+    const url = `https://api.unsplash.com/search/photos?query=${encodeURIComponent(query)}&per_page=${count}&orientation=squarish`;
+
+    const res = await fetch(url, {
+      headers: { Authorization: `Client-ID ${accessKey}` },
+    });
+
+    if (!res.ok) {
+      console.error('[Unsplash API Error]', res.status, await res.text());
+      return [];
+    }
+
+    const data = await res.json();
+    const photos: { urls: { small: string } }[] = data.results || [];
+
+    return photos.map(p => p.urls.small);
+  } catch (err: any) {
+    console.error('[Unsplash Search Error]', err?.message);
     return [];
   }
 }
