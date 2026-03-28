@@ -524,7 +524,11 @@ export default function MenuManager({ initialItems, vendorId, aiEnabled, aiCredi
           </div>
         </div>
       )}
-      <VendorPlansModal isOpen={isPlansModalOpen} onClose={() => setIsPlansModalOpen(false)} />
+      <VendorPlansModal 
+        isOpen={isPlansModalOpen} 
+        onClose={() => setIsPlansModalOpen(false)} 
+        onlyShowAi={true}
+      />
     </div>
   );
 }

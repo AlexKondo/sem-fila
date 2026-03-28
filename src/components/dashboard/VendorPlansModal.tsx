@@ -49,7 +49,7 @@ function PlanCard({ name, price, features, recommended, onSelect }: PlanProps) {
   );
 }
 
-export default function VendorPlansModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
+export default function VendorPlansModal({ isOpen, onClose, onlyShowAi }: { isOpen: boolean; onClose: () => void; onlyShowAi?: boolean }) {
   const [plans, setPlans] = React.useState<any[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [aiConfig, setAiConfig] = React.useState({ size: '50', price: '199.00' });
@@ -98,65 +98,70 @@ export default function VendorPlansModal({ isOpen, onClose }: { isOpen: boolean;
           <X className="w-5 h-5" />
         </button>
 
-        <div className="p-8 md:p-12">
-          {/* Header */}
-          <div className="text-center mb-12">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-orange-100 text-orange-600 text-[10px] font-black uppercase tracking-widest mb-4">
-              <Zap className="w-3 h-3 fill-orange-600" />
-              Upgrade de Potencial
-            </div>
-            <h2 className="text-3xl md:text-4xl font-black text-slate-900 mb-4 tracking-tight">Escolha o Plano Ideal</h2>
-            <p className="text-slate-500 max-w-md mx-auto font-medium">
-              Aumente seu limite de pedidos e desbloqueie ferramentas de inteligência artificial para vender mais.
-            </p>
-          </div>
+        <div className={`p-8 md:p-12 ${onlyShowAi ? 'md:pt-16 md:pb-16' : ''}`}>
+          
+          {!onlyShowAi && (
+            <>
+              {/* Header */}
+              <div className="text-center mb-12">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-orange-100 text-orange-600 text-[10px] font-black uppercase tracking-widest mb-4">
+                  <Zap className="w-3 h-3 fill-orange-600" />
+                  Upgrade de Potencial
+                </div>
+                <h2 className="text-3xl md:text-4xl font-black text-slate-900 mb-4 tracking-tight">Escolha o Plano Ideal</h2>
+                <p className="text-slate-500 max-w-md mx-auto font-medium">
+                  Aumente seu limite de pedidos e desbloqueie ferramentas de inteligência artificial para vender mais.
+                </p>
+              </div>
 
-          {loading ? (
-            <div className="flex flex-col items-center justify-center py-20 gap-4">
-              <div className="w-10 h-10 border-4 border-orange-200 border-t-orange-500 animate-spin rounded-full" />
-              <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Carregando Melhores Preços...</p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12 items-stretch">
-              {plans.length > 0 ? plans.map((p) => (
-                <PlanCard 
-                  key={p.id || p.name}
-                  name={p.name} 
-                  price={String(p.price)} 
-                  recommended={p.recommended}
-                  features={p.features}
-                  onSelect={() => alert(`Assinando ${p.name}...`)}
-                />
-              )) : (
-                 <p className="col-span-3 text-center text-slate-400 font-bold uppercase tracking-widest py-10">Serviço de Assinaturas Indisponível</p>
+              {loading ? (
+                <div className="flex flex-col items-center justify-center py-20 gap-4">
+                  <div className="w-10 h-10 border-4 border-orange-200 border-t-orange-500 animate-spin rounded-full" />
+                  <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Carregando Melhores Preços...</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12 items-stretch">
+                  {plans.length > 0 ? plans.map((p) => (
+                    <PlanCard 
+                      key={p.id || p.name}
+                      name={p.name} 
+                      price={String(p.price)} 
+                      recommended={p.recommended}
+                      features={p.features}
+                      onSelect={() => alert(`Assinando ${p.name}...`)}
+                    />
+                  )) : (
+                    <p className="col-span-3 text-center text-slate-400 font-bold uppercase tracking-widest py-10">Serviço de Assinaturas Indisponível</p>
+                  )}
+                </div>
               )}
-            </div>
+            </>
           )}
 
-          {/* Add-ons Section */}
-          <div className="bg-slate-50 rounded-3xl p-6 border border-slate-100 flex flex-col md:flex-row items-center justify-between gap-6">
-            <div className="flex items-center gap-4 text-center md:text-left">
-              <div className="w-14 h-14 rounded-2xl bg-white border border-slate-100 flex items-center justify-center text-2xl shadow-sm">
+          {/* Seção IA - O seu retangulo vermelho */}
+          <div className="bg-slate-50 rounded-3xl p-6 md:p-10 border border-slate-100 flex flex-col md:flex-row items-center justify-between gap-6 shadow-inner">
+            <div className="flex items-center gap-6 text-center md:text-left">
+              <div className="w-20 h-20 rounded-3xl bg-white border border-slate-100 flex items-center justify-center text-4xl shadow-md rotate-3">
                 ✨
               </div>
               <div>
-                <h4 className="text-lg font-black text-slate-900 flex items-center gap-2 justify-center md:justify-start">
-                  Pacote de IA ({aiConfig.size} fotos)
-                  <span className="text-[10px] bg-orange-500 text-white px-2 py-0.5 rounded-full font-black uppercase">Exclusivo</span>
+                <h4 className="text-xl font-black text-slate-900 flex items-center gap-2 justify-center md:justify-start">
+                  Melhorias com IA 
+                  <span className="text-[10px] bg-orange-500 text-white px-2 py-0.5 rounded-full font-black uppercase">Plus</span>
                 </h4>
-                <p className="text-sm text-slate-500 font-medium max-w-sm">
-                  Deixe suas fotos de comida com aspecto profissional usando nosso motor de IA. Melhore {aiConfig.size} pratos.
+                <p className="text-sm text-slate-500 font-medium max-w-sm mt-1">
+                  Deixe suas fotos de comida com aspecto profissional usando nosso motor de IA. Pacote exclusivo para {aiConfig.size} pratos.
                 </p>
               </div>
             </div>
-            <div className="flex flex-col items-center md:items-end gap-2">
+            <div className="flex flex-col items-center md:items-end gap-3 shrink-0">
               <div className="flex items-baseline gap-1">
-                <span className="text-2xl font-black text-slate-900">R$ {aiConfig.price}</span>
+                <span className="text-3xl font-black text-slate-900">R$ {aiConfig.price}</span>
                 <span className="text-xs text-slate-400 font-bold">/pacote</span>
               </div>
               <button 
                 onClick={() => alert(`Compra de ${aiConfig.size} fotos por R$ ${aiConfig.price} iniciada!`)}
-                className="bg-slate-900 text-white px-6 py-2.5 rounded-xl font-bold text-sm hover:bg-slate-800 transition-all shadow-sm"
+                className="bg-slate-900 text-white px-8 py-3 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-slate-800 transition-all shadow-lg shadow-black/20"
               >
                 Habilitar Agora
               </button>
@@ -164,12 +169,9 @@ export default function VendorPlansModal({ isOpen, onClose }: { isOpen: boolean;
           </div>
 
           {/* Trust Footer */}
-          <div className="mt-10 flex flex-wrap items-center justify-center gap-6 text-slate-400 grayscale opacity-60">
-            <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest">
-              <ShieldCheck className="w-4 h-4" /> Pagamento Seguro
-            </div>
-            <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest">
-              <Check className="w-4 h-4" /> Cancelamento Fácil
+          <div className="mt-12 flex items-center justify-center text-slate-400">
+            <div className="flex items-center gap-3 text-sm font-black uppercase tracking-[0.2em] text-slate-500">
+              <ShieldCheck className="w-6 h-6 text-green-500" /> PAGAMENTO SEGURO
             </div>
           </div>
         </div>
