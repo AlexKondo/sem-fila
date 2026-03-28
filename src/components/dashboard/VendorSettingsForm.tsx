@@ -44,7 +44,14 @@ export default function VendorSettingsForm({ vendor, subscription }: { vendor: a
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState('');
+  const [aiImagesPerCredit, setAiImagesPerCredit] = useState(10);
   const router = useRouter();
+
+  useEffect(() => {
+    const supabase = createClient();
+    supabase.from('platform_config').select('key, value').eq('key', 'ai_images_per_credit').single()
+      .then(({ data }) => { if (data) setAiImagesPerCredit(parseInt(data.value) || 10); });
+  }, []);
 
   useEffect(() => {
     if (!showUsage || aiUsage.length > 0) return;
@@ -345,7 +352,7 @@ export default function VendorSettingsForm({ vendor, subscription }: { vendor: a
           <div className="flex-1">
             <p className="text-sm font-bold text-gray-800">Habilitar Geração de Imagem com IA</p>
             <p className="text-[11px] text-gray-500 font-medium leading-relaxed">
-              O sistema pegará a foto original do prato e gerará **6 opções melhoradas** para você escolher a &quot;Foto Ideal&quot;.
+              O sistema pegará a foto original do prato e gerará {aiImagesPerCredit} opções melhoradas para você escolher a &quot;Foto Ideal&quot;.
               Cobra 1 crédito por item editado.
             </p>
           </div>
@@ -466,20 +473,6 @@ export default function VendorSettingsForm({ vendor, subscription }: { vendor: a
             )}
           </div>
 
-          {/* Features do plano */}
-          {subscription.plan.features && subscription.plan.features.length > 0 && (
-            <div className="mt-4 flex flex-wrap gap-2">
-              {subscription.plan.features.map((f, i) => (
-                <span key={i} className="text-[10px] font-bold text-slate-500 bg-slate-50 px-2 py-1 rounded-lg border border-slate-100">
-                  {f}
-                </span>
-              ))}
-            </div>
-          )}
-
-          <p className="text-[10px] text-slate-400 mt-3">
-            O plano vale para todas as suas marcas. O consumo é a soma de pedidos de todos os negócios.
-          </p>
         </section>
       ) : (
         // Plano gratuito: mostra CTA de upgrade
