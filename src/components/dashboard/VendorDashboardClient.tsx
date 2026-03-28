@@ -196,6 +196,11 @@ export default function VendorDashboardClient({
           sub="No período selecionado"
           icon="💰"
           accent={P}
+          vendorBars={globalSummary?.vendors.map(v => ({
+            name: v.name,
+            value: v.revenue,
+            label: formatCurrency(v.revenue),
+          }))}
         />
         <KpiCard
           label="Pedidos Ativos"
@@ -204,6 +209,11 @@ export default function VendorDashboardClient({
           icon="🔥"
           accent="#f59e0b"
           badge={currentPeriod === 'today' ? 'ATIVOS' : undefined}
+          vendorBars={globalSummary?.vendors.map(v => ({
+            name: v.name,
+            value: v.active,
+            label: String(v.active),
+          }))}
         />
         <KpiCard
           label="Tempo Médio Prep."
@@ -316,11 +326,21 @@ export default function VendorDashboardClient({
   );
 }
 
+interface VendorBar {
+  name: string;
+  value: number;
+  label: string;
+}
+
+const VENDOR_COLORS = ['#ec5b13', '#3b82f6', '#8b5cf6', '#22c55e', '#f59e0b'];
+
 function KpiCard({
-  label, value, sub, icon, accent, badge,
+  label, value, sub, icon, accent, badge, vendorBars,
 }: {
-  label: string; value: string; sub: string; icon: string; accent: string; badge?: string;
+  label: string; value: string; sub: string; icon: string; accent: string; badge?: string; vendorBars?: VendorBar[];
 }) {
+  const maxBar = vendorBars ? Math.max(...vendorBars.map(v => v.value), 1) : 1;
+
   return (
     <div className="bg-white rounded-3xl p-4 border border-slate-100 shadow-sm relative overflow-hidden">
       {badge && (
@@ -328,10 +348,44 @@ function KpiCard({
           {badge}
         </span>
       )}
-      <div className="text-2xl mb-2">{icon}</div>
-      <p className="text-[11px] text-slate-400 font-medium leading-none mb-1">{label}</p>
-      <p className="text-xl font-black text-slate-900 leading-tight">{value}</p>
-      <p className="text-[10px] text-slate-300 mt-1">{sub}</p>
+
+      <div className={vendorBars && vendorBars.length > 0 ? 'flex gap-3' : ''}>
+        {/* Lado esquerdo: icone + valor */}
+        <div className={vendorBars && vendorBars.length > 0 ? 'shrink-0' : ''}>
+          <div className="text-2xl mb-2">{icon}</div>
+          <p className="text-[11px] text-slate-400 font-medium leading-none mb-1">{label}</p>
+          <p className="text-xl font-black text-slate-900 leading-tight">{value}</p>
+          <p className="text-[10px] text-slate-300 mt-1">{sub}</p>
+        </div>
+
+        {/* Lado direito: mini barras por vendor */}
+        {vendorBars && vendorBars.length > 0 && (
+          <div className="flex-1 flex flex-col justify-end gap-1.5 min-w-0 pt-2">
+            {vendorBars.map((v, i) => (
+              <div key={i} className="flex items-center gap-1.5">
+                <div className="flex-1 h-3 bg-slate-50 rounded-full overflow-hidden">
+                  <div
+                    className="h-full rounded-full transition-all duration-500"
+                    style={{
+                      width: `${Math.max((v.value / maxBar) * 100, v.value > 0 ? 8 : 0)}%`,
+                      backgroundColor: VENDOR_COLORS[i % VENDOR_COLORS.length],
+                    }}
+                  />
+                </div>
+                <span className="text-[8px] font-black text-slate-400 shrink-0 w-7 text-right">{v.label}</span>
+              </div>
+            ))}
+            <div className="flex gap-1 flex-wrap mt-0.5">
+              {vendorBars.map((v, i) => (
+                <span key={i} className="flex items-center gap-0.5">
+                  <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: VENDOR_COLORS[i % VENDOR_COLORS.length] }} />
+                  <span className="text-[7px] text-slate-300 font-bold truncate max-w-[60px]">{v.name}</span>
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
