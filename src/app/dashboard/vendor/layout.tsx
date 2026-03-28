@@ -9,7 +9,7 @@ export default async function VendorDashboardLayout({ children }: { children: Re
 
   const [profileRes, vendorsRes] = await Promise.all([
     supabase.from('profiles').select('role, cnpj, name').eq('id', user.id).single(),
-    supabase.from('vendors').select('*').eq('owner_id', user.id).eq('active', true)
+    supabase.from('vendors').select('*').eq('owner_id', user.id)
   ]);
 
   const profile = profileRes.data;
