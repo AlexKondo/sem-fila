@@ -37,6 +37,11 @@ These defaults are optimized for AI coding agents (and humans) working on apps t
 - **Renderização**: Evite lógica pesada síncrona dentro do loop de renderização. Mova cálculos complexos para `useMemo`.
 - **Imagens**: Limite o carregamento de imagens pesadas e use as propriedades de otimização do Next.js.
 
+### Máscaras de Input (CPF/CNPJ/Telefone)
+- **Sempre** aplique a máscara tanto no `onChange` quanto no valor inicial (`useState`). Dados vindos do banco chegam sem formatação — o usuário deve ver o valor já mascarado ao abrir a tela.
+- CPF: `000.000.000-00` | CNPJ: `00.000.000/0000-00` | Celular: `(00) 00000-0000`
+- Salve sempre apenas dígitos no banco (`replace(/\D/g, '')`), a máscara é apenas visual.
+
 ### Escalabilidade de Dados (Postgres/Supabase)
 - **Índices**: Sempre carregue índices para Colunas de Chave Estrangeira (FKs) e colunas usadas frequentemente em filtros (`WHERE`) e ordenações (`ORDER BY`).
 - **RLS Otimizado**: Mantenha as políticas simples e use funções `SECURITY DEFINER` para evitar loops de recursão no banco.

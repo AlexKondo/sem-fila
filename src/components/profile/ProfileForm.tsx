@@ -21,10 +21,18 @@ interface Props {
   email: string;
 }
 
+function maskCpf(v: string) {
+  const d = v.replace(/\D/g, '').substring(0, 11);
+  if (d.length > 9) return `${d.substring(0, 3)}.${d.substring(3, 6)}.${d.substring(6, 9)}-${d.substring(9)}`;
+  if (d.length > 6) return `${d.substring(0, 3)}.${d.substring(3, 6)}.${d.substring(6)}`;
+  if (d.length > 3) return `${d.substring(0, 3)}.${d.substring(3)}`;
+  return d;
+}
+
 export default function ProfileForm({ profile, email }: Props) {
   const [name, setName] = useState(profile?.name ?? '');
   const [phone, setPhone] = useState(profile?.phone ?? '');
-  const [cpf, setCpf] = useState(profile?.cpf ?? '');
+  const [cpf, setCpf] = useState(maskCpf(profile?.cpf ?? ''));
   const [birthdayDay, setBirthdayDay] = useState(profile?.birthday_day?.toString() ?? '');
   const [birthdayMonth, setBirthdayMonth] = useState(profile?.birthday_month?.toString() ?? '');
   const [saving, setSaving] = useState(false);
@@ -137,14 +145,7 @@ export default function ProfileForm({ profile, email }: Props) {
             <input
               type="text"
               value={cpf}
-              onChange={(e) => {
-                const digits = e.target.value.replace(/\D/g, '').substring(0, 11);
-                let f = digits;
-                if (f.length > 9) f = `${f.substring(0, 3)}.${f.substring(3, 6)}.${f.substring(6, 9)}-${f.substring(9)}`;
-                else if (f.length > 6) f = `${f.substring(0, 3)}.${f.substring(3, 6)}.${f.substring(6)}`;
-                else if (f.length > 3) f = `${f.substring(0, 3)}.${f.substring(3)}`;
-                setCpf(f);
-              }}
+              onChange={(e) => setCpf(maskCpf(e.target.value))}
               placeholder="000.000.000-00"
               className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
             />

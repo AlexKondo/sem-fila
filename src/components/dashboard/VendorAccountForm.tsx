@@ -32,8 +32,8 @@ function maskPhone(v: string) {
 
 export default function VendorAccountForm({ profile }: { profile: any }) {
   const [name, setName] = useState(profile.name || '');
-  const [phone, setPhone] = useState(profile.phone || '');
-  const [cnpj, setCnpj] = useState(profile.cnpj || '');
+  const [phone, setPhone] = useState(maskPhone(profile.phone || ''));
+  const [cnpj, setCnpj] = useState(maskCPF_CNPJ(profile.cnpj || ''));
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState({ text: '', type: '' });
 
