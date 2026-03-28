@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { Sparkles, Clock, ImageIcon, Type } from 'lucide-react';
 import VendorPlansModal from './VendorPlansModal';
@@ -24,6 +25,11 @@ export default function VendorSettingsForm({ vendor }: { vendor: any }) {
   const [aiUsage, setAiUsage] = useState<{ id: string; type: string; credits_used: number; menu_item_name: string | null; prompt: string | null; created_at: string }[]>([]);
   const [usageLoading, setUsageLoading] = useState(false);
   const [showUsage, setShowUsage] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState('');
+  const router = useRouter();
 
   useEffect(() => {
     if (!showUsage || aiUsage.length > 0) return;
@@ -53,6 +59,31 @@ export default function VendorSettingsForm({ vendor }: { vendor: any }) {
       setDeliversToTable(true);
     }
   };
+
+  async function handleDeleteVendor() {
+    setDeleting(true);
+    setDeleteError('');
+    try {
+      const res = await fetch('/api/vendor/delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ vendorId: vendor.id }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setDeleteError(data.error || 'Erro ao apagar marca.');
+        setDeleting(false);
+        return;
+      }
+      // Limpa cookie e redireciona
+      document.cookie = 'selected_vendor_id=;path=/;max-age=0';
+      router.push('/dashboard/vendor/settings');
+      router.refresh();
+    } catch {
+      setDeleteError('Erro de conexão. Tente novamente.');
+      setDeleting(false);
+    }
+  }
 
   async function handleSave(e: React.FormEvent) {
     e.preventDefault();
@@ -374,6 +405,83 @@ export default function VendorSettingsForm({ vendor }: { vendor: any }) {
           </div>
         )}
       </section>
+
+      {/* Bloco 5: Zona de Perigo — Apagar Marca */}
+      <section className="bg-white p-5 rounded-2xl shadow-sm border border-red-100">
+        <h2 className="text-sm font-bold text-red-600 mb-3 pb-2 border-b border-red-50 uppercase tracking-wide">5. Zona de Perigo</h2>
+        <p className="text-xs text-slate-500 mb-4">Ao apagar esta marca, todos os pedidos, itens do cardápio, configurações e dados associados serão permanentemente removidos.</p>
+
+        <label className="flex items-center gap-3 p-3 border border-red-100 rounded-xl cursor-pointer hover:bg-red-50/30 transition mb-3">
+          <div className="relative flex items-center">
+            <input
+              type="checkbox"
+              checked={confirmDelete}
+              onChange={(e) => setConfirmDelete(e.target.checked)}
+              className="peer shrink-0 appearance-none w-5 h-5 border border-red-300 rounded-md bg-white checked:bg-red-600 checked:border-red-600 focus:outline-none focus:ring-2 focus:ring-red-500/50 transition-colors"
+            />
+            <svg className="absolute w-5 h-5 text-white pointer-events-none hidden peer-checked:block p-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
+          </div>
+          <div className="flex-1">
+            <p className="text-sm font-bold text-red-700">Sim, desejo apagar a marca &quot;{vendor.name}&quot;</p>
+            <p className="text-[11px] text-slate-400 font-medium">Marque esta caixa para habilitar o botão de exclusão.</p>
+          </div>
+        </label>
+
+        <button
+          type="button"
+          disabled={!confirmDelete || deleting}
+          onClick={() => setShowDeleteModal(true)}
+          className="w-full h-12 bg-red-600 text-white font-bold rounded-xl text-sm transition hover:bg-red-700 disabled:opacity-30 disabled:cursor-not-allowed"
+        >
+          {deleting ? 'Apagando...' : 'Apagar Marca Permanentemente'}
+        </button>
+      </section>
+
+      {/* Modal de Confirmação de Exclusão */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
+          <div className="bg-white rounded-3xl p-6 w-full max-w-md shadow-2xl border border-red-100">
+            <div className="flex flex-col items-center text-center mb-5">
+              <div className="w-14 h-14 rounded-full bg-red-100 flex items-center justify-center mb-3">
+                <svg className="w-7 h-7 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" /></svg>
+              </div>
+              <h3 className="text-lg font-black text-slate-900">Tem certeza absoluta?</h3>
+              <p className="text-sm text-slate-500 mt-2 leading-relaxed">
+                Esta ação vai <span className="font-bold text-red-600">apagar permanentemente</span> a marca <span className="font-bold">&quot;{vendor.name}&quot;</span> e todos os seus dados:
+              </p>
+              <ul className="text-xs text-slate-500 mt-3 space-y-1 text-left w-full bg-red-50 p-3 rounded-xl">
+                <li className="flex items-center gap-2"><span className="text-red-400">&#10005;</span> Todos os pedidos</li>
+                <li className="flex items-center gap-2"><span className="text-red-400">&#10005;</span> Itens do cardápio e imagens</li>
+                <li className="flex items-center gap-2"><span className="text-red-400">&#10005;</span> Configurações e créditos de IA</li>
+                <li className="flex items-center gap-2"><span className="text-red-400">&#10005;</span> QR Codes gerados</li>
+              </ul>
+              <p className="text-xs text-red-600 font-bold mt-3">Os dados NÃO são recuperáveis.</p>
+            </div>
+
+            {deleteError && (
+              <div className="bg-red-50 text-red-600 text-xs font-bold px-3 py-2 rounded-xl mb-4">{deleteError}</div>
+            )}
+
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => { setShowDeleteModal(false); setDeleteError(''); }}
+                className="flex-1 h-12 bg-slate-100 text-slate-600 font-bold rounded-xl text-sm transition hover:bg-slate-200"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                disabled={deleting}
+                onClick={handleDeleteVendor}
+                className="flex-1 h-12 bg-red-600 text-white font-bold rounded-xl text-sm transition hover:bg-red-700 disabled:opacity-50"
+              >
+                {deleting ? 'Apagando...' : 'Apagar Tudo'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Alertas */}
       {msg.text && (
