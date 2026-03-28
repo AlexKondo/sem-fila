@@ -1,8 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
-import { Sparkles } from 'lucide-react';
+import { Sparkles, Clock, ImageIcon, Type } from 'lucide-react';
 import VendorPlansModal from './VendorPlansModal';
 
 const P = '#ec5b13';
@@ -21,6 +21,19 @@ export default function VendorSettingsForm({ vendor }: { vendor: any }) {
   const [aiPhotoCredits] = useState(vendor.ai_photo_credits || 0);
   const [alertsEnabled, setAlertsEnabled] = useState(true);
   const [isPlansModalOpen, setIsPlansModalOpen] = useState(false);
+  const [aiUsage, setAiUsage] = useState<{ id: string; type: string; credits_used: number; menu_item_name: string | null; prompt: string | null; created_at: string }[]>([]);
+  const [usageLoading, setUsageLoading] = useState(false);
+  const [showUsage, setShowUsage] = useState(false);
+
+  useEffect(() => {
+    if (!showUsage || aiUsage.length > 0) return;
+    setUsageLoading(true);
+    fetch(`/api/vendor/ai/usage?vendorId=${vendor.id}`)
+      .then(r => r.json())
+      .then(d => setAiUsage(d.usage || []))
+      .catch(() => {})
+      .finally(() => setUsageLoading(false));
+  }, [showUsage, vendor.id, aiUsage.length]);
 
   // Carrega preferência local de som
   useState(() => {
@@ -299,8 +312,8 @@ export default function VendorSettingsForm({ vendor }: { vendor: any }) {
 
         <label className="flex items-center gap-3 p-3 mt-4 border border-slate-100 rounded-xl cursor-pointer hover:bg-slate-50 transition">
           <div className="relative flex items-center">
-            <input 
-              type="checkbox" 
+            <input
+              type="checkbox"
               checked={aiPhotoEnabled}
               onChange={(e) => setAiPhotoEnabled(e.target.checked)}
               className="peer shrink-0 appearance-none w-5 h-5 border border-slate-300 rounded-md bg-white checked:bg-orange-600 checked:border-orange-600 focus:outline-none focus:ring-2 focus:ring-orange-500/50 transition-colors"
@@ -310,11 +323,56 @@ export default function VendorSettingsForm({ vendor }: { vendor: any }) {
           <div className="flex-1">
             <p className="text-sm font-bold text-gray-800">Habilitar Geração de Imagem com IA</p>
             <p className="text-[11px] text-gray-500 font-medium leading-relaxed">
-              O sistema pegará a foto original do prato e gerará **6 opções melhoradas** para você escolher a "Foto Ideal". 
+              O sistema pegará a foto original do prato e gerará **6 opções melhoradas** para você escolher a &quot;Foto Ideal&quot;.
               Cobra 1 crédito por item editado.
             </p>
           </div>
         </label>
+
+        {/* Histórico de uso */}
+        <button
+          type="button"
+          onClick={() => setShowUsage(!showUsage)}
+          className="flex items-center gap-2 mt-4 text-xs font-bold text-slate-500 hover:text-orange-600 transition"
+        >
+          <Clock className="w-3.5 h-3.5" />
+          {showUsage ? 'Ocultar histórico de uso' : 'Ver histórico de uso de créditos'}
+        </button>
+
+        {showUsage && (
+          <div className="mt-3 border border-slate-100 rounded-xl overflow-hidden">
+            {usageLoading ? (
+              <div className="flex items-center justify-center py-6">
+                <div className="w-5 h-5 border-2 border-orange-200 border-t-orange-500 animate-spin rounded-full" />
+              </div>
+            ) : aiUsage.length === 0 ? (
+              <p className="text-xs text-slate-400 text-center py-6 font-medium">Nenhum crédito utilizado ainda.</p>
+            ) : (
+              <div className="max-h-60 overflow-y-auto divide-y divide-slate-50">
+                {aiUsage.map(u => (
+                  <div key={u.id} className="flex items-center gap-3 px-4 py-2.5 hover:bg-slate-50/50">
+                    <div className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 ${u.type === 'image' ? 'bg-orange-100 text-orange-600' : 'bg-blue-100 text-blue-600'}`}>
+                      {u.type === 'image' ? <ImageIcon className="w-3.5 h-3.5" /> : <Type className="w-3.5 h-3.5" />}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-bold text-slate-700 truncate">
+                        {u.type === 'image' ? 'Melhoria de Foto' : 'Melhoria de Descrição'}
+                        {u.menu_item_name && <span className="text-slate-400 font-medium"> — {u.menu_item_name}</span>}
+                      </p>
+                      {u.prompt && <p className="text-[10px] text-slate-400 truncate">{u.prompt}</p>}
+                    </div>
+                    <div className="text-right shrink-0">
+                      <p className="text-[10px] font-bold text-red-500">-{u.credits_used}</p>
+                      <p className="text-[9px] text-slate-300">
+                        {new Date(u.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
       </section>
 
       {/* Alertas */}

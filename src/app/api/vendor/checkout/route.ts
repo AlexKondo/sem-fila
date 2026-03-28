@@ -145,6 +145,44 @@ export async function POST(request: Request) {
         remoteIp: request.headers.get('x-forwarded-for') || '127.0.0.1',
       });
 
+      // Cartão aprovado instantaneamente — credita agora (sem esperar webhook)
+      const { createAdminClient } = await import('@/lib/supabase/server');
+      const admin = await createAdminClient();
+
+      let creditsAdded = 0;
+      if (type === 'ai_package') {
+        const packageSize = parseInt(externalReference.split(':')[2]) || 50;
+        const { data: current } = await admin
+          .from('vendors')
+          .select('ai_photo_credits')
+          .eq('id', vendorId)
+          .single();
+        await admin.from('vendors').update({
+          ai_photo_enabled: true,
+          ai_photo_credits: (current?.ai_photo_credits || 0) + packageSize,
+        }).eq('id', vendorId);
+        creditsAdded = packageSize;
+      } else if (type === 'plan') {
+        const { data: planData } = await admin
+          .from('subscription_plans')
+          .select('ia_included')
+          .eq('id', planId!)
+          .single();
+        if (planData?.ia_included) {
+          await admin.from('vendors').update({ ai_photo_enabled: true }).eq('id', vendorId);
+        }
+      }
+
+      // Registra para idempotência (webhook não vai creditar de novo)
+      try {
+        await admin.from('vendor_payment_log').insert({
+          asaas_payment_id: result.paymentId,
+          vendor_id: vendorId,
+          external_reference: externalReference,
+          credits_added: creditsAdded,
+        });
+      } catch { /* ignora se já existe */ }
+
       return NextResponse.json({
         paymentId: result.paymentId,
         paid: true,

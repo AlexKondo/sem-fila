@@ -12,7 +12,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Token inválido.' }, { status: 401 });
   }
 
-  let payload: { event: string; payment?: { id: string; externalReference?: string } };
+  let payload: { event: string; payment?: { id: string; externalReference?: string; billingType?: string } };
   try {
     payload = await request.json();
   } catch {
@@ -36,7 +36,19 @@ export async function POST(request: Request) {
   // Pagamentos de vendor (planos e pacotes IA)
   if (ref.startsWith('vendor_plan:') || ref.startsWith('vendor_ai:')) {
     if (event === 'PAYMENT_CONFIRMED' || event === 'PAYMENT_RECEIVED') {
-      await handleVendorPayment(supabase, ref);
+      // Idempotência: verifica se já foi processado (ex: cartão creditado no checkout)
+      const paymentId = payment?.id;
+      if (paymentId) {
+        const { data: existing } = await supabase
+          .from('vendor_payment_log')
+          .select('id')
+          .eq('asaas_payment_id', paymentId)
+          .maybeSingle();
+        if (existing) {
+          return NextResponse.json({ received: true, already_processed: true });
+        }
+      }
+      await handleVendorPayment(supabase, ref, paymentId);
     }
     return NextResponse.json({ received: true });
   }
@@ -72,12 +84,12 @@ export async function POST(request: Request) {
   return NextResponse.json({ received: true });
 }
 
-async function handleVendorPayment(supabase: any, ref: string) {
+async function handleVendorPayment(supabase: any, ref: string, asaasPaymentId?: string) {
   const parts = ref.split(':');
+  let creditsAdded = 0;
+  let vendorId = parts[1];
 
   if (parts[0] === 'vendor_plan') {
-    // vendor_plan:<vendorId>:<planId>
-    const vendorId = parts[1];
     const planId = parts[2];
 
     const { data: plan } = await supabase
@@ -88,7 +100,6 @@ async function handleVendorPayment(supabase: any, ref: string) {
 
     if (!plan) return;
 
-    // Habilita IA se incluso no plano
     const updates: Record<string, any> = {};
     if (plan.ia_included) {
       updates.ai_photo_enabled = true;
@@ -98,8 +109,6 @@ async function handleVendorPayment(supabase: any, ref: string) {
     }
 
   } else if (parts[0] === 'vendor_ai') {
-    // vendor_ai:<vendorId>:<credits>
-    const vendorId = parts[1];
     const credits = parseInt(parts[2]) || 50;
 
     const { data: vendor } = await supabase
@@ -117,5 +126,17 @@ async function handleVendorPayment(supabase: any, ref: string) {
         ai_photo_credits: currentCredits + credits,
       })
       .eq('id', vendorId);
+
+    creditsAdded = credits;
+  }
+
+  // Registra para idempotência
+  if (asaasPaymentId && vendorId) {
+    await supabase.from('vendor_payment_log').insert({
+      asaas_payment_id: asaasPaymentId,
+      vendor_id: vendorId,
+      external_reference: ref,
+      credits_added: creditsAdded,
+    }).catch(() => {});
   }
 }
