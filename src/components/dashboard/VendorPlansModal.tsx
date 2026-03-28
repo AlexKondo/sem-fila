@@ -50,6 +50,36 @@ function PlanCard({ name, price, features, recommended, onSelect }: PlanProps) {
 }
 
 export default function VendorPlansModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
+  const [plans, setPlans] = React.useState<any[]>([]);
+  const [loading, setLoading] = React.useState(true);
+
+  React.useEffect(() => {
+    if (!isOpen) return;
+    
+    async function fetchPlans() {
+      const { createClient } = await import('@/lib/supabase/client');
+      const supabase = createClient();
+      const { data, error } = await supabase
+        .from('subscription_plans')
+        .select('*')
+        .eq('active', true)
+        .order('price', { ascending: true });
+
+      if (!error && data && data.length > 0) {
+        setPlans(data);
+      } else {
+        // Fallback se a tabela estiver vazia
+        setPlans([
+          { name: 'Iniciante', price: 0, order_limit: 50, recommended: false, features: ['Até 50 pedidos /mês', 'Cardápio Digital Base', 'Pagamento via PIX'] },
+          { name: 'Crescimento', price: 99, order_limit: 100, recommended: true, features: ['Até 100 pedidos /mês', 'Menu Sem Publicidade', 'Gestão de Impressão'] },
+          { name: 'Escala', price: 199, order_limit: 99999, recommended: false, features: ['Pedidos ILIMITADOS', 'Garçom Digital Incluso', 'Suporte VIP 24h'] }
+        ]);
+      }
+      setLoading(false);
+    }
+    fetchPlans();
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
   return (
@@ -75,43 +105,25 @@ export default function VendorPlansModal({ isOpen, onClose }: { isOpen: boolean;
             </p>
           </div>
 
-          {/* Plan Tiers */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
-            <PlanCard 
-              name="Iniciante" 
-              price="0" 
-              features={[
-                'Até 50 pedidos /mês',
-                'Cardápio Digital Base',
-                'Pagamento via PIX',
-                'Suporte via Email'
-              ]}
-              onSelect={() => alert('Plano Grátis Ativo!')}
-            />
-            <PlanCard 
-              name="Crescimento" 
-              price="99" 
-              recommended
-              features={[
-                'Até 100 pedidos /mês',
-                'Menu Sem Publicidade',
-                'Gestão de Impressão',
-                'Suporte Prioritário'
-              ]}
-              onSelect={() => alert('Redirecionando para pagamento Asaas...')}
-            />
-            <PlanCard 
-              name="Escala" 
-              price="199" 
-              features={[
-                'Pedidos ILIMITADOS',
-                'Garçom Digital Incluso',
-                'Gestão de Equipe Full',
-                'Relatórios Avançados'
-              ]}
-              onSelect={() => alert('Redirecionando para pagamento Asaas...')}
-            />
-          </div>
+          {loading ? (
+            <div className="flex flex-col items-center justify-center py-20 gap-4">
+              <div className="w-10 h-10 border-4 border-orange-200 border-t-orange-500 animate-spin rounded-full" />
+              <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Carregando Melhores Preços...</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12 items-stretch">
+              {plans.map((p) => (
+                <PlanCard 
+                  key={p.id || p.name}
+                  name={p.name} 
+                  price={String(p.price)} 
+                  recommended={p.recommended}
+                  features={p.features}
+                  onSelect={() => alert(`Assinando ${p.name}...`)}
+                />
+              ))}
+            </div>
+          )}
 
           {/* Add-ons Section */}
           <div className="bg-slate-50 rounded-3xl p-6 border border-slate-100 flex flex-col md:flex-row items-center justify-between gap-6">
