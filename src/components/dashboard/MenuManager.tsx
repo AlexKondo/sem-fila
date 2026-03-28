@@ -227,6 +227,19 @@ export default function MenuManager({ initialItems, vendorId, aiEnabled, aiCredi
               <div className="bg-red-50 text-red-700 text-sm px-3 py-2 rounded-lg">{formError}</div>
             )}
 
+            {/* Nome do item (obrigatório antes da IA) */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Nome</label>
+              <input
+                type="text"
+                required
+                placeholder="Ex: Coxinha de frango"
+                value={(editingItem as any).name || ''}
+                onChange={e => setEditingItem(p => ({ ...p!, name: e.target.value }))}
+                className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+              />
+            </div>
+
             {/* Upload de Imagem */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Foto do Produto</label>
@@ -306,6 +319,7 @@ export default function MenuManager({ initialItems, vendorId, aiEnabled, aiCredi
                           type="button"
                           disabled={isGenerating}
                           onClick={async () => {
+                            if (!editingItem?.name?.trim()) { setFormError('Preencha o nome do item antes de gerar com IA.'); return; }
                             if (localCredits <= 0) { setIsPlansModalOpen(true); return; }
                             setIsGenerating(true);
                             setFormError('');
@@ -405,7 +419,6 @@ export default function MenuManager({ initialItems, vendorId, aiEnabled, aiCredi
             </div>
 
             {[
-              { label: 'Nome', key: 'name', type: 'text', required: true, placeholder: 'Ex: Coxinha de frango' },
               { label: 'Descrição', key: 'description', type: 'text', placeholder: 'Ingredientes ou observações' },
               { label: 'Preço (R$)', key: 'price', type: 'number', required: true, placeholder: '0.00' },
             ].map(({ label, key, type, required, placeholder }) => (

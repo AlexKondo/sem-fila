@@ -55,7 +55,38 @@ export async function POST(request: Request) {
   const imagesPerCredit = parseInt(configs?.find(c => c.key === 'ai_images_per_credit')?.value || '10');
   const descriptionsPerCredit = parseInt(configs?.find(c => c.key === 'ai_descriptions_per_credit')?.value || '1');
 
-  // Deduz 1 crédito
+  // PRIMEIRO gera o conteúdo — só deduz crédito se tudo der certo
+  let descriptions: string[];
+  let images: string[];
+
+  try {
+    // Gera descrições com IA real
+    descriptions = [];
+    for (let i = 0; i < descriptionsPerCredit; i++) {
+      const desc = await generateDescription({
+        itemName: menuItemName || 'Prato',
+        category: category || undefined,
+        currentDescription: currentDescription || undefined,
+        userPrompt: prompt || undefined,
+        vendorName: vendor.name,
+        variation: i,
+      });
+      descriptions.push(desc);
+    }
+
+    // Busca fotos reais no Pexels
+    images = await searchPexelsImages(
+      menuItemName || category || 'prato comida',
+      imagesPerCredit,
+    );
+  } catch (err: any) {
+    console.error('[AI Generate Error]', err?.message || err);
+    return NextResponse.json({
+      error: 'Erro ao gerar conteúdo com IA. Nenhum crédito foi consumido, tente novamente.',
+    }, { status: 500 });
+  }
+
+  // Geração OK — agora deduz 1 crédito
   const newCredits = (vendor.ai_photo_credits || 0) - 1;
   const { error: updateError } = await supabase
     .from('vendors')
@@ -76,41 +107,12 @@ export async function POST(request: Request) {
     prompt: prompt || null,
   });
 
-  // Gera conteúdo com Claude (descrição) + imagens placeholder
-  try {
-    // Gera descrições com IA real
-    const descriptions: string[] = [];
-    for (let i = 0; i < descriptionsPerCredit; i++) {
-      const desc = await generateDescription({
-        itemName: menuItemName || 'Prato',
-        category: category || undefined,
-        currentDescription: currentDescription || undefined,
-        userPrompt: prompt || undefined,
-        vendorName: vendor.name,
-        variation: i,
-      });
-      descriptions.push(desc);
-    }
-
-    // Busca fotos reais no Pexels
-    const images = await searchPexelsImages(
-      menuItemName || category || 'prato comida',
-      imagesPerCredit,
-    );
-
-    return NextResponse.json({
-      remaining_credits: newCredits,
-      descriptions,
-      images,
-      bundle: { images_count: imagesPerCredit, descriptions_count: descriptionsPerCredit },
-    });
-  } catch (err: any) {
-    console.error('[AI Generate Error]', err?.message || err);
-    return NextResponse.json({
-      remaining_credits: newCredits,
-      error: 'Erro ao gerar conteúdo com IA. O crédito já foi consumido.',
-    }, { status: 500 });
-  }
+  return NextResponse.json({
+    remaining_credits: newCredits,
+    descriptions,
+    images,
+    bundle: { images_count: imagesPerCredit, descriptions_count: descriptionsPerCredit },
+  });
 }
 
 async function generateDescription(opts: {
