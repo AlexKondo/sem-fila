@@ -184,6 +184,24 @@ export default function VendorSettingsForm({ vendor }: { vendor: any }) {
             </div>
           </label>
 
+          {/* Campo de mesas — aparece logo abaixo do checkbox de entrega */}
+          {deliversToTable && (
+            <div className="ml-8 p-3 bg-orange-50/40 border border-orange-100 rounded-xl">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Número total de mesas do estabelecimento
+              </label>
+              <input
+                type="number" min="0" max="500" step="1"
+                value={numTables} onChange={(e) => setNumTables(Number(e.target.value))}
+                placeholder="Ex: 20"
+                className="w-full h-12 bg-white border border-slate-200 rounded-xl px-4 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/50"
+              />
+              <p className="text-[10px] text-gray-400 mt-1">
+                O cliente verá botões de Mesa 1 a Mesa {numTables || 'N'}, mais a opção &quot;Para Viagem&quot;.
+              </p>
+            </div>
+          )}
+
           <label className="flex items-center gap-3 p-3 border border-slate-100 rounded-xl cursor-pointer hover:bg-slate-50 transition border-l-4 border-l-orange-500">
             <div className="relative flex items-center">
               <input 
@@ -256,27 +274,6 @@ export default function VendorSettingsForm({ vendor }: { vendor: any }) {
           </div>
         </div>
       </section>
-
-      {/* Bloco 2b: Configuração de Mesas */}
-      {deliversToTable && (
-        <section className="bg-white p-5 rounded-2xl shadow-sm border border-orange-100">
-          <h2 className="text-sm font-bold text-gray-900 mb-4 pb-2 border-b border-gray-100 uppercase tracking-wide">2b. Configuração de Mesas</h2>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Número total de mesas do estabelecimento
-            </label>
-            <input
-              type="number" min="0" max="500" step="1"
-              value={numTables} onChange={(e) => setNumTables(Number(e.target.value))}
-              placeholder="Ex: 20"
-              className="w-full h-12 bg-gray-50 border border-slate-200 rounded-xl px-4 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/50"
-            />
-            <p className="text-[10px] text-gray-400 mt-1">
-              O cliente verá botões de Mesa 1 a Mesa {numTables || 'N'}, mais a opção &quot;Para Viagem&quot;.
-            </p>
-          </div>
-        </section>
-      )}
 
       {/* Bloco 3: Cupons e Ofertas */}
       <section className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100">
