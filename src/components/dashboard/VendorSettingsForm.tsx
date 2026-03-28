@@ -625,7 +625,16 @@ export default function VendorSettingsForm({ vendor, subscription }: { vendor: a
       </button>
 
 
-      <VendorPlansModal isOpen={isPlansModalOpen} onClose={() => setIsPlansModalOpen(false)} vendorId={vendor.id} />
+      <VendorPlansModal
+        isOpen={isPlansModalOpen}
+        onClose={() => setIsPlansModalOpen(false)}
+        vendorId={vendor.id}
+        currentPlan={subscription.isPaid && subscription.plan ? {
+          name: subscription.plan.name,
+          price: subscription.plan.price,
+          expiresAt: subscription.expiresAt,
+        } : undefined}
+      />
     </form>
   );
 }

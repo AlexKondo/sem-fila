@@ -11,13 +11,21 @@ interface PlanProps {
   price: string;
   features: string[];
   recommended?: boolean;
+  isCurrent?: boolean;
+  isDowngrade?: boolean;
+  proRataPrice?: string | null;
   onSelect: () => void;
 }
 
-function PlanCard({ name, price, features, recommended, onSelect }: PlanProps) {
+function PlanCard({ name, price, features, recommended, isCurrent, isDowngrade, proRataPrice, onSelect }: PlanProps) {
   return (
-    <div className={`relative p-6 rounded-3xl border-2 transition-all flex flex-col h-full ${recommended ? 'border-orange-500 bg-orange-50/30 shadow-xl shadow-orange-200/50 scale-105 z-10' : 'border-slate-100 bg-white hover:border-slate-200'}`}>
-      {recommended && (
+    <div className={`relative p-6 rounded-3xl border-2 transition-all flex flex-col h-full ${isCurrent ? 'border-green-500 bg-green-50/30' : recommended ? 'border-orange-500 bg-orange-50/30 shadow-xl shadow-orange-200/50 scale-105 z-10' : 'border-slate-100 bg-white hover:border-slate-200'}`}>
+      {isCurrent && (
+        <span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-green-600 text-white text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-widest shadow-lg">
+          Plano Atual
+        </span>
+      )}
+      {!isCurrent && recommended && (
         <span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-orange-500 text-white text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-widest shadow-lg">
           Recomendado
         </span>
@@ -29,6 +37,11 @@ function PlanCard({ name, price, features, recommended, onSelect }: PlanProps) {
           <span className="text-3xl font-black text-slate-900">R$ {price}</span>
           <span className="text-sm text-slate-400 font-medium">/mês</span>
         </div>
+        {proRataPrice && !isCurrent && !isDowngrade && (
+          <p className="text-[11px] text-green-600 font-bold mt-1">
+            Pague apenas R$ {proRataPrice} (diferença pro-rata)
+          </p>
+        )}
       </div>
 
       <ul className="space-y-3 mb-8 flex-1">
@@ -40,17 +53,33 @@ function PlanCard({ name, price, features, recommended, onSelect }: PlanProps) {
         ))}
       </ul>
 
-      <button
-        onClick={onSelect}
-        className={`w-full py-3 rounded-2xl font-bold transition-all ${recommended ? 'bg-orange-500 text-white shadow-lg shadow-orange-400/40 hover:bg-orange-600' : 'bg-slate-900 text-white hover:bg-slate-800'}`}
-      >
-        {price === '0' ? 'Começar Grátis' : 'Assinar Plano'}
-      </button>
+      {isCurrent ? (
+        <div className="w-full py-3 rounded-2xl font-bold text-center bg-green-100 text-green-700 text-sm">
+          Ativo
+        </div>
+      ) : isDowngrade ? (
+        <div className="w-full py-3 rounded-2xl font-bold text-center bg-slate-100 text-slate-400 text-sm cursor-not-allowed">
+          Downgrade não disponível
+        </div>
+      ) : (
+        <button
+          onClick={onSelect}
+          className={`w-full py-3 rounded-2xl font-bold transition-all ${recommended && !isCurrent ? 'bg-orange-500 text-white shadow-lg shadow-orange-400/40 hover:bg-orange-600' : 'bg-slate-900 text-white hover:bg-slate-800'}`}
+        >
+          {price === '0' ? 'Começar Grátis' : proRataPrice ? `Upgrade — R$ ${proRataPrice}` : 'Assinar Plano'}
+        </button>
+      )}
     </div>
   );
 }
 
-export default function VendorPlansModal({ isOpen, onClose, onlyShowAi, vendorId }: { isOpen: boolean; onClose: () => void; onlyShowAi?: boolean; vendorId?: string }) {
+interface CurrentPlanInfo {
+  name: string;
+  price: number;
+  expiresAt: string | null;
+}
+
+export default function VendorPlansModal({ isOpen, onClose, onlyShowAi, vendorId, currentPlan }: { isOpen: boolean; onClose: () => void; onlyShowAi?: boolean; vendorId?: string; currentPlan?: CurrentPlanInfo }) {
   const [plans, setPlans] = React.useState<any[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [aiConfig, setAiConfig] = React.useState({ size: '50', price: '199.00' });
@@ -60,6 +89,24 @@ export default function VendorPlansModal({ isOpen, onClose, onlyShowAi, vendorId
     name: string;
     price: string;
   } | null>(null);
+
+  // Calcula dias restantes do plano atual para pro-rata
+  const getDaysRemaining = () => {
+    if (!currentPlan?.expiresAt) return 0;
+    const now = new Date();
+    const expires = new Date(currentPlan.expiresAt);
+    const diff = Math.max(0, Math.ceil((expires.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)));
+    return diff;
+  };
+
+  const getProRataPrice = (newPrice: number) => {
+    if (!currentPlan || currentPlan.price <= 0) return null;
+    const daysRemaining = getDaysRemaining();
+    if (daysRemaining <= 0) return null;
+    const dailyDiff = (newPrice - currentPlan.price) / 30;
+    const proRata = Math.max(0, Math.round(dailyDiff * daysRemaining * 100) / 100);
+    return proRata > 0 ? proRata.toFixed(2) : null;
+  };
 
   React.useEffect(() => {
     if (!isOpen) return;
@@ -126,31 +173,58 @@ export default function VendorPlansModal({ isOpen, onClose, onlyShowAi, vendorId
                     <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Carregando Melhores Preços...</p>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12 items-stretch">
-                    {plans.length > 0 ? plans.map((p) => (
-                      <PlanCard
-                        key={p.id || p.name}
-                        name={p.name}
-                        price={String(p.price)}
-                        recommended={p.recommended}
-                        features={p.features}
-                        onSelect={() => {
-                          if (Number(p.price) === 0) {
-                            onClose();
-                            return;
-                          }
-                          setCheckoutProduct({
-                            type: 'plan',
-                            planId: p.id,
-                            name: `Plano ${p.name}`,
-                            price: String(p.price),
-                          });
-                        }}
-                      />
-                    )) : (
-                      <p className="col-span-3 text-center text-slate-400 font-bold uppercase tracking-widest py-10">Serviço de Assinaturas Indisponível</p>
+                  <>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-4 items-stretch">
+                      {plans.length > 0 ? plans.map((p) => {
+                        const planPrice = Number(p.price);
+                        const isCurrent = currentPlan ? p.name === currentPlan.name : planPrice === 0;
+                        const isDowngrade = currentPlan && currentPlan.price > 0 && planPrice < currentPlan.price && planPrice > 0;
+                        const proRata = currentPlan && planPrice > currentPlan.price ? getProRataPrice(planPrice) : null;
+
+                        return (
+                          <PlanCard
+                            key={p.id || p.name}
+                            name={p.name}
+                            price={String(p.price)}
+                            recommended={p.recommended}
+                            isCurrent={isCurrent}
+                            isDowngrade={!!isDowngrade}
+                            proRataPrice={proRata}
+                            features={p.features}
+                            onSelect={() => {
+                              if (planPrice === 0) {
+                                onClose();
+                                return;
+                              }
+                              const checkoutPrice = proRata || String(p.price);
+                              setCheckoutProduct({
+                                type: 'plan',
+                                planId: p.id,
+                                name: `Plano ${p.name}`,
+                                price: checkoutPrice,
+                              });
+                            }}
+                          />
+                        );
+                      }) : (
+                        <p className="col-span-3 text-center text-slate-400 font-bold uppercase tracking-widest py-10">Serviço de Assinaturas Indisponível</p>
+                      )}
+                    </div>
+
+                    {/* Mensagem pro-rata */}
+                    {currentPlan && currentPlan.price > 0 && (
+                      <div className="bg-green-50 border border-green-100 rounded-2xl p-4 mb-12 text-center">
+                        <p className="text-xs text-green-700 font-bold">
+                          Ao fazer upgrade, você paga apenas a diferença proporcional aos dias restantes do ciclo atual.
+                        </p>
+                        {currentPlan.expiresAt && (
+                          <p className="text-[10px] text-green-600 mt-1">
+                            Seu plano atual ({currentPlan.name}) renova em {new Date(currentPlan.expiresAt).toLocaleDateString('pt-BR')} &mdash; faltam {getDaysRemaining()} dias.
+                          </p>
+                        )}
+                      </div>
                     )}
-                  </div>
+                  </>
                 )}
               </>
             )}
