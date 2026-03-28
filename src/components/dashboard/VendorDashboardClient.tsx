@@ -13,6 +13,8 @@ interface VendorSummary {
   revenue: number;
   orders: number;
   active: number;
+  avgPrepTime: number | null;
+  customers: number;
 }
 
 interface GlobalSummary {
@@ -189,7 +191,7 @@ export default function VendorDashboardClient({
       </div>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 gap-3">
         <KpiCard
           label={`Receita (${periodLabel})`}
           value={formatCurrency(revenue)}
@@ -221,6 +223,11 @@ export default function VendorDashboardClient({
           sub="Média no período"
           icon="⏱️"
           accent="#8b5cf6"
+          vendorBars={globalSummary?.vendors.map(v => ({
+            name: v.name,
+            value: v.avgPrepTime ?? 0,
+            label: v.avgPrepTime != null ? `${v.avgPrepTime}m` : '–',
+          }))}
         />
         <KpiCard
           label="Total de Clientes"
@@ -228,6 +235,11 @@ export default function VendorDashboardClient({
           sub="Clientes únicos"
           icon="👥"
           accent="#3b82f6"
+          vendorBars={globalSummary?.vendors.map(v => ({
+            name: v.name,
+            value: v.customers,
+            label: String(v.customers),
+          }))}
         />
       </div>
 

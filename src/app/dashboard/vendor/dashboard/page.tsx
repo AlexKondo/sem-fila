@@ -69,13 +69,13 @@ export default async function VendorDashboardPage({ searchParams }: Props) {
     // Dados agregados de TODOS os negócios
     supabase
       .from('orders')
-      .select('id, total_price, status, vendor_id')
+      .select('id, total_price, status, vendor_id, created_at, updated_at')
       .in('vendor_id', allVendorIds)
       .gte('created_at', periodStart)
       .lte('created_at', periodEnd),
     supabase
       .from('orders')
-      .select('user_id')
+      .select('user_id, vendor_id')
       .in('vendor_id', allVendorIds)
       .not('user_id', 'is', null),
   ]);
@@ -143,7 +143,17 @@ export default async function VendorDashboardPage({ searchParams }: Props) {
         const vOrders = allOrders.filter(o => o.vendor_id === v.id);
         const vRevenue = vOrders.reduce((s, o) => s + Number(o.total_price || 0), 0);
         const vActive = vOrders.filter(o => !['delivered', 'cancelled'].includes(o.status)).length;
-        return { id: v.id, name: v.name, revenue: vRevenue, orders: vOrders.length, active: vActive };
+        const vDelivered = vOrders.filter(o => o.status === 'delivered' && o.updated_at);
+        const vAvgPrep = vDelivered.length > 0
+          ? Math.round(vDelivered.reduce((s, o) => {
+              const diff = (new Date(o.updated_at).getTime() - new Date(o.created_at).getTime()) / 60000;
+              return s + diff;
+            }, 0) / vDelivered.length)
+          : null;
+        const vCustomers = new Set(
+          (allCustomersRes.data ?? []).filter(c => c.vendor_id === v.id).map(c => c.user_id)
+        ).size;
+        return { id: v.id, name: v.name, revenue: vRevenue, orders: vOrders.length, active: vActive, avgPrepTime: vAvgPrep, customers: vCustomers };
       })
     : null;
 
