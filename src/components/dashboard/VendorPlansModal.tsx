@@ -10,10 +10,11 @@ interface PlanProps {
   price: string;
   features: string[];
   recommended?: boolean;
+  loading?: boolean;
   onSelect: () => void;
 }
 
-function PlanCard({ name, price, features, recommended, onSelect }: PlanProps) {
+function PlanCard({ name, price, features, recommended, loading, onSelect }: PlanProps) {
   return (
     <div className={`relative p-6 rounded-3xl border-2 transition-all flex flex-col h-full ${recommended ? 'border-orange-500 bg-orange-50/30 shadow-xl shadow-orange-200/50 scale-105 z-10' : 'border-slate-100 bg-white hover:border-slate-200'}`}>
       {recommended && (
@@ -21,7 +22,7 @@ function PlanCard({ name, price, features, recommended, onSelect }: PlanProps) {
           Recomendado
         </span>
       )}
-      
+
       <div className="mb-6">
         <h3 className="text-lg font-black text-slate-900 uppercase tracking-tight">{name}</h3>
         <div className="flex items-baseline gap-1 mt-2">
@@ -41,26 +42,29 @@ function PlanCard({ name, price, features, recommended, onSelect }: PlanProps) {
 
       <button
         onClick={onSelect}
-        className={`w-full py-3 rounded-2xl font-bold transition-all ${recommended ? 'bg-orange-500 text-white shadow-lg shadow-orange-400/40 hover:bg-orange-600' : 'bg-slate-900 text-white hover:bg-slate-800'}`}
+        disabled={loading}
+        className={`w-full py-3 rounded-2xl font-bold transition-all disabled:opacity-50 ${recommended ? 'bg-orange-500 text-white shadow-lg shadow-orange-400/40 hover:bg-orange-600' : 'bg-slate-900 text-white hover:bg-slate-800'}`}
       >
-        {price === '0' ? 'Começar Grátis' : 'Assinar Plano'}
+        {loading ? 'Redirecionando...' : price === '0' ? 'Começar Grátis' : 'Assinar Plano'}
       </button>
     </div>
   );
 }
 
-export default function VendorPlansModal({ isOpen, onClose, onlyShowAi }: { isOpen: boolean; onClose: () => void; onlyShowAi?: boolean }) {
+export default function VendorPlansModal({ isOpen, onClose, onlyShowAi, vendorId }: { isOpen: boolean; onClose: () => void; onlyShowAi?: boolean; vendorId?: string }) {
   const [plans, setPlans] = React.useState<any[]>([]);
   const [loading, setLoading] = React.useState(true);
+  const [checkoutLoading, setCheckoutLoading] = React.useState<string | null>(null);
+  const [error, setError] = React.useState<string | null>(null);
   const [aiConfig, setAiConfig] = React.useState({ size: '50', price: '199.00' });
 
   React.useEffect(() => {
     if (!isOpen) return;
-    
+
     async function fetchData() {
       const { createClient } = await import('@/lib/supabase/client');
       const supabase = createClient();
-      
+
       // Busca Planos
       const plansRes = await supabase
         .from('subscription_plans')
@@ -74,7 +78,7 @@ export default function VendorPlansModal({ isOpen, onClose, onlyShowAi }: { isOp
       const configRes = await supabase
         .from('platform_config')
         .select('key, value');
-      
+
       if (configRes.data) {
         const size = configRes.data.find(c => c.key === 'ai_photo_package_size')?.value || '50';
         const price = configRes.data.find(c => c.key === 'ai_photo_package_price')?.value || '199.00';
@@ -86,12 +90,47 @@ export default function VendorPlansModal({ isOpen, onClose, onlyShowAi }: { isOp
     fetchData();
   }, [isOpen]);
 
+  async function handleCheckout(type: 'plan' | 'ai_package', planId?: string) {
+    if (!vendorId) {
+      setError('Vendor não identificado. Recarregue a página.');
+      return;
+    }
+
+    const key = planId || 'ai';
+    setCheckoutLoading(key);
+    setError(null);
+
+    try {
+      const res = await fetch('/api/vendor/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type, planId, vendorId }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setError(data.error || 'Erro ao criar checkout.');
+        setCheckoutLoading(null);
+        return;
+      }
+
+      if (data.invoiceUrl) {
+        window.open(data.invoiceUrl, '_blank');
+      }
+    } catch {
+      setError('Erro de conexão. Tente novamente.');
+    }
+
+    setCheckoutLoading(null);
+  }
+
   if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-in fade-in duration-300">
       <div className="bg-white rounded-[40px] w-full max-w-4xl max-h-[90vh] overflow-y-auto relative shadow-2xl no-scrollbar">
-        <button 
+        <button
           onClick={onClose}
           className="absolute top-6 right-6 p-2 rounded-full bg-slate-50 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-all z-20"
         >
@@ -99,7 +138,13 @@ export default function VendorPlansModal({ isOpen, onClose, onlyShowAi }: { isOp
         </button>
 
         <div className={`p-8 md:p-12 ${onlyShowAi ? 'md:pt-16 md:pb-16' : ''}`}>
-          
+
+          {error && (
+            <div className="mb-6 p-4 rounded-2xl bg-red-50 border border-red-100 text-red-600 text-sm font-medium text-center">
+              {error}
+            </div>
+          )}
+
           {!onlyShowAi && (
             <>
               {/* Header */}
@@ -122,13 +167,20 @@ export default function VendorPlansModal({ isOpen, onClose, onlyShowAi }: { isOp
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12 items-stretch">
                   {plans.length > 0 ? plans.map((p) => (
-                    <PlanCard 
+                    <PlanCard
                       key={p.id || p.name}
-                      name={p.name} 
-                      price={String(p.price)} 
+                      name={p.name}
+                      price={String(p.price)}
                       recommended={p.recommended}
                       features={p.features}
-                      onSelect={() => alert(`Assinando ${p.name}...`)}
+                      loading={checkoutLoading === p.id}
+                      onSelect={() => {
+                        if (Number(p.price) === 0) {
+                          onClose();
+                          return;
+                        }
+                        handleCheckout('plan', p.id);
+                      }}
                     />
                   )) : (
                     <p className="col-span-3 text-center text-slate-400 font-bold uppercase tracking-widest py-10">Serviço de Assinaturas Indisponível</p>
@@ -138,7 +190,7 @@ export default function VendorPlansModal({ isOpen, onClose, onlyShowAi }: { isOp
             </>
           )}
 
-          {/* Seção IA - O seu retangulo vermelho */}
+          {/* Seção IA */}
           <div className="bg-slate-50 rounded-3xl p-6 md:p-10 border border-slate-100 flex flex-col md:flex-row items-center justify-between gap-6 shadow-inner">
             <div className="flex items-center gap-6 text-center md:text-left">
               <div className="w-20 h-20 rounded-3xl bg-white border border-slate-100 flex items-center justify-center text-4xl shadow-md rotate-3">
@@ -146,7 +198,7 @@ export default function VendorPlansModal({ isOpen, onClose, onlyShowAi }: { isOp
               </div>
               <div>
                 <h4 className="text-xl font-black text-slate-900 flex items-center gap-2 justify-center md:justify-start">
-                  Melhorias com IA 
+                  Melhorias com IA
                   <span className="text-[10px] bg-orange-500 text-white px-2 py-0.5 rounded-full font-black uppercase">Plus</span>
                 </h4>
                 <p className="text-sm text-slate-500 font-medium max-w-sm mt-1">
@@ -159,11 +211,12 @@ export default function VendorPlansModal({ isOpen, onClose, onlyShowAi }: { isOp
                 <span className="text-3xl font-black text-slate-900">R$ {aiConfig.price}</span>
                 <span className="text-xs text-slate-400 font-bold">/pacote</span>
               </div>
-              <button 
-                onClick={() => alert(`Compra de ${aiConfig.size} fotos por R$ ${aiConfig.price} iniciada!`)}
-                className="bg-slate-900 text-white px-8 py-3 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-slate-800 transition-all shadow-lg shadow-black/20"
+              <button
+                onClick={() => handleCheckout('ai_package')}
+                disabled={checkoutLoading === 'ai'}
+                className="bg-slate-900 text-white px-8 py-3 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-slate-800 transition-all shadow-lg shadow-black/20 disabled:opacity-50"
               >
-                Habilitar Agora
+                {checkoutLoading === 'ai' ? 'Redirecionando...' : 'Habilitar Agora'}
               </button>
             </div>
           </div>

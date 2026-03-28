@@ -335,7 +335,7 @@ export default function VendorSettingsForm({ vendor }: { vendor: any }) {
       </button>
 
 
-      <VendorPlansModal isOpen={isPlansModalOpen} onClose={() => setIsPlansModalOpen(false)} />
+      <VendorPlansModal isOpen={isPlansModalOpen} onClose={() => setIsPlansModalOpen(false)} vendorId={vendor.id} />
     </form>
   );
 }

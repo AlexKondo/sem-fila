@@ -1,4 +1,4 @@
-// Webhook do Asaas — atualiza payment_status dos pedidos conforme eventos de cobrança
+// Webhook do Asaas — atualiza payment_status dos pedidos e processa pagamentos de vendor
 // Requer SUPABASE_SERVICE_ROLE_KEY para atualizar sem sessão de usuário
 // Requer ASAAS_WEBHOOK_TOKEN para validar a origem da requisição
 
@@ -20,10 +20,10 @@ export async function POST(request: Request) {
   }
 
   const { event, payment } = payload;
-  const orderId = payment?.externalReference;
+  const ref = payment?.externalReference;
 
-  if (!orderId) {
-    // Evento sem referência ao pedido — ignorar silenciosamente
+  if (!ref) {
+    // Evento sem referência — ignorar silenciosamente
     return NextResponse.json({ received: true });
   }
 
@@ -32,6 +32,17 @@ export async function POST(request: Request) {
     process.env.SUPABASE_SERVICE_ROLE_KEY!,
     { cookies: { getAll: () => [], setAll: () => {} } }
   );
+
+  // Pagamentos de vendor (planos e pacotes IA)
+  if (ref.startsWith('vendor_plan:') || ref.startsWith('vendor_ai:')) {
+    if (event === 'PAYMENT_CONFIRMED' || event === 'PAYMENT_RECEIVED') {
+      await handleVendorPayment(supabase, ref);
+    }
+    return NextResponse.json({ received: true });
+  }
+
+  // Pagamentos de pedidos (fluxo original)
+  const orderId = ref;
 
   switch (event) {
     case 'PAYMENT_CONFIRMED':
@@ -59,4 +70,52 @@ export async function POST(request: Request) {
   }
 
   return NextResponse.json({ received: true });
+}
+
+async function handleVendorPayment(supabase: any, ref: string) {
+  const parts = ref.split(':');
+
+  if (parts[0] === 'vendor_plan') {
+    // vendor_plan:<vendorId>:<planId>
+    const vendorId = parts[1];
+    const planId = parts[2];
+
+    const { data: plan } = await supabase
+      .from('subscription_plans')
+      .select('*')
+      .eq('id', planId)
+      .single();
+
+    if (!plan) return;
+
+    // Habilita IA se incluso no plano
+    const updates: Record<string, any> = {};
+    if (plan.ia_included) {
+      updates.ai_photo_enabled = true;
+    }
+    if (Object.keys(updates).length > 0) {
+      await supabase.from('vendors').update(updates).eq('id', vendorId);
+    }
+
+  } else if (parts[0] === 'vendor_ai') {
+    // vendor_ai:<vendorId>:<credits>
+    const vendorId = parts[1];
+    const credits = parseInt(parts[2]) || 50;
+
+    const { data: vendor } = await supabase
+      .from('vendors')
+      .select('ai_photo_credits')
+      .eq('id', vendorId)
+      .single();
+
+    const currentCredits = vendor?.ai_photo_credits || 0;
+
+    await supabase
+      .from('vendors')
+      .update({
+        ai_photo_enabled: true,
+        ai_photo_credits: currentCredits + credits,
+      })
+      .eq('id', vendorId);
+  }
 }
