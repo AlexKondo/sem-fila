@@ -127,8 +127,6 @@ export default function WaiterBoard({ initialReadyOrders, initialWaiterCalls, ve
   const historyCalls = calls.filter(c => c.status === 'attended').slice(0, 20);
 
   return (
-    <>
-  return (
     <div className="max-w-lg mx-auto px-4 py-2 space-y-6">
         
         {/* Abas Pedidos/Chamadas */}
@@ -256,6 +254,5 @@ export default function WaiterBoard({ initialReadyOrders, initialWaiterCalls, ve
           </section>
         )}
       </div>
-    </>
   );
 }
