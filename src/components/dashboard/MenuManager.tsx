@@ -67,6 +67,7 @@ export default function MenuManager({ initialItems, vendorId, aiEnabled, aiCredi
           available: parsed.data.available,
           category: parsed.data.category ?? null,
           extras: parsed.data.extras ?? [],
+          image_url: editingItem.image_url ?? null,
         } as any)
         .eq('id', editingItem.id)
         .select()
@@ -87,6 +88,7 @@ export default function MenuManager({ initialItems, vendorId, aiEnabled, aiCredi
           position: parsed.data.position,
           category: parsed.data.category ?? null,
           extras: parsed.data.extras ?? [],
+          image_url: editingItem.image_url ?? null,
         } as any)
         .select()
         .single();
@@ -387,7 +389,24 @@ export default function MenuManager({ initialItems, vendorId, aiEnabled, aiCredi
                                 <button
                                   key={i}
                                   type="button"
-                                  onClick={() => { setEditingItem(p => ({ ...p!, image_url: url })); setAiSuggestions([]); }}
+                                  onClick={async () => {
+                                    setAiSuggestions([]);
+                                    setUploadingFile(true);
+                                    setFormError('');
+                                    try {
+                                      const res = await fetch('/api/vendor/ai/upload-image', {
+                                        method: 'POST',
+                                        headers: { 'Content-Type': 'application/json' },
+                                        body: JSON.stringify({ imageUrl: url, vendorId }),
+                                      });
+                                      const data = await res.json();
+                                      if (!res.ok) { setFormError(data.error || 'Erro ao salvar imagem.'); setUploadingFile(false); return; }
+                                      setEditingItem(p => ({ ...p!, image_url: data.publicUrl }));
+                                    } catch {
+                                      setFormError('Erro de conexão ao salvar imagem.');
+                                    }
+                                    setUploadingFile(false);
+                                  }}
                                   className="relative aspect-square rounded-lg overflow-hidden border-2 border-white hover:border-orange-500 transition-all shadow-sm group"
                                 >
                                   <img
