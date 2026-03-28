@@ -13,7 +13,7 @@ export default async function VendorMenuPage() {
 
   const { data: vendors } = await supabase
     .from('vendors')
-    .select('id, name')
+    .select('id, name, ai_photo_enabled, ai_photo_credits')
     .eq('owner_id', user.id)
     .eq('active', true);
 
@@ -35,9 +35,12 @@ export default async function VendorMenuPage() {
 
   return (
     <main className="min-h-screen bg-gray-50">
-
-
-      <MenuManager initialItems={items ?? []} vendorId={vendor.id} />
+      <MenuManager 
+        initialItems={items ?? []} 
+        vendorId={vendor.id} 
+        aiEnabled={vendor.ai_photo_enabled} 
+        aiCredits={vendor.ai_photo_credits}
+      />
     </main>
   );
 }

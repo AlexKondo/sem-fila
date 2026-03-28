@@ -12,15 +12,24 @@ import VendorPlansModal from './VendorPlansModal';
 interface MenuManagerProps {
   initialItems: MenuItem[];
   vendorId: string;
+  aiEnabled?: boolean;
+  aiCredits?: number;
 }
 
-export default function MenuManager({ initialItems, vendorId }: MenuManagerProps) {
+export default function MenuManager({ initialItems, vendorId, aiEnabled, aiCredits = 0 }: MenuManagerProps) {
   const [items, setItems] = useState<MenuItem[]>(initialItems);
   const [editingItem, setEditingItem] = useState<Partial<MenuItem> | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isPlansModalOpen, setIsPlansModalOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState('');
+
+  // Estados de IA
+  const [aiImagePrompt, setAiImagePrompt] = useState('');
+  const [aiDescPrompt, setAiDescPrompt] = useState('');
+  const [isImprovingImage, setIsImprovingImage] = useState(false);
+  const [isImprovingDescription, setIsImprovingDescription] = useState(false);
+  const [aiSuggestions, setAiSuggestions] = useState<string[]>([]);
 
   function openNew() {
     setEditingItem({ vendor_id: vendorId, available: true, position: items.length });
@@ -258,22 +267,124 @@ export default function MenuManager({ initialItems, vendorId }: MenuManagerProps
                   )}
                 </div>
                 
-                {/* AI Feature Component */}
-                <div className="flex-1 bg-gradient-to-r from-orange-50 to-amber-50 border border-orange-100 p-3 rounded-2xl">
-                  <div className="flex items-center justify-between mb-1">
+                {/* 🌟 Magic AI Section */}
+                <div className="flex-1 bg-gradient-to-br from-orange-50/50 to-amber-50 border border-orange-100 rounded-3xl p-4 relative overflow-hidden">
+                  <div className="flex items-center justify-between mb-3">
                     <span className="text-xs font-black text-orange-600 flex items-center gap-1">
-                      ✨ Melhorias com IA
+                      ✨ Criatividade com IA
                     </span>
-                    <span className="text-[10px] bg-orange-200 text-orange-800 font-bold px-1.5 py-0.5 rounded flex items-center gap-1">
-                      🔒 PREMIUM
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[9px] font-black text-slate-400 bg-white px-2 py-0.5 rounded shadow-sm border border-slate-100 uppercase tracking-widest">
+                        {aiCredits} Créditos
+                      </span>
+                      <span className={`text-[9px] font-black px-2 py-0.5 rounded uppercase tracking-widest border ${aiEnabled ? 'bg-orange-500 text-white border-orange-400 shadow-sm' : 'bg-slate-100 text-slate-400 border-slate-200'}`}>
+                        {aiEnabled ? 'PRO' : 'LOCK'}
+                      </span>
+                    </div>
                   </div>
-                  <p className="text-[10px] text-slate-500 leading-snug">
-                    Ajuste automático de brilho, foco e remoção de fundo para fotos mais atraentes.
-                  </p>
-                  <button type="button" onClick={() => setIsPlansModalOpen(true)} className="mt-2 text-[11px] font-bold text-orange-500 hover:underline">
-                    Habilitar Serviço Extra →
-                  </button>
+
+                  {!aiEnabled ? (
+                    <div className="text-center py-2">
+                       <p className="text-[10px] text-slate-400 font-medium mb-2 leading-relaxed italic">
+                         Ative o plano PRO para gerar 6 opções de fotos profissionais e descrições irresistíveis.
+                       </p>
+                       <button type="button" onClick={() => setIsPlansModalOpen(true)} className="text-[11px] font-bold text-orange-500 hover:underline">
+                         Habilitar Agora →
+                       </button>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {/* Sub-bloco: Imagem */}
+                      <div>
+                        <p className="text-[10px] text-slate-500 font-bold uppercase mb-1.5 ml-1">Como você quer sua foto?</p>
+                        <input 
+                          placeholder="Ex: Luz de fim de tarde, mesa rústica..."
+                          value={aiImagePrompt} onChange={e => setAiImagePrompt(e.target.value)}
+                          className="w-full text-[11px] h-9 bg-white border border-orange-100 rounded-xl px-3 focus:outline-none focus:ring-1 focus:ring-orange-300 placeholder-slate-300 shadow-sm"
+                        />
+                        <button 
+                          type="button"
+                          onClick={() => {
+                            if (aiCredits <= 0) { setIsPlansModalOpen(true); return; }
+                            setIsImprovingImage(true);
+                            // Simulação de 6 geração
+                            setTimeout(() => {
+                              setAiSuggestions([
+                                'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400',
+                                'https://images.unsplash.com/photo-1567620905732-2d1ec7bb7445?w=400',
+                                'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=400',
+                                'https://images.unsplash.com/photo-1482049016688-2d3e1b311543?w=400',
+                                'https://images.unsplash.com/photo-1484723088339-fe2a388da59b?w=400',
+                                'https://images.unsplash.com/photo-1476718406336-bb5a9690ee2a?w=400'
+                              ]);
+                              setIsImprovingImage(false);
+                            }, 1500);
+                          }}
+                          className="w-full mt-2 h-8 bg-orange-600 text-white rounded-lg text-[10px] font-black uppercase tracking-widest hover:bg-orange-700 transition shadow-md shadow-orange-500/20"
+                        >
+                          {isImprovingImage ? 'Gerando Sugestões...' : `Gerar 6 Opções Melhoradas`}
+                        </button>
+                      </div>
+
+                      {/* Seletor de Opções (Grid) */}
+                      {aiSuggestions.length > 0 && (
+                        <div className="pt-2 border-t border-orange-100 mt-2">
+                           <p className="text-[10px] text-orange-600 font-black mb-2 flex items-center gap-1 italic">
+                             🔮 Escolha a Foto Ideal:
+                           </p>
+                           <div className="grid grid-cols-3 gap-2">
+                              {aiSuggestions.map((url, i) => (
+                                <button 
+                                  key={i} 
+                                  type="button" 
+                                  onClick={() => { setEditingItem(p => ({ ...p!, image_url: url })); setAiSuggestions([]); }}
+                                  className="relative aspect-square rounded-lg overflow-hidden border-2 border-white hover:border-orange-500 transition-all shadow-sm group"
+                                >
+                                  <img src={url} alt={`IA ${i+1}`} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                                  <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                     <span className="text-[10px] bg-white text-orange-600 px-1.5 py-0.5 rounded font-black">SAVE</span>
+                                  </div>
+                                </button>
+                              ))}
+                           </div>
+                           <button 
+                             type="button" onClick={() => setAiSuggestions([])} 
+                             className="w-full mt-2 text-[10px] font-bold text-slate-400 hover:text-slate-600"
+                           >
+                              Cancelar e Usar Original
+                           </button>
+                        </div>
+                      )}
+
+                      {/* Sub-bloco: Descrição */}
+                      <div className="pt-3 border-t border-orange-100">
+                        <p className="text-[10px] text-slate-500 font-bold uppercase mb-1.5 ml-1">Refinar Texto / Briefing</p>
+                        <textarea 
+                          placeholder="Ex: Texto poético, foque no queijo derretido..."
+                          value={aiDescPrompt} onChange={e => setAiDescPrompt(e.target.value)}
+                          className="w-full text-[11px] h-12 bg-white border border-orange-100 rounded-xl px-3 py-2 focus:outline-none focus:ring-1 focus:ring-orange-300 placeholder-slate-300 shadow-sm resize-none"
+                        />
+                        <button 
+                          type="button" 
+                          onClick={() => {
+                            if (aiCredits <= 0) { setIsPlansModalOpen(true); return; }
+                            setIsImprovingDescription(true);
+                            setTimeout(() => {
+                              const base = editingItem.name || 'Prato Delicioso';
+                              setEditingItem(p => ({ 
+                                ...p!, 
+                                description: `Inspirado por: ${aiDescPrompt}. Saboreie o nosso ${base}, uma explosão de texturas e o equilíbrio perfeito de sabores frescos. Uma experiência memorável para o seu paladar.` 
+                              }));
+                              setIsImprovingDescription(false);
+                            }, 1000);
+                          }}
+                          className="w-full mt-2 h-8 bg-slate-900 text-white rounded-lg text-[10px] font-black uppercase tracking-widest hover:bg-slate-800 transition shadow-md shadow-black/20"
+                        >
+                           {isImprovingDescription ? 'A IA está escrevendo...' : 'Melhorar Descrição com IA'}
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

@@ -52,32 +52,38 @@ function PlanCard({ name, price, features, recommended, onSelect }: PlanProps) {
 export default function VendorPlansModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
   const [plans, setPlans] = React.useState<any[]>([]);
   const [loading, setLoading] = React.useState(true);
+  const [aiConfig, setAiConfig] = React.useState({ size: '50', price: '199.00' });
 
   React.useEffect(() => {
     if (!isOpen) return;
     
-    async function fetchPlans() {
+    async function fetchData() {
       const { createClient } = await import('@/lib/supabase/client');
       const supabase = createClient();
-      const { data, error } = await supabase
+      
+      // Busca Planos
+      const plansRes = await supabase
         .from('subscription_plans')
         .select('*')
         .eq('active', true)
         .order('price', { ascending: true });
 
-      if (!error && data && data.length > 0) {
-        setPlans(data);
-      } else {
-        // Fallback se a tabela estiver vazia
-        setPlans([
-          { name: 'Iniciante', price: 0, order_limit: 50, recommended: false, features: ['Até 50 pedidos /mês', 'Cardápio Digital Base', 'Pagamento via PIX'] },
-          { name: 'Crescimento', price: 99, order_limit: 100, recommended: true, features: ['Até 100 pedidos /mês', 'Menu Sem Publicidade', 'Gestão de Impressão'] },
-          { name: 'Escala', price: 199, order_limit: 99999, recommended: false, features: ['Pedidos ILIMITADOS', 'Garçom Digital Incluso', 'Suporte VIP 24h'] }
-        ]);
+      if (plansRes.data) setPlans(plansRes.data);
+
+      // Busca Config de IA
+      const configRes = await supabase
+        .from('platform_config')
+        .select('key, value');
+      
+      if (configRes.data) {
+        const size = configRes.data.find(c => c.key === 'ai_photo_package_size')?.value || '50';
+        const price = configRes.data.find(c => c.key === 'ai_photo_package_price')?.value || '199.00';
+        setAiConfig({ size, price });
       }
+
       setLoading(false);
     }
-    fetchPlans();
+    fetchData();
   }, [isOpen]);
 
   if (!isOpen) return null;
@@ -112,7 +118,7 @@ export default function VendorPlansModal({ isOpen, onClose }: { isOpen: boolean;
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12 items-stretch">
-              {plans.map((p) => (
+              {plans.length > 0 ? plans.map((p) => (
                 <PlanCard 
                   key={p.id || p.name}
                   name={p.name} 
@@ -121,7 +127,9 @@ export default function VendorPlansModal({ isOpen, onClose }: { isOpen: boolean;
                   features={p.features}
                   onSelect={() => alert(`Assinando ${p.name}...`)}
                 />
-              ))}
+              )) : (
+                 <p className="col-span-3 text-center text-slate-400 font-bold uppercase tracking-widest py-10">Serviço de Assinaturas Indisponível</p>
+              )}
             </div>
           )}
 
@@ -133,22 +141,22 @@ export default function VendorPlansModal({ isOpen, onClose }: { isOpen: boolean;
               </div>
               <div>
                 <h4 className="text-lg font-black text-slate-900 flex items-center gap-2 justify-center md:justify-start">
-                  Melhorias com IA 
-                  <span className="text-[10px] bg-orange-500 text-white px-2 py-0.5 rounded-full font-black uppercase">Plus</span>
+                  Pacote de IA ({aiConfig.size} fotos)
+                  <span className="text-[10px] bg-orange-500 text-white px-2 py-0.5 rounded-full font-black uppercase">Exclusivo</span>
                 </h4>
                 <p className="text-sm text-slate-500 font-medium max-w-sm">
-                  Deixe suas fotos de comida com aspecto profissional usando nosso motor de IA exclusivo.
+                  Deixe suas fotos de comida com aspecto profissional usando nosso motor de IA. Melhore {aiConfig.size} pratos.
                 </p>
               </div>
             </div>
             <div className="flex flex-col items-center md:items-end gap-2">
               <div className="flex items-baseline gap-1">
-                <span className="text-2xl font-black text-slate-900">R$ 29</span>
-                <span className="text-xs text-slate-400 font-bold">/adicional</span>
+                <span className="text-2xl font-black text-slate-900">R$ {aiConfig.price}</span>
+                <span className="text-xs text-slate-400 font-bold">/pacote</span>
               </div>
               <button 
-                onClick={() => alert('Serviço de IA Contratado!')}
-                className="bg-white text-slate-900 border border-slate-200 px-6 py-2 rounded-xl font-bold text-sm hover:border-orange-500 hover:text-orange-500 transition-all shadow-sm"
+                onClick={() => alert(`Compra de ${aiConfig.size} fotos por R$ ${aiConfig.price} iniciada!`)}
+                className="bg-slate-900 text-white px-6 py-2.5 rounded-xl font-bold text-sm hover:bg-slate-800 transition-all shadow-sm"
               >
                 Habilitar Agora
               </button>
