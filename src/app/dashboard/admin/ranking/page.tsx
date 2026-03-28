@@ -72,6 +72,11 @@ export default function RankingPage() {
       expires_at: expires_at.toISOString(),
       active: true,
     }).select('*, vendors(id, name)').single();
+    if (error) {
+      alert(`Erro ao adicionar: ${error.message}`);
+      setAddingNewSub(false);
+      return;
+    }
     if (data) setSubs(prev => [data as SubWithVendor, ...prev]);
     setNewSub({ vendor_id: '', feature: 'featured_badge', price_paid: '', expires_days: '30' });
     setAddingNewSub(false);
