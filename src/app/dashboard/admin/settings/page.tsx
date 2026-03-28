@@ -16,6 +16,8 @@ export default function AdminSettingsPage() {
   const [monthlySubscription, setMonthlySubscription] = useState(199.90);
   const [aiPackageSize, setAiPackageSize] = useState(50);
   const [aiPackagePrice, setAiPackagePrice] = useState(199.00);
+  const [aiImagesPerCredit, setAiImagesPerCredit] = useState(10);
+  const [aiDescriptionsPerCredit, setAiDescriptionsPerCredit] = useState(1);
 
   useEffect(() => {
     async function loadConfigs() {
@@ -27,6 +29,8 @@ export default function AdminSettingsPage() {
           if (item.key === 'platform_fee') setPlatformFee(Number(item.value));
           if (item.key === 'ai_photo_package_size') setAiPackageSize(Number(item.value));
           if (item.key === 'ai_photo_package_price') setAiPackagePrice(Number(item.value));
+          if (item.key === 'ai_images_per_credit') setAiImagesPerCredit(Number(item.value));
+          if (item.key === 'ai_descriptions_per_credit') setAiDescriptionsPerCredit(Number(item.value));
         });
       }
 
@@ -45,7 +49,9 @@ export default function AdminSettingsPage() {
     const updates = [
       { key: 'platform_fee', value: String(platformFee) },
       { key: 'ai_photo_package_size', value: String(aiPackageSize) },
-      { key: 'ai_photo_package_price', value: String(aiPackagePrice) }
+      { key: 'ai_photo_package_price', value: String(aiPackagePrice) },
+      { key: 'ai_images_per_credit', value: String(aiImagesPerCredit) },
+      { key: 'ai_descriptions_per_credit', value: String(aiDescriptionsPerCredit) }
     ];
 
     for (const item of updates) {
@@ -121,9 +127,33 @@ export default function AdminSettingsPage() {
                   </div>
                </div>
             </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
+               <div>
+                  <p className="font-bold text-gray-900 mb-1 leading-tight">Imagens por Crédito</p>
+                  <p className="text-[11px] text-gray-400 mb-3">Sugestões de imagem geradas a cada uso de crédito.</p>
+                  <input
+                    type="number"
+                    min="1"
+                    value={aiImagesPerCredit}
+                    onChange={(e) => setAiImagesPerCredit(Number(e.target.value))}
+                    className="w-full h-12 bg-gray-50 border border-gray-100 rounded-xl px-4 font-bold text-gray-900 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  />
+               </div>
+               <div>
+                  <p className="font-bold text-gray-900 mb-1 leading-tight">Descrições por Crédito</p>
+                  <p className="text-[11px] text-gray-400 mb-3">Descrições IA geradas a cada uso de crédito.</p>
+                  <input
+                    type="number"
+                    min="1"
+                    value={aiDescriptionsPerCredit}
+                    onChange={(e) => setAiDescriptionsPerCredit(Number(e.target.value))}
+                    className="w-full h-12 bg-gray-50 border border-gray-100 rounded-xl px-4 font-bold text-gray-900 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  />
+               </div>
+            </div>
             <div className="p-4 bg-orange-50 rounded-2xl border border-orange-100">
                <p className="text-[11px] text-orange-700 font-medium leading-relaxed">
-                  Ao vender o pacote de IA, o sistema gera 6 sugestões por foto. O custo de API (Claude) é coberto por esse valor. Recomendamos manter margem de lucro de pelo menos 50%.
+                  Cada crédito dá ao vendor <strong>{aiImagesPerCredit} sugestões de imagem + {aiDescriptionsPerCredit} descrição por IA</strong>. O custo de API (Claude) é coberto pelo valor do pacote. Recomendamos margem de lucro de pelo menos 50%.
                </p>
             </div>
           </div>

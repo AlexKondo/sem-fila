@@ -1,0 +1,193 @@
+import { NextResponse } from 'next/server';
+import { createClient } from '@/lib/supabase/server';
+import Anthropic from '@anthropic-ai/sdk';
+
+const anthropic = new Anthropic({
+  apiKey: process.env.CLAUDE_API_KEY,
+});
+
+export async function POST(request: Request) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return NextResponse.json({ error: 'Não autenticado.' }, { status: 401 });
+
+  let body: {
+    vendorId: string;
+    menuItemId?: string;
+    menuItemName?: string;
+    prompt?: string;
+    currentDescription?: string;
+    category?: string;
+  };
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: 'Payload inválido.' }, { status: 400 });
+  }
+
+  const { vendorId, menuItemId, menuItemName, prompt, currentDescription, category } = body;
+  if (!vendorId) {
+    return NextResponse.json({ error: 'vendorId é obrigatório.' }, { status: 400 });
+  }
+
+  // Verifica ownership do vendor
+  const { data: vendor } = await supabase
+    .from('vendors')
+    .select('id, name, ai_photo_enabled, ai_photo_credits')
+    .eq('id', vendorId)
+    .eq('owner_id', user.id)
+    .single();
+
+  if (!vendor) {
+    return NextResponse.json({ error: 'Estabelecimento não encontrado.' }, { status: 404 });
+  }
+
+  if (!vendor.ai_photo_enabled) {
+    return NextResponse.json({ error: 'IA não está habilitada. Ative nas configurações.' }, { status: 403 });
+  }
+
+  if ((vendor.ai_photo_credits || 0) < 1) {
+    return NextResponse.json({ error: 'Créditos insuficientes. Compre mais créditos.' }, { status: 403 });
+  }
+
+  // Lê configurações do pacote (quantas imagens e descrições por crédito)
+  const { data: configs } = await supabase.from('platform_config').select('key, value');
+  const imagesPerCredit = parseInt(configs?.find(c => c.key === 'ai_images_per_credit')?.value || '10');
+  const descriptionsPerCredit = parseInt(configs?.find(c => c.key === 'ai_descriptions_per_credit')?.value || '1');
+
+  // Deduz 1 crédito
+  const newCredits = (vendor.ai_photo_credits || 0) - 1;
+  const { error: updateError } = await supabase
+    .from('vendors')
+    .update({ ai_photo_credits: newCredits })
+    .eq('id', vendorId);
+
+  if (updateError) {
+    return NextResponse.json({ error: 'Erro ao deduzir crédito.' }, { status: 500 });
+  }
+
+  // Registra o uso
+  await supabase.from('ai_photo_usage').insert({
+    vendor_id: vendorId,
+    menu_item_id: menuItemId || null,
+    menu_item_name: menuItemName || null,
+    type: 'bundle',
+    credits_used: 1,
+    prompt: prompt || null,
+  });
+
+  // Gera conteúdo com Claude (descrição) + imagens placeholder
+  try {
+    // Gera descrições com IA real
+    const descriptions: string[] = [];
+    for (let i = 0; i < descriptionsPerCredit; i++) {
+      const desc = await generateDescription({
+        itemName: menuItemName || 'Prato',
+        category: category || undefined,
+        currentDescription: currentDescription || undefined,
+        userPrompt: prompt || undefined,
+        vendorName: vendor.name,
+        variation: i,
+      });
+      descriptions.push(desc);
+    }
+
+    // Busca fotos reais no Pexels
+    const images = await searchPexelsImages(
+      menuItemName || category || 'prato comida',
+      imagesPerCredit,
+    );
+
+    return NextResponse.json({
+      remaining_credits: newCredits,
+      descriptions,
+      images,
+      bundle: { images_count: imagesPerCredit, descriptions_count: descriptionsPerCredit },
+    });
+  } catch (err: any) {
+    console.error('[AI Generate Error]', err?.message || err);
+    return NextResponse.json({
+      remaining_credits: newCredits,
+      error: 'Erro ao gerar conteúdo com IA. O crédito já foi consumido.',
+    }, { status: 500 });
+  }
+}
+
+async function generateDescription(opts: {
+  itemName: string;
+  category?: string;
+  currentDescription?: string;
+  userPrompt?: string;
+  vendorName: string;
+  variation: number;
+}): Promise<string> {
+  const { itemName, category, currentDescription, userPrompt, vendorName, variation } = opts;
+
+  const systemPrompt = `Você é um copywriter especialista em gastronomia brasileira. Sua tarefa é criar descrições curtas, apetitosas e irresistíveis para itens de cardápio digital.
+
+Regras:
+- Máximo 2 frases (até 180 caracteres)
+- Tom acolhedor e sensorial (mencione texturas, aromas, sabores)
+- Não use emojis
+- Não use aspas
+- Não comece com "Experimente" ou "Saboreie" (varie os inícios)
+- Responda APENAS com a descrição, sem explicações adicionais`;
+
+  let userMessage = `Crie uma descrição para o item de cardápio "${itemName}"`;
+  if (category) userMessage += ` da categoria "${category}"`;
+  userMessage += ` do estabelecimento "${vendorName}".`;
+
+  if (currentDescription) {
+    userMessage += `\n\nDescrição atual: "${currentDescription}".\nMelhore esta descrição mantendo a essência.`;
+  }
+
+  if (userPrompt) {
+    userMessage += `\n\nInstruções adicionais do vendor: ${userPrompt}`;
+  }
+
+  if (variation > 0) {
+    userMessage += `\n\nEsta é a variação ${variation + 1}. Crie uma versão diferente da anterior, com outro estilo e vocabulário.`;
+  }
+
+  const response = await anthropic.messages.create({
+    model: 'claude-haiku-4-5-20251001',
+    max_tokens: 200,
+    system: systemPrompt,
+    messages: [{ role: 'user', content: userMessage }],
+  });
+
+  const text = response.content[0];
+  if (text.type === 'text') {
+    return text.text.trim();
+  }
+
+  return `${itemName} preparado com ingredientes selecionados e todo o carinho da casa.`;
+}
+
+async function searchPexelsImages(query: string, count: number): Promise<string[]> {
+  const apiKey = process.env.PEXELS_API_KEY;
+  if (!apiKey) return [];
+
+  try {
+    // Busca em português primeiro, com fallback para termo genérico
+    const searchQuery = `${query} food`;
+    const url = `https://api.pexels.com/v1/search?query=${encodeURIComponent(searchQuery)}&per_page=${count}&orientation=square&size=small`;
+
+    const res = await fetch(url, {
+      headers: { Authorization: apiKey },
+    });
+
+    if (!res.ok) {
+      console.error('[Pexels API Error]', res.status, await res.text());
+      return [];
+    }
+
+    const data = await res.json();
+    const photos: { src: { medium: string } }[] = data.photos || [];
+
+    return photos.map(p => p.src.medium);
+  } catch (err: any) {
+    console.error('[Pexels Search Error]', err?.message);
+    return [];
+  }
+}

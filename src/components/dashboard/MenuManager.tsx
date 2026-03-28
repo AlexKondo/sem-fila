@@ -26,11 +26,10 @@ export default function MenuManager({ initialItems, vendorId, aiEnabled, aiCredi
 
   // Estados de IA
   const [localCredits, setLocalCredits] = useState(aiCredits);
-  const [aiImagePrompt, setAiImagePrompt] = useState('');
-  const [aiDescPrompt, setAiDescPrompt] = useState('');
-  const [isImprovingImage, setIsImprovingImage] = useState(false);
-  const [isImprovingDescription, setIsImprovingDescription] = useState(false);
+  const [aiPrompt, setAiPrompt] = useState('');
+  const [isGenerating, setIsGenerating] = useState(false);
   const [aiSuggestions, setAiSuggestions] = useState<string[]>([]);
+  const [aiDescriptions, setAiDescriptions] = useState<string[]>([]);
 
   function openNew() {
     setEditingItem({ vendor_id: vendorId, available: true, position: items.length });
@@ -287,7 +286,7 @@ export default function MenuManager({ initialItems, vendorId, aiEnabled, aiCredi
                   {!aiEnabled ? (
                     <div className="text-center py-2">
                        <p className="text-[10px] text-slate-400 font-medium mb-2 leading-relaxed italic">
-                         Ative o plano PRO para gerar 6 opções de fotos profissionais e descrições irresistíveis.
+                         Ative o plano PRO para gerar fotos e descrições irresistíveis com IA.
                        </p>
                        <button type="button" onClick={() => setIsPlansModalOpen(true)} className="text-[11px] font-bold text-orange-500 hover:underline">
                          Habilitar Agora →
@@ -295,132 +294,110 @@ export default function MenuManager({ initialItems, vendorId, aiEnabled, aiCredi
                     </div>
                   ) : (
                     <div className="space-y-4">
-                      {/* Sub-bloco: Imagem */}
+                      {/* Prompt unificado */}
                       <div>
-                        <p className="text-[10px] text-slate-500 font-bold uppercase mb-1.5 ml-1">Como você quer sua foto?</p>
-                        <input 
-                          placeholder="Ex: Luz de fim de tarde, mesa rústica..."
-                          value={aiImagePrompt} onChange={e => setAiImagePrompt(e.target.value)}
-                          className="w-full text-[11px] h-9 bg-white border border-orange-100 rounded-xl px-3 focus:outline-none focus:ring-1 focus:ring-orange-300 placeholder-slate-300 shadow-sm"
+                        <p className="text-[10px] text-slate-500 font-bold uppercase mb-1.5 ml-1">Instruções para a IA (opcional)</p>
+                        <textarea
+                          placeholder="Ex: Foto com luz de fim de tarde, mesa rústica. Descrição poética, foque no queijo derretido..."
+                          value={aiPrompt} onChange={e => setAiPrompt(e.target.value)}
+                          className="w-full text-[11px] h-14 bg-white border border-orange-100 rounded-xl px-3 py-2 focus:outline-none focus:ring-1 focus:ring-orange-300 placeholder-slate-300 shadow-sm resize-none"
                         />
                         <button
                           type="button"
-                          disabled={isImprovingImage}
+                          disabled={isGenerating}
                           onClick={async () => {
                             if (localCredits <= 0) { setIsPlansModalOpen(true); return; }
-                            setIsImprovingImage(true);
+                            setIsGenerating(true);
                             setFormError('');
+                            setAiSuggestions([]);
+                            setAiDescriptions([]);
                             try {
-                              const res = await fetch('/api/vendor/ai/use-credit', {
+                              const res = await fetch('/api/vendor/ai/generate', {
                                 method: 'POST',
                                 headers: { 'Content-Type': 'application/json' },
                                 body: JSON.stringify({
                                   vendorId,
                                   menuItemId: editingItem?.id || undefined,
                                   menuItemName: editingItem?.name || undefined,
-                                  type: 'image',
-                                  prompt: aiImagePrompt || undefined,
+                                  prompt: aiPrompt || undefined,
+                                  currentDescription: editingItem?.description || undefined,
+                                  category: editingItem?.category || undefined,
                                 }),
                               });
                               const data = await res.json();
-                              if (!res.ok) { setFormError(data.error || 'Erro ao usar crédito.'); setIsImprovingImage(false); return; }
+                              if (!res.ok) { setFormError(data.error || 'Erro ao gerar conteúdo.'); setIsGenerating(false); return; }
                               setLocalCredits(data.remaining_credits);
-                              // TODO: integrar com API real de geração de imagens
-                              setAiSuggestions([
-                                'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400',
-                                'https://images.unsplash.com/photo-1567620905732-2d1ec7bb7445?w=400',
-                                'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=400',
-                                'https://images.unsplash.com/photo-1482049016688-2d3e1b311543?w=400',
-                                'https://images.unsplash.com/photo-1484723088339-fe2a388da59b?w=400',
-                                'https://images.unsplash.com/photo-1476718406336-bb5a9690ee2a?w=400',
-                              ]);
+                              if (data.images?.length) setAiSuggestions(data.images);
+                              if (data.descriptions?.length) setAiDescriptions(data.descriptions);
                             } catch {
-                              setFormError('Erro de conexão ao usar crédito.');
+                              setFormError('Erro de conexão ao gerar conteúdo.');
                             }
-                            setIsImprovingImage(false);
+                            setIsGenerating(false);
                           }}
-                          className="w-full mt-2 h-8 bg-orange-600 text-white rounded-lg text-[10px] font-black uppercase tracking-widest hover:bg-orange-700 transition shadow-md shadow-orange-500/20 disabled:opacity-50"
+                          className="w-full mt-2 h-9 bg-gradient-to-r from-orange-500 to-amber-500 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:from-orange-600 hover:to-amber-600 transition shadow-lg shadow-orange-500/30 disabled:opacity-50"
                         >
-                          {isImprovingImage ? 'Gerando Sugestões...' : `Gerar 6 Opções Melhoradas`}
+                          {isGenerating ? 'Gerando com IA...' : `Usar 1 Crédito — Gerar Imagens + Descrição`}
                         </button>
                       </div>
 
-                      {/* Seletor de Opções (Grid) */}
-                      {aiSuggestions.length > 0 && (
-                        <div className="pt-2 border-t border-orange-100 mt-2">
-                           <p className="text-[10px] text-orange-600 font-black mb-2 flex items-center gap-1 italic">
-                             🔮 Escolha a Foto Ideal:
+                      {/* Descrições geradas pela IA */}
+                      {aiDescriptions.length > 0 && (
+                        <div className="pt-2 border-t border-orange-100">
+                           <p className="text-[10px] text-slate-600 font-black mb-2 flex items-center gap-1">
+                             Descrição gerada pela IA:
                            </p>
-                           <div className="grid grid-cols-3 gap-2">
+                           <div className="space-y-2">
+                              {aiDescriptions.map((desc, i) => (
+                                <button
+                                  key={i}
+                                  type="button"
+                                  onClick={() => { setEditingItem(p => ({ ...p!, description: desc })); setAiDescriptions([]); }}
+                                  className="w-full text-left p-2.5 bg-white border border-orange-100 rounded-xl text-[11px] text-slate-700 leading-relaxed hover:border-orange-400 hover:bg-orange-50/50 transition shadow-sm"
+                                >
+                                  {desc}
+                                  <span className="block text-[9px] text-orange-500 font-bold mt-1 uppercase">Clique para usar</span>
+                                </button>
+                              ))}
+                           </div>
+                        </div>
+                      )}
+
+                      {/* Seletor de imagens (Grid) */}
+                      {aiSuggestions.length > 0 && (
+                        <div className="pt-2 border-t border-orange-100">
+                           <p className="text-[10px] text-orange-600 font-black mb-2 flex items-center gap-1 italic">
+                             Escolha a Foto Ideal:
+                           </p>
+                           <div className="grid grid-cols-3 gap-2 max-h-60 overflow-y-auto">
                               {aiSuggestions.map((url, i) => (
-                                <button 
-                                  key={i} 
-                                  type="button" 
+                                <button
+                                  key={i}
+                                  type="button"
                                   onClick={() => { setEditingItem(p => ({ ...p!, image_url: url })); setAiSuggestions([]); }}
                                   className="relative aspect-square rounded-lg overflow-hidden border-2 border-white hover:border-orange-500 transition-all shadow-sm group"
                                 >
-                                  <img src={url} alt={`IA ${i+1}`} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                                  <img
+                                    src={url}
+                                    alt={`IA ${i+1}`}
+                                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                                    onError={(e) => {
+                                      (e.target as HTMLElement).closest('button')!.style.display = 'none';
+                                    }}
+                                  />
                                   <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                                     <span className="text-[10px] bg-white text-orange-600 px-1.5 py-0.5 rounded font-black">SAVE</span>
+                                     <span className="text-[10px] bg-white text-orange-600 px-1.5 py-0.5 rounded font-black">USAR</span>
                                   </div>
                                 </button>
                               ))}
                            </div>
-                           <button 
-                             type="button" onClick={() => setAiSuggestions([])} 
+                           <button
+                             type="button" onClick={() => { setAiSuggestions([]); setAiDescriptions([]); }}
                              className="w-full mt-2 text-[10px] font-bold text-slate-400 hover:text-slate-600"
                            >
-                              Cancelar e Usar Original
+                              Descartar Sugestões
                            </button>
                         </div>
                       )}
-
-                      {/* Sub-bloco: Descrição */}
-                      <div className="pt-3 border-t border-orange-100">
-                        <p className="text-[10px] text-slate-500 font-bold uppercase mb-1.5 ml-1">Refinar Texto / Briefing</p>
-                        <textarea 
-                          placeholder="Ex: Texto poético, foque no queijo derretido..."
-                          value={aiDescPrompt} onChange={e => setAiDescPrompt(e.target.value)}
-                          className="w-full text-[11px] h-12 bg-white border border-orange-100 rounded-xl px-3 py-2 focus:outline-none focus:ring-1 focus:ring-orange-300 placeholder-slate-300 shadow-sm resize-none"
-                        />
-                        <button
-                          type="button"
-                          disabled={isImprovingDescription}
-                          onClick={async () => {
-                            if (localCredits <= 0) { setIsPlansModalOpen(true); return; }
-                            setIsImprovingDescription(true);
-                            setFormError('');
-                            try {
-                              const res = await fetch('/api/vendor/ai/use-credit', {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({
-                                  vendorId,
-                                  menuItemId: editingItem?.id || undefined,
-                                  menuItemName: editingItem?.name || undefined,
-                                  type: 'description',
-                                  prompt: aiDescPrompt || undefined,
-                                }),
-                              });
-                              const data = await res.json();
-                              if (!res.ok) { setFormError(data.error || 'Erro ao usar crédito.'); setIsImprovingDescription(false); return; }
-                              setLocalCredits(data.remaining_credits);
-                              // TODO: integrar com API real de geração de texto
-                              const base = editingItem?.name || 'Prato Delicioso';
-                              setEditingItem(p => ({
-                                ...p!,
-                                description: `Saboreie o nosso ${base}, uma explosão de texturas e o equilíbrio perfeito de sabores frescos. Uma experiência memorável para o seu paladar.`,
-                              }));
-                            } catch {
-                              setFormError('Erro de conexão ao usar crédito.');
-                            }
-                            setIsImprovingDescription(false);
-                          }}
-                          className="w-full mt-2 h-8 bg-slate-900 text-white rounded-lg text-[10px] font-black uppercase tracking-widest hover:bg-slate-800 transition shadow-md shadow-black/20 disabled:opacity-50"
-                        >
-                           {isImprovingDescription ? 'A IA está escrevendo...' : 'Melhorar Descrição com IA'}
-                        </button>
-                      </div>
                     </div>
                   )}
                 </div>
