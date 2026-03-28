@@ -140,8 +140,15 @@ export default function VendorPlansModal({ isOpen, onClose, onlyShowAi, vendorId
         <div className={`p-8 md:p-12 ${onlyShowAi ? 'md:pt-16 md:pb-16' : ''}`}>
 
           {error && (
-            <div className="mb-6 p-4 rounded-2xl bg-red-50 border border-red-100 text-red-600 text-sm font-medium text-center">
-              {error}
+            <div className="mb-6 p-5 rounded-2xl bg-amber-50 border border-amber-200 flex items-start gap-3">
+              <span className="text-xl shrink-0">⚠️</span>
+              <div>
+                <p className="text-sm font-bold text-amber-800">{error}</p>
+                <p className="text-xs text-amber-600 mt-1">Se o problema persistir, entre em contato com o suporte.</p>
+              </div>
+              <button onClick={() => setError(null)} className="ml-auto shrink-0 text-amber-400 hover:text-amber-600">
+                <X className="w-4 h-4" />
+              </button>
             </div>
           )}
 

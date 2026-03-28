@@ -89,11 +89,18 @@ export async function POST(request: Request) {
 
   try {
     // Cria/busca customer no Asaas
-    const customerId = await findOrCreateCustomer({
-      name: profile?.name || vendor.name,
-      cpfCnpj,
-      email: user.email,
-    });
+    let customerId: string;
+    try {
+      customerId = await findOrCreateCustomer({
+        name: profile?.name || vendor.name,
+        cpfCnpj,
+        email: user.email,
+      });
+    } catch {
+      return NextResponse.json({
+        error: 'O CPF/CNPJ cadastrado no seu perfil é inválido. Atualize em Configurações antes de prosseguir.',
+      }, { status: 400 });
+    }
 
     // Cria cobrança com todas as formas de pagamento
     const due = new Date();
@@ -115,11 +122,15 @@ export async function POST(request: Request) {
 
     const payment = await res.json();
     if (!payment.id) {
-      return NextResponse.json({ error: 'Erro ao criar cobrança no Asaas.', details: payment }, { status: 500 });
+      return NextResponse.json({
+        error: 'Não foi possível gerar o checkout. Tente novamente em alguns instantes.',
+      }, { status: 500 });
     }
 
     return NextResponse.json({ invoiceUrl: payment.invoiceUrl, paymentId: payment.id });
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message || 'Erro interno.' }, { status: 500 });
+  } catch {
+    return NextResponse.json({
+      error: 'Ocorreu um erro inesperado. Tente novamente.',
+    }, { status: 500 });
   }
 }
