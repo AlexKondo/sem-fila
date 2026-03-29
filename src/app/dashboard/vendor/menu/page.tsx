@@ -5,24 +5,14 @@ import { createClient } from '@/lib/supabase/server';
 import MenuManager from '@/components/dashboard/MenuManager';
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
+import { resolveVendor } from '@/lib/vendor-resolver';
 
 export default async function VendorMenuPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect('/login');
 
-  const { data: vendors } = await supabase
-    .from('vendors')
-    .select('*')
-    .eq('owner_id', user.id);
-
-  const { cookies } = await import('next/headers');
-  const cookieStore = await cookies();
-  const selectedId = cookieStore.get('selected_vendor_id')?.value;
-
-  const vendor = selectedId
-    ? vendors?.find(v => v.id === selectedId) || vendors?.[0]
-    : vendors?.[0] || null;
+  const { vendor } = await resolveVendor(supabase, user.id);
 
   if (!vendor) redirect('/dashboard/vendor');
 

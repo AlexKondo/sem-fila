@@ -2,24 +2,14 @@
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import WaiterBoard from '@/components/dashboard/WaiterBoard';
+import { resolveVendor } from '@/lib/vendor-resolver';
 
 export default async function WaiterPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect('/login');
 
-  const { data: vendors } = await supabase
-    .from('vendors')
-    .select('id, name, business_type')
-    .eq('owner_id', user.id);
-
-  const { cookies } = await import('next/headers');
-  const cookieStore = await cookies();
-  const selectedId = cookieStore.get('selected_vendor_id')?.value;
-
-  const vendor = selectedId
-    ? vendors?.find(v => v.id === selectedId) || vendors?.[0]
-    : vendors?.[0] || null;
+  const { vendor } = await resolveVendor(supabase, user.id, { select: 'id, name, business_type' });
 
   if (!vendor) redirect('/dashboard/vendor');
 

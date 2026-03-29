@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import VendorOrdersBoard from '@/components/dashboard/VendorOrdersBoard';
 import VendorOverview from '@/components/dashboard/VendorOverview';
+import { resolveVendor } from '@/lib/vendor-resolver';
 
 const P = '#ec5b13'; // used in JSX below
 
@@ -10,15 +11,11 @@ export default async function VendorDashboardPage() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect('/login');
 
-  const [profileRes, vendorsRes] = await Promise.all([
-    supabase.from('profiles').select('role, name, cnpj, phone').eq('id', user.id).single(),
-    supabase.from('vendors').select('*').eq('owner_id', user.id)
-  ]);
-
-  const profile = profileRes.data;
-  const vendors = vendorsRes.data || [];
-
+  const { data: profile } = await supabase
+    .from('profiles').select('role').eq('id', user.id).single();
   if (profile?.role === 'platform_admin') redirect('/dashboard/admin');
+
+  const { vendor, vendors } = await resolveVendor(supabase, user.id);
 
   const { cookies } = await import('next/headers');
   const cookieStore = await cookies();
@@ -28,10 +25,6 @@ export default async function VendorDashboardPage() {
   if (selectedId === 'all' && vendors.length > 1) {
     return <VendorOverview vendors={vendors} userId={user.id} />;
   }
-
-  const vendor = selectedId
-    ? vendors.find(v => v.id === selectedId) || vendors[0]
-    : vendors[0] || null;
 
   if (!vendor) {
     return (

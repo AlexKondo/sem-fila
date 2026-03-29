@@ -3,12 +3,13 @@ import { createClient } from '@/lib/supabase/server';
 import QrCodeDisplay from '@/components/dashboard/QrCodeDisplay';
 import Link from 'next/link';
 import { headers } from 'next/headers';
+import { resolveVendor } from '@/lib/vendor-resolver';
 
 export default async function QrCodePage() {
   const headerList = await headers();
   const host = headerList.get('host') || 'localhost:3000';
   const protocol = host.includes('localhost') ? 'http' : 'https';
-  
+
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect('/login');
@@ -19,18 +20,7 @@ export default async function QrCodePage() {
     .eq('id', user.id)
     .single();
 
-  const { data: vendors } = await supabase
-    .from('vendors')
-    .select('id, name')
-    .eq('owner_id', user.id);
-
-  const { cookies } = await import('next/headers');
-  const cookieStore = await cookies();
-  const selectedId = cookieStore.get('selected_vendor_id')?.value;
-
-  const vendor = selectedId 
-    ? vendors?.find(v => v.id === selectedId) || vendors?.[0]
-    : vendors?.[0] || null;
+  const { vendor } = await resolveVendor(supabase, user.id, { select: 'id, name' });
 
   if (!vendor) redirect('/dashboard/vendor');
 
