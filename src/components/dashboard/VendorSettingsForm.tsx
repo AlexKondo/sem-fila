@@ -185,8 +185,8 @@ export default function VendorSettingsForm({ vendor, subscription }: { vendor: a
             </div>
           </label>
 
-          {/* Campo de mesas — aparece logo abaixo do checkbox de entrega */}
-          {deliversToTable && (
+          {/* Campo de mesas — só para restaurante/bar que têm gestão de mesas */}
+          {deliversToTable && ['restaurant', 'bar'].includes(businessType) && (
             <div className="ml-8 p-3 bg-orange-50/40 border border-orange-100 rounded-xl">
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Número total de mesas do estabelecimento
