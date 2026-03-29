@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useRef, useCallback } from 'react';
+import { useEffect, useState, useRef, useCallback, useMemo } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { formatDate } from '@/lib/utils';
 import {
@@ -145,10 +145,10 @@ export default function WaiterBoard({ initialReadyOrders, initialWaiterCalls, in
     return () => { supabase.removeChannel(channel); };
   }, [vendorId, playSound]);
 
-  const supabase = createClient();
+  const supabase = useMemo(() => createClient(), []);
 
   // === TABLE ACTIONS ===
-  async function addTable() {
+  const addTable = useCallback(async () => {
     if (!newTableNumber.trim()) return;
     const { error } = await supabase.from('vendor_tables').insert({
       vendor_id: vendorId,
@@ -164,51 +164,56 @@ export default function WaiterBoard({ initialReadyOrders, initialWaiterCalls, in
     setNewTableNumber('');
     setNewTableCapacity(4);
     setShowAddTable(false);
-  }
+  }, [supabase, vendorId, newTableNumber, newTableCapacity]);
 
-  async function removeTable(tableId: string) {
+  const removeTable = useCallback(async (tableId: string) => {
     if (!confirm('Remover esta mesa?')) return;
-    await supabase.from('vendor_tables').delete().eq('id', tableId);
-  }
+    // Optimistic: remove imediatamente da UI
+    setTables(prev => prev.filter(t => t.id !== tableId));
+    setSelectedTable(null);
+    const { error } = await supabase.from('vendor_tables').delete().eq('id', tableId);
+    if (error) {
+      console.error('Erro ao remover mesa:', error);
+      alert(`Erro ao remover mesa: ${error.message}`);
+      // Rollback: recarrega as mesas
+      const { data } = await supabase.from('vendor_tables').select('*').eq('vendor_id', vendorId).order('table_number');
+      if (data) setTables(data);
+    }
+  }, [supabase, vendorId]);
 
-  async function updateTableStatus(tableId: string, status: TableStatus) {
+  const updateTableStatus = useCallback(async (tableId: string, status: TableStatus) => {
     const updates: Record<string, any> = { status, updated_at: new Date().toISOString() };
     if (status === 'occupied') updates.occupied_at = new Date().toISOString();
     if (status === 'free') { updates.occupied_at = null; updates.merged_with = null; }
     await supabase.from('vendor_tables').update(updates).eq('id', tableId);
-    // Se liberou, desfaz merge
     if (status === 'free') {
       await supabase.from('vendor_tables').update({ merged_with: null }).eq('merged_with', tableId);
     }
     setSelectedTable(null);
-  }
+  }, [supabase]);
 
-  async function updateTableCapacity(tableId: string, capacity: number) {
+  const updateTableCapacity = useCallback(async (tableId: string, capacity: number) => {
     await supabase.from('vendor_tables').update({ capacity, updated_at: new Date().toISOString() }).eq('id', tableId);
-  }
+  }, [supabase]);
 
-  async function mergeTables(sourceId: string, targetId: string) {
-    // Marca a source como "merged_with" target
+  const mergeTables = useCallback(async (sourceId: string, targetId: string) => {
     await supabase.from('vendor_tables').update({
       merged_with: targetId,
       status: 'occupied',
       occupied_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     }).eq('id', sourceId);
-    // Marca target como occupied também
     await supabase.from('vendor_tables').update({
       status: 'occupied',
       occupied_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     }).eq('id', targetId);
     setMergeSource(null);
-  }
+  }, [supabase]);
 
-  async function splitTable(tableId: string) {
-    // Encontra mesas mergeadas com esta
+  const splitTable = useCallback(async (tableId: string) => {
     const merged = tables.filter(t => t.merged_with === tableId);
     const ids = [tableId, ...merged.map(m => m.id)];
-    // Volta todas ao layout original: sem merge, status dirty (precisa limpar)
     for (const id of ids) {
       await supabase.from('vendor_tables').update({
         merged_with: null,
@@ -218,18 +223,18 @@ export default function WaiterBoard({ initialReadyOrders, initialWaiterCalls, in
       }).eq('id', id);
     }
     setSelectedTable(null);
-  }
+  }, [supabase, tables]);
 
   // === QUEUE ACTIONS ===
-  async function callNextInQueue(queueId: string) {
+  const callNextInQueue = useCallback(async (queueId: string) => {
     await supabase.from('queue_entries').update({
       status: 'called',
       called_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     }).eq('id', queueId);
-  }
+  }, [supabase]);
 
-  async function seatFromQueue(queueId: string, tableId: string) {
+  const seatFromQueue = useCallback(async (queueId: string, tableId: string) => {
     await supabase.from('queue_entries').update({
       status: 'seated',
       seated_at: new Date().toISOString(),
@@ -237,37 +242,37 @@ export default function WaiterBoard({ initialReadyOrders, initialWaiterCalls, in
       updated_at: new Date().toISOString(),
     }).eq('id', queueId);
     await updateTableStatus(tableId, 'occupied');
-  }
+  }, [supabase, updateTableStatus]);
 
-  async function markNoShow(queueId: string) {
+  const markNoShow = useCallback(async (queueId: string) => {
     await supabase.from('queue_entries').update({
       status: 'no_show',
       updated_at: new Date().toISOString(),
     }).eq('id', queueId);
-  }
+  }, [supabase]);
 
-  async function cancelQueueEntry(queueId: string) {
+  const cancelQueueEntry = useCallback(async (queueId: string) => {
     await supabase.from('queue_entries').update({
       status: 'cancelled',
       cancelled_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     }).eq('id', queueId);
-  }
+  }, [supabase]);
 
   // === WAITER CALL ACTIONS ===
-  async function attendCall(callId: string) {
+  const attendCall = useCallback(async (callId: string) => {
     const { error } = await supabase.from('waiter_calls')
       .update({ status: 'attended', attended_at: new Date().toISOString() })
       .eq('id', callId);
     if (!error) {
       setCalls(prev => prev.map(c => c.id === callId ? { ...c, status: 'attended' as const, attended_at: new Date().toISOString() } : c));
     }
-  }
+  }, [supabase]);
 
-  async function markDelivered(orderId: string) {
+  const markDelivered = useCallback(async (orderId: string) => {
     const { error } = await supabase.from('orders').update({ status: 'delivered' }).eq('id', orderId);
     if (!error) setOrders(prev => prev.filter(o => o.id !== orderId));
-  }
+  }, [supabase]);
 
   function getDuration(start: string, end: string | null) {
     if (!end) return '...';
