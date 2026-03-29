@@ -46,7 +46,7 @@ export default function VendorSettingsForm({ vendor, subscription }: { vendor: a
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState('');
   const [aiImagesPerCredit, setAiImagesPerCredit] = useState(10);
-  const [openSections, setOpenSections] = useState<Record<string, boolean>>({ operacao: true });
+  const [openSections, setOpenSections] = useState<Record<string, boolean>>({});
   const router = useRouter();
 
   function toggleSection(key: string) {
@@ -256,7 +256,7 @@ export default function VendorSettingsForm({ vendor, subscription }: { vendor: a
       {/* Bloco 1.5: Preferências de Alerta */}
       <section className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
         <button type="button" onClick={() => toggleSection('notificacao')} className="w-full flex items-center justify-between p-5 hover:bg-slate-50/50 transition">
-          <h2 className="text-sm font-bold text-gray-900 uppercase tracking-wide">Preferências de Notificação</h2>
+          <h2 className="text-sm font-bold text-gray-900 uppercase tracking-wide">2. Preferências de Notificação</h2>
           <ChevronDown className={`w-5 h-5 text-slate-400 transition-transform duration-300 ${openSections.notificacao ? 'rotate-180' : ''}`} />
         </button>
         {openSections.notificacao && <div className="px-5 pb-5">
@@ -281,7 +281,7 @@ export default function VendorSettingsForm({ vendor, subscription }: { vendor: a
       {/* Bloco 2: Cobranças */}
       <section className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
         <button type="button" onClick={() => toggleSection('cobrancas')} className="w-full flex items-center justify-between p-5 hover:bg-slate-50/50 transition">
-          <h2 className="text-sm font-bold text-gray-900 uppercase tracking-wide">2. Cobranças e Taxas</h2>
+          <h2 className="text-sm font-bold text-gray-900 uppercase tracking-wide">3. Cobranças e Taxas</h2>
           <ChevronDown className={`w-5 h-5 text-slate-400 transition-transform duration-300 ${openSections.cobrancas ? 'rotate-180' : ''}`} />
         </button>
 
@@ -321,7 +321,7 @@ export default function VendorSettingsForm({ vendor, subscription }: { vendor: a
       {/* Bloco 3: Cupons e Ofertas */}
       <section className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
         <button type="button" onClick={() => toggleSection('descontos')} className="w-full flex items-center justify-between p-5 hover:bg-slate-50/50 transition">
-          <h2 className="text-sm font-bold text-gray-900 uppercase tracking-wide">3. Vendas e Descontos</h2>
+          <h2 className="text-sm font-bold text-gray-900 uppercase tracking-wide">4. Vendas e Descontos</h2>
           <ChevronDown className={`w-5 h-5 text-slate-400 transition-transform duration-300 ${openSections.descontos ? 'rotate-180' : ''}`} />
         </button>
 
@@ -362,7 +362,7 @@ export default function VendorSettingsForm({ vendor, subscription }: { vendor: a
 
         <button type="button" onClick={() => toggleSection('ia')} className="w-full flex items-center justify-between p-5 hover:bg-slate-50/50 transition relative z-10">
           <div className="flex items-center gap-3">
-            <h2 className="text-sm font-bold text-gray-900 uppercase tracking-wide">4. Inteligência Artificial de Fotos</h2>
+            <h2 className="text-sm font-bold text-gray-900 uppercase tracking-wide">5. Inteligência Artificial de Fotos</h2>
             <div className={`px-2 py-0.5 rounded text-[10px] font-black uppercase ${aiPhotoEnabled ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-400'}`}>
               {aiPhotoEnabled ? 'Ativo' : 'Pausado'}
             </div>
@@ -462,7 +462,7 @@ export default function VendorSettingsForm({ vendor, subscription }: { vendor: a
         <section className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
           <button type="button" onClick={() => toggleSection('plano')} className="w-full flex items-center justify-between p-5 hover:bg-slate-50/50 transition">
             <div className="flex items-center gap-3">
-              <h2 className="text-sm font-bold text-gray-900 uppercase tracking-wide">5. Meu Plano</h2>
+              <h2 className="text-sm font-bold text-gray-900 uppercase tracking-wide">6. Meu Plano</h2>
               <div className="px-2 py-0.5 rounded text-[10px] font-black uppercase bg-green-100 text-green-700">
                 Ativo
               </div>
@@ -535,7 +535,7 @@ export default function VendorSettingsForm({ vendor, subscription }: { vendor: a
         <section className="bg-gradient-to-br from-slate-900 to-slate-800 rounded-3xl shadow-xl border border-slate-700 relative overflow-hidden group">
           <button type="button" onClick={() => toggleSection('plano')} className="w-full flex items-center justify-between p-5 hover:bg-white/5 transition">
             <div className="flex items-center gap-3">
-              <h2 className="text-sm font-bold text-white uppercase tracking-wide">5. Meu Plano</h2>
+              <h2 className="text-sm font-bold text-white uppercase tracking-wide">6. Meu Plano</h2>
               <div className="px-2 py-0.5 rounded text-[10px] font-black uppercase bg-orange-500 text-white">
                 Grátis
               </div>
@@ -588,10 +588,10 @@ export default function VendorSettingsForm({ vendor, subscription }: { vendor: a
         </section>
       )}
 
-      {/* Bloco 6: Zona de Perigo — Apagar Marca */}
+      {/* Bloco 7: Zona de Perigo — Apagar Marca */}
       <section className="bg-white rounded-2xl shadow-sm border border-red-100 overflow-hidden">
         <button type="button" onClick={() => toggleSection('perigo')} className="w-full flex items-center justify-between p-5 hover:bg-red-50/30 transition">
-          <h2 className="text-sm font-bold text-red-600 uppercase tracking-wide">6. Zona de Perigo</h2>
+          <h2 className="text-sm font-bold text-red-600 uppercase tracking-wide">7. Zona de Perigo</h2>
           <ChevronDown className={`w-5 h-5 text-red-400 transition-transform duration-300 ${openSections.perigo ? 'rotate-180' : ''}`} />
         </button>
         {openSections.perigo && <div className="px-5 pb-5">
