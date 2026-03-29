@@ -33,6 +33,10 @@ export default function RankingPage() {
 
   useEffect(() => {
     const supabase = createClient();
+    // DEBUG: mostra o uid do usuário logado
+    supabase.auth.getUser().then(({ data }) => {
+      if (data?.user) console.log('DEBUG auth.uid =', data.user.id);
+    });
     Promise.all([
       supabase.from('ranking_settings').select('*').order('feature'),
       supabase.from('vendor_subscriptions').select('*, vendors(id, name)').order('created_at', { ascending: false }),
