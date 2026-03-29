@@ -392,26 +392,6 @@ export default function StaffPage() {
             </div>
 
             <div className="space-y-3">
-              {/* Função */}
-              <div>
-                <label className="text-xs font-bold text-slate-500 block mb-2">Função</label>
-                <div className="grid grid-cols-3 gap-2">
-                  {ROLE_OPTIONS.map(r => (
-                    <button
-                      key={r.value}
-                      onClick={() => setForm(f => ({ ...f, role: r.value }))}
-                      className={`py-2.5 rounded-xl text-xs font-bold transition border ${
-                        form.role === r.value
-                          ? 'bg-orange-500 text-white border-orange-500 shadow'
-                          : 'bg-white text-slate-500 border-slate-200'
-                      }`}
-                    >
-                      {r.emoji} {r.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
               {/* Nome */}
               <div>
                 <label className="text-xs font-bold text-slate-500 block mb-1">Nome completo *</label>
@@ -422,6 +402,20 @@ export default function StaffPage() {
                   placeholder="João da Silva"
                   className="w-full border border-slate-200 rounded-xl px-4 h-12 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/30"
                 />
+              </div>
+
+              {/* Função — combobox */}
+              <div>
+                <label className="text-xs font-bold text-slate-500 block mb-1">Função *</label>
+                <select
+                  value={form.role}
+                  onChange={e => setForm(f => ({ ...f, role: e.target.value }))}
+                  className="w-full border border-slate-200 rounded-xl px-4 h-12 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-orange-500/30"
+                >
+                  {ROLE_OPTIONS.map(r => (
+                    <option key={r.value} value={r.value}>{r.emoji} {r.label}</option>
+                  ))}
+                </select>
               </div>
 
               {/* Email */}
@@ -436,9 +430,9 @@ export default function StaffPage() {
                 />
               </div>
 
-              {/* Telefone */}
+              {/* WhatsApp */}
               <div>
-                <label className="text-xs font-bold text-slate-500 block mb-1">Telefone (opcional)</label>
+                <label className="text-xs font-bold text-slate-500 block mb-1">WhatsApp (opcional)</label>
                 <input
                   type="tel"
                   value={form.phone}
