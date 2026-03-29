@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import Link from 'next/link';
-import { Users, Building2, CalendarDays, Store, ShoppingBag, TrendingUp, DollarSign, Settings, Award, UserCog, Trophy, BarChart2, Sparkles, Zap } from 'lucide-react';
+import { Users, Building2, CalendarDays, Store, ShoppingBag, TrendingUp, DollarSign, Settings, Award, Trophy, BarChart2, Sparkles, Zap } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
 import LogoutButton from '@/components/ui/LogoutButton';
 
@@ -44,12 +44,12 @@ export default async function AdminDashboardPage() {
   const totalRevenue = revenueData?.reduce((sum, o) => sum + (o.total_price ?? 0), 0) ?? 0;
 
   const stats = [
-    { label: 'Usuários', value: totalUsers ?? 0, icon: Users, color: 'bg-blue-50 text-blue-600' },
-    { label: 'Afiliados', value: totalAffiliates ?? 0, icon: Award, color: 'bg-pink-50 text-pink-600' },
-    { label: 'Eventos', value: totalEvents ?? 0, icon: CalendarDays, color: 'bg-green-50 text-green-600' },
-    { label: 'Barracas', value: totalVendors ?? 0, icon: Store, color: 'bg-orange-50 text-orange-600' },
-    { label: 'Pedidos', value: totalOrders ?? 0, icon: ShoppingBag, color: 'bg-yellow-50 text-yellow-600' },
-    { label: 'Receita Total', value: formatCurrency(totalRevenue), icon: TrendingUp, color: 'bg-emerald-50 text-emerald-600', isText: true },
+    { label: 'Usuários', value: totalUsers ?? 0, icon: Users, color: 'bg-blue-50 text-blue-600', href: '/dashboard/admin/users' },
+    { label: 'Afiliados', value: totalAffiliates ?? 0, icon: Award, color: 'bg-pink-50 text-pink-600', href: '/dashboard/admin/users' },
+    { label: 'Eventos', value: totalEvents ?? 0, icon: CalendarDays, color: 'bg-green-50 text-green-600', href: '/dashboard/admin/events' },
+    { label: 'Barracas', value: totalVendors ?? 0, icon: Store, color: 'bg-orange-50 text-orange-600', href: '/dashboard/admin/vendors' },
+    { label: 'Pedidos', value: totalOrders ?? 0, icon: ShoppingBag, color: 'bg-yellow-50 text-yellow-600', href: null },
+    { label: 'Receita Total', value: formatCurrency(totalRevenue), icon: TrendingUp, color: 'bg-emerald-50 text-emerald-600', isText: true, href: null },
   ];
 
   return (
@@ -79,15 +79,26 @@ export default async function AdminDashboardPage() {
             <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide">Status da Plataforma</h2>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-            {stats.map(({ label, value, icon: Icon, color, isText }) => (
-              <div key={label} className="bg-white rounded-2xl shadow-sm p-4 border border-gray-100">
-                <div className={`w-9 h-9 rounded-xl flex items-center justify-center mb-2 ${color}`}>
-                  <Icon className="w-4 h-4" />
+            {stats.map(({ label, value, icon: Icon, color, isText, href }) => {
+              const content = (
+                <>
+                  <div className={`w-9 h-9 rounded-xl flex items-center justify-center mb-2 ${color}`}>
+                    <Icon className="w-4 h-4" />
+                  </div>
+                  <p className={`font-black text-gray-900 ${isText ? 'text-base' : 'text-2xl'}`}>{value}</p>
+                  <p className="text-xs text-gray-500 font-medium">{label}</p>
+                </>
+              );
+              return href ? (
+                <Link key={label} href={href} className="bg-white rounded-2xl shadow-sm p-4 border border-gray-100 hover:shadow-md hover:border-orange-200 transition cursor-pointer">
+                  {content}
+                </Link>
+              ) : (
+                <div key={label} className="bg-white rounded-2xl shadow-sm p-4 border border-gray-100">
+                  {content}
                 </div>
-                <p className={`font-black text-gray-900 ${isText ? 'text-base' : 'text-2xl'}`}>{value}</p>
-                <p className="text-xs text-gray-500 font-medium">{label}</p>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
 
@@ -119,10 +130,7 @@ export default async function AdminDashboardPage() {
             <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">Configurações</h2>
             <div className="grid grid-cols-1 gap-3">
               {[
-                { href: '/dashboard/admin/events', label: 'Gestão de Eventos', icon: CalendarDays, desc: 'Criar e gerenciar eventos da plataforma' },
                 { href: '/dashboard/admin/organizations', label: 'Organizações', icon: Building2, desc: 'Empresas e grandes organizadores' },
-                { href: '/dashboard/admin/vendors', label: 'Gestão de Quiosques', icon: Store, desc: 'Aprovar e gerenciar parceiros' },
-                { href: '/dashboard/admin/users', label: 'Gestão de Usuários', icon: UserCog, desc: 'Usuários, roles e permissões' },
                 { href: '/dashboard/admin/gamification', label: 'Níveis de Bonificação', icon: Trophy, desc: 'Configure bronze, prata, ouro e platina' },
                 { href: '/dashboard/admin/ranking', label: 'Ranking & Monetização', icon: BarChart2, desc: 'Rankings globais e assinaturas premium' },
                 { href: '/dashboard/admin/premium-features', label: 'Benefícios Premium', icon: Sparkles, desc: 'Configure benefícios que vendors podem comprar' },
