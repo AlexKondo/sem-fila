@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { formatCurrency, formatDate, ORDER_STATUS_LABEL, ORDER_STATUS_COLOR } from '@/lib/utils';
 import type { OrderStatus } from '@/types/database';
@@ -52,6 +52,9 @@ function getFilterDate(filter: DateFilter, customDate?: string): Date {
   }
 }
 
+// Pré-carrega o áudio para tocar instantaneamente
+const ALARM_URL = 'https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3';
+
 interface Props {
   initialOrders: OrderWithItems[];
   vendorId: string;
@@ -66,6 +69,53 @@ export default function VendorOrdersBoard({ initialOrders, vendorId }: Props) {
 
   // Ref para rastrear IDs de pedidos já conhecidos (evita alertas falsos)
   const knownIdsRef = useRef<Set<string>>(new Set(initialOrders.map(o => o.id)));
+  // Ref do áudio pré-carregado
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  // Flag para saber se o user já interagiu com a página (autoplay policy)
+  const hasInteractedRef = useRef(false);
+
+  // Pré-carrega o áudio e detecta interação do usuário
+  useEffect(() => {
+    const audio = new Audio(ALARM_URL);
+    audio.preload = 'auto';
+    audio.load();
+    audioRef.current = audio;
+
+    function onInteraction() {
+      hasInteractedRef.current = true;
+      // Toca e pausa silenciosamente para "desbloquear" o áudio no browser
+      audio.volume = 0;
+      audio.play().then(() => { audio.pause(); audio.currentTime = 0; audio.volume = 1; }).catch(() => {});
+    }
+    window.addEventListener('click', onInteraction, { once: true });
+    window.addEventListener('touchstart', onInteraction, { once: true });
+
+    return () => {
+      window.removeEventListener('click', onInteraction);
+      window.removeEventListener('touchstart', onInteraction);
+    };
+  }, []);
+
+  const playNewOrderSound = useCallback(() => {
+    try {
+      if (typeof window !== 'undefined') {
+        const enabled = localStorage.getItem('vendor_alerts_enabled') !== 'false';
+        if (!enabled) return;
+      }
+      const audio = audioRef.current;
+      if (audio) {
+        audio.currentTime = 0;
+        audio.volume = 1;
+        audio.play().catch(() => {
+          // Fallback: cria nova instância
+          const fallback = new Audio(ALARM_URL);
+          fallback.play().catch(() => {});
+        });
+      } else {
+        new Audio(ALARM_URL).play().catch(() => {});
+      }
+    } catch {}
+  }, []);
 
   // Recarrega pedidos imediatamente quando o filtro de data muda
   useEffect(() => {
@@ -80,6 +130,7 @@ export default function VendorOrdersBoard({ initialOrders, vendorId }: Props) {
         p_since: since.toISOString(),
       });
       if (!cancelled) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         setOrders((data || []) as any[]);
         setLoadingFilter(false);
       }
@@ -93,19 +144,8 @@ export default function VendorOrdersBoard({ initialOrders, vendorId }: Props) {
     const supabase = createClient();
     let pollTimer: ReturnType<typeof setInterval> | null = null;
 
-    function playNewOrderSound() {
-      try {
-        if (typeof window !== 'undefined') {
-          const enabled = localStorage.getItem('vendor_alerts_enabled') !== 'false';
-          if (!enabled) return;
-        }
-        const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3');
-        audio.play().catch(() => {});
-      } catch {}
-    }
-
-    // Busca pedidos via RPC (bypassa RLS) e sincroniza com o estado local
-    async function syncOrders(alertOnPaid = false) {
+    // Busca pedidos via RPC e sincroniza com o estado local
+    async function syncOrders(alertOnNew = false) {
       const since = getFilterDate(dateFilter, customDate);
       const { data } = await supabase.rpc('get_vendor_orders', {
         p_vendor_id: vendorId,
@@ -114,14 +154,14 @@ export default function VendorOrdersBoard({ initialOrders, vendorId }: Props) {
       if (!data) return;
       const fresh = data as OrderWithItems[];
 
-      // Detecta pedidos novos comparando com ref (fora do setState)
-      if (alertOnPaid) {
-        const newPaidOrders = fresh.filter(o =>
+      // Detecta pedidos novos comparando com ref
+      if (alertOnNew) {
+        const newOrders = fresh.filter(o =>
           !knownIdsRef.current.has(o.id) &&
           !['delivered', 'cancelled'].includes(o.status)
         );
-        if (newPaidOrders.length > 0) {
-          setAlertOrder(newPaidOrders[0]);
+        if (newOrders.length > 0) {
+          setAlertOrder(newOrders[0]);
           playNewOrderSound();
         }
       }
@@ -146,56 +186,41 @@ export default function VendorOrdersBoard({ initialOrders, vendorId }: Props) {
           const eventType = payload.eventType;
 
           if (eventType === 'DELETE') {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             setOrders(prev => prev.filter(o => o.id !== (payload.old as any).id));
             return;
           }
 
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const updated = payload.new as any;
 
-          // UPDATE de status (preparando → pronto, etc) — atualiza localmente
           if (eventType === 'UPDATE') {
             if (updated.status === 'cancelled' || updated.payment_status === 'failed') {
               setOrders(prev => prev.filter(o => o.id !== updated.id));
               return;
             }
-
-            // Verifica se é um pedido novo ficando pago (ou qualquer mudança relevante)
-            let needsFullSync = false;
-            setOrders(prev => {
-              const exists = prev.some(o => o.id === updated.id);
-              if (!exists && updated.payment_status === 'paid') {
-                needsFullSync = true;
-                return prev; // syncOrders vai preencher
-              }
-              return prev.map(o => o.id === updated.id ? { ...o, ...updated } : o);
-            });
-
-            if (needsFullSync) {
-              await syncOrders(true);
-            }
+            // Sempre faz sync completo no UPDATE para garantir dados frescos
+            await syncOrders(true);
             return;
           }
 
-          // INSERT — só interessa se já veio pago (ex: dinheiro)
+          // INSERT — faz sync para pegar dados completos com items
           if (eventType === 'INSERT') {
-            if (updated.payment_status === 'paid') {
-              await syncOrders(true);
-            }
-            // Se não está pago, ignoramos — o polling vai pegar quando o Asaas confirmar
+            await syncOrders(true);
           }
         }
       )
       .subscribe();
 
-    // Polling de segurança a cada 10s — garante que pedidos apareçam
+    // Polling de segurança a cada 5s — garante que pedidos apareçam
     // mesmo se Realtime falhar (RLS, reconexão, WAL delay)
-    pollTimer = setInterval(() => syncOrders(true), 10000);
+    pollTimer = setInterval(() => syncOrders(true), 5000);
 
     return () => {
       supabase.removeChannel(channel);
       if (pollTimer) clearInterval(pollTimer);
     };
-  }, [vendorId, dateFilter, customDate]);
+  }, [vendorId, dateFilter, customDate, playNewOrderSound]);
 
   async function advanceStatus(orderId: string, nextStatus: OrderStatus) {
     // Atualiza a UI imediatamente (otimista) para resposta instantânea
@@ -224,11 +249,12 @@ export default function VendorOrdersBoard({ initialOrders, vendorId }: Props) {
 
   async function cancelOrder(orderId: string) {
     const order = orders.find(o => o.id === orderId);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const isPaid = (order as any).payment_status === 'paid';
-    
+
     let msg = 'Tem certeza que deseja cancelar este pedido?';
     if (isPaid) msg = 'ATENÇÃO: Este pedido já foi PAGO. Se cancelar, você deverá realizar o estorno da transação no painel de pagamentos. Deseja cancelar mesmo assim?';
-    
+
     if (!confirm(msg)) return;
 
     const supabase = createClient();
@@ -278,7 +304,7 @@ export default function VendorOrdersBoard({ initialOrders, vendorId }: Props) {
     return (
       <>
         {alertOrder && (
-          <div 
+          <div
             onClick={() => setAlertOrder(null)}
             className="fixed inset-0 z-[10000] bg-green-600 flex flex-col items-center justify-center p-8 text-white text-center cursor-pointer animate-in fade-in zoom-in duration-300"
           >
@@ -317,6 +343,7 @@ export default function VendorOrdersBoard({ initialOrders, vendorId }: Props) {
     .filter((o) => !['delivered', 'cancelled'].includes(o.status))
     .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const historicalOrders = orders
     .filter((o) => o.status === 'delivered' || (o.status === 'cancelled' && (o as any).payment_status === 'paid'))
     .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
@@ -324,7 +351,7 @@ export default function VendorOrdersBoard({ initialOrders, vendorId }: Props) {
   return (
     <>
     {alertOrder && (
-      <div 
+      <div
         onClick={() => setAlertOrder(null)}
         className="fixed inset-0 z-[10000] bg-green-600 flex flex-col items-center justify-center p-8 text-white text-center cursor-pointer animate-in fade-in zoom-in duration-300"
       >
@@ -366,7 +393,7 @@ export default function VendorOrdersBoard({ initialOrders, vendorId }: Props) {
                 onCancel={cancelOrder}
               />
             ))}
-            
+
             {activeOrders.length === 0 && (
               <div className="text-center py-16 bg-white border-2 border-dashed border-slate-100 rounded-[32px]">
                 <p className="text-4xl mb-3">🍳</p>
@@ -451,7 +478,7 @@ function OrderCard({
   const secs = timeDiffSec ? timeDiffSec % 60 : 0;
 
   return (
-    <div 
+    <div
       className={`bg-white rounded-2xl shadow-sm p-4 cursor-pointer transition-all border border-slate-100 ${isDelivered ? 'opacity-75 bg-slate-50 shadow-none hover:shadow-none' : 'hover:shadow-md'}`}
       onClick={() => setIsExpanded(!isExpanded)}
     >
