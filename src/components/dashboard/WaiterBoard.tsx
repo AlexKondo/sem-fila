@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useRef, useCallback, useMemo } from 'react';
+import React, { useEffect, useState, useRef, useCallback, useMemo, useTransition, memo } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { formatDate } from '@/lib/utils';
 import {
@@ -44,20 +44,195 @@ const STATUS_COLORS: Record<TableStatus, { bg: string; border: string; text: str
   reserved: { bg: 'bg-blue-50',     border: 'border-blue-200',    text: 'text-blue-600',    dot: 'bg-blue-400',    label: 'Reservada' },
 };
 
+const MERGE_STYLE = { bg: 'bg-indigo-50', border: 'border-indigo-300 border-dashed', text: 'text-indigo-600', dot: 'bg-indigo-400', label: 'Junta' };
+
+// === MEMOIZED TABLE CARD ===
+interface TableCardProps {
+  table: VendorTable;
+  isSelected: boolean;
+  isCalling: boolean;
+  callId: string | null;
+  isMergedChild: boolean;
+  isMergeParent: boolean;
+  mergedNums: string[];
+  totalCapacity: number;
+  mergeParentNumber: string | null;
+  isDragOver: boolean;
+  confirmingDelete: boolean;
+  onSelect: (id: string) => void;
+  onMerge: (sourceId: string, targetId: string) => void;
+  onRemove: (id: string) => void;
+  onConfirmDelete: (id: string | null) => void;
+  onUpdateStatus: (id: string, status: TableStatus) => void;
+  onUpdateCapacity: (id: string, capacity: number) => void;
+  onSplit: (id: string) => void;
+  onSetMergeSource: (id: string) => void;
+  onAttendCall: (callId: string) => void;
+  onDragStart: (id: string, e: React.DragEvent) => void;
+  onDragOver: (id: string, e: React.DragEvent) => void;
+  onDragLeave: () => void;
+  onDrop: (id: string, e: React.DragEvent) => void;
+  mergeSourceId: string | null;
+}
+
+const TableCard = memo(function TableCard({
+  table, isSelected, isCalling, callId, isMergedChild, isMergeParent,
+  mergedNums, totalCapacity, mergeParentNumber, isDragOver, confirmingDelete,
+  onSelect, onMerge, onRemove, onConfirmDelete, onUpdateStatus, onUpdateCapacity,
+  onSplit, onSetMergeSource, onAttendCall, onDragStart, onDragOver, onDragLeave, onDrop,
+  mergeSourceId,
+}: TableCardProps) {
+  const style = isCalling
+    ? { bg: 'bg-red-50', border: 'border-red-300 shadow-md shadow-red-100', text: 'text-red-700', dot: 'bg-red-500 animate-pulse', label: 'Chamando!' }
+    : (isMergedChild || isMergeParent) ? MERGE_STYLE
+    : STATUS_COLORS[table.status];
+
+  return (
+    <div className="space-y-0">
+      <div
+        draggable
+        onDragStart={e => onDragStart(table.id, e)}
+        onDragOver={e => onDragOver(table.id, e)}
+        onDragLeave={onDragLeave}
+        onDrop={e => onDrop(table.id, e)}
+        onClick={() => {
+          if (mergeSourceId && mergeSourceId !== table.id) {
+            onMerge(mergeSourceId, table.id);
+            return;
+          }
+          onSelect(table.id);
+        }}
+        className={`relative border-2 rounded-2xl p-2.5 text-center transition-all cursor-grab active:cursor-grabbing ${style.bg} ${style.border} ${isSelected ? 'ring-2 ring-orange-400' : ''} ${isDragOver ? 'ring-2 ring-blue-400 scale-105' : ''}`}
+      >
+        <span className={`absolute top-1.5 right-1.5 w-2 h-2 rounded-full ${style.dot}`} />
+
+        {isMergeParent && (
+          <span className="absolute top-1 left-1 bg-indigo-500 text-white text-[7px] font-black px-1.5 py-0.5 rounded-full flex items-center gap-0.5">
+            <Merge className="w-2.5 h-2.5" /> {mergedNums.length + 1}
+          </span>
+        )}
+
+        {isMergedChild && mergeParentNumber && (
+          <span className="absolute top-1 left-1 bg-indigo-400 text-white text-[7px] font-black px-1.5 py-0.5 rounded-full">
+            <ArrowRight className="w-2.5 h-2.5 inline" /> {mergeParentNumber}
+          </span>
+        )}
+
+        <p className={`text-xl font-black ${style.text} leading-none`}>{table.table_number}</p>
+
+        {isMergeParent && (
+          <p className="text-[9px] font-bold text-indigo-500 leading-tight">
+            +{mergedNums.join('+')} = {totalCapacity}p
+          </p>
+        )}
+
+        {!isMergeParent && (
+          <div className={`flex items-center justify-center gap-0.5 mt-1 ${style.text} opacity-60`}>
+            <Users className="w-2.5 h-2.5" />
+            <span className="text-[9px] font-black">{table.capacity}p</span>
+          </div>
+        )}
+
+        <p className={`text-[8px] font-bold uppercase tracking-wider mt-0.5 ${style.text} opacity-50`}>{style.label}</p>
+
+        {isCalling && callId && (
+          <button
+            onClick={e => { e.stopPropagation(); onAttendCall(callId); }}
+            className="mt-1.5 w-full bg-red-500 text-white text-[9px] font-black py-1.5 rounded-lg hover:bg-red-600 transition active:scale-95 uppercase"
+          >
+            Atender
+          </button>
+        )}
+      </div>
+
+      {isSelected && (
+        <div className="bg-white border border-gray-200 rounded-xl p-2 mt-1 space-y-1.5 animate-in fade-in slide-in-from-top-1 duration-150 shadow-lg"
+          onClick={e => e.stopPropagation()}
+        >
+          {isMergedChild && mergeParentNumber && (
+            <div className="text-center py-1">
+              <p className="text-[10px] font-bold text-indigo-600">Junta com Mesa {mergeParentNumber}</p>
+              <p className="text-[9px] text-gray-400">Separe pela mesa principal</p>
+            </div>
+          )}
+
+          {isMergeParent && (
+            <button
+              onClick={() => onSplit(table.id)}
+              className="w-full text-[10px] font-black bg-indigo-500 text-white py-2 rounded-lg flex items-center justify-center gap-1 active:scale-95 transition"
+            >
+              <Split className="w-3.5 h-3.5" /> Separar Mesas
+            </button>
+          )}
+
+          {!isMergedChild && (
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-bold text-gray-500">Capacidade</span>
+              <div className="flex items-center gap-1">
+                <button onClick={() => onUpdateCapacity(table.id, Math.max(1, table.capacity - 1))} className="w-6 h-6 bg-gray-100 rounded-lg text-xs font-bold flex items-center justify-center">-</button>
+                <span className="text-xs font-black w-6 text-center">{table.capacity}</span>
+                <button onClick={() => onUpdateCapacity(table.id, table.capacity + 1)} className="w-6 h-6 bg-gray-100 rounded-lg text-xs font-bold flex items-center justify-center">+</button>
+              </div>
+            </div>
+          )}
+
+          {!isMergedChild && !isMergeParent && (
+            <div className="grid grid-cols-2 gap-1">
+              {table.status !== 'free' && (
+                <button onClick={() => onUpdateStatus(table.id, 'free')} className="text-[9px] font-bold bg-emerald-50 text-emerald-700 py-1.5 rounded-lg">Liberar</button>
+              )}
+              {table.status === 'free' && (
+                <button onClick={() => onUpdateStatus(table.id, 'occupied')} className="text-[9px] font-bold bg-gray-100 text-gray-700 py-1.5 rounded-lg">Ocupar</button>
+              )}
+              {table.status === 'occupied' && (
+                <button onClick={() => onUpdateStatus(table.id, 'dirty')} className="text-[9px] font-bold bg-amber-50 text-amber-700 py-1.5 rounded-lg">Limpeza</button>
+              )}
+              {table.status === 'dirty' && (
+                <button onClick={() => onUpdateStatus(table.id, 'free')} className="text-[9px] font-bold bg-emerald-50 text-emerald-700 py-1.5 rounded-lg">Limpa!</button>
+              )}
+            </div>
+          )}
+
+          <div className="flex gap-1">
+            {!isMergedChild && !isMergeParent && table.status !== 'free' && (
+              <button onClick={() => onSetMergeSource(table.id)} className="flex-1 text-[9px] font-bold bg-blue-50 text-blue-700 py-1.5 rounded-lg flex items-center justify-center gap-0.5">
+                <Merge className="w-3 h-3" /> Juntar
+              </button>
+            )}
+            {!isMergedChild && (
+              confirmingDelete ? (
+                <button onClick={() => onRemove(table.id)} className="text-[9px] font-black bg-red-500 text-white py-1.5 px-3 rounded-lg animate-pulse">
+                  Confirmar?
+                </button>
+              ) : (
+                <button onClick={() => onConfirmDelete(table.id)} className="text-[9px] font-bold bg-red-50 text-red-500 py-1.5 px-2 rounded-lg">
+                  <Trash2 className="w-3 h-3" />
+                </button>
+              )
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+});
+
 export default function WaiterBoard({ initialReadyOrders, initialWaiterCalls, initialTables, initialQueue, vendorId, hasTableManagement = false }: Props) {
   const [orders, setOrders] = useState<ReadyOrder[]>(initialReadyOrders);
   const [calls, setCalls] = useState<WaiterCall[]>(initialWaiterCalls);
   const [tables, setTables] = useState<VendorTable[]>(initialTables);
   const [queue, setQueue] = useState<QueueEntry[]>(initialQueue);
   const [activeTab, setActiveTab] = useState<'tables' | 'queue' | 'pending' | 'history'>(hasTableManagement ? 'tables' : 'pending');
+  const [isPending, startTransition] = useTransition();
 
   // Modal states
   const [showAddTable, setShowAddTable] = useState(false);
   const [newTableNumber, setNewTableNumber] = useState('');
-  const [newTableCapacity, setNewTableCapacity] = useState(4);
+  const [newTableCapacity, setNewTableCapacity] = useState(2);
   const [mergeSource, setMergeSource] = useState<string | null>(null);
   const [selectedTable, setSelectedTable] = useState<string | null>(null);
   const [dragOverTable, setDragOverTable] = useState<string | null>(null);
+  const [confirmingDelete, setConfirmingDelete] = useState<string | null>(null);
   const tablesGridRef = useRef<HTMLDivElement>(null);
 
   // Fecha menu ao clicar fora
@@ -65,10 +240,16 @@ export default function WaiterBoard({ initialReadyOrders, initialWaiterCalls, in
     function handleClickOutside(e: MouseEvent) {
       if (selectedTable && tablesGridRef.current && !tablesGridRef.current.contains(e.target as Node)) {
         setSelectedTable(null);
+        setConfirmingDelete(null);
       }
     }
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [selectedTable]);
+
+  // Reset confirmingDelete when selection changes
+  useEffect(() => {
+    setConfirmingDelete(null);
   }, [selectedTable]);
 
   // Audio
@@ -92,13 +273,12 @@ export default function WaiterBoard({ initialReadyOrders, initialWaiterCalls, in
     if (audio) { audio.currentTime = 0; audio.volume = 1; audio.play().catch(() => {}); }
   }, []);
 
+  const supabase = useMemo(() => createClient(), []);
+
   // Realtime subscriptions
   useEffect(() => {
-    const supabase = createClient();
-
     const channel = supabase
       .channel(`waiter-full-${vendorId}`)
-      // Orders
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'orders', filter: `vendor_id=eq.${vendorId}` }, async (payload) => {
         const updated = payload.new;
         if (updated.status === 'ready' && updated.table_number) {
@@ -108,7 +288,6 @@ export default function WaiterBoard({ initialReadyOrders, initialWaiterCalls, in
           setOrders(prev => prev.filter(o => o.id !== updated.id));
         }
       })
-      // Waiter calls
       .on('postgres_changes', { event: '*', schema: 'public', table: 'waiter_calls', filter: `vendor_id=eq.${vendorId}` }, (payload) => {
         if (payload.eventType === 'INSERT') {
           setCalls(prev => [payload.new as WaiterCall, ...prev]);
@@ -119,7 +298,6 @@ export default function WaiterBoard({ initialReadyOrders, initialWaiterCalls, in
           setCalls(prev => prev.filter(c => c.id !== payload.old.id));
         }
       })
-      // Tables
       .on('postgres_changes', { event: '*', schema: 'public', table: 'vendor_tables', filter: `vendor_id=eq.${vendorId}` }, (payload) => {
         if (payload.eventType === 'INSERT') {
           setTables(prev => [...prev, payload.new as VendorTable].sort((a, b) => a.table_number.localeCompare(b.table_number, undefined, { numeric: true })));
@@ -129,7 +307,6 @@ export default function WaiterBoard({ initialReadyOrders, initialWaiterCalls, in
           setTables(prev => prev.filter(t => t.id !== payload.old.id));
         }
       })
-      // Queue
       .on('postgres_changes', { event: '*', schema: 'public', table: 'queue_entries', filter: `vendor_id=eq.${vendorId}` }, (payload) => {
         if (payload.eventType === 'INSERT') {
           setQueue(prev => [...prev, payload.new as QueueEntry].sort((a, b) => a.position - b.position));
@@ -143,9 +320,7 @@ export default function WaiterBoard({ initialReadyOrders, initialWaiterCalls, in
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
-  }, [vendorId, playSound]);
-
-  const supabase = useMemo(() => createClient(), []);
+  }, [vendorId, playSound, supabase]);
 
   // === TABLE ACTIONS ===
   const addTable = useCallback(async () => {
@@ -157,25 +332,22 @@ export default function WaiterBoard({ initialReadyOrders, initialWaiterCalls, in
       status: 'free',
     });
     if (error) {
-      console.error('Erro ao adicionar mesa:', error);
       alert(`Erro ao adicionar mesa: ${error.message}`);
       return;
     }
     setNewTableNumber('');
-    setNewTableCapacity(4);
+    setNewTableCapacity(2);
     setShowAddTable(false);
   }, [supabase, vendorId, newTableNumber, newTableCapacity]);
 
   const removeTable = useCallback(async (tableId: string) => {
-    if (!confirm('Remover esta mesa?')) return;
     // Optimistic: remove imediatamente da UI
     setTables(prev => prev.filter(t => t.id !== tableId));
     setSelectedTable(null);
+    setConfirmingDelete(null);
     const { error } = await supabase.from('vendor_tables').delete().eq('id', tableId);
     if (error) {
-      console.error('Erro ao remover mesa:', error);
       alert(`Erro ao remover mesa: ${error.message}`);
-      // Rollback: recarrega as mesas
       const { data } = await supabase.from('vendor_tables').select('*').eq('vendor_id', vendorId).order('table_number');
       if (data) setTables(data);
     }
@@ -274,40 +446,101 @@ export default function WaiterBoard({ initialReadyOrders, initialWaiterCalls, in
     if (!error) setOrders(prev => prev.filter(o => o.id !== orderId));
   }, [supabase]);
 
-  function getDuration(start: string, end: string | null) {
+  const getDuration = useCallback((start: string, end: string | null) => {
     if (!end) return '...';
     const diff = Math.floor((new Date(end).getTime() - new Date(start).getTime()) / 1000);
     if (diff < 60) return `${diff}s`;
     return `${Math.floor(diff / 60)}m ${diff % 60}s`;
-  }
+  }, []);
 
-  // Derived data
-  const pendingCalls = calls.filter(c => c.status === 'pending');
-  const historyCalls = calls.filter(c => c.status === 'attended').slice(0, 20);
-  const callingTables = new Set(pendingCalls.map(c => c.table_number));
-  const waitingQueue = queue.filter(q => q.status === 'waiting');
-  const calledQueue = queue.filter(q => q.status === 'called');
-  const freeTables = tables.filter(t => t.status === 'free');
+  // === Derived data (memoized) ===
+  const pendingCalls = useMemo(() => calls.filter(c => c.status === 'pending'), [calls]);
+  const historyCalls = useMemo(() => calls.filter(c => c.status === 'attended').slice(0, 20), [calls]);
+  const callingTables = useMemo(() => new Set(pendingCalls.map(c => c.table_number)), [pendingCalls]);
+  const waitingQueue = useMemo(() => queue.filter(q => q.status === 'waiting'), [queue]);
+  const calledQueue = useMemo(() => queue.filter(q => q.status === 'called'), [queue]);
+  const freeTables = useMemo(() => tables.filter(t => t.status === 'free'), [tables]);
 
-  // Merge groups: agrupa mesas que estão mergeadas
-  const mergeGroups = new Map<string, VendorTable[]>();
-  for (const t of tables) {
-    if (t.merged_with) {
-      const group = mergeGroups.get(t.merged_with) || [];
-      group.push(t);
-      mergeGroups.set(t.merged_with, group);
+  // Merge groups
+  const mergeGroups = useMemo(() => {
+    const groups = new Map<string, VendorTable[]>();
+    for (const t of tables) {
+      if (t.merged_with) {
+        const group = groups.get(t.merged_with) || [];
+        group.push(t);
+        groups.set(t.merged_with, group);
+      }
     }
-  }
+    return groups;
+  }, [tables]);
 
-  function getMergedCapacity(table: VendorTable): number {
+  const getMergedCapacity = useCallback((table: VendorTable): number => {
     const merged = mergeGroups.get(table.id) || [];
     return table.capacity + merged.reduce((sum, m) => sum + m.capacity, 0);
-  }
+  }, [mergeGroups]);
 
-  function getMergedNumbers(table: VendorTable): string[] {
+  const getMergedNumbers = useCallback((table: VendorTable): string[] => {
     const merged = mergeGroups.get(table.id) || [];
     return merged.map(m => m.table_number);
-  }
+  }, [mergeGroups]);
+
+  // Callbacks for TableCard
+  const handleSelectTable = useCallback((id: string) => {
+    setSelectedTable(prev => prev === id ? null : id);
+  }, []);
+
+  const handleSetMergeSource = useCallback((id: string) => {
+    setMergeSource(id);
+    setSelectedTable(null);
+  }, []);
+
+  const handleDragStart = useCallback((id: string, e: React.DragEvent) => {
+    e.dataTransfer.setData('table-id', id);
+    e.dataTransfer.effectAllowed = 'move';
+  }, []);
+
+  const handleDragOver = useCallback((id: string, e: React.DragEvent) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    setDragOverTable(prev => prev !== id ? id : prev);
+  }, []);
+
+  const handleDragLeave = useCallback(() => setDragOverTable(null), []);
+
+  const handleDrop = useCallback((id: string, e: React.DragEvent) => {
+    e.preventDefault();
+    setDragOverTable(null);
+    const sourceId = e.dataTransfer.getData('table-id');
+    if (sourceId && sourceId !== id) {
+      mergeTables(sourceId, id);
+    }
+  }, [mergeTables]);
+
+  const handleConfirmDelete = useCallback((id: string | null) => {
+    setConfirmingDelete(id);
+  }, []);
+
+  // Tab switch with transition
+  const switchTab = useCallback((tab: typeof activeTab) => {
+    startTransition(() => setActiveTab(tab));
+  }, []);
+
+  // Precomputed table data for memoized cards
+  const tableCardData = useMemo(() => tables.map(table => {
+    const isMergedChild = !!table.merged_with;
+    const isMergeParent = !isMergedChild && (mergeGroups.get(table.id)?.length ?? 0) > 0;
+    const mergeParent = isMergedChild ? tables.find(t => t.id === table.merged_with) : null;
+    return {
+      table,
+      isCalling: callingTables.has(table.table_number),
+      callId: callingTables.has(table.table_number) ? (pendingCalls.find(c => c.table_number === table.table_number)?.id ?? null) : null,
+      isMergedChild,
+      isMergeParent,
+      mergedNums: isMergeParent ? getMergedNumbers(table) : [],
+      totalCapacity: isMergeParent ? getMergedCapacity(table) : table.capacity,
+      mergeParentNumber: mergeParent?.table_number ?? null,
+    };
+  }), [tables, callingTables, pendingCalls, mergeGroups, getMergedNumbers, getMergedCapacity]);
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-2 space-y-4">
@@ -324,7 +557,7 @@ export default function WaiterBoard({ initialReadyOrders, initialWaiterCalls, in
         ]).map(({ key, icon: Icon, label, badge, badgeColor }) => (
           <button
             key={key}
-            onClick={() => setActiveTab(key)}
+            onClick={() => switchTab(key)}
             className={`flex-1 py-2 px-2 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1 whitespace-nowrap ${activeTab === key ? 'bg-white shadow-sm text-orange-600' : 'text-gray-500'}`}
           >
             <Icon className="w-3.5 h-3.5" />
@@ -388,181 +621,40 @@ export default function WaiterBoard({ initialReadyOrders, initialWaiterCalls, in
             <div className="text-center py-12 bg-white rounded-3xl border border-dashed border-gray-200 text-gray-400">
               <p className="text-3xl mb-2">🪑</p>
               <p className="text-xs font-medium">Nenhuma mesa cadastrada</p>
-              <p className="text-[10px] mt-1">Clique em "+ Mesa" para começar</p>
+              <p className="text-[10px] mt-1">Clique em &quot;+ Mesa&quot; para começar</p>
             </div>
           ) : (
             <div ref={tablesGridRef} className="grid grid-cols-3 sm:grid-cols-4 gap-2.5">
-              {tables.map(table => {
-                const isCalling = callingTables.has(table.table_number);
-                const callForTable = isCalling ? pendingCalls.find(c => c.table_number === table.table_number) : null;
-                const isMergedChild = !!table.merged_with;
-                const isMergeParent = !isMergedChild && (mergeGroups.get(table.id)?.length ?? 0) > 0;
-                const hasMerge = isMergeParent;
-                const mergedNums = isMergeParent ? getMergedNumbers(table) : [];
-                const totalCapacity = isMergeParent ? getMergedCapacity(table) : table.capacity;
-                const mergeParent = isMergedChild ? tables.find(t => t.id === table.merged_with) : null;
-                const isSelected = selectedTable === table.id;
-
-                // Cor: chamando > mergeado (azul) > status normal
-                const MERGE_STYLE = { bg: 'bg-indigo-50', border: 'border-indigo-300 border-dashed', text: 'text-indigo-600', dot: 'bg-indigo-400', label: 'Junta' };
-                const style = isCalling
-                  ? { bg: 'bg-red-50', border: 'border-red-300 shadow-md shadow-red-100', text: 'text-red-700', dot: 'bg-red-500 animate-pulse', label: 'Chamando!' }
-                  : (isMergedChild || isMergeParent) ? MERGE_STYLE
-                  : STATUS_COLORS[table.status];
-
-                const isDragOver = dragOverTable === table.id;
-
-                return (
-                  <div key={table.id} className="space-y-0">
-                    <div
-                      draggable
-                      onDragStart={e => {
-                        e.dataTransfer.setData('table-id', table.id);
-                        e.dataTransfer.effectAllowed = 'move';
-                      }}
-                      onDragOver={e => {
-                        e.preventDefault();
-                        e.dataTransfer.dropEffect = 'move';
-                        if (dragOverTable !== table.id) setDragOverTable(table.id);
-                      }}
-                      onDragLeave={() => setDragOverTable(null)}
-                      onDrop={e => {
-                        e.preventDefault();
-                        setDragOverTable(null);
-                        const sourceId = e.dataTransfer.getData('table-id');
-                        if (sourceId && sourceId !== table.id) {
-                          mergeTables(sourceId, table.id);
-                        }
-                      }}
-                      onClick={() => {
-                        if (mergeSource && mergeSource !== table.id) {
-                          mergeTables(mergeSource, table.id);
-                          return;
-                        }
-                        setSelectedTable(isSelected ? null : table.id);
-                      }}
-                      className={`relative border-2 rounded-2xl p-2.5 text-center transition-all cursor-grab active:cursor-grabbing ${style.bg} ${style.border} ${isSelected ? 'ring-2 ring-orange-400' : ''} ${isDragOver ? 'ring-2 ring-blue-400 scale-105' : ''}`}
-                    >
-                      <span className={`absolute top-1.5 right-1.5 w-2 h-2 rounded-full ${style.dot}`} />
-
-                      {/* Badge de merge no parent */}
-                      {isMergeParent && (
-                        <span className="absolute top-1 left-1 bg-indigo-500 text-white text-[7px] font-black px-1.5 py-0.5 rounded-full flex items-center gap-0.5">
-                          <Merge className="w-2.5 h-2.5" /> {mergedNums.length + 1}
-                        </span>
-                      )}
-
-                      {/* Ícone de link no filho */}
-                      {isMergedChild && mergeParent && (
-                        <span className="absolute top-1 left-1 bg-indigo-400 text-white text-[7px] font-black px-1.5 py-0.5 rounded-full">
-                          <ArrowRight className="w-2.5 h-2.5 inline" /> {mergeParent.table_number}
-                        </span>
-                      )}
-
-                      {/* Número da mesa */}
-                      <p className={`text-xl font-black ${style.text} leading-none`}>
-                        {table.table_number}
-                      </p>
-
-                      {/* Parent: mostra capacidade total */}
-                      {isMergeParent && (
-                        <p className="text-[9px] font-bold text-indigo-500 leading-tight">
-                          +{mergedNums.join('+')} = {totalCapacity}p
-                        </p>
-                      )}
-
-                      {/* Capacidade individual */}
-                      {!isMergeParent && (
-                        <div className={`flex items-center justify-center gap-0.5 mt-1 ${style.text} opacity-60`}>
-                          <Users className="w-2.5 h-2.5" />
-                          <span className="text-[9px] font-black">{table.capacity}p</span>
-                        </div>
-                      )}
-
-                      <p className={`text-[8px] font-bold uppercase tracking-wider mt-0.5 ${style.text} opacity-50`}>{style.label}</p>
-
-                      {/* Botão atender chamada */}
-                      {isCalling && callForTable && (
-                        <button
-                          onClick={e => { e.stopPropagation(); attendCall(callForTable.id); }}
-                          className="mt-1.5 w-full bg-red-500 text-white text-[9px] font-black py-1.5 rounded-lg hover:bg-red-600 transition active:scale-95 uppercase"
-                        >
-                          Atender
-                        </button>
-                      )}
-                    </div>
-
-                    {/* Menu de ações expandido */}
-                    {isSelected && (
-                      <div className="bg-white border border-gray-200 rounded-xl p-2 mt-1 space-y-1.5 animate-in fade-in slide-in-from-top-1 duration-150 shadow-lg"
-                        onClick={e => e.stopPropagation()}
-                      >
-                        {/* Mesa filha (mergeada) — mostra apenas info */}
-                        {isMergedChild && mergeParent && (
-                          <div className="text-center py-1">
-                            <p className="text-[10px] font-bold text-indigo-600">Junta com Mesa {mergeParent.table_number}</p>
-                            <p className="text-[9px] text-gray-400">Separe pela mesa principal</p>
-                          </div>
-                        )}
-
-                        {/* Botão destaque: Liberar & Separar (parent mergeado) */}
-                        {isMergeParent && (
-                          <button
-                            onClick={() => { splitTable(table.id); setSelectedTable(null); }}
-                            className="w-full text-[10px] font-black bg-indigo-500 text-white py-2 rounded-lg flex items-center justify-center gap-1 active:scale-95 transition"
-                          >
-                            <Split className="w-3.5 h-3.5" /> Separar Mesas
-                          </button>
-                        )}
-
-                        {/* Capacidade edit (não para filhas) */}
-                        {!isMergedChild && (
-                          <div className="flex items-center justify-between">
-                            <span className="text-[10px] font-bold text-gray-500">Capacidade</span>
-                            <div className="flex items-center gap-1">
-                              <button onClick={() => updateTableCapacity(table.id, Math.max(1, table.capacity - 1))} className="w-6 h-6 bg-gray-100 rounded-lg text-xs font-bold flex items-center justify-center">-</button>
-                              <span className="text-xs font-black w-6 text-center">{table.capacity}</span>
-                              <button onClick={() => updateTableCapacity(table.id, table.capacity + 1)} className="w-6 h-6 bg-gray-100 rounded-lg text-xs font-bold flex items-center justify-center">+</button>
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Status buttons (não para mergeadas) */}
-                        {!isMergedChild && !isMergeParent && (
-                          <div className="grid grid-cols-2 gap-1">
-                            {table.status !== 'free' && (
-                              <button onClick={() => updateTableStatus(table.id, 'free')} className="text-[9px] font-bold bg-emerald-50 text-emerald-700 py-1.5 rounded-lg">Liberar</button>
-                            )}
-                            {table.status === 'free' && (
-                              <button onClick={() => updateTableStatus(table.id, 'occupied')} className="text-[9px] font-bold bg-gray-100 text-gray-700 py-1.5 rounded-lg">Ocupar</button>
-                            )}
-                            {table.status === 'occupied' && (
-                              <button onClick={() => updateTableStatus(table.id, 'dirty')} className="text-[9px] font-bold bg-amber-50 text-amber-700 py-1.5 rounded-lg">Limpeza</button>
-                            )}
-                            {table.status === 'dirty' && (
-                              <button onClick={() => updateTableStatus(table.id, 'free')} className="text-[9px] font-bold bg-emerald-50 text-emerald-700 py-1.5 rounded-lg">Limpa!</button>
-                            )}
-                          </div>
-                        )}
-
-                        {/* Ações inferiores */}
-                        <div className="flex gap-1">
-                          {!isMergedChild && !isMergeParent && table.status !== 'free' && (
-                            <button onClick={() => { setMergeSource(table.id); setSelectedTable(null); }} className="flex-1 text-[9px] font-bold bg-blue-50 text-blue-700 py-1.5 rounded-lg flex items-center justify-center gap-0.5">
-                              <Merge className="w-3 h-3" /> Juntar
-                            </button>
-                          )}
-                          {!isMergedChild && (
-                            <button onClick={() => removeTable(table.id)} className="text-[9px] font-bold bg-red-50 text-red-500 py-1.5 px-2 rounded-lg">
-                              <Trash2 className="w-3 h-3" />
-                            </button>
-                          )}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
+              {tableCardData.map(({ table, isCalling, callId, isMergedChild, isMergeParent, mergedNums, totalCapacity, mergeParentNumber }) => (
+                <TableCard
+                  key={table.id}
+                  table={table}
+                  isSelected={selectedTable === table.id}
+                  isCalling={isCalling}
+                  callId={callId}
+                  isMergedChild={isMergedChild}
+                  isMergeParent={isMergeParent}
+                  mergedNums={mergedNums}
+                  totalCapacity={totalCapacity}
+                  mergeParentNumber={mergeParentNumber}
+                  isDragOver={dragOverTable === table.id}
+                  confirmingDelete={confirmingDelete === table.id}
+                  mergeSourceId={mergeSource}
+                  onSelect={handleSelectTable}
+                  onMerge={mergeTables}
+                  onRemove={removeTable}
+                  onConfirmDelete={handleConfirmDelete}
+                  onUpdateStatus={updateTableStatus}
+                  onUpdateCapacity={updateTableCapacity}
+                  onSplit={splitTable}
+                  onSetMergeSource={handleSetMergeSource}
+                  onAttendCall={attendCall}
+                  onDragStart={handleDragStart}
+                  onDragOver={handleDragOver}
+                  onDragLeave={handleDragLeave}
+                  onDrop={handleDrop}
+                />
+              ))}
             </div>
           )}
 
@@ -624,7 +716,6 @@ export default function WaiterBoard({ initialReadyOrders, initialWaiterCalls, in
                       </div>
                       <button onClick={() => markNoShow(entry.id)} className="text-[10px] text-red-500 font-bold border border-red-200 px-2 py-1 rounded-lg">Não veio</button>
                     </div>
-                    {/* Mesas disponíveis para sentar */}
                     {freeTables.length > 0 ? (
                       <div className="flex flex-wrap gap-1.5">
                         {freeTables.filter(t => getMergedCapacity(t) >= entry.party_size || freeTables.length <= 2).map(t => (
