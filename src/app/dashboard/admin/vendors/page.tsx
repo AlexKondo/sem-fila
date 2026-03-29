@@ -20,7 +20,7 @@ export default async function AdminVendorsPage() {
     .order('created_at', { ascending: false });
 
   // Busca todos os vendors com dono e evento
-  const { data: vendors } = await supabase
+  const { data: vendors, error: vendorsError } = await supabase
     .from('vendors')
     .select(`
       id, name, description, active, avg_prep_time, payment_mode, created_at,
@@ -28,6 +28,10 @@ export default async function AdminVendorsPage() {
       profiles (id, name, phone)
     `)
     .order('created_at', { ascending: false });
+
+  if (vendorsError) {
+    console.error('VENDORS_QUERY_ERROR:', vendorsError);
+  }
 
   return (
     <main className="min-h-screen bg-gray-50">
