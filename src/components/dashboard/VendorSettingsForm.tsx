@@ -457,16 +457,20 @@ export default function VendorSettingsForm({ vendor, subscription }: { vendor: a
         </div>}
       </section>
 
-      {/* Bloco 5: Plano e Consumo — não colapsável */}
+      {/* Bloco 5: Plano e Consumo */}
       {subscription.isPaid && subscription.plan ? (
-        <section className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 relative overflow-hidden">
-          <div className="flex items-center justify-between mb-4 pb-2 border-b border-gray-100">
-            <h2 className="text-sm font-bold text-gray-900 uppercase tracking-wide">5. Meu Plano</h2>
-            <div className="px-2 py-0.5 rounded text-[10px] font-black uppercase bg-green-100 text-green-700">
-              Ativo
+        <section className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+          <button type="button" onClick={() => toggleSection('plano')} className="w-full flex items-center justify-between p-5 hover:bg-slate-50/50 transition">
+            <div className="flex items-center gap-3">
+              <h2 className="text-sm font-bold text-gray-900 uppercase tracking-wide">5. Meu Plano</h2>
+              <div className="px-2 py-0.5 rounded text-[10px] font-black uppercase bg-green-100 text-green-700">
+                Ativo
+              </div>
             </div>
-          </div>
+            <ChevronDown className={`w-5 h-5 text-slate-400 transition-transform duration-300 ${openSections.plano ? 'rotate-180' : ''}`} />
+          </button>
 
+          {openSections.plano && <div className="px-5 pb-5">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-5">
             <div>
               <h3 className="text-lg font-black text-slate-900">Plano {subscription.plan.name}</h3>
@@ -524,18 +528,26 @@ export default function VendorSettingsForm({ vendor, subscription }: { vendor: a
               </p>
             )}
           </div>
-
+          </div>}
         </section>
       ) : (
         // Plano gratuito: mostra CTA de upgrade
-        <section className="bg-gradient-to-br from-slate-900 to-slate-800 p-6 rounded-3xl shadow-xl border border-slate-700 relative overflow-hidden group">
+        <section className="bg-gradient-to-br from-slate-900 to-slate-800 rounded-3xl shadow-xl border border-slate-700 relative overflow-hidden group">
+          <button type="button" onClick={() => toggleSection('plano')} className="w-full flex items-center justify-between p-5 hover:bg-white/5 transition">
+            <div className="flex items-center gap-3">
+              <h2 className="text-sm font-bold text-white uppercase tracking-wide">5. Meu Plano</h2>
+              <div className="px-2 py-0.5 rounded text-[10px] font-black uppercase bg-orange-500 text-white">
+                Grátis
+              </div>
+            </div>
+            <ChevronDown className={`w-5 h-5 text-slate-400 transition-transform duration-300 ${openSections.plano ? 'rotate-180' : ''}`} />
+          </button>
+
+          {openSections.plano && <div className="px-6 pb-6">
           <Sparkles className="absolute -right-4 -top-4 w-24 h-24 text-white/5 rotate-12 group-hover:scale-110 transition-transform" />
           <div className="relative z-10">
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-4">
               <div>
-                <div className="inline-flex items-center gap-2 px-2 py-0.5 rounded bg-orange-500 text-white text-[10px] font-black uppercase tracking-widest mb-2">
-                  Plano Atual: Grátis
-                </div>
                 <h3 className="text-white font-black text-lg tracking-tight">Faça Upgrade e Venda Mais</h3>
                 <p className="text-slate-400 text-xs font-medium">Libere mais pedidos, IA de imagens e suporte prioritário.</p>
               </div>
@@ -572,6 +584,7 @@ export default function VendorSettingsForm({ vendor, subscription }: { vendor: a
               )}
             </div>
           </div>
+          </div>}
         </section>
       )}
 

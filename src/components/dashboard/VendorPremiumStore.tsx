@@ -67,7 +67,7 @@ export default function VendorPremiumStore({ vendorId }: Props) {
     <>
       {/* Benefícios para comprar */}
       {features.length > 0 && (
-        <div className="mt-8">
+        <div>
           <div className="flex items-center gap-2 mb-4 px-2">
             <Sparkles className="w-5 h-5 text-orange-500" />
             <h2 className="text-lg font-bold text-slate-900">Benefícios Premium</h2>
@@ -136,7 +136,7 @@ export default function VendorPremiumStore({ vendorId }: Props) {
 
       {/* Metas para ganhar benefícios automaticamente */}
       {autoRules.length > 0 && (
-        <div className="mt-8">
+        <div className="mt-6">
           <div className="flex items-center gap-2 mb-4 px-2">
             <Target className="w-5 h-5 text-emerald-500" />
             <h2 className="text-lg font-bold text-slate-900">Metas de Desempenho</h2>

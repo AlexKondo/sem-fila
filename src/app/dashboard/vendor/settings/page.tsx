@@ -5,6 +5,7 @@ import VendorAccountForm from '@/components/dashboard/VendorAccountForm';
 import VendorBusinesses from '@/components/dashboard/VendorBusinesses';
 import VendorPremiumStore from '@/components/dashboard/VendorPremiumStore';
 import { RevenueReport, EfficiencyPanel } from '@/components/dashboard/VendorPremiumPanels';
+import CollapsibleSection from '@/components/dashboard/CollapsibleSection';
 
 const P = '#ec5b13';
 
@@ -105,14 +106,20 @@ export default async function VendorSettingsPage() {
           <VendorSettingsForm vendor={vendor} subscription={subscriptionData} />
         </section>
 
-        {/* Bloco 4: Painéis Premium */}
-        <div className="mt-10 space-y-4">
-          <RevenueReport vendorId={vendor.id} />
-          <EfficiencyPanel vendorId={vendor.id} />
+        {/* Bloco 4: Recursos Premium (consolidado) */}
+        <div className="mt-10">
+          <CollapsibleSection
+            title="Recursos Premium"
+            subtitle="Relatórios, benefícios e metas de desempenho"
+            icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 2l2.4 7.2h7.6l-6.1 4.5 2.3 7.3-6.2-4.5-6.2 4.5 2.3-7.3-6.1-4.5h7.6z" /></svg>}
+          >
+            <div className="space-y-4">
+              <RevenueReport vendorId={vendor.id} />
+              <EfficiencyPanel vendorId={vendor.id} />
+              <VendorPremiumStore vendorId={vendor.id} />
+            </div>
+          </CollapsibleSection>
         </div>
-
-        {/* Bloco 5: Loja de Benefícios Premium */}
-        <VendorPremiumStore vendorId={vendor.id} />
       </div>
     </main>
   );
