@@ -1,12 +1,14 @@
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
-import Link from 'next/link';
 import VendorSettingsForm from '@/components/dashboard/VendorSettingsForm';
 import VendorAccountForm from '@/components/dashboard/VendorAccountForm';
 import VendorBusinesses from '@/components/dashboard/VendorBusinesses';
 import VendorPremiumStore from '@/components/dashboard/VendorPremiumStore';
 import { RevenueReport, EfficiencyPanel } from '@/components/dashboard/VendorPremiumPanels';
 import CollapsibleSection from '@/components/dashboard/CollapsibleSection';
+import VendorDashboardClient from '@/components/dashboard/VendorDashboardClient';
+import StaffPage from '@/app/dashboard/vendor/staff/page';
+import { fetchDashboardData } from '@/lib/dashboard-data';
 
 const P = '#ec5b13';
 
@@ -80,16 +82,19 @@ export default async function VendorSettingsPage() {
   const cookieStore = await cookies();
   const selectedId = cookieStore.get('selected_vendor_id')?.value;
 
-  const vendor = selectedId 
+  const vendor = selectedId
     ? vendors.find(v => v.id === selectedId) || vendors[0]
     : vendors[0] || null;
 
   if (!vendor) redirect('/dashboard/vendor');
 
+  // Dados do Dashboard (hoje por padrão)
+  const dashboardData = await fetchDashboardData(supabase, vendor, vendors, user.id);
+
   return (
     <main className="min-h-screen pb-20 overflow-x-hidden" style={{ backgroundColor: '#f8f6f6' }}>
       <div className="max-w-2xl mx-auto px-4 py-8">
-        
+
         {/* Bloco 1: Meus Negócios */}
         <VendorBusinesses vendors={vendors} currentVendorId={vendor.id} />
 
@@ -98,46 +103,57 @@ export default async function VendorSettingsPage() {
           <VendorAccountForm profile={{ ...profile, email: user.email }} />
         </div>
 
-        {/* Atalhos: Dashboard e Equipe */}
-        <div className="grid grid-cols-2 gap-3 mb-10">
-          <Link
-            href="/dashboard/vendor/dashboard"
-            className="flex items-center gap-3 bg-white rounded-2xl shadow-sm border border-slate-100 px-4 py-4 hover:border-orange-300 transition"
+        {/* Dashboard (expandível) */}
+        <div className="mb-6">
+          <CollapsibleSection
+            title="Dashboard"
+            subtitle="Relatórios e vendas do dia"
+            icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>}
           >
-            <div className="w-9 h-9 rounded-xl bg-orange-50 flex items-center justify-center">
-              <svg className="w-5 h-5 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
-            </div>
-            <div>
-              <p className="text-sm font-bold text-slate-900">Dashboard</p>
-              <p className="text-[11px] text-slate-400">Relatórios e vendas</p>
-            </div>
-          </Link>
-          <Link
-            href="/dashboard/vendor/staff"
-            className="flex items-center gap-3 bg-white rounded-2xl shadow-sm border border-slate-100 px-4 py-4 hover:border-orange-300 transition"
-          >
-            <div className="w-9 h-9 rounded-xl bg-blue-50 flex items-center justify-center">
-              <svg className="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
-            </div>
-            <div>
-              <p className="text-sm font-bold text-slate-900">Equipe</p>
-              <p className="text-[11px] text-slate-400">Garçons e entregadores</p>
-            </div>
-          </Link>
+            <VendorDashboardClient
+              vendorName={dashboardData.vendorName}
+              revenue={dashboardData.revenue}
+              activeCount={dashboardData.activeCount}
+              avgMinutes={dashboardData.avgMinutes}
+              uniqueCustomers={dashboardData.uniqueCustomers}
+              efficiency={dashboardData.efficiency}
+              readyCount={dashboardData.readyCount}
+              validCount={dashboardData.validCount}
+              chartData={dashboardData.chartData}
+              currentPeriod={dashboardData.currentPeriod}
+              startDate={dashboardData.startDate}
+              endDate={dashboardData.endDate}
+              globalSummary={dashboardData.globalSummary}
+              orderLimitAlert={dashboardData.orderLimitAlert}
+            />
+          </CollapsibleSection>
         </div>
 
-        {/* Bloco 3: Configurações da Marca Selecionada */}
-        <CollapsibleSection
-          title={`Configurações para "${vendor.name}"`}
-          subtitle="Ajuste as taxas e regras específicas do seu ponto de venda atual."
-          icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>}
-          defaultOpen
-        >
-          <VendorSettingsForm key={vendor.id} vendor={vendor} subscription={subscriptionData} />
-        </CollapsibleSection>
+        {/* Equipe (expandível) */}
+        <div className="mb-6">
+          <CollapsibleSection
+            title="Equipe"
+            subtitle="Garçons e entregadores"
+            icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg>}
+          >
+            <StaffPage />
+          </CollapsibleSection>
+        </div>
 
-        {/* Bloco 4: Recursos Premium (consolidado) */}
-        <div className="mt-10">
+        {/* Configurações da Marca Selecionada */}
+        <div className="mb-6">
+          <CollapsibleSection
+            title={`Configurações para "${vendor.name}"`}
+            subtitle="Ajuste as taxas e regras específicas do seu ponto de venda atual."
+            icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>}
+            defaultOpen
+          >
+            <VendorSettingsForm key={vendor.id} vendor={vendor} subscription={subscriptionData} />
+          </CollapsibleSection>
+        </div>
+
+        {/* Recursos Premium */}
+        <div className="mb-6">
           <CollapsibleSection
             title="Recursos Premium"
             subtitle="Relatórios, benefícios e metas de desempenho"
