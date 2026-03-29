@@ -31,25 +31,9 @@ const NEXT_STATUS: Partial<Record<OrderStatus, OrderStatus>> = {
   ready: 'delivered',
 };
 
-type DateFilter = 'today' | 'yesterday' | '7days' | '30days' | 'custom';
-
-const DATE_FILTER_LABELS: Record<DateFilter, string> = {
-  today: 'Hoje',
-  yesterday: 'Ontem',
-  '7days': '7 dias',
-  '30days': '30 dias',
-  custom: 'Período',
-};
-
-function getFilterDate(filter: DateFilter, customDate?: string): Date {
+function todayStr() {
   const d = new Date();
-  switch (filter) {
-    case 'yesterday': d.setDate(d.getDate() - 1); d.setHours(0,0,0,0); return d;
-    case '7days': d.setDate(d.getDate() - 7); d.setHours(0,0,0,0); return d;
-    case '30days': d.setDate(d.getDate() - 30); d.setHours(0,0,0,0); return d;
-    case 'custom': return customDate ? new Date(customDate + 'T00:00:00') : (d.setHours(0,0,0,0), d);
-    default: d.setHours(0,0,0,0); return d;
-  }
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
 // Pré-carrega o áudio para tocar instantaneamente
@@ -62,8 +46,8 @@ interface Props {
 
 export default function VendorOrdersBoard({ initialOrders, vendorId }: Props) {
   const [orders, setOrders] = useState<OrderWithItems[]>(initialOrders);
-  const [dateFilter, setDateFilter] = useState<DateFilter>('today');
-  const [customDate, setCustomDate] = useState('');
+  const [dateFrom, setDateFrom] = useState(todayStr());
+  const [dateTo, setDateTo] = useState(todayStr());
   const [loadingFilter, setLoadingFilter] = useState(false);
   const [alertOrder, setAlertOrder] = useState<OrderWithItems | null>(null);
 
@@ -118,26 +102,30 @@ export default function VendorOrdersBoard({ initialOrders, vendorId }: Props) {
   }, []);
 
   // Recarrega pedidos imediatamente quando o filtro de data muda
+  const isToday = dateFrom === todayStr() && dateTo === todayStr();
   useEffect(() => {
-    if (dateFilter === 'today') return; // initialOrders já cobre "Hoje"
+    if (isToday) return; // initialOrders já cobre "Hoje"
     let cancelled = false;
     async function fetchOrders() {
       setLoadingFilter(true);
       const supabase = createClient();
-      const since = getFilterDate(dateFilter, customDate);
+      const since = new Date(dateFrom + 'T00:00:00');
       const { data } = await supabase.rpc('get_vendor_orders', {
         p_vendor_id: vendorId,
         p_since: since.toISOString(),
       });
       if (!cancelled) {
+        // Filtra client-side pelo dateTo
+        const untilEnd = new Date(dateTo + 'T23:59:59').getTime();
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        setOrders((data || []) as any[]);
+        const filtered = ((data || []) as any[]).filter((o: any) => new Date(o.created_at).getTime() <= untilEnd);
+        setOrders(filtered);
         setLoadingFilter(false);
       }
     }
     fetchOrders();
     return () => { cancelled = true; };
-  }, [dateFilter, customDate, vendorId]);
+  }, [dateFrom, dateTo, vendorId, isToday]);
 
   // Realtime + Polling de segurança
   useEffect(() => {
@@ -146,13 +134,15 @@ export default function VendorOrdersBoard({ initialOrders, vendorId }: Props) {
 
     // Busca pedidos via RPC e sincroniza com o estado local
     async function syncOrders(alertOnNew = false) {
-      const since = getFilterDate(dateFilter, customDate);
+      const since = new Date(dateFrom + 'T00:00:00');
       const { data } = await supabase.rpc('get_vendor_orders', {
         p_vendor_id: vendorId,
         p_since: since.toISOString(),
       });
       if (!data) return;
-      const fresh = data as OrderWithItems[];
+      // Filtra client-side pelo dateTo
+      const untilEnd = new Date(dateTo + 'T23:59:59').getTime();
+      const fresh = (data as OrderWithItems[]).filter(o => new Date(o.created_at).getTime() <= untilEnd);
 
       // Detecta pedidos novos comparando com ref
       if (alertOnNew) {
@@ -220,7 +210,7 @@ export default function VendorOrdersBoard({ initialOrders, vendorId }: Props) {
       supabase.removeChannel(channel);
       if (pollTimer) clearInterval(pollTimer);
     };
-  }, [vendorId, dateFilter, customDate, playNewOrderSound]);
+  }, [vendorId, dateFrom, dateTo, playNewOrderSound]);
 
   async function advanceStatus(orderId: string, nextStatus: OrderStatus) {
     // Atualiza a UI imediatamente (otimista) para resposta instantânea
@@ -267,29 +257,30 @@ export default function VendorOrdersBoard({ initialOrders, vendorId }: Props) {
   const filterBar = (
     <div className="max-w-5xl mx-auto px-4 mb-4">
       <div className="flex items-center gap-2 flex-wrap">
-        {(Object.keys(DATE_FILTER_LABELS) as DateFilter[]).filter(k => k !== 'custom').map(key => (
-          <button
-            key={key}
-            onClick={() => { setDateFilter(key); }}
-            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
-              dateFilter === key
-                ? 'bg-orange-500 text-white shadow-sm'
-                : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
-            }`}
-          >
-            {DATE_FILTER_LABELS[key]}
-          </button>
-        ))}
+        <label className="text-xs font-bold text-slate-500">De</label>
         <input
           type="date"
-          value={customDate}
-          onChange={e => { setCustomDate(e.target.value); setDateFilter('custom'); }}
-          className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition-all ${
-            dateFilter === 'custom'
-              ? 'border-orange-500 bg-orange-50 text-orange-600'
-              : 'border-slate-200 bg-slate-100 text-slate-500'
-          }`}
+          value={dateFrom}
+          max={dateTo}
+          onChange={e => setDateFrom(e.target.value)}
+          className="px-3 py-1.5 rounded-xl text-xs font-bold border border-slate-200 bg-slate-50 text-slate-700 focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-400 transition-all"
         />
+        <label className="text-xs font-bold text-slate-500">Até</label>
+        <input
+          type="date"
+          value={dateTo}
+          min={dateFrom}
+          onChange={e => setDateTo(e.target.value)}
+          className="px-3 py-1.5 rounded-xl text-xs font-bold border border-slate-200 bg-slate-50 text-slate-700 focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-400 transition-all"
+        />
+        {!isToday && (
+          <button
+            onClick={() => { setDateFrom(todayStr()); setDateTo(todayStr()); }}
+            className="px-3 py-1.5 rounded-xl text-xs font-bold bg-orange-500 text-white hover:bg-orange-600 transition-all"
+          >
+            Hoje
+          </button>
+        )}
         {loadingFilter && (
           <svg className="w-4 h-4 animate-spin text-orange-500" fill="none" viewBox="0 0 24 24">
             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
