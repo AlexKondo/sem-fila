@@ -25,7 +25,7 @@ export default async function AdminVendorsPage() {
     .select(`
       id, name, description, active, avg_prep_time, payment_mode, created_at,
       events (id, name),
-      profiles (id, name, phone)
+      profiles!owner_id (id, name, phone)
     `)
     .order('created_at', { ascending: false });
 
