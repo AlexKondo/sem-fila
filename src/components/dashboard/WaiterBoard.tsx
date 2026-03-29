@@ -341,6 +341,7 @@ export default function WaiterBoard({ initialReadyOrders, initialWaiterCalls, in
             <div className="flex items-center gap-3 text-[9px] font-bold uppercase tracking-wide">
               <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full bg-emerald-400" /> Livre</span>
               <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full bg-gray-400" /> Ocupada</span>
+              <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full bg-indigo-400" /> Junta</span>
               <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full bg-amber-400" /> Limpeza</span>
               <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse" /> Chamando</span>
             </div>
@@ -386,16 +387,22 @@ export default function WaiterBoard({ initialReadyOrders, initialWaiterCalls, in
             </div>
           ) : (
             <div ref={tablesGridRef} className="grid grid-cols-3 sm:grid-cols-4 gap-2.5">
-              {tables.filter(t => !t.merged_with).map(table => {
+              {tables.map(table => {
                 const isCalling = callingTables.has(table.table_number);
                 const callForTable = isCalling ? pendingCalls.find(c => c.table_number === table.table_number) : null;
-                const mergedNums = getMergedNumbers(table);
-                const totalCapacity = getMergedCapacity(table);
-                const hasMerge = mergedNums.length > 0;
+                const isMergedChild = !!table.merged_with;
+                const isMergeParent = !isMergedChild && (mergeGroups.get(table.id)?.length ?? 0) > 0;
+                const hasMerge = isMergeParent;
+                const mergedNums = isMergeParent ? getMergedNumbers(table) : [];
+                const totalCapacity = isMergeParent ? getMergedCapacity(table) : table.capacity;
+                const mergeParent = isMergedChild ? tables.find(t => t.id === table.merged_with) : null;
                 const isSelected = selectedTable === table.id;
 
+                // Cor: chamando > mergeado (azul) > status normal
+                const MERGE_STYLE = { bg: 'bg-indigo-50', border: 'border-indigo-300 border-dashed', text: 'text-indigo-600', dot: 'bg-indigo-400', label: 'Junta' };
                 const style = isCalling
                   ? { bg: 'bg-red-50', border: 'border-red-300 shadow-md shadow-red-100', text: 'text-red-700', dot: 'bg-red-500 animate-pulse', label: 'Chamando!' }
+                  : (isMergedChild || isMergeParent) ? MERGE_STYLE
                   : STATUS_COLORS[table.status];
 
                 const isDragOver = dragOverTable === table.id;
@@ -433,28 +440,39 @@ export default function WaiterBoard({ initialReadyOrders, initialWaiterCalls, in
                     >
                       <span className={`absolute top-1.5 right-1.5 w-2 h-2 rounded-full ${style.dot}`} />
 
-                      {/* Badge de merge */}
-                      {hasMerge && (
-                        <span className="absolute top-1 left-1 bg-blue-500 text-white text-[7px] font-black px-1.5 py-0.5 rounded-full flex items-center gap-0.5">
+                      {/* Badge de merge no parent */}
+                      {isMergeParent && (
+                        <span className="absolute top-1 left-1 bg-indigo-500 text-white text-[7px] font-black px-1.5 py-0.5 rounded-full flex items-center gap-0.5">
                           <Merge className="w-2.5 h-2.5" /> {mergedNums.length + 1}
                         </span>
                       )}
 
-                      {/* Número da mesa + merge */}
+                      {/* Ícone de link no filho */}
+                      {isMergedChild && mergeParent && (
+                        <span className="absolute top-1 left-1 bg-indigo-400 text-white text-[7px] font-black px-1.5 py-0.5 rounded-full">
+                          <ArrowRight className="w-2.5 h-2.5 inline" /> {mergeParent.table_number}
+                        </span>
+                      )}
+
+                      {/* Número da mesa */}
                       <p className={`text-xl font-black ${style.text} leading-none`}>
                         {table.table_number}
                       </p>
-                      {hasMerge && (
-                        <p className="text-[9px] font-bold text-blue-500 leading-tight">
-                          +{mergedNums.join('+')}
+
+                      {/* Parent: mostra capacidade total */}
+                      {isMergeParent && (
+                        <p className="text-[9px] font-bold text-indigo-500 leading-tight">
+                          +{mergedNums.join('+')} = {totalCapacity}p
                         </p>
                       )}
 
-                      {/* Capacidade */}
-                      <div className={`flex items-center justify-center gap-0.5 mt-1 ${style.text} opacity-60`}>
-                        <Users className="w-2.5 h-2.5" />
-                        <span className="text-[9px] font-black">{totalCapacity}p</span>
-                      </div>
+                      {/* Capacidade individual */}
+                      {!isMergeParent && (
+                        <div className={`flex items-center justify-center gap-0.5 mt-1 ${style.text} opacity-60`}>
+                          <Users className="w-2.5 h-2.5" />
+                          <span className="text-[9px] font-black">{table.capacity}p</span>
+                        </div>
+                      )}
 
                       <p className={`text-[8px] font-bold uppercase tracking-wider mt-0.5 ${style.text} opacity-50`}>{style.label}</p>
 
@@ -474,57 +492,66 @@ export default function WaiterBoard({ initialReadyOrders, initialWaiterCalls, in
                       <div className="bg-white border border-gray-200 rounded-xl p-2 mt-1 space-y-1.5 animate-in fade-in slide-in-from-top-1 duration-150 shadow-lg"
                         onClick={e => e.stopPropagation()}
                       >
-                        {/* Botão destaque: Liberar & Separar (quando mergeada e cliente saiu) */}
-                        {hasMerge && table.status === 'occupied' && (
+                        {/* Mesa filha (mergeada) — mostra apenas info */}
+                        {isMergedChild && mergeParent && (
+                          <div className="text-center py-1">
+                            <p className="text-[10px] font-bold text-indigo-600">Junta com Mesa {mergeParent.table_number}</p>
+                            <p className="text-[9px] text-gray-400">Separe pela mesa principal</p>
+                          </div>
+                        )}
+
+                        {/* Botão destaque: Liberar & Separar (parent mergeado) */}
+                        {isMergeParent && (
                           <button
                             onClick={() => { splitTable(table.id); setSelectedTable(null); }}
-                            className="w-full text-[10px] font-black bg-purple-500 text-white py-2 rounded-lg flex items-center justify-center gap-1 active:scale-95 transition"
+                            className="w-full text-[10px] font-black bg-indigo-500 text-white py-2 rounded-lg flex items-center justify-center gap-1 active:scale-95 transition"
                           >
-                            <Split className="w-3.5 h-3.5" /> Liberar e Separar Mesas
+                            <Split className="w-3.5 h-3.5" /> Separar Mesas
                           </button>
                         )}
 
-                        {/* Capacidade edit */}
-                        <div className="flex items-center justify-between">
-                          <span className="text-[10px] font-bold text-gray-500">Capacidade</span>
-                          <div className="flex items-center gap-1">
-                            <button onClick={() => updateTableCapacity(table.id, Math.max(1, table.capacity - 1))} className="w-6 h-6 bg-gray-100 rounded-lg text-xs font-bold flex items-center justify-center">-</button>
-                            <span className="text-xs font-black w-6 text-center">{table.capacity}</span>
-                            <button onClick={() => updateTableCapacity(table.id, table.capacity + 1)} className="w-6 h-6 bg-gray-100 rounded-lg text-xs font-bold flex items-center justify-center">+</button>
+                        {/* Capacidade edit (não para filhas) */}
+                        {!isMergedChild && (
+                          <div className="flex items-center justify-between">
+                            <span className="text-[10px] font-bold text-gray-500">Capacidade</span>
+                            <div className="flex items-center gap-1">
+                              <button onClick={() => updateTableCapacity(table.id, Math.max(1, table.capacity - 1))} className="w-6 h-6 bg-gray-100 rounded-lg text-xs font-bold flex items-center justify-center">-</button>
+                              <span className="text-xs font-black w-6 text-center">{table.capacity}</span>
+                              <button onClick={() => updateTableCapacity(table.id, table.capacity + 1)} className="w-6 h-6 bg-gray-100 rounded-lg text-xs font-bold flex items-center justify-center">+</button>
+                            </div>
                           </div>
-                        </div>
+                        )}
 
-                        {/* Status buttons */}
-                        <div className="grid grid-cols-2 gap-1">
-                          {table.status !== 'free' && !hasMerge && (
-                            <button onClick={() => updateTableStatus(table.id, 'free')} className="text-[9px] font-bold bg-emerald-50 text-emerald-700 py-1.5 rounded-lg">Liberar</button>
-                          )}
-                          {table.status === 'free' && (
-                            <button onClick={() => updateTableStatus(table.id, 'occupied')} className="text-[9px] font-bold bg-gray-100 text-gray-700 py-1.5 rounded-lg">Ocupar</button>
-                          )}
-                          {table.status === 'occupied' && !hasMerge && (
-                            <button onClick={() => updateTableStatus(table.id, 'dirty')} className="text-[9px] font-bold bg-amber-50 text-amber-700 py-1.5 rounded-lg">Limpeza</button>
-                          )}
-                          {table.status === 'dirty' && (
-                            <button onClick={() => updateTableStatus(table.id, 'free')} className="text-[9px] font-bold bg-emerald-50 text-emerald-700 py-1.5 rounded-lg">Limpa!</button>
-                          )}
-                        </div>
+                        {/* Status buttons (não para mergeadas) */}
+                        {!isMergedChild && !isMergeParent && (
+                          <div className="grid grid-cols-2 gap-1">
+                            {table.status !== 'free' && (
+                              <button onClick={() => updateTableStatus(table.id, 'free')} className="text-[9px] font-bold bg-emerald-50 text-emerald-700 py-1.5 rounded-lg">Liberar</button>
+                            )}
+                            {table.status === 'free' && (
+                              <button onClick={() => updateTableStatus(table.id, 'occupied')} className="text-[9px] font-bold bg-gray-100 text-gray-700 py-1.5 rounded-lg">Ocupar</button>
+                            )}
+                            {table.status === 'occupied' && (
+                              <button onClick={() => updateTableStatus(table.id, 'dirty')} className="text-[9px] font-bold bg-amber-50 text-amber-700 py-1.5 rounded-lg">Limpeza</button>
+                            )}
+                            {table.status === 'dirty' && (
+                              <button onClick={() => updateTableStatus(table.id, 'free')} className="text-[9px] font-bold bg-emerald-50 text-emerald-700 py-1.5 rounded-lg">Limpa!</button>
+                            )}
+                          </div>
+                        )}
 
-                        {/* Merge / Split */}
+                        {/* Ações inferiores */}
                         <div className="flex gap-1">
-                          {!hasMerge && table.status !== 'free' && (
+                          {!isMergedChild && !isMergeParent && table.status !== 'free' && (
                             <button onClick={() => { setMergeSource(table.id); setSelectedTable(null); }} className="flex-1 text-[9px] font-bold bg-blue-50 text-blue-700 py-1.5 rounded-lg flex items-center justify-center gap-0.5">
                               <Merge className="w-3 h-3" /> Juntar
                             </button>
                           )}
-                          {hasMerge && table.status !== 'occupied' && (
-                            <button onClick={() => { splitTable(table.id); setSelectedTable(null); }} className="flex-1 text-[9px] font-bold bg-purple-50 text-purple-700 py-1.5 rounded-lg flex items-center justify-center gap-0.5">
-                              <Split className="w-3 h-3" /> Separar
+                          {!isMergedChild && (
+                            <button onClick={() => removeTable(table.id)} className="text-[9px] font-bold bg-red-50 text-red-500 py-1.5 px-2 rounded-lg">
+                              <Trash2 className="w-3 h-3" />
                             </button>
                           )}
-                          <button onClick={() => removeTable(table.id)} className="text-[9px] font-bold bg-red-50 text-red-500 py-1.5 px-2 rounded-lg">
-                            <Trash2 className="w-3 h-3" />
-                          </button>
                         </div>
                       </div>
                     )}
