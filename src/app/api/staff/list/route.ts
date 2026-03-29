@@ -34,12 +34,29 @@ export async function GET(req: NextRequest) {
 
   if (userIds.length > 0) {
     const admin = await createAdminClient();
+
+    // Busca emails via auth.users
     const { data: authUsers } = await admin.auth.admin.listUsers({ perPage: 200 });
     const emailMap = new Map<string, string>();
     authUsers?.users?.forEach(u => emailMap.set(u.id, u.email || ''));
 
+    // Busca phones via profiles (admin bypassa RLS)
+    const { data: profiles } = await admin
+      .from('profiles')
+      .select('id, phone')
+      .in('id', userIds);
+    const phoneMap = new Map<string, string | null>();
+    profiles?.forEach((p: any) => phoneMap.set(p.id, p.phone));
+
     for (const s of staffList) {
       s.email = emailMap.get(s.user_id) || null;
+      // Garante que profiles.phone está presente
+      if (s.profiles && !s.profiles.phone) {
+        s.profiles.phone = phoneMap.get(s.user_id) || null;
+      }
+      if (!s.profiles) {
+        s.profiles = { id: s.user_id, full_name: null, name: null, role: 'waitstaff', phone: phoneMap.get(s.user_id) || null };
+      }
     }
   }
 
