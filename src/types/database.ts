@@ -279,6 +279,42 @@ export interface OrderWithItems extends Order {
   vendors: Vendor | null;
 }
 
+// ============================================================
+// Gestão de Mesas + Fila de Espera
+// ============================================================
+
+export type TableStatus = 'free' | 'occupied' | 'dirty' | 'reserved';
+export type QueueStatus = 'waiting' | 'called' | 'seated' | 'cancelled' | 'no_show';
+
+export interface VendorTable {
+  id: string;
+  vendor_id: string;
+  table_number: string;
+  capacity: number;
+  status: TableStatus;
+  merged_with: string | null;
+  occupied_at: string | null;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface QueueEntry {
+  id: string;
+  vendor_id: string;
+  customer_name: string;
+  customer_phone: string | null;
+  party_size: number;
+  status: QueueStatus;
+  position: number;
+  called_at: string | null;
+  seated_at: string | null;
+  cancelled_at: string | null;
+  table_id: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface VendorWithMenu extends Vendor {
   menu_items: MenuItem[];
 }
@@ -308,6 +344,8 @@ export type Database = {
       staff_schedules: { Row: StaffSchedule; Insert: Omit<StaffSchedule, 'id' | 'created_at'>; Update: Partial<StaffSchedule>; Relationships: never[] };
       staff_invites: { Row: StaffInvite; Insert: Omit<StaffInvite, 'id' | 'created_at' | 'token'>; Update: Partial<StaffInvite>; Relationships: never[] };
       deliveries: { Row: Delivery; Insert: Omit<Delivery, 'id' | 'assigned_at' | 'created_at'>; Update: Partial<Delivery>; Relationships: never[] };
+      vendor_tables: { Row: VendorTable; Insert: Omit<VendorTable, 'id' | 'created_at' | 'updated_at'>; Update: Partial<VendorTable>; Relationships: never[] };
+      queue_entries: { Row: QueueEntry; Insert: Omit<QueueEntry, 'id' | 'created_at' | 'updated_at'>; Update: Partial<QueueEntry>; Relationships: never[] };
     };
     Views: {};
     Functions: {};

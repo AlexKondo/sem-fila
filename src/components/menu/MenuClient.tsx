@@ -313,6 +313,11 @@ export default function MenuClient({ vendor, items, mesa, waitTime, hasFeaturedB
           )}
         </div>
 
+        {/* Banner de fila de espera (só restaurante/bar) */}
+        {['restaurant', 'bar'].includes(vendor.business_type) && (
+          <QueueBanner vendorId={vendor.id} />
+        )}
+
         {/* Category tabs dinâmicas */}
         <div className="overflow-x-auto no-scrollbar">
           <div className="flex px-4 gap-6 border-b border-slate-100">
@@ -505,5 +510,52 @@ function WaiterModal({ mesa, onClose, onConfirm, status, onReset }: { mesa?: str
         </div>
       </div>
     </div>
+  );
+}
+
+/* ─── Banner de Fila de Espera (aparece se mesas cheias) ─── */
+function QueueBanner({ vendorId }: { vendorId: string }) {
+  const [data, setData] = useState<{ freeTables: number; waitingCount: number; totalTables: number } | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function check() {
+      try {
+        const res = await fetch(`/api/queue?vendor_id=${vendorId}`);
+        if (!res.ok) return;
+        const json = await res.json();
+        if (!cancelled) setData(json.stats);
+      } catch {}
+    }
+    check();
+    const timer = setInterval(check, 15000);
+    return () => { cancelled = true; clearInterval(timer); };
+  }, [vendorId]);
+
+  if (!data || data.totalTables === 0) return null;
+  if (data.freeTables > 0 && data.waitingCount === 0) return null;
+
+  const isFull = data.freeTables === 0;
+
+  return (
+    <Link
+      href={`/menu/${vendorId}/fila`}
+      className={`mx-4 mb-2 flex items-center justify-between rounded-xl px-3 py-2.5 transition-all ${isFull ? 'bg-red-50 border border-red-200' : 'bg-purple-50 border border-purple-200'}`}
+    >
+      <div className="flex items-center gap-2">
+        <span className="text-lg">{isFull ? '⏳' : '📋'}</span>
+        <div>
+          <p className={`text-xs font-bold ${isFull ? 'text-red-700' : 'text-purple-700'}`}>
+            {isFull ? 'Mesas lotadas' : `${data.waitingCount} na fila`}
+          </p>
+          <p className={`text-[10px] ${isFull ? 'text-red-500' : 'text-purple-500'}`}>
+            {isFull ? `${data.waitingCount} pessoa${data.waitingCount !== 1 ? 's' : ''} aguardando` : 'Toque para ver sua posição'}
+          </p>
+        </div>
+      </div>
+      <span className={`text-[10px] font-black px-2.5 py-1 rounded-full ${isFull ? 'bg-red-500 text-white' : 'bg-purple-500 text-white'}`}>
+        Entrar na Fila →
+      </span>
+    </Link>
   );
 }
