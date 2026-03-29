@@ -15,6 +15,7 @@ interface MenuClientProps {
   items: MenuItem[];
   mesa?: string;
   waitTime: string;
+  hasFeaturedBadge?: boolean;
 }
 
 interface Extra { name: string; price: number; }
@@ -85,7 +86,7 @@ const ItemList = memo(function ItemList({ items, waitTime, onAdd }: { items: Men
   );
 });
 
-export default function MenuClient({ vendor, items, mesa, waitTime }: MenuClientProps) {
+export default function MenuClient({ vendor, items, mesa, waitTime, hasFeaturedBadge }: MenuClientProps) {
   const [selectedCat, setSelectedCat] = useState('Todos');
   const [searchQuery, setSearchQuery] = useState('');
   const deferredSearchQuery = useDeferredValue(searchQuery);
@@ -245,7 +246,15 @@ export default function MenuClient({ vendor, items, mesa, waitTime }: MenuClient
               )}
             </div>
             <div>
-              <h2 className="text-slate-900 text-lg font-bold leading-tight tracking-tight">{vendor.name}</h2>
+              <div className="flex items-center gap-1.5">
+                <h2 className="text-slate-900 text-lg font-bold leading-tight tracking-tight">{vendor.name}</h2>
+                {hasFeaturedBadge && (
+                  <span className="inline-flex items-center gap-0.5 bg-amber-50 text-amber-600 text-[9px] font-black px-1.5 py-0.5 rounded-full border border-amber-200 uppercase whitespace-nowrap">
+                    <svg className="w-2.5 h-2.5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                    Destaque
+                  </span>
+                )}
+              </div>
               <p className="text-xs text-slate-500">
                 {mesa ? `Mesa ${mesa} • ` : ''}{waitTime}
               </p>

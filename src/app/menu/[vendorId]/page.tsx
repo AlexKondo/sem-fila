@@ -48,16 +48,24 @@ export default async function MenuPage({ params, searchParams }: Props) {
 
   if (!vendor) notFound();
 
-  // Optimizing Database Calls - Executa as três buscas ao MESMO TEMPO em vez de esperar uma terminar
+  // Optimizing Database Calls - Executa as buscas ao MESMO TEMPO
   const [
     { data: items },
     { data: pastOrders },
-    { count: activeOrders }
+    { count: activeOrders },
+    { data: featuredFeature },
+    { data: featuredSub },
   ] = await Promise.all([
     supabase.from('menu_items').select('*').eq('vendor_id', vendor.id).eq('available', true).order('position', { ascending: true }),
     supabase.from('orders').select('created_at, updated_at').eq('vendor_id', vendor.id).eq('status', 'delivered').order('created_at', { ascending: false }).limit(3),
-    supabase.from('orders').select('*', { count: 'exact', head: true }).eq('vendor_id', vendor.id).in('status', ['received', 'preparing', 'almost_ready'])
+    supabase.from('orders').select('*', { count: 'exact', head: true }).eq('vendor_id', vendor.id).in('status', ['received', 'preparing', 'almost_ready']),
+    supabase.from('premium_features').select('free_for_all').eq('slug', 'destaque_plataforma').eq('active', true).single(),
+    supabase.from('vendor_subscriptions').select('active, expires_at').eq('vendor_id', vendor.id).eq('feature', 'destaque_plataforma').single(),
   ]);
+
+  // Verifica selo destaque: free_for_all ou subscription ativa
+  const hasFeaturedBadge = featuredFeature?.free_for_all === true ||
+    (featuredSub?.active === true && (!featuredSub.expires_at || new Date(featuredSub.expires_at) > new Date()));
 
   let realAvgTime = 0; // Começa em 0 para indicar que não há histórico real
 
@@ -83,11 +91,12 @@ export default async function MenuPage({ params, searchParams }: Props) {
   const waitTime = `Média: ${avgText} (Fila: ${fila})`;
 
   return (
-    <MenuClient 
-      vendor={vendor as Vendor} 
-      items={(items || []) as MenuItem[]} 
-      mesa={mesa} 
-      waitTime={waitTime} 
+    <MenuClient
+      vendor={vendor as Vendor}
+      items={(items || []) as MenuItem[]}
+      mesa={mesa}
+      waitTime={waitTime}
+      hasFeaturedBadge={hasFeaturedBadge}
     />
   );
 }

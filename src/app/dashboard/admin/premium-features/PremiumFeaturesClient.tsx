@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
+import { ToggleLeft, ToggleRight } from 'lucide-react';
 import type { PremiumFeature } from '@/types/database';
 
 interface FeatureDraft {
@@ -13,6 +14,7 @@ interface FeatureDraft {
   price: number;
   duration_days: number;
   active: boolean;
+  free_for_all: boolean;
   sort_order: number;
   _isNew?: boolean;
 }
@@ -40,6 +42,7 @@ export default function PremiumFeaturesClient() {
             price: Number(f.price),
             duration_days: f.duration_days,
             active: f.active,
+            free_for_all: f.free_for_all ?? false,
             sort_order: f.sort_order,
           }));
           setFeatures(mapped);
@@ -59,6 +62,7 @@ export default function PremiumFeaturesClient() {
         price: 0,
         duration_days: 30,
         active: true,
+        free_for_all: false,
         sort_order: prev.length,
         _isNew: true,
       },
@@ -106,6 +110,7 @@ export default function PremiumFeaturesClient() {
         price: f.price,
         duration_days: f.duration_days,
         active: f.active,
+        free_for_all: f.free_for_all,
         sort_order: f.sort_order,
         updated_at: new Date().toISOString(),
       }).eq('id', f.id!);
@@ -122,6 +127,7 @@ export default function PremiumFeaturesClient() {
           price: f.price,
           duration_days: f.duration_days,
           active: f.active,
+          free_for_all: f.free_for_all,
           sort_order: f.sort_order,
         }))
       ).select();
@@ -229,6 +235,28 @@ export default function PremiumFeaturesClient() {
                 placeholder="Descricao do beneficio para o vendor"
                 className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/30"
               />
+            </div>
+
+            <div className="flex items-center gap-3 bg-amber-50 rounded-xl px-3 py-2.5">
+              <button
+                type="button"
+                onClick={() => updateFeature(index, 'free_for_all', !feature.free_for_all)}
+                className="flex items-center gap-2"
+              >
+                {feature.free_for_all
+                  ? <ToggleRight className="w-6 h-6 text-amber-500" />
+                  : <ToggleLeft className="w-6 h-6 text-gray-300" />
+                }
+              </button>
+              <div>
+                <p className="text-xs font-bold text-amber-700">Grátis para todos</p>
+                <p className="text-[10px] text-amber-500">
+                  {feature.free_for_all
+                    ? 'Todos os vendors têm acesso sem precisar comprar'
+                    : 'Apenas quem comprar terá acesso'
+                  }
+                </p>
+              </div>
             </div>
 
             <div className="grid grid-cols-3 gap-3">

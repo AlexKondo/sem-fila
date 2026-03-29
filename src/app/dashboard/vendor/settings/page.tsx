@@ -4,6 +4,7 @@ import VendorSettingsForm from '@/components/dashboard/VendorSettingsForm';
 import VendorAccountForm from '@/components/dashboard/VendorAccountForm';
 import VendorBusinesses from '@/components/dashboard/VendorBusinesses';
 import VendorPremiumStore from '@/components/dashboard/VendorPremiumStore';
+import { RevenueReport, EfficiencyPanel } from '@/components/dashboard/VendorPremiumPanels';
 
 const P = '#ec5b13';
 
@@ -104,7 +105,13 @@ export default async function VendorSettingsPage() {
           <VendorSettingsForm vendor={vendor} subscription={subscriptionData} />
         </section>
 
-        {/* Bloco 4: Benefícios Premium */}
+        {/* Bloco 4: Painéis Premium */}
+        <div className="mt-10 space-y-4">
+          <RevenueReport vendorId={vendor.id} />
+          <EfficiencyPanel vendorId={vendor.id} />
+        </div>
+
+        {/* Bloco 5: Loja de Benefícios Premium */}
         <VendorPremiumStore vendorId={vendor.id} />
       </div>
     </main>
