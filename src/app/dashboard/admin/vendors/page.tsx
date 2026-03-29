@@ -40,12 +40,6 @@ export default async function AdminVendorsPage() {
         </div>
       </header>
 
-      {vendorsError && (
-        <div className="max-w-3xl mx-auto px-4 py-2">
-          <p className="text-red-600 text-xs bg-red-50 p-3 rounded-xl">DEBUG: {vendorsError.message} | code: {vendorsError.code}</p>
-        </div>
-      )}
-
       {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
       <VendorAdminManager initialVendors={(vendors ?? []) as any} events={(events ?? []) as any} />
     </main>
