@@ -201,7 +201,16 @@ export default function RankingClient() {
             ) : (
               subs.map(sub => {
                 const pf = premiumFeatures.find(f => f.slug === sub.feature);
-                const info = { label: pf?.name ?? sub.feature, desc: pf?.description ?? '' };
+                const SLUG_LABELS: Record<string, string> = {
+                  featured_badge: 'Selo Destaque',
+                  destaque_plataforma: 'Destaque na Plataforma',
+                  relatorio_faturamento: 'Relatório de Faturamento',
+                  painel_eficiencia: 'Painel de Eficiência',
+                  selo_top_vendas: 'Selo Top Vendas',
+                  analise_cardapio: 'Análise de Cardápio',
+                  prioridade_suporte: 'Prioridade no Suporte',
+                };
+                const info = { label: pf?.name ?? SLUG_LABELS[sub.feature] ?? sub.feature.replace(/_/g, ' '), desc: pf?.description ?? '' };
                 const expired = sub.expires_at ? new Date(sub.expires_at) < new Date() : false;
                 return (
                   <div key={sub.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex items-center justify-between">
