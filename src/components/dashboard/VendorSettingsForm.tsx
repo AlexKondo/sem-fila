@@ -29,6 +29,7 @@ export default function VendorSettingsForm({ vendor, subscription }: { vendor: a
   const [serviceFee, setServiceFee] = useState(vendor.service_fee_percentage || 0);
   const [couvert, setCouvert] = useState(vendor.couvert_fee || 0);
   const [numTables, setNumTables] = useState(vendor.num_tables || 0);
+  const [pricePerKg, setPricePerKg] = useState(vendor.price_per_kg || 0);
   
   const [couponCode, setCouponCode] = useState(vendor.active_coupon_code || '');
   const [couponDiscount, setCouponDiscount] = useState(vendor.discount_percentage || 0);
@@ -77,7 +78,7 @@ export default function VendorSettingsForm({ vendor, subscription }: { vendor: a
   // Auto-habilita entrega na mesa se for restaurante
   const handleBusinessTypeChange = (val: string) => {
     setBusinessType(val);
-    if (val === 'restaurant') {
+    if (['restaurant', 'restaurant_kilo', 'bar'].includes(val)) {
       setDeliversToTable(true);
     }
   };
@@ -126,6 +127,7 @@ export default function VendorSettingsForm({ vendor, subscription }: { vendor: a
         discount_percentage: Number(couponDiscount),
         allow_waiter_calls: allowWaiterCalls,
         num_tables: Number(numTables),
+        price_per_kg: businessType === 'restaurant_kilo' ? Number(pricePerKg) : null,
         ai_photo_enabled: aiPhotoEnabled,
       })
       .eq('id', vendor.id);
@@ -162,6 +164,7 @@ export default function VendorSettingsForm({ vendor, subscription }: { vendor: a
             >
               <option value="kiosk">Quiosque / Barraca em Evento</option>
               <option value="restaurant">Restaurante Tradicional</option>
+              <option value="restaurant_kilo">Restaurante por Kilo</option>
               <option value="bar">Bar / Pub</option>
               <option value="foodtruck">Food Truck</option>
             </select>
@@ -185,8 +188,29 @@ export default function VendorSettingsForm({ vendor, subscription }: { vendor: a
             </div>
           </label>
 
+          {/* Campo de preço por kg — só para restaurante por kilo */}
+          {businessType === 'restaurant_kilo' && (
+            <div className="ml-8 p-3 bg-orange-50/40 border border-orange-100 rounded-xl">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Valor por Kg (R$)
+              </label>
+              <div className="relative">
+                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-medium text-sm">R$</span>
+                <input
+                  type="number" min="0" step="0.50"
+                  value={pricePerKg} onChange={(e) => setPricePerKg(Number(e.target.value))}
+                  placeholder="Ex: 69.90"
+                  className="w-full h-12 bg-white border border-slate-200 rounded-xl pl-10 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/50"
+                />
+              </div>
+              <p className="text-[10px] text-gray-400 mt-1">
+                O cliente pesará o prato e informará o peso. O valor será calculado automaticamente.
+              </p>
+            </div>
+          )}
+
           {/* Campo de mesas — só para restaurante/bar que têm gestão de mesas */}
-          {deliversToTable && ['restaurant', 'bar'].includes(businessType) && (
+          {deliversToTable && ['restaurant', 'restaurant_kilo', 'bar'].includes(businessType) && (
             <div className="ml-8 p-3 bg-orange-50/40 border border-orange-100 rounded-xl">
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Número total de mesas do estabelecimento

@@ -314,7 +314,7 @@ export default function MenuClient({ vendor, items, mesa, waitTime, hasFeaturedB
         </div>
 
         {/* Banner de fila de espera (só restaurante/bar) */}
-        {['restaurant', 'bar'].includes(vendor.business_type) && (
+        {['restaurant', 'restaurant_kilo', 'bar'].includes(vendor.business_type) && (
           <QueueBanner vendorId={vendor.id} />
         )}
 

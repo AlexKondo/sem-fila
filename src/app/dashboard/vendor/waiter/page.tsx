@@ -24,7 +24,7 @@ export default async function WaiterPage() {
   if (!vendor) redirect('/dashboard/vendor');
 
   const businessType = (vendor as any).business_type || 'kiosk';
-  const hasTableManagement = ['restaurant', 'bar'].includes(businessType);
+  const hasTableManagement = ['restaurant', 'restaurant_kilo', 'bar'].includes(businessType);
 
   // Busca tudo em paralelo
   const [

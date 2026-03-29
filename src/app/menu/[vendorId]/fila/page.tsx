@@ -22,7 +22,7 @@ export default async function QueuePage({ params }: Props) {
   if (!vendor) notFound();
 
   // Fila só existe para restaurante/bar
-  if (!['restaurant', 'bar'].includes(vendor.business_type || '')) {
+  if (!['restaurant', 'restaurant_kilo', 'bar'].includes(vendor.business_type || '')) {
     const { redirect } = await import('next/navigation');
     redirect(`/menu/${vendorId}`);
   }
