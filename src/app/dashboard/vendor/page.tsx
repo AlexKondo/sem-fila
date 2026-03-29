@@ -50,22 +50,23 @@ export default async function VendorDashboardPage() {
     p_since: today.toISOString(),
   });
 
-  const activeOrders = (rpcOrders || []) as any[];
+  const allOrders = (rpcOrders || []) as any[];
+  const pendingCount = allOrders.filter((o: any) => !['delivered', 'cancelled'].includes(o.status)).length;
 
   return (
     <>
-      <div className="max-w-2xl mx-auto px-4 pb-2">
-        <div className="flex items-center gap-2">
-          <span className="text-sm font-bold text-slate-900">Fila em tempo real</span>
-          {activeOrders.length > 0 && (
+      <div className="max-w-2xl mx-auto px-4 pb-2 text-center">
+        <div className="inline-flex items-center gap-2">
+          <span className="text-sm font-bold text-slate-900">Pedidos</span>
+          {pendingCount > 0 && (
             <span className="text-[11px] font-bold px-2 py-0.5 rounded-full text-white" style={{ backgroundColor: P }}>
-              {activeOrders.length}
+              {pendingCount}
             </span>
           )}
         </div>
       </div>
 
-      <VendorOrdersBoard initialOrders={activeOrders} vendorId={vendor.id} />
+      <VendorOrdersBoard initialOrders={allOrders} vendorId={vendor.id} />
     </>
   );
 }
