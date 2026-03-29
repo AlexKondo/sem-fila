@@ -57,6 +57,19 @@ export default function WaiterBoard({ initialReadyOrders, initialWaiterCalls, in
   const [newTableCapacity, setNewTableCapacity] = useState(4);
   const [mergeSource, setMergeSource] = useState<string | null>(null);
   const [selectedTable, setSelectedTable] = useState<string | null>(null);
+  const [dragOverTable, setDragOverTable] = useState<string | null>(null);
+  const tablesGridRef = useRef<HTMLDivElement>(null);
+
+  // Fecha menu ao clicar fora
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (selectedTable && tablesGridRef.current && !tablesGridRef.current.contains(e.target as Node)) {
+        setSelectedTable(null);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [selectedTable]);
 
   // Audio
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -194,19 +207,17 @@ export default function WaiterBoard({ initialReadyOrders, initialWaiterCalls, in
   async function splitTable(tableId: string) {
     // Encontra mesas mergeadas com esta
     const merged = tables.filter(t => t.merged_with === tableId);
-    for (const m of merged) {
+    const ids = [tableId, ...merged.map(m => m.id)];
+    // Volta todas ao layout original: sem merge, status dirty (precisa limpar)
+    for (const id of ids) {
       await supabase.from('vendor_tables').update({
         merged_with: null,
         status: 'dirty',
+        occupied_at: null,
         updated_at: new Date().toISOString(),
-      }).eq('id', m.id);
+      }).eq('id', id);
     }
-    // Mesa principal fica como dirty
-    await supabase.from('vendor_tables').update({
-      status: 'dirty',
-      merged_with: null,
-      updated_at: new Date().toISOString(),
-    }).eq('id', tableId);
+    setSelectedTable(null);
   }
 
   // === QUEUE ACTIONS ===
@@ -374,7 +385,7 @@ export default function WaiterBoard({ initialReadyOrders, initialWaiterCalls, in
               <p className="text-[10px] mt-1">Clique em "+ Mesa" para começar</p>
             </div>
           ) : (
-            <div className="grid grid-cols-3 sm:grid-cols-4 gap-2.5">
+            <div ref={tablesGridRef} className="grid grid-cols-3 sm:grid-cols-4 gap-2.5">
               {tables.filter(t => !t.merged_with).map(table => {
                 const isCalling = callingTables.has(table.table_number);
                 const callForTable = isCalling ? pendingCalls.find(c => c.table_number === table.table_number) : null;
@@ -387,9 +398,30 @@ export default function WaiterBoard({ initialReadyOrders, initialWaiterCalls, in
                   ? { bg: 'bg-red-50', border: 'border-red-300 shadow-md shadow-red-100', text: 'text-red-700', dot: 'bg-red-500 animate-pulse', label: 'Chamando!' }
                   : STATUS_COLORS[table.status];
 
+                const isDragOver = dragOverTable === table.id;
+
                 return (
                   <div key={table.id} className="space-y-0">
                     <div
+                      draggable
+                      onDragStart={e => {
+                        e.dataTransfer.setData('table-id', table.id);
+                        e.dataTransfer.effectAllowed = 'move';
+                      }}
+                      onDragOver={e => {
+                        e.preventDefault();
+                        e.dataTransfer.dropEffect = 'move';
+                        if (dragOverTable !== table.id) setDragOverTable(table.id);
+                      }}
+                      onDragLeave={() => setDragOverTable(null)}
+                      onDrop={e => {
+                        e.preventDefault();
+                        setDragOverTable(null);
+                        const sourceId = e.dataTransfer.getData('table-id');
+                        if (sourceId && sourceId !== table.id) {
+                          mergeTables(sourceId, table.id);
+                        }
+                      }}
                       onClick={() => {
                         if (mergeSource && mergeSource !== table.id) {
                           mergeTables(mergeSource, table.id);
@@ -397,15 +429,26 @@ export default function WaiterBoard({ initialReadyOrders, initialWaiterCalls, in
                         }
                         setSelectedTable(isSelected ? null : table.id);
                       }}
-                      className={`relative border-2 rounded-2xl p-2.5 text-center transition-all cursor-pointer ${style.bg} ${style.border} ${isSelected ? 'ring-2 ring-orange-400' : ''}`}
+                      className={`relative border-2 rounded-2xl p-2.5 text-center transition-all cursor-grab active:cursor-grabbing ${style.bg} ${style.border} ${isSelected ? 'ring-2 ring-orange-400' : ''} ${isDragOver ? 'ring-2 ring-blue-400 scale-105' : ''}`}
                     >
                       <span className={`absolute top-1.5 right-1.5 w-2 h-2 rounded-full ${style.dot}`} />
+
+                      {/* Badge de merge */}
+                      {hasMerge && (
+                        <span className="absolute top-1 left-1 bg-blue-500 text-white text-[7px] font-black px-1.5 py-0.5 rounded-full flex items-center gap-0.5">
+                          <Merge className="w-2.5 h-2.5" /> {mergedNums.length + 1}
+                        </span>
+                      )}
 
                       {/* Número da mesa + merge */}
                       <p className={`text-xl font-black ${style.text} leading-none`}>
                         {table.table_number}
-                        {hasMerge && <span className="text-xs">+{mergedNums.join('+')}</span>}
                       </p>
+                      {hasMerge && (
+                        <p className="text-[9px] font-bold text-blue-500 leading-tight">
+                          +{mergedNums.join('+')}
+                        </p>
+                      )}
 
                       {/* Capacidade */}
                       <div className={`flex items-center justify-center gap-0.5 mt-1 ${style.text} opacity-60`}>
@@ -428,7 +471,19 @@ export default function WaiterBoard({ initialReadyOrders, initialWaiterCalls, in
 
                     {/* Menu de ações expandido */}
                     {isSelected && (
-                      <div className="bg-white border border-gray-200 rounded-xl p-2 mt-1 space-y-1.5 animate-in fade-in slide-in-from-top-1 duration-150 shadow-lg">
+                      <div className="bg-white border border-gray-200 rounded-xl p-2 mt-1 space-y-1.5 animate-in fade-in slide-in-from-top-1 duration-150 shadow-lg"
+                        onClick={e => e.stopPropagation()}
+                      >
+                        {/* Botão destaque: Liberar & Separar (quando mergeada e cliente saiu) */}
+                        {hasMerge && table.status === 'occupied' && (
+                          <button
+                            onClick={() => { splitTable(table.id); setSelectedTable(null); }}
+                            className="w-full text-[10px] font-black bg-purple-500 text-white py-2 rounded-lg flex items-center justify-center gap-1 active:scale-95 transition"
+                          >
+                            <Split className="w-3.5 h-3.5" /> Liberar e Separar Mesas
+                          </button>
+                        )}
+
                         {/* Capacidade edit */}
                         <div className="flex items-center justify-between">
                           <span className="text-[10px] font-bold text-gray-500">Capacidade</span>
@@ -441,13 +496,13 @@ export default function WaiterBoard({ initialReadyOrders, initialWaiterCalls, in
 
                         {/* Status buttons */}
                         <div className="grid grid-cols-2 gap-1">
-                          {table.status !== 'free' && (
+                          {table.status !== 'free' && !hasMerge && (
                             <button onClick={() => updateTableStatus(table.id, 'free')} className="text-[9px] font-bold bg-emerald-50 text-emerald-700 py-1.5 rounded-lg">Liberar</button>
                           )}
                           {table.status === 'free' && (
                             <button onClick={() => updateTableStatus(table.id, 'occupied')} className="text-[9px] font-bold bg-gray-100 text-gray-700 py-1.5 rounded-lg">Ocupar</button>
                           )}
-                          {table.status === 'occupied' && (
+                          {table.status === 'occupied' && !hasMerge && (
                             <button onClick={() => updateTableStatus(table.id, 'dirty')} className="text-[9px] font-bold bg-amber-50 text-amber-700 py-1.5 rounded-lg">Limpeza</button>
                           )}
                           {table.status === 'dirty' && (
@@ -462,8 +517,8 @@ export default function WaiterBoard({ initialReadyOrders, initialWaiterCalls, in
                               <Merge className="w-3 h-3" /> Juntar
                             </button>
                           )}
-                          {hasMerge && (
-                            <button onClick={() => splitTable(table.id)} className="flex-1 text-[9px] font-bold bg-purple-50 text-purple-700 py-1.5 rounded-lg flex items-center justify-center gap-0.5">
+                          {hasMerge && table.status !== 'occupied' && (
+                            <button onClick={() => { splitTable(table.id); setSelectedTable(null); }} className="flex-1 text-[9px] font-bold bg-purple-50 text-purple-700 py-1.5 rounded-lg flex items-center justify-center gap-0.5">
                               <Split className="w-3 h-3" /> Separar
                             </button>
                           )}
