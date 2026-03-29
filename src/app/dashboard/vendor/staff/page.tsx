@@ -11,7 +11,8 @@ const ROLE_OPTIONS = [
 ];
 
 type StaffWithProfile = StaffSchedule & {
-  profiles: { full_name: string | null; name: string | null; role: string; id: string } | null;
+  profiles: { full_name: string | null; name: string | null; role: string; id: string; phone: string | null } | null;
+  email?: string | null;
 };
 
 export default function StaffPage() {
@@ -27,7 +28,7 @@ export default function StaffPage() {
   const [removing, setRemoving] = useState<string | null>(null);
 
   const [editingMember, setEditingMember] = useState<StaffWithProfile | null>(null);
-  const [editForm, setEditForm] = useState({ name: '', role: 'waitstaff' });
+  const [editForm, setEditForm] = useState({ name: '', role: 'waitstaff', phone: '', email: '' });
   const [editSaving, setEditSaving] = useState(false);
   const [editError, setEditError] = useState('');
 
@@ -101,9 +102,15 @@ export default function StaffPage() {
 
   function openEdit(member: StaffWithProfile) {
     setEditingMember(member);
+    const rawPhone = member.profiles?.phone?.replace(/\D/g, '') || '';
+    const maskedPhone = rawPhone.length <= 2 ? rawPhone
+      : rawPhone.length <= 7 ? `(${rawPhone.slice(0,2)}) ${rawPhone.slice(2)}`
+      : `(${rawPhone.slice(0,2)}) ${rawPhone.slice(2,7)}-${rawPhone.slice(7)}`;
     setEditForm({
       name: member.profiles?.full_name || member.profiles?.name || '',
       role: member.profiles?.role ?? 'waitstaff',
+      phone: maskedPhone,
+      email: member.email || '',
     });
     setEditError('');
   }
@@ -117,9 +124,10 @@ export default function StaffPage() {
     setEditError('');
 
     const supabase = createClient();
+    const phoneDigits = editForm.phone.replace(/\D/g, '') || null;
     const { error } = await supabase
       .from('profiles')
-      .update({ full_name: editForm.name, name: editForm.name, role: editForm.role })
+      .update({ full_name: editForm.name, name: editForm.name, role: editForm.role, phone: phoneDigits })
       .eq('id', editingMember.user_id);
 
     if (error) {
@@ -131,7 +139,7 @@ export default function StaffPage() {
     setStaff(prev =>
       prev.map(s =>
         s.id === editingMember.id
-          ? { ...s, profiles: { ...s.profiles!, full_name: editForm.name, name: editForm.name, role: editForm.role } }
+          ? { ...s, profiles: { ...s.profiles!, full_name: editForm.name, name: editForm.name, role: editForm.role, phone: phoneDigits } }
           : s
       )
     );
@@ -312,6 +320,34 @@ export default function StaffPage() {
                     <option key={r.value} value={r.value}>{r.emoji} {r.label}</option>
                   ))}
                 </select>
+              </div>
+
+              <div>
+                <label className="text-xs font-bold text-slate-500 block mb-1">Email</label>
+                <input
+                  type="email"
+                  value={editForm.email}
+                  readOnly
+                  className="w-full border border-slate-200 rounded-xl px-4 h-12 text-sm bg-slate-50 text-slate-400 cursor-not-allowed"
+                />
+                <p className="text-[11px] text-slate-400 mt-1">O email não pode ser alterado.</p>
+              </div>
+
+              <div>
+                <label className="text-xs font-bold text-slate-500 block mb-1">WhatsApp</label>
+                <input
+                  type="tel"
+                  value={editForm.phone}
+                  onChange={e => {
+                    const v = e.target.value.replace(/\D/g, '').slice(0, 11);
+                    const masked = v.length <= 2 ? v
+                      : v.length <= 7 ? `(${v.slice(0,2)}) ${v.slice(2)}`
+                      : `(${v.slice(0,2)}) ${v.slice(2,7)}-${v.slice(7)}`;
+                    setEditForm(f => ({ ...f, phone: masked }));
+                  }}
+                  placeholder="(11) 99999-9999"
+                  className="w-full border border-slate-200 rounded-xl px-4 h-12 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/30"
+                />
               </div>
 
               {editError && (
