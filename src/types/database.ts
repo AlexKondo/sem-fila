@@ -203,6 +203,7 @@ export interface PremiumFeature {
   duration_days: number;
   active: boolean;
   free_for_all: boolean;
+  trial_days: number;
   sort_order: number;
   created_at: string;
   updated_at: string;

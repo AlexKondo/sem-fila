@@ -15,6 +15,7 @@ interface FeatureDraft {
   duration_days: number;
   active: boolean;
   free_for_all: boolean;
+  trial_days: number;
   sort_order: number;
   _isNew?: boolean;
 }
@@ -43,6 +44,7 @@ export default function PremiumFeaturesClient() {
             duration_days: f.duration_days,
             active: f.active,
             free_for_all: f.free_for_all ?? false,
+            trial_days: f.trial_days ?? 0,
             sort_order: f.sort_order,
           }));
           setFeatures(mapped);
@@ -63,6 +65,7 @@ export default function PremiumFeaturesClient() {
         duration_days: 30,
         active: true,
         free_for_all: false,
+        trial_days: 0,
         sort_order: prev.length,
         _isNew: true,
       },
@@ -111,6 +114,7 @@ export default function PremiumFeaturesClient() {
         duration_days: f.duration_days,
         active: f.active,
         free_for_all: f.free_for_all,
+        trial_days: f.trial_days,
         sort_order: f.sort_order,
         updated_at: new Date().toISOString(),
       }).eq('id', f.id!);
@@ -128,6 +132,7 @@ export default function PremiumFeaturesClient() {
           duration_days: f.duration_days,
           active: f.active,
           free_for_all: f.free_for_all,
+          trial_days: f.trial_days,
           sort_order: f.sort_order,
         }))
       ).select();
@@ -237,25 +242,48 @@ export default function PremiumFeaturesClient() {
               />
             </div>
 
-            <div className="flex items-center gap-3 bg-amber-50 rounded-xl px-3 py-2.5">
-              <button
-                type="button"
-                onClick={() => updateFeature(index, 'free_for_all', !feature.free_for_all)}
-                className="flex items-center gap-2"
-              >
-                {feature.free_for_all
-                  ? <ToggleRight className="w-6 h-6 text-amber-500" />
-                  : <ToggleLeft className="w-6 h-6 text-gray-300" />
-                }
-              </button>
-              <div>
-                <p className="text-xs font-bold text-amber-700">Grátis para todos</p>
-                <p className="text-[10px] text-amber-500">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <div className="flex items-center gap-3 bg-amber-50 rounded-xl px-3 py-2.5">
+                <button
+                  type="button"
+                  onClick={() => updateFeature(index, 'free_for_all', !feature.free_for_all)}
+                  className="flex items-center gap-2 flex-shrink-0"
+                >
                   {feature.free_for_all
-                    ? 'Todos os vendors têm acesso sem precisar comprar'
-                    : 'Apenas quem comprar terá acesso'
+                    ? <ToggleRight className="w-6 h-6 text-amber-500" />
+                    : <ToggleLeft className="w-6 h-6 text-gray-300" />
                   }
-                </p>
+                </button>
+                <div>
+                  <p className="text-xs font-bold text-amber-700">Grátis para todos</p>
+                  <p className="text-[10px] text-amber-500">
+                    {feature.free_for_all
+                      ? 'Todos têm acesso sem comprar'
+                      : 'Apenas quem comprar'
+                    }
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3 bg-blue-50 rounded-xl px-3 py-2.5">
+                <div className="flex-shrink-0">
+                  <input
+                    type="number"
+                    min="0"
+                    value={feature.trial_days}
+                    onChange={e => updateFeature(index, 'trial_days', parseInt(e.target.value) || 0)}
+                    className="w-16 border border-blue-200 rounded-lg px-2 py-1 text-sm text-center font-bold focus:outline-none focus:ring-2 focus:ring-blue-400/30"
+                  />
+                </div>
+                <div>
+                  <p className="text-xs font-bold text-blue-700">Dias de teste grátis</p>
+                  <p className="text-[10px] text-blue-500">
+                    {feature.trial_days > 0
+                      ? `Vendors ganham ${feature.trial_days} dias grátis ao acessar`
+                      : 'Sem período de teste'
+                    }
+                  </p>
+                </div>
               </div>
             </div>
 
