@@ -137,12 +137,17 @@ export default function WaiterBoard({ initialReadyOrders, initialWaiterCalls, in
   // === TABLE ACTIONS ===
   async function addTable() {
     if (!newTableNumber.trim()) return;
-    await supabase.from('vendor_tables').insert({
+    const { error } = await supabase.from('vendor_tables').insert({
       vendor_id: vendorId,
       table_number: newTableNumber.trim(),
       capacity: newTableCapacity,
       status: 'free',
     });
+    if (error) {
+      console.error('Erro ao adicionar mesa:', error);
+      alert(`Erro ao adicionar mesa: ${error.message}`);
+      return;
+    }
     setNewTableNumber('');
     setNewTableCapacity(4);
     setShowAddTable(false);
