@@ -3,7 +3,8 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
-import type { LevelConfig } from '@/types/database';
+import type { LevelConfig, PointRule } from '@/types/database';
+import { Plus, Trash2, Save } from 'lucide-react';
 
 const PROFILE_TYPES = [
   { key: 'customer', label: 'Clientes' },
@@ -18,25 +19,36 @@ const LEVEL_LABELS: Record<string, string> = {
   platinum: '💎 Platina',
 };
 
+const TARGET_OPTIONS = [
+  { value: 'customer', label: 'Cliente' },
+  { value: 'vendor', label: 'Vendedor' },
+];
+
 export default function GamificationClient() {
   const [configs, setConfigs] = useState<LevelConfig[]>([]);
+  const [pointRules, setPointRules] = useState<PointRule[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState('customer');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editValues, setEditValues] = useState<Partial<LevelConfig>>({});
 
+  // Point rules state
+  const [editedRules, setEditedRules] = useState<Record<string, Partial<PointRule>>>({});
+  const [savingRules, setSavingRules] = useState(false);
+  const [newRule, setNewRule] = useState<{ action: string; label: string; target: string; points: number } | null>(null);
+  const [ruleError, setRuleError] = useState('');
+
   useEffect(() => {
     const supabase = createClient();
-    supabase
-      .from('level_configs')
-      .select('*')
-      .order('profile_type')
-      .order('level_order')
-      .then(({ data }) => {
-        if (data) setConfigs(data as LevelConfig[]);
-        setLoading(false);
-      });
+    Promise.all([
+      supabase.from('level_configs').select('*').order('profile_type').order('level_order'),
+      supabase.from('point_rules').select('*').order('sort_order'),
+    ]).then(([{ data: lc }, { data: pr }]) => {
+      if (lc) setConfigs(lc as LevelConfig[]);
+      if (pr) setPointRules(pr as PointRule[]);
+      setLoading(false);
+    });
   }, []);
 
   const tabConfigs = configs.filter(c => c.profile_type === activeTab);
@@ -62,6 +74,70 @@ export default function GamificationClient() {
     });
   }
 
+  function updateRuleLocal(id: string, field: string, value: string | number | boolean) {
+    setEditedRules(prev => ({
+      ...prev,
+      [id]: { ...prev[id], [field]: value },
+    }));
+  }
+
+  function getRuleValue(rule: PointRule, field: keyof PointRule) {
+    return editedRules[rule.id]?.[field] ?? rule[field];
+  }
+
+  async function saveAllRules() {
+    setSavingRules(true);
+    setRuleError('');
+    const supabase = createClient();
+    const entries = Object.entries(editedRules);
+    for (const [id, changes] of entries) {
+      const { error } = await supabase.from('point_rules').update(changes).eq('id', id);
+      if (error) { setRuleError(error.message); setSavingRules(false); return; }
+    }
+    // Refresh
+    const { data } = await supabase.from('point_rules').select('*').order('sort_order');
+    if (data) setPointRules(data as PointRule[]);
+    setEditedRules({});
+    setSavingRules(false);
+  }
+
+  async function addRule() {
+    if (!newRule || !newRule.action || !newRule.label) { setRuleError('Preencha ação e label'); return; }
+    setSavingRules(true);
+    setRuleError('');
+    const supabase = createClient();
+    const { data, error } = await supabase.from('point_rules').insert({
+      action: newRule.action,
+      label: newRule.label,
+      target: newRule.target || 'customer',
+      points: newRule.points || 0,
+      active: true,
+      sort_order: pointRules.length + 1,
+    }).select().single();
+    if (error) { setRuleError(error.message); setSavingRules(false); return; }
+    setPointRules(prev => [...prev, data as PointRule]);
+    setNewRule(null);
+    setSavingRules(false);
+  }
+
+  async function deleteRule(id: string) {
+    const supabase = createClient();
+    await supabase.from('point_rules').delete().eq('id', id);
+    setPointRules(prev => prev.filter(r => r.id !== id));
+    const copy = { ...editedRules };
+    delete copy[id];
+    setEditedRules(copy);
+  }
+
+  async function toggleRuleActive(rule: PointRule) {
+    const supabase = createClient();
+    const newActive = !rule.active;
+    await supabase.from('point_rules').update({ active: newActive }).eq('id', rule.id);
+    setPointRules(prev => prev.map(r => r.id === rule.id ? { ...r, active: newActive } : r));
+  }
+
+  const hasRuleChanges = Object.keys(editedRules).length > 0;
+
   if (loading) return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center">
       <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500" />
@@ -84,146 +160,272 @@ export default function GamificationClient() {
         </div>
       </header>
 
-      <div className="max-w-4xl mx-auto px-4 py-6">
-        <div className="flex gap-2 mb-6">
-          {PROFILE_TYPES.map(t => (
-            <button
-              key={t.key}
-              onClick={() => setActiveTab(t.key)}
-              className={`px-4 py-2 rounded-xl text-sm font-bold transition ${
-                activeTab === t.key
-                  ? 'bg-orange-500 text-white shadow'
-                  : 'bg-white text-gray-500 border border-gray-100 hover:border-orange-200'
-              }`}
-            >
-              {t.label}
-            </button>
-          ))}
-        </div>
+      <div className="max-w-4xl mx-auto px-4 py-6 space-y-8">
+        {/* ===== SEÇÃO 1: REGRAS DE PONTUAÇÃO ===== */}
+        <div>
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide">Regras de Pontuação</h2>
+              <p className="text-xs text-gray-400 mt-0.5">Defina quantos pontos cada ação concede</p>
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setNewRule({ action: '', label: '', target: 'customer', points: 0 })}
+                className="flex items-center gap-1.5 text-xs font-bold text-orange-600 bg-orange-50 px-3 py-2 rounded-xl hover:bg-orange-100 transition"
+              >
+                <Plus className="w-3.5 h-3.5" /> Nova regra
+              </button>
+              {hasRuleChanges && (
+                <button
+                  onClick={saveAllRules}
+                  disabled={savingRules}
+                  className="flex items-center gap-1.5 text-xs font-bold text-white bg-orange-500 px-4 py-2 rounded-xl hover:bg-orange-600 transition disabled:opacity-50"
+                >
+                  <Save className="w-3.5 h-3.5" /> {savingRules ? 'Salvando...' : 'Salvar alterações'}
+                </button>
+              )}
+            </div>
+          </div>
 
-        <div className="grid gap-4">
-          {tabConfigs.map(config => (
-            <div key={config.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-              <div className="p-4 flex items-start justify-between">
-                <div className="flex items-center gap-3">
-                  <div
-                    className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl shadow-sm"
-                    style={{ backgroundColor: config.badge_color + '20', border: `2px solid ${config.badge_color}40` }}
-                  >
-                    {config.badge_emoji}
-                  </div>
-                  <div>
-                    <h3 className="font-black text-gray-900">{LEVEL_LABELS[config.level_name] ?? config.level_name}</h3>
-                    <p className="text-xs text-gray-400">
-                      A partir de <span className="font-bold text-gray-700">{config.min_points} pontos</span>
-                    </p>
-                  </div>
+          {ruleError && <p className="text-red-600 text-xs mb-3">{ruleError}</p>}
+
+          {/* Form nova regra */}
+          {newRule && (
+            <div className="bg-white rounded-2xl border border-orange-200 shadow-sm p-4 mb-4 space-y-3">
+              <h3 className="text-sm font-bold text-gray-900">Nova regra de pontuação</h3>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-bold text-gray-500 block mb-1">Ação (slug)</label>
+                  <input
+                    placeholder="ex: order_placed"
+                    value={newRule.action}
+                    onChange={e => setNewRule(p => p ? { ...p, action: e.target.value } : null)}
+                    className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/30"
+                  />
                 </div>
-                <div className="flex items-center gap-2">
-                  <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${config.active ? 'bg-green-50 text-green-600' : 'bg-gray-100 text-gray-400'}`}>
-                    {config.active ? 'Ativo' : 'Inativo'}
-                  </span>
-                  <button
-                    onClick={() => editingId === config.id ? setEditingId(null) : startEdit(config)}
-                    className="text-xs font-bold text-orange-600 bg-orange-50 px-3 py-1.5 rounded-xl hover:bg-orange-100 transition"
+                <div>
+                  <label className="text-xs font-bold text-gray-500 block mb-1">Nome visível</label>
+                  <input
+                    placeholder="ex: Pedido realizado"
+                    value={newRule.label}
+                    onChange={e => setNewRule(p => p ? { ...p, label: e.target.value } : null)}
+                    className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/30"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-bold text-gray-500 block mb-1">Quem recebe</label>
+                  <select
+                    value={newRule.target}
+                    onChange={e => setNewRule(p => p ? { ...p, target: e.target.value } : null)}
+                    className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/30"
                   >
-                    {editingId === config.id ? 'Cancelar' : 'Editar'}
-                  </button>
+                    {TARGET_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="text-xs font-bold text-gray-500 block mb-1">Pontos</label>
+                  <input
+                    type="number"
+                    value={newRule.points}
+                    onChange={e => setNewRule(p => p ? { ...p, points: parseInt(e.target.value) || 0 } : null)}
+                    className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/30"
+                  />
                 </div>
               </div>
+              <div className="flex gap-2">
+                <button onClick={() => setNewRule(null)} className="flex-1 border border-gray-200 text-gray-600 py-2 rounded-xl text-xs font-bold">Cancelar</button>
+                <button onClick={addRule} disabled={savingRules} className="flex-1 bg-orange-500 text-white py-2 rounded-xl text-xs font-bold disabled:opacity-50">
+                  {savingRules ? 'Salvando...' : 'Adicionar'}
+                </button>
+              </div>
+            </div>
+          )}
 
-              {!editingId || editingId !== config.id ? (
-                <div className="px-4 pb-4 flex flex-wrap gap-2">
-                  {config.benefits?.map((b, i) => (
-                    <span key={i} className="text-xs bg-gray-50 border border-gray-100 text-gray-600 px-2.5 py-1 rounded-full font-medium">
-                      {b.label}
-                    </span>
-                  ))}
+          {/* Lista de regras */}
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+            <div className="grid grid-cols-[1fr_1fr_100px_80px_80px_40px] gap-2 px-4 py-2.5 bg-gray-50 border-b border-gray-100 text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+              <span>Ação</span>
+              <span>Nome</span>
+              <span>Quem recebe</span>
+              <span className="text-center">Pontos</span>
+              <span className="text-center">Status</span>
+              <span></span>
+            </div>
+            {pointRules.map(rule => (
+              <div key={rule.id} className={`grid grid-cols-[1fr_1fr_100px_80px_80px_40px] gap-2 px-4 py-3 border-b border-gray-50 items-center ${!rule.active ? 'opacity-50' : ''}`}>
+                <span className="text-xs font-mono text-gray-600">{rule.action}</span>
+                <input
+                  value={getRuleValue(rule, 'label') as string}
+                  onChange={e => updateRuleLocal(rule.id, 'label', e.target.value)}
+                  className="text-xs text-gray-800 font-medium border border-transparent hover:border-gray-200 focus:border-orange-300 rounded-lg px-2 py-1 focus:outline-none transition"
+                />
+                <select
+                  value={getRuleValue(rule, 'target') as string}
+                  onChange={e => updateRuleLocal(rule.id, 'target', e.target.value)}
+                  className="text-xs text-gray-600 border border-transparent hover:border-gray-200 focus:border-orange-300 rounded-lg px-1 py-1 focus:outline-none transition"
+                >
+                  {TARGET_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+                </select>
+                <input
+                  type="number"
+                  value={getRuleValue(rule, 'points') as number}
+                  onChange={e => updateRuleLocal(rule.id, 'points', parseInt(e.target.value) || 0)}
+                  className="text-xs font-bold text-center text-gray-800 border border-transparent hover:border-gray-200 focus:border-orange-300 rounded-lg px-1 py-1 w-full focus:outline-none transition"
+                />
+                <div className="flex justify-center">
+                  <button
+                    onClick={() => toggleRuleActive(rule)}
+                    className={`text-[10px] font-bold px-2 py-0.5 rounded-full transition ${rule.active ? 'bg-green-50 text-green-600 hover:bg-green-100' : 'bg-gray-100 text-gray-400 hover:bg-gray-200'}`}
+                  >
+                    {rule.active ? 'Ativo' : 'Inativo'}
+                  </button>
                 </div>
-              ) : (
-                <div className="px-4 pb-4 space-y-3 border-t border-gray-50 pt-4">
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className="text-xs font-bold text-gray-500 block mb-1">Mínimo de Pontos</label>
-                      <input
-                        type="number"
-                        value={editValues.min_points ?? config.min_points}
-                        onChange={e => setEditValues(v => ({ ...v, min_points: parseInt(e.target.value) }))}
-                        className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/30"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-xs font-bold text-gray-500 block mb-1">Emoji do Badge</label>
-                      <input
-                        type="text"
-                        value={editValues.badge_emoji ?? config.badge_emoji}
-                        onChange={e => setEditValues(v => ({ ...v, badge_emoji: e.target.value }))}
-                        className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/30"
-                      />
-                    </div>
-                  </div>
-                  <div>
-                    <label className="text-xs font-bold text-gray-500 block mb-1">Cor do Badge (hex)</label>
-                    <div className="flex gap-2">
-                      <input
-                        type="color"
-                        value={editValues.badge_color ?? config.badge_color}
-                        onChange={e => setEditValues(v => ({ ...v, badge_color: e.target.value }))}
-                        className="h-10 w-14 rounded-lg border border-gray-200 cursor-pointer"
-                      />
-                      <input
-                        type="text"
-                        value={editValues.badge_color ?? config.badge_color}
-                        onChange={e => setEditValues(v => ({ ...v, badge_color: e.target.value }))}
-                        className="flex-1 border border-gray-200 rounded-xl px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-orange-500/30"
-                      />
-                    </div>
-                  </div>
-                  <div>
-                    <label className="text-xs font-bold text-gray-500 block mb-1">Benefícios (um por linha)</label>
-                    <textarea
-                      rows={3}
-                      value={(editValues.benefits ?? config.benefits)?.map(b => b.label).join('\n')}
-                      onChange={e => setEditValues(v => ({
-                        ...v,
-                        benefits: e.target.value.split('\n').filter(Boolean).map(label => ({ label }))
-                      }))}
-                      className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/30 resize-none"
-                    />
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <label className="flex items-center gap-2 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={editValues.active ?? config.active}
-                        onChange={e => setEditValues(v => ({ ...v, active: e.target.checked }))}
-                        className="w-4 h-4 accent-orange-500"
-                      />
-                      <span className="text-sm font-medium text-gray-700">Nível ativo</span>
-                    </label>
-                    <button
-                      onClick={() => saveEdit(config.id)}
-                      disabled={saving === config.id}
-                      className="bg-orange-500 text-white text-sm font-bold px-4 py-2 rounded-xl hover:bg-orange-600 transition disabled:opacity-50"
+                <button
+                  onClick={() => deleteRule(rule.id)}
+                  className="text-gray-300 hover:text-red-500 transition p-1"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            ))}
+            {pointRules.length === 0 && (
+              <p className="text-center text-sm text-gray-400 py-8">Nenhuma regra de pontuação cadastrada.</p>
+            )}
+          </div>
+        </div>
+
+        {/* ===== SEÇÃO 2: NÍVEIS ===== */}
+        <div>
+          <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4">Níveis por Categoria</h2>
+          <div className="flex gap-2 mb-6">
+            {PROFILE_TYPES.map(t => (
+              <button
+                key={t.key}
+                onClick={() => setActiveTab(t.key)}
+                className={`px-4 py-2 rounded-xl text-sm font-bold transition ${
+                  activeTab === t.key
+                    ? 'bg-orange-500 text-white shadow'
+                    : 'bg-white text-gray-500 border border-gray-100 hover:border-orange-200'
+                }`}
+              >
+                {t.label}
+              </button>
+            ))}
+          </div>
+
+          <div className="grid gap-4">
+            {tabConfigs.map(config => (
+              <div key={config.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                <div className="p-4 flex items-start justify-between">
+                  <div className="flex items-center gap-3">
+                    <div
+                      className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl shadow-sm"
+                      style={{ backgroundColor: config.badge_color + '20', border: `2px solid ${config.badge_color}40` }}
                     >
-                      {saving === config.id ? 'Salvando…' : 'Salvar'}
+                      {config.badge_emoji}
+                    </div>
+                    <div>
+                      <h3 className="font-black text-gray-900">{LEVEL_LABELS[config.level_name] ?? config.level_name}</h3>
+                      <p className="text-xs text-gray-400">
+                        A partir de <span className="font-bold text-gray-700">{config.min_points} pontos</span>
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${config.active ? 'bg-green-50 text-green-600' : 'bg-gray-100 text-gray-400'}`}>
+                      {config.active ? 'Ativo' : 'Inativo'}
+                    </span>
+                    <button
+                      onClick={() => editingId === config.id ? setEditingId(null) : startEdit(config)}
+                      className="text-xs font-bold text-orange-600 bg-orange-50 px-3 py-1.5 rounded-xl hover:bg-orange-100 transition"
+                    >
+                      {editingId === config.id ? 'Cancelar' : 'Editar'}
                     </button>
                   </div>
                 </div>
-              )}
-            </div>
-          ))}
-        </div>
 
-        <div className="mt-6 bg-blue-50 border border-blue-100 rounded-2xl p-4">
-          <p className="text-xs font-bold text-blue-700 mb-1">Como funciona a pontuação</p>
-          <ul className="text-xs text-blue-600 space-y-1 list-disc list-inside">
-            <li>Pedido realizado: +10 pontos (cliente)</li>
-            <li>Pedido entregue: +5 pontos (cliente)</li>
-            <li>Avaliação dada: +5 pontos (cliente)</li>
-            <li>Venda realizada: +10 pontos (vendor)</li>
-          </ul>
-          <p className="text-xs text-blue-400 mt-2">Os pontos são adicionados automaticamente pelos triggers do banco.</p>
+                {!editingId || editingId !== config.id ? (
+                  <div className="px-4 pb-4 flex flex-wrap gap-2">
+                    {config.benefits?.map((b, i) => (
+                      <span key={i} className="text-xs bg-gray-50 border border-gray-100 text-gray-600 px-2.5 py-1 rounded-full font-medium">
+                        {b.label}
+                      </span>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="px-4 pb-4 space-y-3 border-t border-gray-50 pt-4">
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="text-xs font-bold text-gray-500 block mb-1">Mínimo de Pontos</label>
+                        <input
+                          type="number"
+                          value={editValues.min_points ?? config.min_points}
+                          onChange={e => setEditValues(v => ({ ...v, min_points: parseInt(e.target.value) }))}
+                          className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/30"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-xs font-bold text-gray-500 block mb-1">Emoji do Badge</label>
+                        <input
+                          type="text"
+                          value={editValues.badge_emoji ?? config.badge_emoji}
+                          onChange={e => setEditValues(v => ({ ...v, badge_emoji: e.target.value }))}
+                          className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/30"
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="text-xs font-bold text-gray-500 block mb-1">Cor do Badge (hex)</label>
+                      <div className="flex gap-2">
+                        <input
+                          type="color"
+                          value={editValues.badge_color ?? config.badge_color}
+                          onChange={e => setEditValues(v => ({ ...v, badge_color: e.target.value }))}
+                          className="h-10 w-14 rounded-lg border border-gray-200 cursor-pointer"
+                        />
+                        <input
+                          type="text"
+                          value={editValues.badge_color ?? config.badge_color}
+                          onChange={e => setEditValues(v => ({ ...v, badge_color: e.target.value }))}
+                          className="flex-1 border border-gray-200 rounded-xl px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-orange-500/30"
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="text-xs font-bold text-gray-500 block mb-1">Benefícios (um por linha)</label>
+                      <textarea
+                        rows={3}
+                        value={(editValues.benefits ?? config.benefits)?.map(b => b.label).join('\n')}
+                        onChange={e => setEditValues(v => ({
+                          ...v,
+                          benefits: e.target.value.split('\n').filter(Boolean).map(label => ({ label }))
+                        }))}
+                        className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/30 resize-none"
+                      />
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={editValues.active ?? config.active}
+                          onChange={e => setEditValues(v => ({ ...v, active: e.target.checked }))}
+                          className="w-4 h-4 accent-orange-500"
+                        />
+                        <span className="text-sm font-medium text-gray-700">Nível ativo</span>
+                      </label>
+                      <button
+                        onClick={() => saveEdit(config.id)}
+                        disabled={saving === config.id}
+                        className="bg-orange-500 text-white text-sm font-bold px-4 py-2 rounded-xl hover:bg-orange-600 transition disabled:opacity-50"
+                      >
+                        {saving === config.id ? 'Salvando…' : 'Salvar'}
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </main>

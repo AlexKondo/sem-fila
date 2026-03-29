@@ -161,6 +161,18 @@ export interface PointsLog {
   created_at: string;
 }
 
+export interface PointRule {
+  id: string;
+  action: string;
+  label: string;
+  target: 'customer' | 'vendor';
+  points: number;
+  active: boolean;
+  sort_order: number;
+  created_at: string;
+  updated_at: string;
+}
+
 // ============================================================
 // Ranking & Monetização
 // ============================================================
@@ -287,6 +299,7 @@ export type Database = {
       waiter_calls: { Row: WaiterCall; Insert: Omit<WaiterCall, 'id' | 'created_at'>; Update: Partial<WaiterCall>; Relationships: never[] };
       level_configs: { Row: LevelConfig; Insert: Omit<LevelConfig, 'id' | 'created_at'>; Update: Partial<LevelConfig>; Relationships: never[] };
       points_log: { Row: PointsLog; Insert: Omit<PointsLog, 'id' | 'created_at'>; Update: Partial<PointsLog>; Relationships: never[] };
+      point_rules: { Row: PointRule; Insert: Omit<PointRule, 'id' | 'created_at' | 'updated_at'>; Update: Partial<PointRule>; Relationships: never[] };
       ranking_settings: { Row: RankingSetting; Insert: Omit<RankingSetting, 'id'>; Update: Partial<RankingSetting>; Relationships: never[] };
       vendor_subscriptions: { Row: VendorSubscription; Insert: Omit<VendorSubscription, 'id' | 'created_at'>; Update: Partial<VendorSubscription>; Relationships: never[] };
       premium_features: { Row: PremiumFeature; Insert: Omit<PremiumFeature, 'id' | 'created_at' | 'updated_at'>; Update: Partial<PremiumFeature>; Relationships: never[] };
