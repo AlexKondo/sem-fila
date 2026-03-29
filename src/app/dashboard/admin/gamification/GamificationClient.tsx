@@ -52,6 +52,23 @@ export default function GamificationClient() {
   }, []);
 
   const tabConfigs = configs.filter(c => c.profile_type === activeTab);
+  const [creatingSeed, setCreatingSeed] = useState(false);
+
+  const DEFAULT_LEVELS = [
+    { level_name: 'bronze', level_order: 1, min_points: 0, badge_color: '#cd7f32', badge_emoji: '🥉', benefits: [{ label: 'Acesso básico' }] },
+    { level_name: 'silver', level_order: 2, min_points: 100, badge_color: '#c0c0c0', badge_emoji: '🥈', benefits: [{ label: 'Prioridade leve' }] },
+    { level_name: 'gold', level_order: 3, min_points: 500, badge_color: '#ffd700', badge_emoji: '🥇', benefits: [{ label: 'Destaque no ranking' }] },
+    { level_name: 'platinum', level_order: 4, min_points: 1500, badge_color: '#e5e4e2', badge_emoji: '💎', benefits: [{ label: 'Benefícios exclusivos' }] },
+  ];
+
+  async function createDefaultLevels() {
+    setCreatingSeed(true);
+    const supabase = createClient();
+    const rows = DEFAULT_LEVELS.map(l => ({ ...l, profile_type: activeTab, active: true }));
+    const { data } = await supabase.from('level_configs').insert(rows).select();
+    if (data) setConfigs(prev => [...prev, ...(data as LevelConfig[])]);
+    setCreatingSeed(false);
+  }
 
   async function saveEdit(id: string) {
     setSaving(id);
@@ -194,21 +211,16 @@ export default function GamificationClient() {
             <div className="bg-white rounded-2xl border border-orange-200 shadow-sm p-4 mb-4 space-y-3">
               <h3 className="text-sm font-bold text-gray-900">Nova regra de pontuação</h3>
               <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="text-xs font-bold text-gray-500 block mb-1">Ação (slug)</label>
-                  <input
-                    placeholder="ex: order_placed"
-                    value={newRule.action}
-                    onChange={e => setNewRule(p => p ? { ...p, action: e.target.value } : null)}
-                    className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/30"
-                  />
-                </div>
-                <div>
-                  <label className="text-xs font-bold text-gray-500 block mb-1">Nome visível</label>
+                <div className="col-span-2">
+                  <label className="text-xs font-bold text-gray-500 block mb-1">Nome da ação</label>
                   <input
                     placeholder="ex: Pedido realizado"
                     value={newRule.label}
-                    onChange={e => setNewRule(p => p ? { ...p, label: e.target.value } : null)}
+                    onChange={e => {
+                      const label = e.target.value;
+                      const slug = label.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '');
+                      setNewRule(p => p ? { ...p, label, action: slug } : null);
+                    }}
                     className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/30"
                   />
                 </div>
@@ -243,8 +255,7 @@ export default function GamificationClient() {
 
           {/* Lista de regras */}
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-            <div className="grid grid-cols-[1fr_1fr_100px_80px_80px_40px] gap-2 px-4 py-2.5 bg-gray-50 border-b border-gray-100 text-[10px] font-bold text-gray-400 uppercase tracking-wider">
-              <span>Ação</span>
+            <div className="grid grid-cols-[1fr_110px_80px_80px_40px] gap-2 px-4 py-2.5 bg-gray-50 border-b border-gray-100 text-[10px] font-bold text-gray-400 uppercase tracking-wider">
               <span>Nome</span>
               <span>Quem recebe</span>
               <span className="text-center">Pontos</span>
@@ -252,12 +263,11 @@ export default function GamificationClient() {
               <span></span>
             </div>
             {pointRules.map(rule => (
-              <div key={rule.id} className={`grid grid-cols-[1fr_1fr_100px_80px_80px_40px] gap-2 px-4 py-3 border-b border-gray-50 items-center ${!rule.active ? 'opacity-50' : ''}`}>
-                <span className="text-xs font-mono text-gray-600">{rule.action}</span>
+              <div key={rule.id} className={`grid grid-cols-[1fr_110px_80px_80px_40px] gap-2 px-4 py-3 border-b border-gray-50 items-center ${!rule.active ? 'opacity-50' : ''}`}>
                 <input
                   value={getRuleValue(rule, 'label') as string}
                   onChange={e => updateRuleLocal(rule.id, 'label', e.target.value)}
-                  className="text-xs text-gray-800 font-medium border border-transparent hover:border-gray-200 focus:border-orange-300 rounded-lg px-2 py-1 focus:outline-none transition"
+                  className="text-sm text-gray-800 font-medium border border-transparent hover:border-gray-200 focus:border-orange-300 rounded-lg px-2 py-1 focus:outline-none transition"
                 />
                 <select
                   value={getRuleValue(rule, 'target') as string}
@@ -313,6 +323,18 @@ export default function GamificationClient() {
             ))}
           </div>
 
+          {tabConfigs.length === 0 ? (
+            <div className="text-center py-12 bg-white rounded-2xl border border-gray-100 shadow-sm">
+              <p className="text-gray-400 text-sm mb-4">Nenhum nível configurado para esta categoria.</p>
+              <button
+                onClick={createDefaultLevels}
+                disabled={creatingSeed}
+                className="bg-orange-500 text-white text-sm font-bold px-6 py-2.5 rounded-xl hover:bg-orange-600 transition disabled:opacity-50"
+              >
+                {creatingSeed ? 'Criando...' : 'Criar níveis padrão (Bronze, Prata, Ouro, Platina)'}
+              </button>
+            </div>
+          ) : (
           <div className="grid gap-4">
             {tabConfigs.map(config => (
               <div key={config.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
@@ -426,6 +448,7 @@ export default function GamificationClient() {
               </div>
             ))}
           </div>
+          )}
         </div>
       </div>
     </main>
