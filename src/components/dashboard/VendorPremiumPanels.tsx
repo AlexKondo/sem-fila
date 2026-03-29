@@ -101,7 +101,7 @@ export function RevenueReport({ vendorId }: Props) {
   }, [vendorId, hasAccess, loading]);
 
   if (loading) return null;
-  if (!hasAccess) return <LockedPanel title="Relatório de Faturamento" icon={TrendingUp} featureSlug="relatorio_faturamento" vendorId={vendorId} />;
+  if (!hasAccess) return null;
   if (loadingData) return null;
   if (!data) return null;
 
@@ -202,7 +202,7 @@ export function EfficiencyPanel({ vendorId }: Props) {
   }, [vendorId, hasAccess, loading]);
 
   if (loading) return null;
-  if (!hasAccess) return <LockedPanel title="Painel de Eficiência" icon={BarChart3} featureSlug="painel_eficiencia" vendorId={vendorId} />;
+  if (!hasAccess) return null;
   if (loadingData) return null;
   if (!data) return null;
 
