@@ -282,105 +282,53 @@ export default function StaffPage() {
       </div>
 
       {/* Modal de Edição */}
-      {editingMember && (() => {
-        const memberName = editingMember.profiles?.full_name || editingMember.profiles?.name || 'Funcionário';
-        const initials = memberName.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase();
-        const currentRoleInfo = ROLE_OPTIONS.find(r => r.value === editForm.role) ?? ROLE_OPTIONS[0];
+      {editingMember && (
+        <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => setEditingMember(null)}>
+          <div className="bg-white rounded-t-[32px] sm:rounded-[32px] p-6 w-full max-w-md" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-lg font-black text-slate-900">Editar Funcionário</h2>
+              <button onClick={() => setEditingMember(null)} className="text-slate-400 font-bold p-1 text-xl leading-none">✕</button>
+            </div>
 
-        return (
-          <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => setEditingMember(null)}>
-            <div className="bg-white rounded-t-[32px] sm:rounded-[28px] w-full max-w-[420px] overflow-hidden animate-in slide-in-from-bottom duration-300" onClick={e => e.stopPropagation()}>
-
-              {/* Header com gradiente */}
-              <div className="relative bg-gradient-to-br from-orange-500 to-orange-600 px-6 pt-5 pb-10">
-                <div className="flex items-center justify-between">
-                  <h2 className="text-base font-black text-white">Editar Funcionário</h2>
-                  <button onClick={() => setEditingMember(null)} className="w-8 h-8 flex items-center justify-center rounded-full bg-white/20 text-white hover:bg-white/30 transition">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12"/></svg>
-                  </button>
-                </div>
+            <div className="space-y-3">
+              <div>
+                <label className="text-xs font-bold text-slate-500 block mb-1">Nome completo *</label>
+                <input
+                  type="text"
+                  value={editForm.name}
+                  onChange={e => setEditForm(f => ({ ...f, name: e.target.value }))}
+                  className="w-full border border-slate-200 rounded-xl px-4 h-12 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/30"
+                />
               </div>
 
-              {/* Avatar flutuante */}
-              <div className="flex justify-center -mt-8 mb-1">
-                <div className="w-16 h-16 rounded-2xl bg-white text-orange-500 flex items-center justify-center font-black text-xl shadow-lg border-4 border-white">
-                  {initials}
-                </div>
+              <div>
+                <label className="text-xs font-bold text-slate-500 block mb-1">Função *</label>
+                <select
+                  value={editForm.role}
+                  onChange={e => setEditForm(f => ({ ...f, role: e.target.value }))}
+                  className="w-full border border-slate-200 rounded-xl px-4 h-12 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-orange-500/30"
+                >
+                  {ROLE_OPTIONS.map(r => (
+                    <option key={r.value} value={r.value}>{r.emoji} {r.label}</option>
+                  ))}
+                </select>
               </div>
 
-              {/* Conteudo */}
-              <div className="px-6 pb-6 space-y-5">
-                {/* Nome atual */}
-                <p className="text-center text-sm font-bold text-slate-700">{memberName}</p>
+              {editError && (
+                <div className="bg-red-50 border border-red-200 text-red-700 text-sm px-4 py-3 rounded-xl">{editError}</div>
+              )}
 
-                {/* Função */}
-                <div>
-                  <label className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-2.5">Função</label>
-                  <div className="grid grid-cols-3 gap-2">
-                    {ROLE_OPTIONS.map(r => {
-                      const isActive = editForm.role === r.value;
-                      return (
-                        <button
-                          key={r.value}
-                          onClick={() => setEditForm(f => ({ ...f, role: r.value }))}
-                          className={`flex flex-col items-center gap-1.5 py-3 rounded-2xl text-xs font-bold transition-all border-2 ${
-                            isActive
-                              ? 'bg-orange-50 text-orange-600 border-orange-500 shadow-sm shadow-orange-100'
-                              : 'bg-slate-50 text-slate-400 border-transparent hover:border-slate-200'
-                          }`}
-                        >
-                          <span className="text-lg">{r.emoji}</span>
-                          <span className="text-[11px] leading-tight">{r.label}</span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                {/* Nome */}
-                <div>
-                  <label className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-2">Nome completo</label>
-                  <input
-                    type="text"
-                    value={editForm.name}
-                    onChange={e => setEditForm(f => ({ ...f, name: e.target.value }))}
-                    className="w-full border-2 border-slate-100 rounded-2xl px-4 h-12 text-sm font-medium text-slate-800 focus:outline-none focus:border-orange-400 focus:ring-4 focus:ring-orange-500/10 transition-all bg-slate-50/50"
-                  />
-                </div>
-
-                {editError && (
-                  <div className="flex items-center gap-2 bg-red-50 text-red-600 text-sm px-4 py-3 rounded-2xl">
-                    <svg className="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd"/></svg>
-                    {editError}
-                  </div>
-                )}
-
-                {/* Botoes */}
-                <div className="flex gap-2 pt-1">
-                  <button
-                    onClick={() => setEditingMember(null)}
-                    className="flex-1 py-3.5 rounded-2xl text-sm font-bold text-slate-500 bg-slate-100 hover:bg-slate-200 transition active:scale-[0.98]"
-                  >
-                    Cancelar
-                  </button>
-                  <button
-                    onClick={saveEdit}
-                    disabled={editSaving}
-                    className="flex-[2] py-3.5 rounded-2xl text-sm font-bold text-white bg-orange-500 hover:bg-orange-600 transition disabled:opacity-50 shadow-lg shadow-orange-500/25 active:scale-[0.98]"
-                  >
-                    {editSaving ? (
-                      <span className="flex items-center justify-center gap-2">
-                        <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/></svg>
-                        Salvando...
-                      </span>
-                    ) : 'Salvar Alterações'}
-                  </button>
-                </div>
-              </div>
+              <button
+                onClick={saveEdit}
+                disabled={editSaving}
+                className="w-full bg-orange-500 text-white font-bold py-3.5 rounded-xl hover:bg-orange-600 transition disabled:opacity-50 mt-2"
+              >
+                {editSaving ? 'Salvando…' : 'Salvar Alterações'}
+              </button>
             </div>
           </div>
-        );
-      })()}
+        </div>
+      )}
 
       {/* Modal de Cadastro */}
       {showModal && (
