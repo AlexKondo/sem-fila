@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 import type { LevelConfig, PointRule } from '@/types/database';
-import { Plus, Trash2, Save } from 'lucide-react';
+import { Plus, Trash2, Save, ToggleLeft, ToggleRight } from 'lucide-react';
 
 const PROFILE_TYPES = [
   { key: 'customer', label: 'Clientes' },
@@ -68,6 +68,13 @@ export default function GamificationClient() {
     const { data } = await supabase.from('level_configs').insert(rows).select();
     if (data) setConfigs(prev => [...prev, ...(data as LevelConfig[])]);
     setCreatingSeed(false);
+  }
+
+  async function toggleLevelActive(config: LevelConfig) {
+    const supabase = createClient();
+    const newActive = !config.active;
+    await supabase.from('level_configs').update({ active: newActive }).eq('id', config.id);
+    setConfigs(prev => prev.map(c => c.id === config.id ? { ...c, active: newActive } : c));
   }
 
   async function saveEdit(id: string) {
@@ -283,11 +290,11 @@ export default function GamificationClient() {
                   className="text-xs font-bold text-center text-gray-800 border border-transparent hover:border-gray-200 focus:border-orange-300 rounded-lg px-1 py-1 w-full focus:outline-none transition"
                 />
                 <div className="flex justify-center">
-                  <button
-                    onClick={() => toggleRuleActive(rule)}
-                    className={`text-[10px] font-bold px-2 py-0.5 rounded-full transition ${rule.active ? 'bg-green-50 text-green-600 hover:bg-green-100' : 'bg-gray-100 text-gray-400 hover:bg-gray-200'}`}
-                  >
-                    {rule.active ? 'Ativo' : 'Inativo'}
+                  <button onClick={() => toggleRuleActive(rule)}>
+                    {rule.active
+                      ? <ToggleRight className="w-6 h-6 text-green-500" />
+                      : <ToggleLeft className="w-6 h-6 text-gray-400" />
+                    }
                   </button>
                 </div>
                 <button
@@ -354,9 +361,12 @@ export default function GamificationClient() {
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${config.active ? 'bg-green-50 text-green-600' : 'bg-gray-100 text-gray-400'}`}>
-                      {config.active ? 'Ativo' : 'Inativo'}
-                    </span>
+                    <button onClick={() => toggleLevelActive(config)}>
+                      {config.active
+                        ? <ToggleRight className="w-6 h-6 text-green-500" />
+                        : <ToggleLeft className="w-6 h-6 text-gray-400" />
+                      }
+                    </button>
                     <button
                       onClick={() => editingId === config.id ? setEditingId(null) : startEdit(config)}
                       className="text-xs font-bold text-orange-600 bg-orange-50 px-3 py-1.5 rounded-xl hover:bg-orange-100 transition"
@@ -425,16 +435,7 @@ export default function GamificationClient() {
                         className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/30 resize-none"
                       />
                     </div>
-                    <div className="flex items-center justify-between">
-                      <label className="flex items-center gap-2 cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={editValues.active ?? config.active}
-                          onChange={e => setEditValues(v => ({ ...v, active: e.target.checked }))}
-                          className="w-4 h-4 accent-orange-500"
-                        />
-                        <span className="text-sm font-medium text-gray-700">Nível ativo</span>
-                      </label>
+                    <div className="flex items-center justify-end">
                       <button
                         onClick={() => saveEdit(config.id)}
                         disabled={saving === config.id}
