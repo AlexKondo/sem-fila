@@ -94,8 +94,9 @@ interface VendorCheckoutModalProps {
   onClose: () => void;
   vendorId: string;
   product: {
-    type: 'plan' | 'ai_package';
+    type: 'plan' | 'ai_package' | 'premium_feature';
     planId?: string;
+    featureId?: string;
     name: string;
     price: string;
   };
@@ -136,6 +137,7 @@ export default function VendorCheckoutModal({ isOpen, onClose, vendorId, product
         body: JSON.stringify({
           type: product.type,
           planId: product.planId,
+          featureId: product.featureId,
           vendorId,
           paymentMethod,
           card: paymentMethod === 'credit_card' ? cardData : undefined,

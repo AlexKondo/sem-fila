@@ -1,8 +1,8 @@
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
-import RankingClient from './RankingClient';
+import AutoBenefitsClient from './AutoBenefitsClient';
 
-export default async function RankingPage() {
+export default async function AutoBenefitsPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect('/login');
@@ -15,5 +15,5 @@ export default async function RankingPage() {
 
   if (profile?.role !== 'platform_admin') redirect('/dashboard/vendor');
 
-  return <RankingClient />;
+  return <AutoBenefitsClient />;
 }

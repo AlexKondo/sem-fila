@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server';
 import VendorSettingsForm from '@/components/dashboard/VendorSettingsForm';
 import VendorAccountForm from '@/components/dashboard/VendorAccountForm';
 import VendorBusinesses from '@/components/dashboard/VendorBusinesses';
+import VendorPremiumStore from '@/components/dashboard/VendorPremiumStore';
 
 const P = '#ec5b13';
 
@@ -102,6 +103,9 @@ export default async function VendorSettingsPage() {
           </div>
           <VendorSettingsForm vendor={vendor} subscription={subscriptionData} />
         </section>
+
+        {/* Bloco 4: Benefícios Premium */}
+        <VendorPremiumStore vendorId={vendor.id} />
       </div>
     </main>
   );

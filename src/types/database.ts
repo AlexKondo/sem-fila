@@ -175,11 +175,42 @@ export interface RankingSetting {
 export interface VendorSubscription {
   id: string;
   vendor_id: string;
-  feature: 'hide_ranking' | 'featured_badge' | 'featured_dishes';
+  feature: string;
   active: boolean;
   price_paid: number | null;
   expires_at: string | null;
   created_at: string;
+}
+
+export interface PremiumFeature {
+  id: string;
+  slug: string;
+  name: string;
+  description: string | null;
+  price: number;
+  duration_days: number;
+  active: boolean;
+  sort_order: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export type AutoBenefitMetric = 'monthly_revenue' | 'rating_avg' | 'order_count' | 'cancellation_rate' | 'avg_prep_time';
+export type AutoBenefitOperator = '>=' | '<=' | '>' | '<' | '=';
+
+export interface AutoBenefitRule {
+  id: string;
+  name: string;
+  description: string | null;
+  metric: AutoBenefitMetric;
+  operator: AutoBenefitOperator;
+  threshold: number;
+  benefit_slug: string;
+  duration_days: number;
+  active: boolean;
+  sort_order: number;
+  created_at: string;
+  updated_at: string;
 }
 
 // ============================================================
@@ -258,6 +289,7 @@ export type Database = {
       points_log: { Row: PointsLog; Insert: Omit<PointsLog, 'id' | 'created_at'>; Update: Partial<PointsLog>; Relationships: never[] };
       ranking_settings: { Row: RankingSetting; Insert: Omit<RankingSetting, 'id'>; Update: Partial<RankingSetting>; Relationships: never[] };
       vendor_subscriptions: { Row: VendorSubscription; Insert: Omit<VendorSubscription, 'id' | 'created_at'>; Update: Partial<VendorSubscription>; Relationships: never[] };
+      premium_features: { Row: PremiumFeature; Insert: Omit<PremiumFeature, 'id' | 'created_at' | 'updated_at'>; Update: Partial<PremiumFeature>; Relationships: never[] };
       staff_schedules: { Row: StaffSchedule; Insert: Omit<StaffSchedule, 'id' | 'created_at'>; Update: Partial<StaffSchedule>; Relationships: never[] };
       staff_invites: { Row: StaffInvite; Insert: Omit<StaffInvite, 'id' | 'created_at' | 'token'>; Update: Partial<StaffInvite>; Relationships: never[] };
       deliveries: { Row: Delivery; Insert: Omit<Delivery, 'id' | 'assigned_at' | 'created_at'>; Update: Partial<Delivery>; Relationships: never[] };

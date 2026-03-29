@@ -34,7 +34,7 @@ export async function POST(request: Request) {
   );
 
   // Pagamentos de vendor (planos e pacotes IA)
-  if (ref.startsWith('vendor_plan:') || ref.startsWith('vendor_ai:')) {
+  if (ref.startsWith('vendor_plan:') || ref.startsWith('vendor_ai:') || ref.startsWith('vendor_premium:')) {
     if (event === 'PAYMENT_CONFIRMED' || event === 'PAYMENT_RECEIVED') {
       // Idempotência: verifica se já foi processado (ex: cartão creditado no checkout)
       const paymentId = payment?.id;
@@ -144,6 +144,28 @@ async function handleVendorPayment(supabase: any, ref: string, asaasPaymentId?: 
       .eq('id', vendorId);
 
     creditsAdded = credits;
+  } else if (parts[0] === 'vendor_premium') {
+    // ref: vendor_premium:{vendorId}:{featureId}:{slug}
+    const featureId = parts[2];
+    const slug = parts[3];
+
+    const { data: feat } = await supabase
+      .from('premium_features')
+      .select('duration_days, price')
+      .eq('id', featureId)
+      .single();
+
+    const durationDays = feat?.duration_days || 30;
+    const expiresAt = new Date();
+    expiresAt.setDate(expiresAt.getDate() + durationDays);
+
+    await supabase.from('vendor_subscriptions').upsert({
+      vendor_id: vendorId,
+      feature: slug,
+      active: true,
+      price_paid: feat?.price || 0,
+      expires_at: expiresAt.toISOString(),
+    }, { onConflict: 'vendor_id,feature' });
   }
 
   // Registra para idempotência

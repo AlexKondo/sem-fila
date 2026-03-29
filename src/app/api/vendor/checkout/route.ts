@@ -8,8 +8,9 @@ export async function POST(request: Request) {
   if (!user) return NextResponse.json({ error: 'Não autenticado.' }, { status: 401 });
 
   let body: {
-    type: 'plan' | 'ai_package';
+    type: 'plan' | 'ai_package' | 'premium_feature';
     planId?: string;
+    featureId?: string;
     vendorId: string;
     paymentMethod: 'pix' | 'credit_card';
     card?: { number: string; holder: string; expiryMonth: string; expiryYear: string; cvv: string };
@@ -20,7 +21,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Payload inválido.' }, { status: 400 });
   }
 
-  const { type, planId, vendorId, paymentMethod, card } = body;
+  const { type, planId, featureId, vendorId, paymentMethod, card } = body;
   if (!vendorId) return NextResponse.json({ error: 'vendorId obrigatório.' }, { status: 400 });
   if (!paymentMethod) return NextResponse.json({ error: 'Forma de pagamento obrigatória.' }, { status: 400 });
 
@@ -79,6 +80,21 @@ export async function POST(request: Request) {
     value = Number(price);
     description = `Pacote IA (${size} fotos) — ${vendor.name}`;
     externalReference = `vendor_ai:${vendorId}:${size}`;
+  } else if (type === 'premium_feature') {
+    if (!featureId) return NextResponse.json({ error: 'featureId obrigatório.' }, { status: 400 });
+
+    const { data: feature } = await supabase
+      .from('premium_features')
+      .select('*')
+      .eq('id', featureId)
+      .eq('active', true)
+      .single();
+
+    if (!feature) return NextResponse.json({ error: 'Beneficio não encontrado.' }, { status: 404 });
+
+    value = Number(feature.price);
+    description = `${feature.name} (${feature.duration_days} dias) — ${vendor.name}`;
+    externalReference = `vendor_premium:${vendorId}:${featureId}:${feature.slug}`;
   } else {
     return NextResponse.json({ error: 'Tipo inválido.' }, { status: 400 });
   }
@@ -178,6 +194,25 @@ export async function POST(request: Request) {
           plan_id: planId,
           plan_expires_at: expiresAt.toISOString(),
         }).eq('id', user.id);
+      } else if (type === 'premium_feature') {
+        const parts = externalReference.split(':');
+        const fSlug = parts[3];
+        const fId = parts[2];
+        const { data: feat } = await admin
+          .from('premium_features')
+          .select('duration_days')
+          .eq('id', fId)
+          .single();
+        const durationDays = feat?.duration_days || 30;
+        const expiresAt = new Date();
+        expiresAt.setDate(expiresAt.getDate() + durationDays);
+        await admin.from('vendor_subscriptions').upsert({
+          vendor_id: vendorId,
+          feature: fSlug,
+          active: true,
+          price_paid: value,
+          expires_at: expiresAt.toISOString(),
+        }, { onConflict: 'vendor_id,feature' });
       }
 
       // Registra para idempotência (webhook não vai creditar de novo)
