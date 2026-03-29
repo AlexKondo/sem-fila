@@ -32,10 +32,6 @@ function clearVendorCookie() {
   window.location.reload();
 }
 
-function setOverviewCookie() {
-  document.cookie = 'selected_vendor_id=all; path=/; max-age=86400';
-  window.location.reload();
-}
 
 export default function VendorHeader({ vendorName, userName, cnpjFormatted, vendorId, multiVendor, isOverview }: VendorHeaderProps) {
   const pathname = usePathname();
@@ -139,14 +135,6 @@ export default function VendorHeader({ vendorName, userName, cnpjFormatted, vend
             </div>
           </div>
           <div className="flex items-center gap-2">
-            {multiVendor && !isOverview && (
-              <button
-                onClick={setOverviewCookie}
-                className="text-[11px] font-bold px-2.5 py-1.5 rounded-lg border border-slate-200 text-slate-500 hover:border-orange-300 hover:text-orange-600 transition"
-              >
-                Ver Geral
-              </button>
-            )}
             {multiVendor && (
               <button
                 onClick={clearVendorCookie}
