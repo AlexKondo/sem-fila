@@ -255,8 +255,8 @@ export default function VendorOrdersBoard({ initialOrders, vendorId }: Props) {
   }
 
   const filterBar = (
-    <div className="max-w-5xl mx-auto px-4 mb-4">
-      <div className="flex items-center gap-2 flex-wrap">
+    <div className="max-w-2xl mx-auto px-4 mb-4">
+      <div className="flex items-center justify-center gap-2 flex-wrap">
         <label className="text-xs font-bold text-slate-500">De</label>
         <input
           type="date"
@@ -363,19 +363,47 @@ export default function VendorOrdersBoard({ initialOrders, vendorId }: Props) {
       </div>
     )}
     {filterBar}
-    <div className="max-w-5xl mx-auto px-4 py-4">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
-        {/* Coluna da Esquerda: Fila em Tempo Real */}
-        <div className="space-y-6">
-          <div className="flex items-center justify-between mb-2">
-            <h2 className="text-xs font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-orange-500 animate-pulse" />
-              Fila de Produção ({activeOrders.length})
-            </h2>
-          </div>
+    <div className="max-w-2xl mx-auto px-4 py-4 space-y-8">
+      {/* Fila de Produção */}
+      <div>
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-xs font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-orange-500 animate-pulse" />
+            Fila de Produção ({activeOrders.length})
+          </h2>
+        </div>
 
-          <div className="space-y-4">
-            {activeOrders.map((order) => (
+        <div className="space-y-4">
+          {activeOrders.map((order) => (
+            <OrderCard
+              key={order.id}
+              order={order}
+              orderNumber={orderNumbers[order.id]}
+              onAdvance={advanceStatus}
+              onCancel={cancelOrder}
+            />
+          ))}
+
+          {activeOrders.length === 0 && (
+            <div className="text-center py-16 bg-white border-2 border-dashed border-slate-100 rounded-[32px]">
+              <p className="text-4xl mb-3">🍳</p>
+              <p className="font-bold text-slate-900">Nenhum pedido na fila</p>
+              <p className="text-xs text-slate-400">Aguardando novos clientes...</p>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Histórico de Entregues */}
+      <div className="bg-slate-50 border border-slate-100 rounded-2xl p-4">
+        <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-4">
+          Histórico • Concluídos ({historicalOrders.length})
+        </h2>
+        <div className="space-y-3">
+          {historicalOrders.length === 0 ? (
+            <p className="text-xs text-slate-400 text-center py-4">Nenhum pedido processado ainda.</p>
+          ) : (
+            historicalOrders.map((order) => (
               <OrderCard
                 key={order.id}
                 order={order}
@@ -383,40 +411,8 @@ export default function VendorOrdersBoard({ initialOrders, vendorId }: Props) {
                 onAdvance={advanceStatus}
                 onCancel={cancelOrder}
               />
-            ))}
-
-            {activeOrders.length === 0 && (
-              <div className="text-center py-16 bg-white border-2 border-dashed border-slate-100 rounded-[32px]">
-                <p className="text-4xl mb-3">🍳</p>
-                <p className="font-bold text-slate-900">Nenhum pedido na fila</p>
-                <p className="text-xs text-slate-400">Aguardando novos clientes...</p>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Coluna da Direita: Histórico de Entregues */}
-        <div>
-           <div className="bg-slate-50 border border-slate-100 rounded-2xl p-4">
-            <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-4">
-              Histórico • Concluídos ({historicalOrders.length})
-            </h2>
-            <div className="space-y-3">
-              {historicalOrders.length === 0 ? (
-                <p className="text-xs text-slate-400 text-center py-4">Nenhum pedido processado ainda.</p>
-              ) : (
-                historicalOrders.map((order) => (
-                  <OrderCard
-                    key={order.id}
-                    order={order}
-                    orderNumber={orderNumbers[order.id]}
-                    onAdvance={advanceStatus}
-                    onCancel={cancelOrder}
-                  />
-                ))
-              )}
-            </div>
-           </div>
+            ))
+          )}
         </div>
       </div>
     </div>
