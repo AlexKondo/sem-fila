@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
-import { Sparkles, Clock, ImageIcon, Type } from 'lucide-react';
+import { Sparkles, Clock, ImageIcon, Type, ChevronDown } from 'lucide-react';
 import VendorPlansModal from './VendorPlansModal';
 
 const P = '#ec5b13';
@@ -46,7 +46,12 @@ export default function VendorSettingsForm({ vendor, subscription }: { vendor: a
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState('');
   const [aiImagesPerCredit, setAiImagesPerCredit] = useState(10);
+  const [openSections, setOpenSections] = useState<Record<string, boolean>>({ operacao: true });
   const router = useRouter();
+
+  function toggleSection(key: string) {
+    setOpenSections(prev => ({ ...prev, [key]: !prev[key] }));
+  }
 
   useEffect(() => {
     const supabase = createClient();
@@ -151,10 +156,13 @@ export default function VendorSettingsForm({ vendor, subscription }: { vendor: a
     <form onSubmit={handleSave} className="space-y-6">
       
       {/* Bloco 1: Operação e Logística */}
-      <section className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100">
-        <h2 className="text-sm font-bold text-gray-900 mb-4 pb-2 border-b border-gray-100 uppercase tracking-wide">1. Operação e Logística</h2>
-        
-        <div className="space-y-4">
+      <section className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+        <button type="button" onClick={() => toggleSection('operacao')} className="w-full flex items-center justify-between p-5 hover:bg-slate-50/50 transition">
+          <h2 className="text-sm font-bold text-gray-900 uppercase tracking-wide">1. Operação e Logística</h2>
+          <ChevronDown className={`w-5 h-5 text-slate-400 transition-transform duration-300 ${openSections.operacao ? 'rotate-180' : ''}`} />
+        </button>
+
+        {openSections.operacao && <div className="space-y-4 px-5 pb-5">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Qual é o seu tipo de negócio?</label>
             <select
@@ -242,16 +250,20 @@ export default function VendorSettingsForm({ vendor, subscription }: { vendor: a
               <p className="text-[11px] text-orange-600 font-medium">Faz o celular do garçom vibrar e piscar um alarme na tela por 5 segundos</p>
             </div>
           </label>
-        </div>
+        </div>}
       </section>
 
       {/* Bloco 1.5: Preferências de Alerta */}
-      <section className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100">
-        <h2 className="text-sm font-bold text-gray-900 mb-4 pb-2 border-b border-gray-100 uppercase tracking-wide">Preferências de Notificação</h2>
+      <section className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+        <button type="button" onClick={() => toggleSection('notificacao')} className="w-full flex items-center justify-between p-5 hover:bg-slate-50/50 transition">
+          <h2 className="text-sm font-bold text-gray-900 uppercase tracking-wide">Preferências de Notificação</h2>
+          <ChevronDown className={`w-5 h-5 text-slate-400 transition-transform duration-300 ${openSections.notificacao ? 'rotate-180' : ''}`} />
+        </button>
+        {openSections.notificacao && <div className="px-5 pb-5">
         <label className="flex items-center gap-3 p-3 bg-orange-50/30 border border-orange-100 rounded-xl cursor-pointer hover:bg-orange-50 transition">
           <div className="relative flex items-center">
-            <input 
-              type="checkbox" 
+            <input
+              type="checkbox"
               checked={alertsEnabled}
               onChange={(e) => setAlertsEnabled(e.target.checked)}
               className="peer shrink-0 appearance-none w-5 h-5 border border-orange-200 rounded-md bg-white checked:bg-orange-600 checked:border-orange-600 focus:outline-none focus:ring-2 focus:ring-orange-500/50 transition-colors"
@@ -263,12 +275,17 @@ export default function VendorSettingsForm({ vendor, subscription }: { vendor: a
             <p className="text-[11px] text-gray-500 font-medium">Toca um bipe quando novos pedidos chegarem ou quando o garçom for chamado.</p>
           </div>
         </label>
+        </div>}
       </section>
 
       {/* Bloco 2: Cobranças */}
-      <section className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100">
-        <h2 className="text-sm font-bold text-gray-900 mb-4 pb-2 border-b border-gray-100 uppercase tracking-wide">2. Cobranças e Taxas</h2>
-        
+      <section className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+        <button type="button" onClick={() => toggleSection('cobrancas')} className="w-full flex items-center justify-between p-5 hover:bg-slate-50/50 transition">
+          <h2 className="text-sm font-bold text-gray-900 uppercase tracking-wide">2. Cobranças e Taxas</h2>
+          <ChevronDown className={`w-5 h-5 text-slate-400 transition-transform duration-300 ${openSections.cobrancas ? 'rotate-180' : ''}`} />
+        </button>
+
+        {openSections.cobrancas && <div className="px-5 pb-5">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Tarifa de Serviço / Gorjeta (%)</label>
@@ -298,12 +315,17 @@ export default function VendorSettingsForm({ vendor, subscription }: { vendor: a
             <p className="text-[10px] text-gray-400 mt-1">Soma-se um valor fixo a cada conta/pessoa.</p>
           </div>
         </div>
+        </div>}
       </section>
 
       {/* Bloco 3: Cupons e Ofertas */}
-      <section className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100">
-        <h2 className="text-sm font-bold text-gray-900 mb-4 pb-2 border-b border-gray-100 uppercase tracking-wide">3. Vendas e Descontos</h2>
-        
+      <section className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+        <button type="button" onClick={() => toggleSection('descontos')} className="w-full flex items-center justify-between p-5 hover:bg-slate-50/50 transition">
+          <h2 className="text-sm font-bold text-gray-900 uppercase tracking-wide">3. Vendas e Descontos</h2>
+          <ChevronDown className={`w-5 h-5 text-slate-400 transition-transform duration-300 ${openSections.descontos ? 'rotate-180' : ''}`} />
+        </button>
+
+        {openSections.descontos && <div className="px-5 pb-5">
         <div className="grid grid-cols-1 sm:grid-cols-5 gap-4">
           <div className="sm:col-span-3">
             <label className="block text-sm font-medium text-gray-700 mb-1">Código de Cupom Global</label>
@@ -329,20 +351,26 @@ export default function VendorSettingsForm({ vendor, subscription }: { vendor: a
             </div>
           </div>
         </div>
+        </div>}
       </section>
 
       {/* Bloco 4: Inteligência Artificial de Fotos */}
-      <section className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 relative overflow-hidden">
-        <div className="absolute top-0 right-0 p-4 opacity-5">
+      <section className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden relative">
+        <div className="absolute top-0 right-0 p-4 opacity-5 pointer-events-none">
            <svg className="w-20 h-20" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l2.4 7.2h7.6l-6.1 4.5 2.3 7.3-6.2-4.5-6.2 4.5 2.3-7.3-6.1-4.5h7.6z"/></svg>
         </div>
-        
-        <div className="flex items-center justify-between mb-4 pb-2 border-b border-gray-100">
-           <h2 className="text-sm font-bold text-gray-900 uppercase tracking-wide">4. Inteligência Artificial de Fotos</h2>
-           <div className={`px-2 py-0.5 rounded text-[10px] font-black uppercase ${aiPhotoEnabled ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-400'}`}>
-             {aiPhotoEnabled ? 'Ativo' : 'Pausado'}
-           </div>
-        </div>
+
+        <button type="button" onClick={() => toggleSection('ia')} className="w-full flex items-center justify-between p-5 hover:bg-slate-50/50 transition relative z-10">
+          <div className="flex items-center gap-3">
+            <h2 className="text-sm font-bold text-gray-900 uppercase tracking-wide">4. Inteligência Artificial de Fotos</h2>
+            <div className={`px-2 py-0.5 rounded text-[10px] font-black uppercase ${aiPhotoEnabled ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-400'}`}>
+              {aiPhotoEnabled ? 'Ativo' : 'Pausado'}
+            </div>
+          </div>
+          <ChevronDown className={`w-5 h-5 text-slate-400 transition-transform duration-300 ${openSections.ia ? 'rotate-180' : ''}`} />
+        </button>
+
+        {openSections.ia && <div className="px-5 pb-5">
 
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 rounded-xl bg-orange-50/50 border border-orange-100/50">
            <div className="flex items-center gap-4">
@@ -426,11 +454,11 @@ export default function VendorSettingsForm({ vendor, subscription }: { vendor: a
             )}
           </div>
         )}
+        </div>}
       </section>
 
-      {/* Bloco 5: Plano e Consumo */}
+      {/* Bloco 5: Plano e Consumo — não colapsável */}
       {subscription.isPaid && subscription.plan ? (
-        // Plano pago: mostra detalhes e barra de consumo
         <section className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 relative overflow-hidden">
           <div className="flex items-center justify-between mb-4 pb-2 border-b border-gray-100">
             <h2 className="text-sm font-bold text-gray-900 uppercase tracking-wide">5. Meu Plano</h2>
@@ -548,8 +576,12 @@ export default function VendorSettingsForm({ vendor, subscription }: { vendor: a
       )}
 
       {/* Bloco 6: Zona de Perigo — Apagar Marca */}
-      <section className="bg-white p-5 rounded-2xl shadow-sm border border-red-100">
-        <h2 className="text-sm font-bold text-red-600 mb-3 pb-2 border-b border-red-50 uppercase tracking-wide">6. Zona de Perigo</h2>
+      <section className="bg-white rounded-2xl shadow-sm border border-red-100 overflow-hidden">
+        <button type="button" onClick={() => toggleSection('perigo')} className="w-full flex items-center justify-between p-5 hover:bg-red-50/30 transition">
+          <h2 className="text-sm font-bold text-red-600 uppercase tracking-wide">6. Zona de Perigo</h2>
+          <ChevronDown className={`w-5 h-5 text-red-400 transition-transform duration-300 ${openSections.perigo ? 'rotate-180' : ''}`} />
+        </button>
+        {openSections.perigo && <div className="px-5 pb-5">
         <p className="text-xs text-slate-500 mb-4">Ao apagar esta marca, todos os pedidos, itens do cardápio, configurações e dados associados serão permanentemente removidos.</p>
 
         <label className="flex items-center gap-3 p-3 border border-red-100 rounded-xl cursor-pointer hover:bg-red-50/30 transition mb-3">
@@ -576,6 +608,7 @@ export default function VendorSettingsForm({ vendor, subscription }: { vendor: a
         >
           {deleting ? 'Apagando...' : 'Apagar Marca Permanentemente'}
         </button>
+        </div>}
       </section>
 
       {/* Modal de Confirmação de Exclusão */}

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { ChevronDown } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 
 const P = '#ec5b13';
@@ -37,6 +38,7 @@ export default function VendorAccountForm({ profile }: { profile: any }) {
   const [address, setAddress] = useState(profile.address || '');
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState({ text: '', type: '' });
+  const [expanded, setExpanded] = useState(false);
 
   async function handleUpdateProfile(e: React.FormEvent) {
     e.preventDefault();
@@ -63,18 +65,26 @@ export default function VendorAccountForm({ profile }: { profile: any }) {
   }
 
   return (
-    <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
-      <div className="flex items-center gap-3 mb-6">
-        <div className="w-10 h-10 rounded-2xl flex items-center justify-center bg-orange-100 text-orange-600">
-           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
+    <div className="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
+      <button
+        type="button"
+        onClick={() => setExpanded(!expanded)}
+        className="w-full flex items-center justify-between p-6 hover:bg-slate-50/50 transition"
+      >
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-2xl flex items-center justify-center bg-orange-100 text-orange-600">
+             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
+          </div>
+          <div className="text-left">
+            <h2 className="text-lg font-bold text-slate-900">Meus Dados Pessoais</h2>
+            <p className="text-xs text-slate-400 font-medium tracking-tight">Informações do seu cadastro no QuickPick</p>
+          </div>
         </div>
-        <div>
-          <h2 className="text-lg font-bold text-slate-900">Meus Dados Pessoais</h2>
-          <p className="text-xs text-slate-400 font-medium tracking-tight">Informações do seu cadastro no QuickPick</p>
-        </div>
-      </div>
+        <ChevronDown className={`w-5 h-5 text-slate-400 transition-transform duration-300 ${expanded ? 'rotate-180' : ''}`} />
+      </button>
 
-      <form onSubmit={handleUpdateProfile} className="space-y-4">
+      {expanded && (
+      <form onSubmit={handleUpdateProfile} className="space-y-4 px-6 pb-6">
         <div>
           <label className="block text-xs font-bold text-slate-500 mb-1 ml-1 uppercase tracking-widest">Nome Completo</label>
           <input
@@ -132,6 +142,7 @@ export default function VendorAccountForm({ profile }: { profile: any }) {
           {loading ? 'Atualizando...' : 'Salvar Meus Dados'}
         </button>
       </form>
+      )}
     </div>
   );
 }
