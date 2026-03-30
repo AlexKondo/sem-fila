@@ -97,6 +97,11 @@ export default function RegisterOrgPage() {
       <div className="relative h-[30vh] w-full overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-t from-[#f8f6f6] via-transparent to-transparent z-10" />
         <div className="h-full w-full" style={{ background: 'linear-gradient(135deg, #1a0533 0%, #3b1d6e 50%, #7c3aed20 100%)' }} />
+        <Link href="/" className="absolute top-4 left-4 z-30 w-10 h-10 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center text-white hover:bg-white/30 transition-colors">
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+          </svg>
+        </Link>
         <div className="absolute top-10 left-0 right-0 z-20 flex flex-col items-center">
           <div className="p-3 rounded-xl shadow-lg mb-3" style={{ backgroundColor: P }}>
             <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
