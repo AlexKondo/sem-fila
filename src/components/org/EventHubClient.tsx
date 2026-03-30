@@ -109,24 +109,33 @@ export default function EventHubClient({
   const sendInvite = useCallback(async () => {
     if (!inviteEmail.trim()) { setInviteError('Email obrigatório.'); return; }
     setInviteError(''); setInviteSending(true);
-    const supabase = createClient();
 
-    const insertData: Record<string, any> = {
-      event_id: event.id,
-      vendor_email: inviteEmail.trim(),
-      fee_amount: parseFloat(inviteFee) || 0,
-    };
-    if (selectedVendorId) insertData.vendor_id = selectedVendorId;
+    try {
+      const res = await fetch('/api/event-invite', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          event_id: event.id,
+          vendor_email: inviteEmail.trim(),
+          fee_amount: inviteFee,
+          vendor_id: selectedVendorId || undefined,
+        }),
+      });
+      const result = await res.json();
 
-    const { data, error } = await supabase.from('event_vendor_invitations')
-      .insert(insertData)
-      .select('*, vendors(name)').single();
+      if (!res.ok) { setInviteError(result.error ?? 'Erro ao enviar convite.'); setInviteSending(false); return; }
 
-    if (error) { setInviteError(error.message); setInviteSending(false); return; }
-    setInvitations(prev => [data as Invitation, ...prev]);
-    setInviteEmail('');
-    setSelectedVendorId('');
-    setInviteFee(String(event.default_booth_fee));
+      setInvitations(prev => [result.invitation as Invitation, ...prev]);
+      setInviteEmail('');
+      setSelectedVendorId('');
+      setInviteFee(String(event.default_booth_fee));
+
+      if (result.emailSent === false) {
+        setInviteError('Convite salvo, mas não foi possível enviar o email.');
+      }
+    } catch {
+      setInviteError('Erro de conexão ao enviar convite.');
+    }
     setInviteSending(false);
   }, [inviteEmail, inviteFee, selectedVendorId, event.id, event.default_booth_fee]);
 
