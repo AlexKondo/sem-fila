@@ -226,36 +226,43 @@ export default function EventHubClient({
             {inviteError && <p className="text-red-600 text-xs">{inviteError}</p>}
 
             {/* Selecionar vendor existente */}
-            {availableVendors.length > 0 && (
-              <div>
-                <label className="text-xs text-gray-500 mb-1 block">Selecionar fornecedor existente</label>
-                <select
-                  value={selectedVendorId}
-                  onChange={e => handleVendorSelect(e.target.value)}
-                  className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400 bg-white"
-                >
-                  <option value="">— Digitar email manualmente —</option>
-                  {availableVendors.map(v => (
-                    <option key={v.id} value={v.id}>
-                      {v.name} {v.email ? `(${v.email})` : ''}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            )}
+            <div>
+              <label className="text-xs text-gray-500 mb-1 block">Selecionar fornecedor existente</label>
+              <select
+                value={selectedVendorId}
+                onChange={e => handleVendorSelect(e.target.value)}
+                className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400 bg-white"
+              >
+                <option value="">— Digitar email manualmente —</option>
+                {availableVendors.length > 0
+                  ? availableVendors.map(v => (
+                      <option key={v.id} value={v.id}>
+                        {v.name} {v.email ? `(${v.email})` : ''}
+                      </option>
+                    ))
+                  : <option disabled>Nenhum fornecedor disponível</option>
+                }
+              </select>
+            </div>
 
             {/* Email + taxa + enviar */}
-            <div className="flex gap-2">
-              <input
-                type="email" placeholder="Email do fornecedor"
-                value={inviteEmail} onChange={e => { setInviteEmail(e.target.value); setSelectedVendorId(''); }}
-                className="flex-1 border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400"
-              />
-              <input
-                type="number" placeholder="Taxa" min="0" step="0.01"
-                value={inviteFee} onChange={e => setInviteFee(e.target.value)}
-                className="w-24 border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400"
-              />
+            <div className="flex gap-2 items-end">
+              <div className="flex-1">
+                <label className="text-xs text-gray-500 mb-1 block">Email</label>
+                <input
+                  type="email" placeholder="Email do fornecedor"
+                  value={inviteEmail} onChange={e => { setInviteEmail(e.target.value); setSelectedVendorId(''); }}
+                  className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400"
+                />
+              </div>
+              <div className="w-24">
+                <label className="text-xs text-gray-500 mb-1 block">Taxa (R$)</label>
+                <input
+                  type="number" placeholder="0.00" min="0" step="0.01"
+                  value={inviteFee} onChange={e => setInviteFee(e.target.value)}
+                  className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400"
+                />
+              </div>
               <button onClick={sendInvite} disabled={inviteSending}
                 className="bg-purple-600 text-white px-4 rounded-xl hover:bg-purple-700 disabled:opacity-50 flex items-center gap-1 text-sm font-medium">
                 <Send className="w-4 h-4" />
