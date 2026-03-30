@@ -118,6 +118,7 @@ export default function BenefitsAdminClient() {
   const [originalRuleIds, setOriginalRuleIds] = useState<string[]>([]);
   const [expandedFeatures, setExpandedFeatures] = useState<Set<string>>(new Set());
   const [showPreview, setShowPreview] = useState(false);
+  const [showValidation, setShowValidation] = useState(false);
   const [activeTab, setActiveTab] = useState<BenefitAudience>('vendor');
 
   useEffect(() => {
@@ -228,6 +229,16 @@ export default function BenefitsAdminClient() {
 
   // ── Save all ──
   async function saveAll() {
+    // Valida campos obrigatórios antes de salvar
+    const invalidFeatures = features.filter(f => f._isNew && (!f.name || !f.slug));
+    const invalidRules = rules.filter(r => r._isNew && !r.name);
+    if (invalidFeatures.length > 0 || invalidRules.length > 0) {
+      setShowValidation(true);
+      setMsg(`Erro: Preencha os campos obrigatórios (${invalidFeatures.length + invalidRules.length} item(ns) incompleto(s))`);
+      setTimeout(() => setMsg(''), 5000);
+      return;
+    }
+    setShowValidation(false);
     setSaving(true);
     setMsg('Salvando...');
     const supabase = createClient();
@@ -334,17 +345,9 @@ export default function BenefitsAdminClient() {
         }
       }
 
-      // Avisa se regras novas sem nome foram ignoradas
-      const skippedRules = rules.filter(r => r._isNew && !r.name);
-
       setOriginalFeatureIds(features.map(f => f._isNew ? '' : f.id).filter(Boolean));
       setOriginalRuleIds(rules.map(r => r._isNew ? '' : r.id).filter(Boolean));
-
-      if (skippedRules.length > 0) {
-        setMsg(`Salvo! ${skippedRules.length} meta(s) nova(s) sem nome foram ignoradas.`);
-      } else {
-        setMsg('Tudo salvo com sucesso!');
-      }
+      setMsg('Tudo salvo com sucesso!');
       setTimeout(() => setMsg(''), 8000);
     } catch (err: any) {
       setMsg(`Erro: ${err.message}`);
@@ -533,10 +536,10 @@ export default function BenefitsAdminClient() {
                           onChange={e => updateFeature(feature.id, 'name', e.target.value)}
                           placeholder="Ex: Destaque Plataforma"
                           className={`w-full border rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/30 ${
-                            feature._isNew && !feature.name ? 'border-red-400 bg-red-50' : 'border-gray-200'
+                            showValidation && feature._isNew && !feature.name ? 'border-red-400 bg-red-50' : 'border-gray-200'
                           }`}
                         />
-                        {feature._isNew && !feature.name && (
+                        {showValidation && feature._isNew && !feature.name && (
                           <p className="text-[10px] text-red-500 font-bold mt-0.5">Obrigatório</p>
                         )}
                       </div>
@@ -686,10 +689,10 @@ export default function BenefitsAdminClient() {
                               onChange={e => updateRule(rule.id, 'name', e.target.value)}
                               placeholder="Nome da meta (ex: Faturamento > R$ 5.000)"
                               className={`w-full border rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/30 ${
-                                rule._isNew && !rule.name ? 'border-red-400 bg-red-50' : 'border-slate-200'
+                                showValidation && rule._isNew && !rule.name ? 'border-red-400 bg-red-50' : 'border-slate-200'
                               }`}
                             />
-                            {rule._isNew && !rule.name && (
+                            {showValidation && rule._isNew && !rule.name && (
                               <p className="text-[10px] text-red-500 font-bold mt-0.5">Preencha o nome para salvar esta meta</p>
                             )}
                           </div>
