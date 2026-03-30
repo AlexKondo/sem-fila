@@ -11,6 +11,7 @@ export default function RegisterUserPage() {
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [cpf, setCpf] = useState('');
+  const [birthday, setBirthday] = useState('');
   const [password, setPassword] = useState('');
   const [showPw, setShowPw] = useState(false);
   const [error, setError] = useState('');
@@ -49,12 +50,14 @@ export default function RegisterUserPage() {
 
     if (signUpError) { setError(signUpError.message); setLoading(false); return; }
 
-    // Salva phone e CPF no perfil
-    if (authData.user && (phone || cpf)) {
+    // Salva dados complementares no perfil
+    if (authData.user) {
       await supabase.from('profiles').update({
         name: name.trim(),
-        phone: phone || null,
+        email: email.trim(),
+        phone: phone.replace(/\D/g, '') || null,
         cpf: cpf.replace(/\D/g, '') || null,
+        birthday: birthday || null,
       }).eq('id', authData.user.id);
     }
 
@@ -147,6 +150,15 @@ export default function RegisterUserPage() {
                 type="text" value={cpf} onChange={e => setCpf(formatCpf(e.target.value))}
                 placeholder="000.000.000-00"
                 inputMode="numeric"
+                className="w-full px-4 h-14 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 text-sm"
+              />
+            </div>
+
+            {/* Data de Nascimento */}
+            <div className="flex flex-col gap-1.5">
+              <label className="text-sm font-semibold text-slate-700 ml-1">Data de nascimento</label>
+              <input
+                type="date" value={birthday} onChange={e => setBirthday(e.target.value)}
                 className="w-full px-4 h-14 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 text-sm"
               />
             </div>

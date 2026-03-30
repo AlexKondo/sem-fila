@@ -4,7 +4,7 @@ import { useState, useCallback } from 'react';
 import React from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { formatDate } from '@/lib/utils';
-import { Copy, Check, Trash2, Pencil, X, Save } from 'lucide-react';
+import { Copy, Check, Trash2, Pencil, X, Save, Mail, Phone, CreditCard, Cake } from 'lucide-react';
 import type { AppRole } from '@/types/database';
 
 const ROLE_LABELS: Record<AppRole, string> = {
@@ -27,12 +27,60 @@ const ROLE_COLORS: Record<AppRole, string> = {
   deliverer: 'bg-green-100 text-green-700',
 };
 
-type UserProfile = { id: string; name: string | null; phone: string | null; role: AppRole; created_at: string };
+type UserProfile = {
+  id: string;
+  name: string | null;
+  email: string | null;
+  phone: string | null;
+  cpf: string | null;
+  birthday: string | null;
+  role: AppRole;
+  created_at: string;
+};
 
 interface Props {
   initialUsers: UserProfile[];
   currentUserId: string;
 }
+
+function formatPhoneDisplay(val: string | null) {
+  if (!val) return null;
+  const d = val.replace(/\D/g, '');
+  if (d.length === 11) return `(${d.slice(0,2)}) ${d.slice(2,7)}-${d.slice(7)}`;
+  if (d.length === 10) return `(${d.slice(0,2)}) ${d.slice(2,6)}-${d.slice(6)}`;
+  return val;
+}
+
+function formatCpfDisplay(val: string | null) {
+  if (!val) return null;
+  const d = val.replace(/\D/g, '');
+  if (d.length === 11) return `${d.slice(0,3)}.${d.slice(3,6)}.${d.slice(6,9)}-${d.slice(9)}`;
+  return val;
+}
+
+function formatBirthdayDisplay(val: string | null) {
+  if (!val) return null;
+  const d = new Date(val + 'T00:00:00');
+  return d.toLocaleDateString('pt-BR');
+}
+
+function formatPhoneMask(val: string) {
+  const d = val.replace(/\D/g, '').substring(0, 11);
+  if (d.length > 10) return `(${d.slice(0,2)}) ${d.slice(2,7)}-${d.slice(7)}`;
+  if (d.length > 6)  return `(${d.slice(0,2)}) ${d.slice(2,6)}-${d.slice(6)}`;
+  if (d.length > 2)  return `(${d.slice(0,2)}) ${d.slice(2)}`;
+  return d;
+}
+
+function formatCpfMask(val: string) {
+  const d = val.replace(/\D/g, '').substring(0, 11);
+  if (d.length > 9) return `${d.slice(0,3)}.${d.slice(3,6)}.${d.slice(6,9)}-${d.slice(9)}`;
+  if (d.length > 6) return `${d.slice(0,3)}.${d.slice(3,6)}.${d.slice(6)}`;
+  if (d.length > 3) return `${d.slice(0,3)}.${d.slice(3)}`;
+  return d;
+}
+
+type EditForm = { name: string; email: string; phone: string; cpf: string; birthday: string };
 
 const UserCard = React.memo(function UserCard({
   u,
@@ -54,13 +102,13 @@ const UserCard = React.memo(function UserCard({
   savingId: string | null;
   copiedId: string | null;
   editingId: string | null;
-  editForm: { name: string; phone: string };
+  editForm: EditForm;
   onCopy: (id: string) => void;
   onChangeRole: (id: string, role: AppRole) => void;
   onStartEdit: (u: UserProfile) => void;
   onCancelEdit: () => void;
   onSaveEdit: (id: string) => void;
-  onEditChange: (field: 'name' | 'phone', value: string) => void;
+  onEditChange: (field: keyof EditForm, value: string) => void;
   onDelete: (u: UserProfile) => void;
 }) {
   const isEditing = editingId === u.id;
@@ -98,12 +146,37 @@ const UserCard = React.memo(function UserCard({
             className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
           />
           <input
-            type="text"
-            value={editForm.phone}
-            onChange={(e) => onEditChange('phone', e.target.value)}
-            placeholder="Telefone"
+            type="email"
+            value={editForm.email}
+            onChange={(e) => onEditChange('email', e.target.value)}
+            placeholder="Email"
             className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
           />
+          <input
+            type="tel"
+            value={editForm.phone}
+            onChange={(e) => onEditChange('phone', formatPhoneMask(e.target.value))}
+            placeholder="Telefone"
+            inputMode="numeric"
+            className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
+          />
+          <input
+            type="text"
+            value={editForm.cpf}
+            onChange={(e) => onEditChange('cpf', formatCpfMask(e.target.value))}
+            placeholder="CPF"
+            inputMode="numeric"
+            className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
+          />
+          <div>
+            <label className="text-xs text-gray-500 ml-1">Data de nascimento</label>
+            <input
+              type="date"
+              value={editForm.birthday}
+              onChange={(e) => onEditChange('birthday', e.target.value)}
+              className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
+            />
+          </div>
         </div>
       ) : (
         <div className="flex items-start justify-between">
@@ -120,13 +193,38 @@ const UserCard = React.memo(function UserCard({
               </span>
             </div>
 
-            {u.phone && (
-              <p className="text-xs text-gray-500 mt-0.5">{u.phone}</p>
-            )}
+            {/* Dados do usuário */}
+            <div className="mt-1.5 space-y-0.5">
+              {u.email && (
+                <div className="flex items-center gap-1.5 text-xs text-gray-500">
+                  <Mail className="w-3 h-3 flex-shrink-0" />
+                  <span>{u.email}</span>
+                </div>
+              )}
+              {u.phone && (
+                <div className="flex items-center gap-1.5 text-xs text-gray-500">
+                  <Phone className="w-3 h-3 flex-shrink-0" />
+                  <span>{formatPhoneDisplay(u.phone)}</span>
+                </div>
+              )}
+              {u.cpf && (
+                <div className="flex items-center gap-1.5 text-xs text-gray-500">
+                  <CreditCard className="w-3 h-3 flex-shrink-0" />
+                  <span>{formatCpfDisplay(u.cpf)}</span>
+                </div>
+              )}
+              {u.birthday && (
+                <div className="flex items-center gap-1.5 text-xs text-gray-500">
+                  <Cake className="w-3 h-3 flex-shrink-0" />
+                  <span>{formatBirthdayDisplay(u.birthday)}</span>
+                </div>
+              )}
+            </div>
 
+            {/* UUID copiável */}
             <button
               onClick={() => onCopy(u.id)}
-              className="flex items-center gap-1 mt-1 text-xs text-gray-400 hover:text-orange-500 transition group"
+              className="flex items-center gap-1 mt-1.5 text-xs text-gray-400 hover:text-orange-500 transition group"
               title="Copiar UUID"
             >
               <span className="font-mono truncate max-w-[200px]">{u.id}</span>
@@ -185,7 +283,7 @@ export default function UsersManager({ initialUsers, currentUserId }: Props) {
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [editForm, setEditForm] = useState({ name: '', phone: '' });
+  const [editForm, setEditForm] = useState<EditForm>({ name: '', email: '', phone: '', cpf: '', birthday: '' });
   const [deleteConfirm, setDeleteConfirm] = useState<UserProfile | null>(null);
 
   const changeRole = useCallback(async (userId: string, newRole: AppRole) => {
@@ -208,15 +306,20 @@ export default function UsersManager({ initialUsers, currentUserId }: Props) {
 
   const startEdit = useCallback((u: UserProfile) => {
     setEditingId(u.id);
-    setEditForm({ name: u.name ?? '', phone: u.phone ?? '' });
+    setEditForm({
+      name: u.name ?? '',
+      email: u.email ?? '',
+      phone: formatPhoneMask(u.phone ?? ''),
+      cpf: formatCpfMask(u.cpf ?? ''),
+      birthday: u.birthday ?? '',
+    });
   }, []);
 
   const cancelEdit = useCallback(() => {
     setEditingId(null);
-    setEditForm({ name: '', phone: '' });
   }, []);
 
-  const handleEditChange = useCallback((field: 'name' | 'phone', value: string) => {
+  const handleEditChange = useCallback((field: keyof EditForm, value: string) => {
     setEditForm((prev) => ({ ...prev, [field]: value }));
   }, []);
 
@@ -225,7 +328,13 @@ export default function UsersManager({ initialUsers, currentUserId }: Props) {
     const supabase = createClient();
     const { error } = await supabase
       .from('profiles')
-      .update({ name: editForm.name || null, phone: editForm.phone || null })
+      .update({
+        name: editForm.name.trim() || null,
+        email: editForm.email.trim() || null,
+        phone: editForm.phone.replace(/\D/g, '') || null,
+        cpf: editForm.cpf.replace(/\D/g, '') || null,
+        birthday: editForm.birthday || null,
+      })
       .eq('id', userId);
 
     if (error) {
@@ -233,7 +342,16 @@ export default function UsersManager({ initialUsers, currentUserId }: Props) {
     } else {
       setUsers((prev) =>
         prev.map((u) =>
-          u.id === userId ? { ...u, name: editForm.name || null, phone: editForm.phone || null } : u
+          u.id === userId
+            ? {
+                ...u,
+                name: editForm.name.trim() || null,
+                email: editForm.email.trim() || null,
+                phone: editForm.phone.replace(/\D/g, '') || null,
+                cpf: editForm.cpf.replace(/\D/g, '') || null,
+                birthday: editForm.birthday || null,
+              }
+            : u
         )
       );
       setEditingId(null);
@@ -254,17 +372,22 @@ export default function UsersManager({ initialUsers, currentUserId }: Props) {
     setDeleteConfirm(null);
   }, []);
 
-  const filtered = users.filter((u) =>
-    !search ||
-    u.name?.toLowerCase().includes(search.toLowerCase()) ||
-    u.id.includes(search)
-  );
+  const filtered = users.filter((u) => {
+    if (!search) return true;
+    const s = search.toLowerCase();
+    return (
+      u.name?.toLowerCase().includes(s) ||
+      u.email?.toLowerCase().includes(s) ||
+      u.phone?.includes(search.replace(/\D/g, '')) ||
+      u.id.includes(search)
+    );
+  });
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-4 space-y-4">
       <input
         type="search"
-        placeholder="Buscar por nome ou UUID..."
+        placeholder="Buscar por nome, email ou UUID..."
         value={search}
         onChange={(e) => setSearch(e.target.value)}
         className="w-full bg-white border border-gray-200 rounded-2xl px-4 py-2.5 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
