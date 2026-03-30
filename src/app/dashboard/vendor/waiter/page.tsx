@@ -37,7 +37,7 @@ export default async function WaiterPage() {
       .order('created_at', { ascending: false })
       .limit(50),
     hasTableManagement
-      ? supabase.from('vendor_tables').select('*').eq('vendor_id', vendor.id).order('table_number')
+      ? supabase.from('vendor_tables').select('*').eq('vendor_id', vendor.id)
       : Promise.resolve({ data: [] }),
     hasTableManagement
       ? supabase.from('queue_entries').select('*').eq('vendor_id', vendor.id).in('status', ['waiting', 'called']).order('position', { ascending: true })
@@ -49,7 +49,7 @@ export default async function WaiterPage() {
       <WaiterBoard
         initialReadyOrders={readyOrders ?? []}
         initialWaiterCalls={waiterCalls ?? []}
-        initialTables={vendorTables ?? []}
+        initialTables={[...(vendorTables ?? [])].sort((a, b) => Number(a.table_number) - Number(b.table_number))}
         initialQueue={queueEntries ?? []}
         vendorId={vendor.id}
         hasTableManagement={hasTableManagement}

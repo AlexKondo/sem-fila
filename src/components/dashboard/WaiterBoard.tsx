@@ -348,8 +348,8 @@ export default function WaiterBoard({ initialReadyOrders, initialWaiterCalls, in
     const { error } = await supabase.from('vendor_tables').delete().eq('id', tableId);
     if (error) {
       alert(`Erro ao remover mesa: ${error.message}`);
-      const { data } = await supabase.from('vendor_tables').select('*').eq('vendor_id', vendorId).order('table_number');
-      if (data) setTables(data);
+      const { data } = await supabase.from('vendor_tables').select('*').eq('vendor_id', vendorId);
+      if (data) setTables(data.sort((a, b) => a.table_number.localeCompare(b.table_number, undefined, { numeric: true })));
     }
   }, [supabase, vendorId]);
 
