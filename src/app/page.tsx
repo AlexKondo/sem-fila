@@ -84,12 +84,12 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Seção do fornecedor — discreta, no rodapé */}
+      {/* Seção para fornecedores e organizadores */}
       <section className="px-6 py-12 border-t border-slate-200">
         <div className="max-w-sm mx-auto text-center">
-          <p className="text-xs text-slate-400 font-medium uppercase tracking-widest mb-2">Você é fornecedor?</p>
+          <p className="text-xs text-slate-400 font-medium uppercase tracking-widest mb-2">Tem um negócio?</p>
           <p className="text-slate-500 text-sm mb-6 leading-relaxed">
-            Tenha seu cardápio digital, gerencie pedidos em tempo real e receba pagamentos pelo QuickPick.
+            Cadastre seu quiosque, food truck ou organize eventos com controle de taxas — tudo em um só lugar.
           </p>
           <div className="flex flex-col gap-3">
             <Link
@@ -98,9 +98,9 @@ export default function LandingPage() {
               style={{ backgroundColor: '#ec5b13', boxShadow: '0 4px 15px #ec5b1330' }}
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
               </svg>
-              Quero cadastrar meu quiosque
+              Criar conta grátis
             </Link>
             <Link
               href="/login"
@@ -109,16 +109,7 @@ export default function LandingPage() {
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
               </svg>
-              Já tenho conta de vendor
-            </Link>
-            <Link
-              href="/register-org"
-              className="w-full py-3 px-4 font-semibold rounded-xl flex items-center justify-center gap-2 transition-all border border-purple-200 bg-white text-purple-700 hover:bg-purple-50 active:scale-95 text-center leading-snug"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-              </svg>
-              Organize eventos e tenha controle de taxas dos Quiosques do evento.
+              Já tenho conta
             </Link>
           </div>
         </div>

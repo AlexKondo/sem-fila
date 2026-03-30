@@ -3,20 +3,19 @@
 import { useState } from 'react';
 import Link from 'next/link';
 
-const P = '#ec5b13';
+type AccountType = 'vendor' | 'org_admin';
 
-// Máscara CPF/CNPJ: 000.000.000-00 ou 00.000.000/0000-00
+const ORANGE = '#ec5b13';
+const PURPLE = '#7c3aed';
+
 function maskCPF_CNPJ(v: string) {
   const digits = v.replace(/\D/g, '').slice(0, 14);
-  
   if (digits.length <= 11) {
-    // Máscara CPF: 000.000.000-00
     return digits
       .replace(/(\d{3})(\d)/, '$1.$2')
       .replace(/(\d{3})(\d)/, '$1.$2')
       .replace(/(\d{3})(\d{1,2})$/, '$1-$2');
   } else {
-    // Máscara CNPJ: 00.000.000/0000-00
     return digits
       .replace(/^(\d{2})(\d)/, '$1.$2')
       .replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3')
@@ -25,17 +24,18 @@ function maskCPF_CNPJ(v: string) {
   }
 }
 
-// Máscara celular: (00) 00000-0000
 function maskPhone(v: string) {
   v = v.replace(/\D/g, '').slice(0, 11);
   if (v.length <= 2) return v.length ? `(${v}` : '';
-  if (v.length <= 7) return `(${v.slice(0,2)}) ${v.slice(2)}`;
-  return `(${v.slice(0,2)}) ${v.slice(2,7)}-${v.slice(7)}`;
+  if (v.length <= 7) return `(${v.slice(0, 2)}) ${v.slice(2)}`;
+  return `(${v.slice(0, 2)}) ${v.slice(2, 7)}-${v.slice(7)}`;
 }
 
 export default function RegisterPage() {
+  const [accountType, setAccountType] = useState<AccountType>('vendor');
   const [name, setName] = useState('');
   const [brandName, setBrandName] = useState('');
+  const [orgName, setOrgName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [cnpj, setCnpj] = useState('');
@@ -46,6 +46,9 @@ export default function RegisterPage() {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
 
+  const accentColor = accountType === 'vendor' ? ORANGE : PURPLE;
+  const ringStyle = { '--tw-ring-color': accentColor + '80' } as React.CSSProperties;
+
   async function handleRegister(e: React.FormEvent) {
     e.preventDefault();
     setError('');
@@ -55,13 +58,20 @@ export default function RegisterPage() {
     const rawDoc = cnpj.replace(/\D/g, '');
     if (rawDoc.length !== 11 && rawDoc.length !== 14) { setError('CPF ou CNPJ inválido.'); return; }
 
-    if (!brandName.trim()) { setError('O nome da marca é obrigatório.'); return; }
+    if (accountType === 'vendor' && !brandName.trim()) { setError('O nome da marca é obrigatório.'); return; }
+    if (accountType === 'org_admin' && !orgName.trim()) { setError('O nome da organização é obrigatório.'); return; }
 
     setLoading(true);
-    const res = await fetch('/api/register', {
+
+    const endpoint = accountType === 'vendor' ? '/api/register' : '/api/register-org';
+    const body = accountType === 'vendor'
+      ? { email, password, name, brandName, phone: phone.replace(/\D/g, ''), cnpj: rawDoc, address }
+      : { email, password, name, phone: phone.replace(/\D/g, ''), cnpj: rawDoc, orgName: orgName.trim() };
+
+    const res = await fetch(endpoint, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password, name, brandName, phone: phone.replace(/\D/g, ''), cnpj: rawDoc, address }),
+      body: JSON.stringify(body),
     });
     const data = await res.json();
 
@@ -71,35 +81,54 @@ export default function RegisterPage() {
   }
 
   if (success) {
+    const isVendor = accountType === 'vendor';
     return (
       <div className="min-h-screen flex items-center justify-center px-4" style={{ backgroundColor: '#f8f6f6' }}>
         <div className="bg-white rounded-3xl p-10 text-center max-w-sm w-full shadow-sm border border-slate-100">
-          <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-5" style={{ backgroundColor: P + '20' }}>
-            <svg className="w-8 h-8" style={{ color: P }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+          <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-5" style={{ backgroundColor: accentColor + '20' }}>
+            <svg className="w-8 h-8" style={{ color: accentColor }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
             </svg>
           </div>
           <h2 className="text-xl font-bold text-slate-900 mb-2">Conta criada com sucesso!</h2>
           <p className="text-slate-500 text-sm leading-relaxed">
-            Seja bem-vindo ao <strong className="text-slate-700">QuickPick</strong>. Sua marca já está pronta para receber pedidos.
+            {isVendor
+              ? <>Seja bem-vindo ao <strong className="text-slate-700">QuickPick</strong>. Sua marca já está pronta para receber pedidos.</>
+              : <>Sua organização <strong className="text-slate-700">{orgName}</strong> está pronta. Agora você pode criar eventos e convidar fornecedores.</>
+            }
           </p>
-          <Link href="/login" className="block mt-6 font-semibold text-sm" style={{ color: P }}>Ir para o login →</Link>
+          <Link href="/login" className="block mt-6 font-semibold text-sm" style={{ color: accentColor }}>Ir para o login →</Link>
         </div>
       </div>
     );
   }
 
+  const heroGradient = accountType === 'vendor'
+    ? 'linear-gradient(135deg, #1e1008 0%, #3d1f0a 50%, #ec5b1320 100%)'
+    : 'linear-gradient(135deg, #1a0533 0%, #3b1d6e 50%, #7c3aed20 100%)';
+
   return (
     <div className="relative flex min-h-screen w-full flex-col overflow-x-hidden" style={{ backgroundColor: '#f8f6f6' }}>
       {/* Hero */}
-      <div className="relative h-[30vh] w-full overflow-hidden">
+      <div className="relative h-[28vh] w-full overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-t from-[#f8f6f6] via-transparent to-transparent z-10" />
-        <div className="h-full w-full" style={{ background: 'linear-gradient(135deg, #1e1008 0%, #3d1f0a 50%, #ec5b1320 100%)' }} />
-        <div className="absolute top-10 left-0 right-0 z-20 flex flex-col items-center">
-          <div className="p-3 rounded-xl shadow-lg mb-3" style={{ backgroundColor: P }}>
-            <svg className="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z"/>
-            </svg>
+        <div className="h-full w-full transition-all duration-500" style={{ background: heroGradient }} />
+        <Link href="/" className="absolute top-4 left-4 z-30 w-10 h-10 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center text-white hover:bg-white/30 transition-colors">
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+          </svg>
+        </Link>
+        <div className="absolute top-8 left-0 right-0 z-20 flex flex-col items-center">
+          <div className="p-3 rounded-xl shadow-lg mb-3 transition-colors duration-500" style={{ backgroundColor: accentColor }}>
+            {accountType === 'vendor' ? (
+              <svg className="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z"/>
+              </svg>
+            ) : (
+              <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+            )}
           </div>
           <h1 className="text-2xl font-bold tracking-tight text-white drop-shadow-md">QuickPick</h1>
         </div>
@@ -110,7 +139,41 @@ export default function RegisterPage() {
         <div className="max-w-md mx-auto pb-12">
           <div className="mb-6">
             <h2 className="text-2xl font-bold text-slate-900">Criar conta grátis</h2>
-            <p className="text-slate-500 mt-1 text-sm">Cadastre sua barraca e comece a receber pedidos</p>
+            <p className="text-slate-500 mt-1 text-sm">Escolha o tipo de conta e comece agora</p>
+          </div>
+
+          {/* Seletor de tipo de conta */}
+          <div className="flex gap-2 mb-6">
+            <button
+              type="button"
+              onClick={() => setAccountType('vendor')}
+              className={`flex-1 py-3 px-3 rounded-xl text-sm font-semibold transition-all flex items-center justify-center gap-2 border-2 ${
+                accountType === 'vendor'
+                  ? 'text-white border-transparent'
+                  : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300'
+              }`}
+              style={accountType === 'vendor' ? { backgroundColor: ORANGE, borderColor: ORANGE } : undefined}
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+              </svg>
+              Fornecedor
+            </button>
+            <button
+              type="button"
+              onClick={() => setAccountType('org_admin')}
+              className={`flex-1 py-3 px-3 rounded-xl text-sm font-semibold transition-all flex items-center justify-center gap-2 border-2 ${
+                accountType === 'org_admin'
+                  ? 'text-white border-transparent'
+                  : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300'
+              }`}
+              style={accountType === 'org_admin' ? { backgroundColor: PURPLE, borderColor: PURPLE } : undefined}
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+              Organizador de eventos
+            </button>
           </div>
 
           {error && (
@@ -125,7 +188,7 @@ export default function RegisterPage() {
                   type="text" required value={name} onChange={e => setName(e.target.value)}
                   placeholder="Seu nome" autoComplete="name"
                   className="w-full pl-12 pr-4 h-14 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 text-sm"
-                  style={{ '--tw-ring-color': P + '80' } as React.CSSProperties}
+                  style={ringStyle}
                 />
               </InputIcon>
             </Field>
@@ -137,12 +200,12 @@ export default function RegisterPage() {
                   type="email" required value={email} onChange={e => setEmail(e.target.value)}
                   placeholder="seu@email.com" autoComplete="email"
                   className="w-full pl-12 pr-4 h-14 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 text-sm"
-                  style={{ '--tw-ring-color': P + '80' } as React.CSSProperties}
+                  style={ringStyle}
                 />
               </InputIcon>
             </Field>
 
-            {/* Celular com máscara */}
+            {/* Celular */}
             <Field label="Celular" required>
               <InputIcon icon={<PhoneIcon />}>
                 <input
@@ -150,24 +213,37 @@ export default function RegisterPage() {
                   onChange={e => setPhone(maskPhone(e.target.value))}
                   placeholder="(11) 99999-9999" autoComplete="tel" inputMode="numeric"
                   className="w-full pl-12 pr-4 h-14 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 text-sm"
-                  style={{ '--tw-ring-color': P + '80' } as React.CSSProperties}
+                  style={ringStyle}
                 />
               </InputIcon>
             </Field>
 
-            {/* Nome da Marca */}
-            <Field label="Nome da sua marca" required hint="Ex. Bar do Juazeiro">
-              <InputIcon icon={<svg className="w-5 h-5 font-bold" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>}>
-                <input
-                  type="text" required value={brandName} onChange={e => setBrandName(e.target.value)}
-                  placeholder="Nome do seu negócio"
-                  className="w-full pl-12 pr-4 h-14 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 text-sm font-bold"
-                  style={{ '--tw-ring-color': P + '80' } as React.CSSProperties}
-                />
-              </InputIcon>
-            </Field>
+            {/* Campo condicional: Nome da marca (vendor) ou Nome da organização (org_admin) */}
+            {accountType === 'vendor' ? (
+              <Field label="Nome da sua marca" required hint="Ex. Bar do Juazeiro">
+                <InputIcon icon={<StoreIcon />}>
+                  <input
+                    type="text" required value={brandName} onChange={e => setBrandName(e.target.value)}
+                    placeholder="Nome do seu negócio"
+                    className="w-full pl-12 pr-4 h-14 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 text-sm font-bold"
+                    style={ringStyle}
+                  />
+                </InputIcon>
+              </Field>
+            ) : (
+              <Field label="Nome da organização" required hint="Ex. Festa Beneficente do Morango">
+                <InputIcon icon={<CalendarIcon />}>
+                  <input
+                    type="text" required value={orgName} onChange={e => setOrgName(e.target.value)}
+                    placeholder="Nome da sua empresa/organização"
+                    className="w-full pl-12 pr-4 h-14 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 text-sm font-bold"
+                    style={ringStyle}
+                  />
+                </InputIcon>
+              </Field>
+            )}
 
-            {/* CNPJ/CPF com máscara */}
+            {/* CPF/CNPJ */}
             <Field label="CPF ou CNPJ" required>
               <InputIcon icon={<DocIcon />}>
                 <input
@@ -175,22 +251,24 @@ export default function RegisterPage() {
                   onChange={e => setCnpj(maskCPF_CNPJ(e.target.value))}
                   inputMode="numeric"
                   className="w-full pl-12 pr-4 h-14 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 text-sm"
-                  style={{ '--tw-ring-color': P + '80' } as React.CSSProperties}
+                  style={ringStyle}
                 />
               </InputIcon>
             </Field>
 
-            {/* Endereço */}
-            <Field label="Endereço" hint="(opcional)">
-              <InputIcon icon={<MapIcon />}>
-                <input
-                  type="text" value={address} onChange={e => setAddress(e.target.value)}
-                  placeholder="Rua, número, cidade" autoComplete="street-address"
-                  className="w-full pl-12 pr-4 h-14 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 text-sm"
-                  style={{ '--tw-ring-color': P + '80' } as React.CSSProperties}
-                />
-              </InputIcon>
-            </Field>
+            {/* Endereço — só para vendor */}
+            {accountType === 'vendor' && (
+              <Field label="Endereço" hint="(opcional)">
+                <InputIcon icon={<MapIcon />}>
+                  <input
+                    type="text" value={address} onChange={e => setAddress(e.target.value)}
+                    placeholder="Rua, número, cidade" autoComplete="street-address"
+                    className="w-full pl-12 pr-4 h-14 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 text-sm"
+                    style={ringStyle}
+                  />
+                </InputIcon>
+              </Field>
+            )}
 
             {/* Senha */}
             <Field label="Senha" required>
@@ -203,7 +281,7 @@ export default function RegisterPage() {
                   onChange={e => setPassword(e.target.value)}
                   placeholder="Mínimo 8 caracteres" autoComplete="new-password"
                   className="w-full pl-12 pr-12 h-14 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 text-sm"
-                  style={{ '--tw-ring-color': P + '80' } as React.CSSProperties}
+                  style={ringStyle}
                 />
                 <button type="button" onClick={() => setShowPw(!showPw)} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400">
                   <EyeIcon open={showPw} />
@@ -213,11 +291,11 @@ export default function RegisterPage() {
 
             <button
               type="submit" disabled={loading}
-              className="w-full h-14 font-bold rounded-xl text-white shadow-lg transition-all flex items-center justify-center gap-2 disabled:opacity-50 mt-2"
-              style={{ backgroundColor: P, boxShadow: `0 4px 15px ${P}40` }}
+              className="w-full h-14 font-bold rounded-xl text-white shadow-lg transition-all duration-500 flex items-center justify-center gap-2 disabled:opacity-50 mt-2"
+              style={{ backgroundColor: accentColor, boxShadow: `0 4px 15px ${accentColor}40` }}
             >
               {loading ? 'Criando conta…' : <>
-                Criar conta grátis
+                {accountType === 'vendor' ? 'Criar conta de fornecedor' : 'Criar conta de organizador'}
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
                 </svg>
@@ -228,7 +306,7 @@ export default function RegisterPage() {
           <div className="text-center mt-6">
             <p className="text-slate-500 text-sm">
               Já tem conta?{' '}
-              <Link href="/login" className="font-bold ml-1" style={{ color: P }}>Entrar</Link>
+              <Link href="/login" className="font-bold ml-1" style={{ color: accentColor }}>Entrar</Link>
             </p>
           </div>
         </div>
@@ -237,7 +315,7 @@ export default function RegisterPage() {
   );
 }
 
-// ── Helpers de layout ──────────────────────────────────────────────────────────
+// ── Helpers ──────────────────────────────────────────────────────────────────────
 function Field({ label, required, hint, children }: { label: string; required?: boolean; hint?: string; children: React.ReactNode }) {
   return (
     <div className="flex flex-col gap-1.5">
@@ -268,6 +346,12 @@ function EmailIcon() {
 }
 function PhoneIcon() {
   return <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" /></svg>;
+}
+function StoreIcon() {
+  return <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>;
+}
+function CalendarIcon() {
+  return <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>;
 }
 function DocIcon() {
   return <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>;
