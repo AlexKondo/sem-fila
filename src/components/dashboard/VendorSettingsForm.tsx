@@ -146,6 +146,39 @@ export default function VendorSettingsForm({ vendor, subscription }: { vendor: a
         setMsg({ text: `Erro ao salvar: ${error.message}`, type: 'error' });
       }
     } else {
+      // Sincroniza vendor_tables com num_tables
+      const desiredCount = Number(numTables);
+      if (desiredCount > 0) {
+        const { data: existingTables } = await supabase
+          .from('vendor_tables')
+          .select('id, table_number')
+          .eq('vendor_id', vendor.id);
+
+        const currentCount = existingTables?.length ?? 0;
+
+        if (currentCount < desiredCount) {
+          // Criar mesas faltantes
+          const toInsert = [];
+          for (let i = currentCount + 1; i <= desiredCount; i++) {
+            toInsert.push({
+              vendor_id: vendor.id,
+              table_number: String(i),
+              capacity: 2,
+            });
+          }
+          if (toInsert.length > 0) {
+            await supabase.from('vendor_tables').insert(toInsert);
+          }
+        } else if (currentCount > desiredCount) {
+          // Remover mesas excedentes (as de maior número)
+          const sorted = (existingTables ?? []).sort((a, b) => Number(a.table_number) - Number(b.table_number));
+          const toRemove = sorted.slice(desiredCount).map(t => t.id);
+          if (toRemove.length > 0) {
+            await supabase.from('vendor_tables').delete().in('id', toRemove);
+          }
+        }
+      }
+
       setMsg({ text: 'Configurações salvas com sucesso!', type: 'success' });
       // Salva preferência de som localmente
       localStorage.setItem('vendor_alerts_enabled', String(alertsEnabled));
