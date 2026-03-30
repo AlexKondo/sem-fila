@@ -6,7 +6,7 @@ import { formatDate } from '@/lib/utils';
 import {
   Bell, CheckCircle, Clock, History, LayoutGrid, Users,
   Merge, Split, Trash2, Plus, UserCheck, PhoneCall,
-  ChevronDown, ChevronUp, ArrowRight
+  ChevronDown, ChevronUp, ArrowRight, MessageCircle, Send
 } from 'lucide-react';
 import type { VendorTable, QueueEntry, TableStatus } from '@/types/database';
 
@@ -441,6 +441,35 @@ export default function WaiterBoard({ initialReadyOrders, initialWaiterCalls, in
     }
   }, [supabase]);
 
+  // === MESSAGE TO TABLE ===
+  const [msgModal, setMsgModal] = useState<{ table: string; callId: string } | null>(null);
+  const [msgSending, setMsgSending] = useState(false);
+  const [msgSent, setMsgSent] = useState(false);
+
+  const QUICK_MESSAGES = [
+    'Seu pedido está sendo preparado!',
+    'Pedido pronto! Estamos levando até você.',
+    'Estamos a caminho da sua mesa!',
+    'Aguarde um momento, por favor.',
+    'Precisamos confirmar seu pedido.',
+    'Sua mesa será liberada em breve.',
+  ];
+
+  const sendTableMessage = useCallback(async (message: string) => {
+    if (!msgModal) return;
+    setMsgSending(true);
+    const { error } = await supabase.from('table_messages').insert({
+      vendor_id: vendorId,
+      table_number: msgModal.table,
+      message,
+    });
+    setMsgSending(false);
+    if (!error) {
+      setMsgSent(true);
+      setTimeout(() => { setMsgModal(null); setMsgSent(false); }, 1500);
+    }
+  }, [supabase, vendorId, msgModal]);
+
   const markDelivered = useCallback(async (orderId: string) => {
     const { error } = await supabase.from('orders').update({ status: 'delivered' }).eq('id', orderId);
     if (!error) setOrders(prev => prev.filter(o => o.id !== orderId));
@@ -795,7 +824,16 @@ export default function WaiterBoard({ initialReadyOrders, initialWaiterCalls, in
                       <p className="font-black text-red-700 text-xl italic">MESA {call.table_number}</p>
                       <p className="text-[10px] text-red-400 font-bold uppercase">{formatDate(call.created_at)}</p>
                     </div>
-                    <button onClick={() => attendCall(call.id)} className="bg-red-600 text-white font-black text-xs px-5 py-2.5 rounded-xl hover:bg-red-700 transition active:scale-95">ATENDER</button>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => setMsgModal({ table: call.table_number, callId: call.id })}
+                        className="bg-blue-500 text-white p-2.5 rounded-xl hover:bg-blue-600 transition active:scale-95"
+                        title="Enviar mensagem para a mesa"
+                      >
+                        <MessageCircle className="w-4 h-4" />
+                      </button>
+                      <button onClick={() => attendCall(call.id)} className="bg-red-600 text-white font-black text-xs px-5 py-2.5 rounded-xl hover:bg-red-700 transition active:scale-95">ATENDER</button>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -855,6 +893,84 @@ export default function WaiterBoard({ initialReadyOrders, initialWaiterCalls, in
           )}
         </section>
       )}
+
+      {/* === MODAL: ENVIAR MENSAGEM PARA MESA === */}
+      {msgModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="w-full max-w-sm bg-white rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+            <div className="p-5">
+              {msgSent ? (
+                <div className="text-center py-6 animate-in zoom-in duration-200">
+                  <div className="w-14 h-14 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-3">
+                    <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
+                  </div>
+                  <p className="font-bold text-gray-900">Mensagem enviada!</p>
+                  <p className="text-xs text-gray-400 mt-1">Mesa {msgModal.table} foi notificada com som</p>
+                </div>
+              ) : (
+                <>
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-2">
+                      <div className="w-10 h-10 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center">
+                        <MessageCircle className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <h3 className="font-bold text-gray-900 leading-none">Mensagem</h3>
+                        <p className="text-[10px] text-gray-400 font-bold uppercase">Mesa {msgModal.table}</p>
+                      </div>
+                    </div>
+                    <button onClick={() => setMsgModal(null)} className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-400">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                    </button>
+                  </div>
+
+                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wide mb-2">Mensagens rápidas</p>
+                  <div className="space-y-1.5 mb-4 max-h-52 overflow-y-auto">
+                    {QUICK_MESSAGES.map((msg) => (
+                      <button
+                        key={msg}
+                        onClick={() => sendTableMessage(msg)}
+                        disabled={msgSending}
+                        className="w-full text-left px-3 py-2.5 rounded-xl border border-gray-100 hover:border-blue-300 hover:bg-blue-50 transition text-sm text-gray-700 font-medium flex items-center justify-between gap-2 disabled:opacity-50"
+                      >
+                        <span>{msg}</span>
+                        <Send className="w-3.5 h-3.5 text-gray-300 flex-shrink-0" />
+                      </button>
+                    ))}
+                  </div>
+
+                  <MessageCustomInput onSend={sendTableMessage} sending={msgSending} />
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ─── Input customizado para mensagem livre ─── */
+function MessageCustomInput({ onSend, sending }: { onSend: (msg: string) => void; sending: boolean }) {
+  const [text, setText] = useState('');
+  return (
+    <div className="flex gap-2">
+      <input
+        type="text"
+        value={text}
+        onChange={e => setText(e.target.value)}
+        onKeyDown={e => { if (e.key === 'Enter' && text.trim()) { onSend(text.trim()); setText(''); } }}
+        placeholder="Ou escreva sua mensagem..."
+        className="flex-1 h-10 bg-gray-50 border border-gray-100 rounded-xl px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30 placeholder:text-gray-300"
+        disabled={sending}
+      />
+      <button
+        onClick={() => { if (text.trim()) { onSend(text.trim()); setText(''); } }}
+        disabled={!text.trim() || sending}
+        className="h-10 w-10 bg-blue-500 text-white rounded-xl flex items-center justify-center hover:bg-blue-600 transition disabled:opacity-40"
+      >
+        <Send className="w-4 h-4" />
+      </button>
     </div>
   );
 }

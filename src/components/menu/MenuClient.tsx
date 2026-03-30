@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo, useCallback, memo, useDeferredValue } from 'react';
+import { useState, useEffect, useMemo, useCallback, memo, useDeferredValue, useRef } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { formatCurrency, getItemImage } from '@/lib/utils';
@@ -177,6 +177,52 @@ export default function MenuClient({ vendor, items, mesa, waitTime, hasFeaturedB
   // Custom Waiter Modal State
   const [showWaiterModal, setShowWaiterModal] = useState(false);
   const [callStatus, setCallStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+
+  // Table message alert (mensagem do garçom)
+  const [tableAlert, setTableAlert] = useState<string | null>(null);
+  const alertAudioRef = useRef<HTMLAudioElement | null>(null);
+
+  useEffect(() => {
+    const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
+    audio.preload = 'auto';
+    audio.load();
+    alertAudioRef.current = audio;
+    function unlock() {
+      audio.volume = 0;
+      audio.play().then(() => { audio.pause(); audio.currentTime = 0; audio.volume = 1; }).catch(() => {});
+    }
+    window.addEventListener('click', unlock, { once: true });
+    window.addEventListener('touchstart', unlock, { once: true });
+    return () => { window.removeEventListener('click', unlock); window.removeEventListener('touchstart', unlock); };
+  }, []);
+
+  useEffect(() => {
+    if (!mesa) return;
+    const supabase = createClient();
+    const channel = supabase
+      .channel(`table-msg-${vendor.id}-${mesa}`)
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'table_messages',
+        filter: `vendor_id=eq.${vendor.id}`,
+      }, (payload) => {
+        const msg = payload.new as { table_number: string; message: string };
+        if (msg.table_number === mesa) {
+          setTableAlert(msg.message);
+          const audio = alertAudioRef.current;
+          if (audio) {
+            audio.currentTime = 0;
+            audio.volume = 1;
+            audio.loop = true;
+            audio.play().catch(() => {});
+          }
+        }
+      })
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, [vendor.id, mesa]);
 
   const handleAddToCart = useCallback((item: MenuItem) => {
     const extras = (item as any).extras as Extra[] | undefined;
@@ -464,13 +510,42 @@ export default function MenuClient({ vendor, items, mesa, waitTime, hasFeaturedB
 
       {/* Custom Waiter Modal */}
       {showWaiterModal && (
-        <WaiterModal 
+        <WaiterModal
           mesa={mesa}
           onClose={() => setShowWaiterModal(false)}
           onConfirm={confirmWaiterCall}
           status={callStatus}
           onReset={() => setCallStatus('idle')}
         />
+      )}
+
+      {/* Alerta de mensagem do garçom (fullscreen com som) */}
+      {tableAlert && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-6 bg-black/80 backdrop-blur-sm animate-in fade-in duration-300">
+          <div className="w-full max-w-sm bg-white rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300">
+            <div className="bg-blue-500 p-5 text-center">
+              <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-3 animate-pulse">
+                <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                </svg>
+              </div>
+              <p className="text-white/80 text-xs font-bold uppercase tracking-widest">Mensagem do Garçom</p>
+            </div>
+            <div className="p-6 text-center">
+              <p className="text-lg font-bold text-gray-900 leading-snug mb-6">{tableAlert}</p>
+              <button
+                onClick={() => {
+                  setTableAlert(null);
+                  const audio = alertAudioRef.current;
+                  if (audio) { audio.pause(); audio.currentTime = 0; audio.loop = false; }
+                }}
+                className="w-full h-12 bg-blue-500 text-white font-bold rounded-xl active:scale-95 transition-all shadow-lg shadow-blue-500/30 text-sm"
+              >
+                OK, Entendi!
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
