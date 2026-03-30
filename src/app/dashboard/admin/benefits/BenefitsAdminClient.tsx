@@ -186,11 +186,18 @@ export default function BenefitsAdminClient() {
     setFeatures(prev => {
       const feat = prev.find(f => f.id === id);
       if (feat) {
+        const linkedRules = rules.filter(r => r.benefit_slug === feat.slug);
+        if (linkedRules.length > 0) {
+          const ok = window.confirm(
+            `O benefício "${feat.name || feat.slug}" possui ${linkedRules.length} meta(s) vinculada(s).\n\nAo remover este benefício, as metas também serão excluídas.\n\nDeseja continuar?`
+          );
+          if (!ok) return prev;
+        }
         setRules(r => r.filter(rule => rule.benefit_slug !== feat.slug));
       }
       return prev.filter(f => f.id !== id);
     });
-  }, []);
+  }, [rules]);
 
   const updateFeature = useCallback((id: string, field: keyof FeatureDraft, value: string | number | boolean) => {
     setFeatures(prev => prev.map(f => {
