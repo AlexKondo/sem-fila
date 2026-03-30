@@ -4,7 +4,7 @@ import VendorSettingsForm from '@/components/dashboard/VendorSettingsForm';
 import VendorAccountForm from '@/components/dashboard/VendorAccountForm';
 import VendorBusinesses from '@/components/dashboard/VendorBusinesses';
 import VendorPremiumStore from '@/components/dashboard/VendorPremiumStore';
-import { RevenueReport, EfficiencyPanel } from '@/components/dashboard/VendorPremiumPanels';
+import { RevenueReport, EfficiencyPanel, MenuAnalysisPanel, SupportPanel } from '@/components/dashboard/VendorPremiumPanels';
 import CollapsibleSection from '@/components/dashboard/CollapsibleSection';
 import VendorDashboardClient from '@/components/dashboard/VendorDashboardClient';
 import StaffPage from '@/app/dashboard/vendor/staff/page';
@@ -162,6 +162,8 @@ export default async function VendorSettingsPage() {
             <div className="space-y-4">
               <RevenueReport vendorId={vendor.id} />
               <EfficiencyPanel vendorId={vendor.id} />
+              <MenuAnalysisPanel vendorId={vendor.id} />
+              <SupportPanel vendorId={vendor.id} />
               <VendorPremiumStore vendorId={vendor.id} />
             </div>
           </CollapsibleSection>

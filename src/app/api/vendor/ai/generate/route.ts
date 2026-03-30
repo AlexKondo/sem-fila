@@ -42,8 +42,28 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Estabelecimento não encontrado.' }, { status: 404 });
   }
 
+  // Verifica acesso: ai_photo_enabled OU subscription ativa de fotos_ia
   if (!vendor.ai_photo_enabled) {
-    return NextResponse.json({ error: 'IA não está habilitada. Ative nas configurações.' }, { status: 403 });
+    const { data: sub } = await supabase
+      .from('vendor_subscriptions')
+      .select('active, expires_at')
+      .eq('vendor_id', vendorId)
+      .eq('feature', 'fotos_ia')
+      .single();
+    const hasSubscription = sub?.active && (!sub.expires_at || new Date(sub.expires_at) > new Date());
+
+    // Também verifica free_for_all
+    const { data: feature } = await supabase
+      .from('premium_features')
+      .select('free_for_all')
+      .eq('slug', 'fotos_ia')
+      .eq('active', true)
+      .single();
+    const isFreeForAll = feature?.free_for_all === true;
+
+    if (!hasSubscription && !isFreeForAll) {
+      return NextResponse.json({ error: 'IA não está habilitada. Ative nas configurações ou adquira o benefício "Fotos com IA".' }, { status: 403 });
+    }
   }
 
   if ((vendor.ai_photo_credits || 0) < 1) {

@@ -32,6 +32,21 @@ const BADGE_CONFIG: Record<string, { label: string; bg: string; text: string; bo
     bg: 'bg-sky-50', text: 'text-sky-600', border: 'border-sky-200',
     icon: 'M13 10V3L4 14h7v7l9-11h-7z',
   },
+  selo_entrega_rapida: {
+    label: 'Entrega Rápida',
+    bg: 'bg-teal-50', text: 'text-teal-600', border: 'border-teal-200',
+    icon: 'M13 10V3L4 14h7v7l9-11h-7z',
+  },
+  fotos_ia: {
+    label: 'Fotos com IA',
+    bg: 'bg-violet-50', text: 'text-violet-600', border: 'border-violet-200',
+    icon: 'M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z',
+  },
+  suporte_prioritario: {
+    label: 'Suporte VIP',
+    bg: 'bg-rose-50', text: 'text-rose-600', border: 'border-rose-200',
+    icon: 'M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z',
+  },
 };
 
 interface MenuClientProps {
