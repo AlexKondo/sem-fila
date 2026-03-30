@@ -74,6 +74,9 @@ function LoginPageContent() {
     if (role === 'platform_admin' || authData.user.email === ADMIN_EMAIL) {
       router.push('/dashboard/admin');
       router.refresh();
+    } else if (role === 'org_admin') {
+      router.push('/dashboard/org');
+      router.refresh();
     } else if (role === 'vendor' || role === 'waitstaff') {
       router.push('/dashboard/vendor');
       router.refresh();
@@ -166,6 +169,10 @@ function LoginPageContent() {
             <p className="text-slate-500 text-sm">
               Não tem conta?{' '}
               <Link href="/register" className="font-bold ml-1" style={{ color: P }}>Criar conta de fornecedor</Link>
+            </p>
+            <p className="text-slate-400 text-xs">
+              Organiza eventos?{' '}
+              <Link href="/register-org" className="font-semibold hover:underline text-purple-600">Criar conta de organizador</Link>
             </p>
             <p className="text-slate-400 text-xs">
               É cliente?{' '}
