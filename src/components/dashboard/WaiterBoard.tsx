@@ -464,7 +464,9 @@ export default function WaiterBoard({ initialReadyOrders, initialWaiterCalls, in
       message,
     });
     setMsgSending(false);
-    if (!error) {
+    if (error) {
+      alert(`Erro ao enviar mensagem: ${error.message}`);
+    } else {
       setMsgSent(true);
       setTimeout(() => { setMsgModal(null); setMsgSent(false); }, 1500);
     }
