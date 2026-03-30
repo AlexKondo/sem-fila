@@ -228,7 +228,6 @@ export default function BenefitsAdminClient() {
 
   // ── Save all ──
   async function saveAll() {
-    console.log('[SAVE] Iniciando saveAll...');
     setSaving(true);
     setMsg('Salvando...');
     const supabase = createClient();
@@ -236,10 +235,7 @@ export default function BenefitsAdminClient() {
     // Detecta se coluna target_audience existe (migration pode não ter rodado)
     let hasAudienceCol = true;
     const testRes = await supabase.from('premium_features').select('target_audience').limit(1);
-    if (testRes.error) {
-      hasAudienceCol = false;
-      console.log('[SAVE] target_audience não existe, ignorando coluna');
-    }
+    if (testRes.error) hasAudienceCol = false;
 
     try {
       // ── Features: deletar removidos ──
@@ -247,33 +243,27 @@ export default function BenefitsAdminClient() {
       const removedFeatureIds = originalFeatureIds.filter(id => !currentFeatureIds.includes(id));
 
       if (removedFeatureIds.length > 0) {
-        console.log('[SAVE] Deletando features:', removedFeatureIds);
         const { error } = await supabase.from('premium_features').delete().in('id', removedFeatureIds);
         if (error) throw new Error(`Erro ao deletar benefícios: ${error.message}`);
       }
 
       // ── Features: atualizar existentes ──
-      const existingFeatures = features.filter(f => !f._isNew);
-      console.log('[SAVE] Atualizando', existingFeatures.length, 'features...');
-      for (const f of existingFeatures) {
+      for (const f of features.filter(f => !f._isNew)) {
         const payload: any = {
           name: f.name, slug: f.slug, description: f.description || null,
           price: f.price, duration_days: f.duration_days, active: f.active,
           free_for_all: f.free_for_all, trial_days: f.trial_days, sort_order: f.sort_order,
         };
         if (hasAudienceCol) payload.target_audience = f.target_audience;
-        console.log('[SAVE] update feature', f.id, f.name, payload);
         const { data, error } = await supabase
           .from('premium_features').update(payload).eq('id', f.id).select();
-        console.log('[SAVE] result:', { data, error });
         if (error) throw new Error(`Erro ao atualizar "${f.name}": ${error.message}`);
-        if (!data || data.length === 0) throw new Error(`Sem permissão para atualizar "${f.name}" (RLS). Verifique se você é platform_admin.`);
+        if (!data || data.length === 0) throw new Error(`Sem permissão para atualizar "${f.name}" (RLS).`);
       }
 
       // ── Features: inserir novos ──
       const newFeatures = features.filter(f => f._isNew && f.name && f.slug);
       if (newFeatures.length > 0) {
-        console.log('[SAVE] Inserindo', newFeatures.length, 'novas features');
         const inserts = newFeatures.map(f => {
           const payload: any = {
             slug: f.slug, name: f.name, description: f.description || null,
@@ -284,7 +274,6 @@ export default function BenefitsAdminClient() {
           return payload;
         });
         const { data, error } = await supabase.from('premium_features').insert(inserts).select();
-        console.log('[SAVE] insert features result:', { data, error });
         if (error) throw new Error(`Erro ao inserir benefícios: ${error.message}`);
         if (data) {
           setFeatures(prev => prev.map(f => {
@@ -301,15 +290,12 @@ export default function BenefitsAdminClient() {
       const removedRuleIds = originalRuleIds.filter(id => !currentRuleIds.includes(id));
 
       if (removedRuleIds.length > 0) {
-        console.log('[SAVE] Deletando rules:', removedRuleIds);
         const { error } = await supabase.from('auto_benefit_rules').delete().in('id', removedRuleIds);
         if (error) throw new Error(`Erro ao deletar regras: ${error.message}`);
       }
 
       // ── Rules: atualizar existentes ──
-      const existingRules = rules.filter(r => !r._isNew);
-      console.log('[SAVE] Atualizando', existingRules.length, 'rules...');
-      for (const r of existingRules) {
+      for (const r of rules.filter(r => !r._isNew)) {
         const payload: any = {
           name: r.name, description: r.description || null,
           metric: r.metric, operator: r.operator, threshold: r.threshold,
@@ -317,18 +303,15 @@ export default function BenefitsAdminClient() {
           active: r.active, sort_order: r.sort_order,
         };
         if (hasAudienceCol) payload.target_audience = r.target_audience;
-        console.log('[SAVE] update rule', r.id, r.name, payload);
         const { data, error } = await supabase
           .from('auto_benefit_rules').update(payload).eq('id', r.id).select();
-        console.log('[SAVE] result:', { data, error });
         if (error) throw new Error(`Erro ao atualizar regra "${r.name}": ${error.message}`);
         if (!data || data.length === 0) throw new Error(`Sem permissão para atualizar regra "${r.name}" (RLS).`);
       }
 
-      // ── Rules: inserir novas ──
+      // ── Rules: inserir novas (só salva se tiver nome) ──
       const newRules = rules.filter(r => r._isNew && r.name);
       if (newRules.length > 0) {
-        console.log('[SAVE] Inserindo', newRules.length, 'novas rules');
         const inserts = newRules.map(r => {
           const payload: any = {
             name: r.name, description: r.description || null,
@@ -340,7 +323,6 @@ export default function BenefitsAdminClient() {
           return payload;
         });
         const { data, error } = await supabase.from('auto_benefit_rules').insert(inserts).select();
-        console.log('[SAVE] insert rules result:', { data, error });
         if (error) throw new Error(`Erro ao inserir regras: ${error.message}`);
         if (data) {
           setRules(prev => prev.map(r => {
@@ -352,18 +334,20 @@ export default function BenefitsAdminClient() {
         }
       }
 
+      // Avisa se regras novas sem nome foram ignoradas
+      const skippedRules = rules.filter(r => r._isNew && !r.name);
+
       setOriginalFeatureIds(features.map(f => f._isNew ? '' : f.id).filter(Boolean));
       setOriginalRuleIds(rules.map(r => r._isNew ? '' : r.id).filter(Boolean));
-      const successMsg = hasAudienceCol ? 'Tudo salvo com sucesso!' : 'Salvo! (Rode a migration target_audience para habilitar abas)';
-      console.log('[SAVE] SUCESSO:', successMsg);
-      setMsg(successMsg);
-      window.alert(successMsg);
+
+      if (skippedRules.length > 0) {
+        setMsg(`Salvo! ${skippedRules.length} meta(s) nova(s) sem nome foram ignoradas.`);
+      } else {
+        setMsg('Tudo salvo com sucesso!');
+      }
       setTimeout(() => setMsg(''), 8000);
     } catch (err: any) {
-      console.error('[SAVE] ERRO:', err);
-      const errMsg = `Erro: ${err.message}`;
-      setMsg(errMsg);
-      window.alert(errMsg);
+      setMsg(`Erro: ${err.message}`);
     } finally {
       setSaving(false);
     }
