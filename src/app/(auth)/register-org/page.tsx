@@ -159,7 +159,7 @@ export default function RegisterOrgPage() {
             <div className="flex flex-col gap-1.5">
               <label className="text-sm font-semibold text-slate-700 ml-1">
                 Nome da organização <span className="text-red-400">*</span>
-                <span className="text-slate-400 font-normal ml-1">Ex: Eventos SP</span>
+                <span className="text-slate-400 font-normal ml-1">Ex: Festa Beneficente do Morango</span>
               </label>
               <input
                 type="text" required value={orgName} onChange={e => setOrgName(e.target.value)}
