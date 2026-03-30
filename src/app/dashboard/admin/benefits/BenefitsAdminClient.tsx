@@ -578,7 +578,7 @@ export default function BenefitsAdminClient() {
                         type="number" min="0"
                         value={card.trial_days}
                         onChange={e => updateCard(card.featureId, 'trial_days', parseInt(e.target.value) || 0)}
-                        className="w-12 border border-blue-200 rounded-lg px-2 py-1 text-sm text-center font-bold focus:outline-none focus:ring-2 focus:ring-blue-400/30 flex-shrink-0"
+                        className="w-16 border border-blue-200 rounded-lg px-2 py-1 text-sm text-center font-bold focus:outline-none focus:ring-2 focus:ring-blue-400/30 flex-shrink-0"
                       />
                       <div>
                         <p className="text-[11px] font-bold text-blue-700">Dias de teste</p>
