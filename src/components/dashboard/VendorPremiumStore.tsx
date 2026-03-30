@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/client';
 import { Sparkles, Check, Clock, Zap, Target } from 'lucide-react';
 import type { PremiumFeature, VendorSubscription, AutoBenefitRule } from '@/types/database';
 import VendorCheckoutModal from './VendorCheckoutModal';
+import PremiumAdminModal from './PremiumAdminModal';
 
 const METRIC_LABELS: Record<string, { label: string; unit: string; format: (v: number) => string }> = {
   monthly_revenue: { label: 'Faturamento Mensal', unit: 'R$', format: v => `R$ ${v.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` },
@@ -37,6 +38,8 @@ export default function VendorPremiumStore({ vendorId }: Props) {
     name: string;
     price: string;
   } | null>(null);
+  const [showAdmin, setShowAdmin] = useState(false);
+  const [isOwner, setIsOwner] = useState(false);
 
   useEffect(() => {
     const supabase = createClient();
@@ -44,10 +47,16 @@ export default function VendorPremiumStore({ vendorId }: Props) {
       supabase.from('premium_features').select('*').eq('active', true).order('sort_order'),
       supabase.from('vendor_subscriptions').select('*').eq('vendor_id', vendorId),
       supabase.from('auto_benefit_rules').select('*').eq('active', true).order('sort_order'),
-    ]).then(([{ data: pf }, { data: vs }, { data: ar }]) => {
+      supabase.auth.getUser().then(({ data: { user } }) => {
+        if (!user) return null;
+        return supabase.from('profiles').select('role').eq('id', user.id).single();
+      }),
+    ]).then(([{ data: pf }, { data: vs }, { data: ar }, profileRes]) => {
       if (pf) setFeatures(pf as PremiumFeature[]);
       if (vs) setMySubs(vs as VendorSubscription[]);
       if (ar) setAutoRules(ar as AutoBenefitRule[]);
+      const role = profileRes?.data?.role;
+      if (role === 'platform_admin' || role === 'vendor') setIsOwner(true);
       setLoading(false);
     });
   }, [vendorId]);
@@ -201,6 +210,34 @@ export default function VendorPremiumStore({ vendorId }: Props) {
           </div>
         </div>
       )}
+
+      {/* Botão admin para editar benefícios/metas */}
+      {isOwner && (
+        <div className="mt-6 text-center">
+          <button
+            onClick={() => setShowAdmin(true)}
+            className="text-xs font-bold text-slate-400 hover:text-orange-600 transition underline underline-offset-2"
+          >
+            Gerenciar benefícios e metas
+          </button>
+        </div>
+      )}
+
+      <PremiumAdminModal
+        isOpen={showAdmin}
+        onClose={() => {
+          setShowAdmin(false);
+          // Refresh data
+          const supabase = createClient();
+          Promise.all([
+            supabase.from('premium_features').select('*').eq('active', true).order('sort_order'),
+            supabase.from('auto_benefit_rules').select('*').eq('active', true).order('sort_order'),
+          ]).then(([{ data: pf }, { data: ar }]) => {
+            if (pf) setFeatures(pf as PremiumFeature[]);
+            if (ar) setAutoRules(ar as AutoBenefitRule[]);
+          });
+        }}
+      />
 
       {checkoutProduct && (
         <VendorCheckoutModal

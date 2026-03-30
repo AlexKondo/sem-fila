@@ -39,7 +39,7 @@ export default function AutoBenefitsClient() {
     const supabase = createClient();
     Promise.all([
       supabase.from('auto_benefit_rules').select('*').order('sort_order'),
-      supabase.from('premium_features').select('*').eq('active', true).order('sort_order'),
+      supabase.from('premium_features').select('*').order('sort_order'),
     ]).then(([{ data: r }, { data: pf }]) => {
       if (r) {
         const mapped = r.map((rule: AutoBenefitRule) => ({
@@ -311,9 +311,13 @@ export default function AutoBenefitsClient() {
                   onChange={e => updateRule(index, 'benefit_slug', e.target.value)}
                   className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/30"
                 >
+                  <option value="">Selecione...</option>
                   {features.map(f => (
                     <option key={f.slug} value={f.slug}>{f.name}</option>
                   ))}
+                  {rule.benefit_slug && !features.find(f => f.slug === rule.benefit_slug) && (
+                    <option value={rule.benefit_slug}>{rule.benefit_slug} (não encontrado)</option>
+                  )}
                 </select>
               </div>
               <div>
