@@ -226,12 +226,6 @@ export default function BenefitsAdminClient() {
     setRules(prev => prev.map(r => r.id === id ? { ...r, [field]: value } : r));
   }, []);
 
-  // ── Helper: throw on supabase error ──
-  function check<T>(result: { data: T; error: any }): T {
-    if (result.error) throw new Error(result.error.message || 'Erro desconhecido do Supabase');
-    return result.data;
-  }
-
   // ── Save all ──
   async function saveAll() {
     setSaving(true);
@@ -241,30 +235,36 @@ export default function BenefitsAdminClient() {
     // Detecta se coluna target_audience existe (migration pode não ter rodado)
     let hasAudienceCol = true;
     const testRes = await supabase.from('premium_features').select('target_audience').limit(1);
-    if (testRes.error && testRes.error.message.includes('target_audience')) {
+    if (testRes.error) {
+      // Qualquer erro ao selecionar target_audience = coluna não existe
       hasAudienceCol = false;
     }
 
     try {
-      // ── Features ──
+      // ── Features: deletar removidos ──
       const currentFeatureIds = features.filter(f => !f._isNew).map(f => f.id);
       const removedFeatureIds = originalFeatureIds.filter(id => !currentFeatureIds.includes(id));
 
       if (removedFeatureIds.length > 0) {
-        check(await supabase.from('premium_features').delete().in('id', removedFeatureIds));
+        const { error } = await supabase.from('premium_features').delete().in('id', removedFeatureIds);
+        if (error) throw new Error(`Erro ao deletar benefícios: ${error.message}`);
       }
 
+      // ── Features: atualizar existentes ──
       for (const f of features.filter(f => !f._isNew)) {
         const payload: any = {
           name: f.name, slug: f.slug, description: f.description || null,
           price: f.price, duration_days: f.duration_days, active: f.active,
           free_for_all: f.free_for_all, trial_days: f.trial_days, sort_order: f.sort_order,
-          updated_at: new Date().toISOString(),
         };
         if (hasAudienceCol) payload.target_audience = f.target_audience;
-        check(await supabase.from('premium_features').update(payload).eq('id', f.id));
+        const { data, error } = await supabase
+          .from('premium_features').update(payload).eq('id', f.id).select();
+        if (error) throw new Error(`Erro ao atualizar "${f.name}": ${error.message}`);
+        if (!data || data.length === 0) throw new Error(`Sem permissão para atualizar "${f.name}" (RLS). Verifique se você é platform_admin.`);
       }
 
+      // ── Features: inserir novos ──
       const newFeatures = features.filter(f => f._isNew && f.name && f.slug);
       if (newFeatures.length > 0) {
         const inserts = newFeatures.map(f => {
@@ -276,37 +276,43 @@ export default function BenefitsAdminClient() {
           if (hasAudienceCol) payload.target_audience = f.target_audience;
           return payload;
         });
-        const data = check(await supabase.from('premium_features').insert(inserts).select());
+        const { data, error } = await supabase.from('premium_features').insert(inserts).select();
+        if (error) throw new Error(`Erro ao inserir benefícios: ${error.message}`);
         if (data) {
           setFeatures(prev => prev.map(f => {
             if (!f._isNew) return f;
-            const match = (data as any[]).find((d: any) => d.slug === f.slug);
+            const match = data.find((d: any) => d.slug === f.slug);
             if (match) return { ...f, id: match.id, _isNew: false };
             return f;
           }));
         }
       }
 
-      // ── Rules ──
+      // ── Rules: deletar removidas ──
       const currentRuleIds = rules.filter(r => !r._isNew).map(r => r.id);
       const removedRuleIds = originalRuleIds.filter(id => !currentRuleIds.includes(id));
 
       if (removedRuleIds.length > 0) {
-        check(await supabase.from('auto_benefit_rules').delete().in('id', removedRuleIds));
+        const { error } = await supabase.from('auto_benefit_rules').delete().in('id', removedRuleIds);
+        if (error) throw new Error(`Erro ao deletar regras: ${error.message}`);
       }
 
+      // ── Rules: atualizar existentes ──
       for (const r of rules.filter(r => !r._isNew)) {
         const payload: any = {
           name: r.name, description: r.description || null,
           metric: r.metric, operator: r.operator, threshold: r.threshold,
           benefit_slug: r.benefit_slug, duration_days: r.duration_days,
           active: r.active, sort_order: r.sort_order,
-          updated_at: new Date().toISOString(),
         };
         if (hasAudienceCol) payload.target_audience = r.target_audience;
-        check(await supabase.from('auto_benefit_rules').update(payload).eq('id', r.id));
+        const { data, error } = await supabase
+          .from('auto_benefit_rules').update(payload).eq('id', r.id).select();
+        if (error) throw new Error(`Erro ao atualizar regra "${r.name}": ${error.message}`);
+        if (!data || data.length === 0) throw new Error(`Sem permissão para atualizar regra "${r.name}" (RLS).`);
       }
 
+      // ── Rules: inserir novas ──
       const newRules = rules.filter(r => r._isNew && r.name);
       if (newRules.length > 0) {
         const inserts = newRules.map(r => {
@@ -319,11 +325,12 @@ export default function BenefitsAdminClient() {
           if (hasAudienceCol) payload.target_audience = r.target_audience;
           return payload;
         });
-        const data = check(await supabase.from('auto_benefit_rules').insert(inserts).select());
+        const { data, error } = await supabase.from('auto_benefit_rules').insert(inserts).select();
+        if (error) throw new Error(`Erro ao inserir regras: ${error.message}`);
         if (data) {
           setRules(prev => prev.map(r => {
             if (!r._isNew) return r;
-            const match = (data as any[]).find((d: any) => d.name === r.name && d.benefit_slug === r.benefit_slug);
+            const match = data.find((d: any) => d.name === r.name && d.benefit_slug === r.benefit_slug);
             if (match) return { ...r, id: match.id, _isNew: false };
             return r;
           }));
@@ -333,8 +340,9 @@ export default function BenefitsAdminClient() {
       setOriginalFeatureIds(features.map(f => f._isNew ? '' : f.id).filter(Boolean));
       setOriginalRuleIds(rules.map(r => r._isNew ? '' : r.id).filter(Boolean));
       setMsg(hasAudienceCol ? 'Tudo salvo com sucesso!' : 'Salvo! (Rode a migration target_audience para habilitar abas)');
-      setTimeout(() => setMsg(''), 5000);
+      setTimeout(() => setMsg(''), 8000);
     } catch (err: any) {
+      console.error('[BenefitsAdmin] saveAll error:', err);
       setMsg(`Erro: ${err.message}`);
     } finally {
       setSaving(false);
@@ -735,10 +743,10 @@ export default function BenefitsAdminClient() {
 
         {/* Feedback toast */}
         {msg && (
-          <div className={`fixed top-4 left-1/2 -translate-x-1/2 z-50 px-6 py-3 rounded-2xl shadow-lg font-bold text-sm animate-pulse ${
+          <div className={`fixed bottom-20 left-1/2 -translate-x-1/2 z-[100] px-6 py-3 rounded-2xl shadow-2xl font-bold text-sm max-w-[90vw] text-center ${
             msg.startsWith('Erro') ? 'bg-red-500 text-white' : 'bg-emerald-500 text-white'
           }`}>
-            {msg.startsWith('Erro') ? msg : `${msg}`}
+            {msg}
           </div>
         )}
 
