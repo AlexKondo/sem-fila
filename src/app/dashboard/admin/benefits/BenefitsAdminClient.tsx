@@ -249,16 +249,32 @@ export default function BenefitsAdminClient() {
     if (testRes.error) hasAudienceCol = false;
 
     try {
-      // ── Features: deletar removidos ──
+      // ── 1) Rules: deletar removidas PRIMEIRO (por causa da FK benefit_slug) ──
+      const currentRuleIds = rules.filter(r => !r._isNew).map(r => r.id);
+      const removedRuleIds = originalRuleIds.filter(id => !currentRuleIds.includes(id));
+
+      if (removedRuleIds.length > 0) {
+        const { error } = await supabase.from('auto_benefit_rules').delete().in('id', removedRuleIds);
+        if (error) throw new Error(`Erro ao deletar regras: ${error.message}`);
+      }
+
+      // ── 2) Features: deletar removidos (agora seguro, rules órfãs já foram) ──
       const currentFeatureIds = features.filter(f => !f._isNew).map(f => f.id);
       const removedFeatureIds = originalFeatureIds.filter(id => !currentFeatureIds.includes(id));
 
       if (removedFeatureIds.length > 0) {
+        // Deleta rules do banco que referenciam os slugs das features removidas
+        const { data: removedFeatData } = await supabase
+          .from('premium_features').select('slug').in('id', removedFeatureIds);
+        if (removedFeatData && removedFeatData.length > 0) {
+          const slugs = removedFeatData.map((f: any) => f.slug);
+          await supabase.from('auto_benefit_rules').delete().in('benefit_slug', slugs);
+        }
         const { error } = await supabase.from('premium_features').delete().in('id', removedFeatureIds);
         if (error) throw new Error(`Erro ao deletar benefícios: ${error.message}`);
       }
 
-      // ── Features: atualizar existentes ──
+      // ── 3) Features: atualizar existentes ──
       for (const f of features.filter(f => !f._isNew)) {
         const payload: any = {
           name: f.name, slug: f.slug, description: f.description || null,
@@ -272,7 +288,7 @@ export default function BenefitsAdminClient() {
         if (!data || data.length === 0) throw new Error(`Sem permissão para atualizar "${f.name}" (RLS).`);
       }
 
-      // ── Features: inserir novos ──
+      // ── 4) Features: inserir novos ──
       const newFeatures = features.filter(f => f._isNew && f.name && f.slug);
       if (newFeatures.length > 0) {
         const inserts = newFeatures.map(f => {
@@ -296,16 +312,7 @@ export default function BenefitsAdminClient() {
         }
       }
 
-      // ── Rules: deletar removidas ──
-      const currentRuleIds = rules.filter(r => !r._isNew).map(r => r.id);
-      const removedRuleIds = originalRuleIds.filter(id => !currentRuleIds.includes(id));
-
-      if (removedRuleIds.length > 0) {
-        const { error } = await supabase.from('auto_benefit_rules').delete().in('id', removedRuleIds);
-        if (error) throw new Error(`Erro ao deletar regras: ${error.message}`);
-      }
-
-      // ── Rules: atualizar existentes ──
+      // ── 5) Rules: atualizar existentes ──
       for (const r of rules.filter(r => !r._isNew)) {
         const payload: any = {
           name: r.name, description: r.description || null,
@@ -320,7 +327,7 @@ export default function BenefitsAdminClient() {
         if (!data || data.length === 0) throw new Error(`Sem permissão para atualizar regra "${r.name}" (RLS).`);
       }
 
-      // ── Rules: inserir novas (só salva se tiver nome) ──
+      // ── 6) Rules: inserir novas ──
       const newRules = rules.filter(r => r._isNew && r.name);
       if (newRules.length > 0) {
         const inserts = newRules.map(r => {
