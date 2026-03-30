@@ -3,8 +3,15 @@
 import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
-import { ToggleLeft, ToggleRight, Plus, Trash2, Save, Zap, ChevronDown, ChevronUp, Eye } from 'lucide-react';
-import type { PremiumFeature, AutoBenefitRule, AutoBenefitMetric, AutoBenefitOperator } from '@/types/database';
+import { ToggleLeft, ToggleRight, Plus, Trash2, Save, Zap, ChevronDown, ChevronUp, Eye, Store, Users, UserCheck } from 'lucide-react';
+import type { PremiumFeature, AutoBenefitRule, AutoBenefitMetric, AutoBenefitOperator, BenefitAudience } from '@/types/database';
+
+// ── Audience config ──
+const AUDIENCE_TABS: { value: BenefitAudience; label: string; icon: typeof Store; color: string; bg: string; border: string; desc: string }[] = [
+  { value: 'vendor', label: 'Vendors', icon: Store, color: 'text-orange-600', bg: 'bg-orange-50', border: 'border-orange-200', desc: 'Benefícios para barracas/quiosques' },
+  { value: 'affiliate', label: 'Afiliados', icon: UserCheck, color: 'text-pink-600', bg: 'bg-pink-50', border: 'border-pink-200', desc: 'Benefícios para afiliados da plataforma' },
+  { value: 'customer', label: 'Clientes', icon: Users, color: 'text-blue-600', bg: 'bg-blue-50', border: 'border-blue-200', desc: 'Benefícios para clientes/consumidores' },
+];
 
 // ── Badge preview config (mesma do MenuClient) ──
 const BADGE_PREVIEW: Record<string, { label: string; bg: string; text: string; border: string; icon: string }> = {
@@ -53,6 +60,7 @@ interface FeatureDraft {
   free_for_all: boolean;
   trial_days: number;
   sort_order: number;
+  target_audience: BenefitAudience;
   _isNew?: boolean;
 }
 
@@ -67,6 +75,7 @@ interface RuleDraft {
   duration_days: number;
   active: boolean;
   sort_order: number;
+  target_audience: BenefitAudience;
   _isNew?: boolean;
 }
 
@@ -86,6 +95,17 @@ function BadgePreview({ slug }: { slug: string }) {
   );
 }
 
+function AudienceBadge({ audience }: { audience: BenefitAudience }) {
+  const tab = AUDIENCE_TABS.find(t => t.value === audience)!;
+  const Icon = tab.icon;
+  return (
+    <span className={`inline-flex items-center gap-1 ${tab.bg} ${tab.color} text-[9px] font-black px-2 py-0.5 rounded-full border ${tab.border} uppercase`}>
+      <Icon className="w-2.5 h-2.5" />
+      {tab.label}
+    </span>
+  );
+}
+
 export default function BenefitsAdminClient() {
   const [features, setFeatures] = useState<FeatureDraft[]>([]);
   const [rules, setRules] = useState<RuleDraft[]>([]);
@@ -98,6 +118,7 @@ export default function BenefitsAdminClient() {
   const [originalRuleIds, setOriginalRuleIds] = useState<string[]>([]);
   const [expandedFeatures, setExpandedFeatures] = useState<Set<string>>(new Set());
   const [showPreview, setShowPreview] = useState(false);
+  const [activeTab, setActiveTab] = useState<BenefitAudience>('vendor');
 
   useEffect(() => {
     const supabase = createClient();
@@ -105,7 +126,7 @@ export default function BenefitsAdminClient() {
       supabase.from('premium_features').select('*').order('sort_order'),
       supabase.from('auto_benefit_rules').select('*').order('sort_order'),
     ]).then(([{ data: pf }, { data: ar }]) => {
-      const mappedF = (pf || []).map((f: PremiumFeature) => ({
+      const mappedF = (pf || []).map((f: any) => ({
         id: f.id,
         slug: f.slug,
         name: f.name,
@@ -116,8 +137,9 @@ export default function BenefitsAdminClient() {
         free_for_all: f.free_for_all ?? false,
         trial_days: f.trial_days ?? 0,
         sort_order: f.sort_order,
+        target_audience: (f.target_audience as BenefitAudience) || 'vendor',
       }));
-      const mappedR = (ar || []).map((r: AutoBenefitRule) => ({
+      const mappedR = (ar || []).map((r: any) => ({
         id: r.id,
         name: r.name,
         description: r.description ?? '',
@@ -128,13 +150,13 @@ export default function BenefitsAdminClient() {
         duration_days: r.duration_days,
         active: r.active,
         sort_order: r.sort_order,
+        target_audience: (r.target_audience as BenefitAudience) || 'vendor',
       }));
       setFeatures(mappedF);
       setRules(mappedR);
-      setOriginalFeatureIds(mappedF.map(f => f.id));
-      setOriginalRuleIds(mappedR.map(r => r.id));
-      // Expand all by default
-      setExpandedFeatures(new Set(mappedF.map(f => f.id)));
+      setOriginalFeatureIds(mappedF.map((f: FeatureDraft) => f.id));
+      setOriginalRuleIds(mappedR.map((r: RuleDraft) => r.id));
+      setExpandedFeatures(new Set(mappedF.map((f: FeatureDraft) => f.id)));
       setLoading(false);
     });
   }, []);
@@ -148,65 +170,51 @@ export default function BenefitsAdminClient() {
   }, []);
 
   // ── Feature CRUD ──
-  const addFeature = useCallback(() => {
+  const addFeature = useCallback((audience: BenefitAudience) => {
     const id = `new_${Date.now()}`;
     setFeatures(prev => [...prev, {
-      id,
-      slug: '',
-      name: '',
-      description: '',
-      price: 0,
-      duration_days: 30,
-      active: true,
-      free_for_all: false,
-      trial_days: 0,
-      sort_order: prev.length,
-      _isNew: true,
+      id, slug: '', name: '', description: '', price: 0,
+      duration_days: 30, active: true, free_for_all: false,
+      trial_days: 0, sort_order: prev.filter(f => f.target_audience === audience).length,
+      target_audience: audience, _isNew: true,
     }]);
     setExpandedFeatures(prev => new Set([...prev, id]));
   }, []);
 
   const removeFeature = useCallback((id: string) => {
-    setFeatures(prev => prev.filter(f => f.id !== id));
-    // Also remove rules linked to this feature
-    const feat = features.find(f => f.id === id);
-    if (feat) {
-      setRules(prev => prev.filter(r => r.benefit_slug !== feat.slug));
-    }
-  }, [features]);
+    setFeatures(prev => {
+      const feat = prev.find(f => f.id === id);
+      if (feat) {
+        setRules(r => r.filter(rule => rule.benefit_slug !== feat.slug));
+      }
+      return prev.filter(f => f.id !== id);
+    });
+  }, []);
 
   const updateFeature = useCallback((id: string, field: keyof FeatureDraft, value: string | number | boolean) => {
     setFeatures(prev => prev.map(f => {
       if (f.id !== id) return f;
       const updated = { ...f, [field]: value };
-      // Auto-generate slug from name for new features
       if (field === 'name' && f._isNew) {
         updated.slug = String(value)
-          .toLowerCase()
-          .normalize('NFD')
-          .replace(/[\u0300-\u036f]/g, '')
-          .replace(/[^a-z0-9]+/g, '_')
-          .replace(/^_|_$/g, '');
+          .toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+          .replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '');
       }
       return updated;
     }));
   }, []);
 
   // ── Rule CRUD ──
-  const addRule = useCallback((benefitSlug: string) => {
+  const addRule = useCallback((benefitSlug: string, audience: BenefitAudience) => {
     const id = `new_${Date.now()}`;
     setRules(prev => [...prev, {
-      id,
-      name: '',
-      description: '',
+      id, name: '', description: '',
       metric: 'monthly_revenue' as AutoBenefitMetric,
       operator: '>=' as AutoBenefitOperator,
-      threshold: 0,
-      benefit_slug: benefitSlug,
-      duration_days: 30,
-      active: true,
+      threshold: 0, benefit_slug: benefitSlug,
+      duration_days: 30, active: true,
       sort_order: prev.filter(r => r.benefit_slug === benefitSlug).length,
-      _isNew: true,
+      target_audience: audience, _isNew: true,
     }]);
   }, []);
 
@@ -238,6 +246,7 @@ export default function BenefitsAdminClient() {
           name: f.name, slug: f.slug, description: f.description || null,
           price: f.price, duration_days: f.duration_days, active: f.active,
           free_for_all: f.free_for_all, trial_days: f.trial_days, sort_order: f.sort_order,
+          target_audience: f.target_audience,
           updated_at: new Date().toISOString(),
         }).eq('id', f.id);
       }
@@ -249,12 +258,13 @@ export default function BenefitsAdminClient() {
             slug: f.slug, name: f.name, description: f.description || null,
             price: f.price, duration_days: f.duration_days, active: f.active,
             free_for_all: f.free_for_all, trial_days: f.trial_days, sort_order: f.sort_order,
+            target_audience: f.target_audience,
           }))
         ).select();
         if (data) {
           setFeatures(prev => prev.map(f => {
             if (!f._isNew) return f;
-            const match = data.find(d => d.slug === f.slug);
+            const match = data.find((d: any) => d.slug === f.slug);
             if (match) return { ...f, id: match.id, _isNew: false };
             return f;
           }));
@@ -274,7 +284,7 @@ export default function BenefitsAdminClient() {
           name: r.name, description: r.description || null,
           metric: r.metric, operator: r.operator, threshold: r.threshold,
           benefit_slug: r.benefit_slug, duration_days: r.duration_days,
-          active: r.active, sort_order: r.sort_order,
+          active: r.active, sort_order: r.sort_order, target_audience: r.target_audience,
           updated_at: new Date().toISOString(),
         }).eq('id', r.id);
       }
@@ -286,13 +296,13 @@ export default function BenefitsAdminClient() {
             name: r.name, description: r.description || null,
             metric: r.metric, operator: r.operator, threshold: r.threshold,
             benefit_slug: r.benefit_slug, duration_days: r.duration_days,
-            active: r.active, sort_order: r.sort_order,
+            active: r.active, sort_order: r.sort_order, target_audience: r.target_audience,
           }))
         ).select();
         if (data) {
           setRules(prev => prev.map(r => {
             if (!r._isNew) return r;
-            const match = data.find(d => d.name === r.name && d.benefit_slug === r.benefit_slug);
+            const match = data.find((d: any) => d.name === r.name && d.benefit_slug === r.benefit_slug);
             if (match) return { ...r, id: match.id, _isNew: false };
             return r;
           }));
@@ -328,14 +338,18 @@ export default function BenefitsAdminClient() {
     setRunning(false);
   }
 
-  // ── Rules for a given slug ──
   function rulesForSlug(slug: string) {
     return rules.filter(r => r.benefit_slug === slug);
   }
 
-  // ── Orphan rules (benefit_slug not matching any feature) ──
+  // Features and orphan rules for current tab
+  const tabFeatures = features.filter(f => f.target_audience === activeTab);
   const featureSlugs = new Set(features.map(f => f.slug));
   const orphanRules = rules.filter(r => r.benefit_slug && !featureSlugs.has(r.benefit_slug));
+  const currentTabConfig = AUDIENCE_TABS.find(t => t.value === activeTab)!;
+
+  // Counts per tab
+  const countPerTab = (aud: BenefitAudience) => features.filter(f => f.target_audience === aud).length;
 
   if (loading) return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -356,7 +370,7 @@ export default function BenefitsAdminClient() {
           <div className="flex-1">
             <h1 className="font-bold text-gray-900 leading-none">Benefícios & Metas</h1>
             <p className="text-[10px] text-gray-400 uppercase font-bold tracking-tighter">
-              Configure benefícios premium e regras automáticas
+              Configure benefícios e regras automáticas por público
             </p>
           </div>
           <button
@@ -367,20 +381,52 @@ export default function BenefitsAdminClient() {
             Preview
           </button>
         </div>
+
+        {/* Audience Tabs */}
+        <div className="max-w-4xl mx-auto px-4 flex border-t border-gray-50">
+          {AUDIENCE_TABS.map(tab => {
+            const Icon = tab.icon;
+            const count = countPerTab(tab.value);
+            const isActive = activeTab === tab.value;
+            return (
+              <button
+                key={tab.value}
+                onClick={() => setActiveTab(tab.value)}
+                className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-bold transition border-b-2 ${
+                  isActive ? `${tab.color} border-current` : 'text-gray-400 border-transparent hover:text-gray-600'
+                }`}
+              >
+                <Icon className="w-4 h-4" />
+                {tab.label}
+                {count > 0 && (
+                  <span className={`text-[10px] px-1.5 py-0 rounded-full ${isActive ? tab.bg : 'bg-gray-100'}`}>
+                    {count}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
       </header>
 
       <div className="max-w-4xl mx-auto px-4 py-6 space-y-4">
 
-        {/* Preview dos selos como o cliente vê */}
+        {/* Tab description */}
+        <div className={`rounded-2xl border ${currentTabConfig.border} ${currentTabConfig.bg} p-3 flex items-center gap-3`}>
+          {(() => { const Icon = currentTabConfig.icon; return <Icon className={`w-5 h-5 ${currentTabConfig.color} flex-shrink-0`} />; })()}
+          <p className={`text-xs font-medium ${currentTabConfig.color}`}>{currentTabConfig.desc}</p>
+        </div>
+
+        {/* Preview dos selos */}
         {showPreview && (
           <div className="bg-white rounded-2xl border border-orange-200 shadow-sm p-4">
-            <p className="text-xs font-bold text-orange-600 uppercase mb-3">Preview — Como o cliente vê os selos</p>
+            <p className="text-xs font-bold text-orange-600 uppercase mb-3">Preview — Como o cliente vê os selos (vendor)</p>
             <div className="bg-gray-50 rounded-xl p-4 flex flex-wrap gap-2">
-              {features.filter(f => f.active).map(f => (
+              {features.filter(f => f.active && f.target_audience === 'vendor').map(f => (
                 <BadgePreview key={f.id} slug={f.slug} />
               ))}
-              {features.filter(f => f.active).length === 0 && (
-                <p className="text-xs text-gray-400">Nenhum benefício ativo</p>
+              {features.filter(f => f.active && f.target_audience === 'vendor').length === 0 && (
+                <p className="text-xs text-gray-400">Nenhum benefício vendor ativo</p>
               )}
             </div>
           </div>
@@ -390,7 +436,7 @@ export default function BenefitsAdminClient() {
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex items-center justify-between">
           <div>
             <p className="font-bold text-sm text-gray-900">Executar Avaliação</p>
-            <p className="text-xs text-gray-400">Avalia vendors contra regras ativas e concede/revoga benefícios.</p>
+            <p className="text-xs text-gray-400">Avalia contra regras ativas e concede/revoga benefícios.</p>
             {runResult && <p className="text-xs text-green-600 font-bold mt-1">{runResult}</p>}
           </div>
           <button
@@ -402,17 +448,24 @@ export default function BenefitsAdminClient() {
           </button>
         </div>
 
-        {/* ── BENEFÍCIOS (cada um com suas metas abaixo) ── */}
-        {features.map((feature) => {
+        {/* ── BENEFÍCIOS do tab ativo ── */}
+        {tabFeatures.length === 0 && (
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 text-center">
+            <p className="text-gray-400 text-sm">Nenhum benefício para <strong>{currentTabConfig.label}</strong> ainda.</p>
+          </div>
+        )}
+
+        {tabFeatures.map((feature) => {
           const linkedRules = rulesForSlug(feature.slug);
           const isExpanded = expandedFeatures.has(feature.id);
 
           return (
-            <div key={feature.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+            <div key={feature.id} className={`bg-white rounded-2xl border shadow-sm overflow-hidden ${currentTabConfig.border}`}>
               {/* Feature header */}
               <div className="p-4">
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-2 flex-wrap">
+                    <AudienceBadge audience={feature.target_audience} />
                     <BadgePreview slug={feature.slug} />
                     <span className={`text-[10px] font-black px-2 py-0.5 rounded-full uppercase ${feature.active ? 'bg-green-50 text-green-600' : 'bg-gray-100 text-gray-400'}`}>
                       {feature.active ? 'Ativo' : 'Inativo'}
@@ -430,7 +483,7 @@ export default function BenefitsAdminClient() {
                     <button onClick={() => toggleExpand(feature.id)} className="p-1.5 text-gray-400 hover:text-gray-600 rounded-lg transition">
                       {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
                     </button>
-                    <button onClick={() => removeFeature(feature.id)} className="p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition" title="Remover benefício">
+                    <button onClick={() => removeFeature(feature.id)} className="p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition" title="Remover">
                       <Trash2 className="w-4 h-4" />
                     </button>
                   </div>
@@ -467,7 +520,7 @@ export default function BenefitsAdminClient() {
                       <input
                         value={feature.description}
                         onChange={e => updateFeature(feature.id, 'description', e.target.value)}
-                        placeholder="O que o vendor/cliente ganha com este benefício"
+                        placeholder="O que este público ganha com este benefício"
                         className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/30"
                       />
                     </div>
@@ -503,7 +556,7 @@ export default function BenefitsAdminClient() {
                       </div>
                     </div>
 
-                    {/* Toggles: free_for_all + trial + active */}
+                    {/* Toggles */}
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                       <div className="flex items-center gap-3 bg-amber-50 rounded-xl px-3 py-2.5">
                         <button type="button" onClick={() => updateFeature(feature.id, 'free_for_all', !feature.free_for_all)} className="flex-shrink-0">
@@ -535,7 +588,7 @@ export default function BenefitsAdminClient() {
                         />
                         <div>
                           <p className="text-[11px] font-bold text-green-700">Ativo</p>
-                          <p className="text-[9px] text-green-500">{feature.active ? 'Visível para vendors' : 'Oculto'}</p>
+                          <p className="text-[9px] text-green-500">{feature.active ? 'Visível' : 'Oculto'}</p>
                         </div>
                       </label>
                     </div>
@@ -543,7 +596,7 @@ export default function BenefitsAdminClient() {
                 )}
               </div>
 
-              {/* ── Metas vinculadas a este benefício ── */}
+              {/* ── Metas vinculadas ── */}
               {isExpanded && (
                 <div className="border-t border-gray-100 bg-slate-50 p-4">
                   <div className="flex items-center justify-between mb-3">
@@ -554,7 +607,7 @@ export default function BenefitsAdminClient() {
                       </p>
                     </div>
                     <button
-                      onClick={() => addRule(feature.slug)}
+                      onClick={() => addRule(feature.slug, feature.target_audience)}
                       className="flex items-center gap-1 text-[11px] font-bold text-purple-600 hover:text-purple-800 bg-purple-50 hover:bg-purple-100 px-2.5 py-1 rounded-lg transition"
                     >
                       <Plus className="w-3 h-3" /> Meta
@@ -563,7 +616,7 @@ export default function BenefitsAdminClient() {
 
                   {linkedRules.length === 0 ? (
                     <p className="text-xs text-slate-400 italic">
-                      Nenhuma meta automática. Vendor só ganha comprando.
+                      Nenhuma meta automática. Só ganha comprando.
                     </p>
                   ) : (
                     <div className="space-y-3">
@@ -580,12 +633,7 @@ export default function BenefitsAdminClient() {
                             </div>
                             <div className="flex items-center gap-1">
                               <label className="flex items-center gap-1 cursor-pointer">
-                                <input
-                                  type="checkbox"
-                                  checked={rule.active}
-                                  onChange={e => updateRule(rule.id, 'active', e.target.checked)}
-                                  className="w-3.5 h-3.5 accent-green-500"
-                                />
+                                <input type="checkbox" checked={rule.active} onChange={e => updateRule(rule.id, 'active', e.target.checked)} className="w-3.5 h-3.5 accent-green-500" />
                                 <span className="text-[10px] text-gray-500">Ativa</span>
                               </label>
                               <button onClick={() => removeRule(rule.id)} className="p-1 text-red-400 hover:text-red-600 rounded transition">
@@ -594,7 +642,6 @@ export default function BenefitsAdminClient() {
                             </div>
                           </div>
 
-                          {/* Nome da regra */}
                           <input
                             value={rule.name}
                             onChange={e => updateRule(rule.id, 'name', e.target.value)}
@@ -602,36 +649,16 @@ export default function BenefitsAdminClient() {
                             className="w-full border border-slate-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/30"
                           />
 
-                          {/* Condição: Métrica + Operador + Valor */}
                           <div className="grid grid-cols-3 gap-2">
-                            <select
-                              value={rule.metric}
-                              onChange={e => updateRule(rule.id, 'metric', e.target.value)}
-                              className="border border-slate-200 rounded-lg px-2 py-1.5 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-purple-500/30"
-                            >
-                              {METRIC_OPTIONS.map(m => (
-                                <option key={m.value} value={m.value}>{m.label}</option>
-                              ))}
+                            <select value={rule.metric} onChange={e => updateRule(rule.id, 'metric', e.target.value)} className="border border-slate-200 rounded-lg px-2 py-1.5 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-purple-500/30">
+                              {METRIC_OPTIONS.map(m => <option key={m.value} value={m.value}>{m.label}</option>)}
                             </select>
-                            <select
-                              value={rule.operator}
-                              onChange={e => updateRule(rule.id, 'operator', e.target.value)}
-                              className="border border-slate-200 rounded-lg px-2 py-1.5 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-purple-500/30"
-                            >
-                              {OPERATOR_OPTIONS.map(o => (
-                                <option key={o.value} value={o.value}>{o.label}</option>
-                              ))}
+                            <select value={rule.operator} onChange={e => updateRule(rule.id, 'operator', e.target.value)} className="border border-slate-200 rounded-lg px-2 py-1.5 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-purple-500/30">
+                              {OPERATOR_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
                             </select>
-                            <input
-                              type="number" step="0.01"
-                              value={rule.threshold}
-                              onChange={e => updateRule(rule.id, 'threshold', parseFloat(e.target.value) || 0)}
-                              placeholder="Valor"
-                              className="border border-slate-200 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-purple-500/30"
-                            />
+                            <input type="number" step="0.01" value={rule.threshold} onChange={e => updateRule(rule.id, 'threshold', parseFloat(e.target.value) || 0)} placeholder="Valor" className="border border-slate-200 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-purple-500/30" />
                           </div>
 
-                          {/* Resumo visual da regra */}
                           <div className="bg-purple-50 rounded-lg px-3 py-1.5">
                             <p className="text-[11px] text-purple-700 font-medium">
                               Se <strong>{METRIC_OPTIONS.find(m => m.value === rule.metric)?.label}</strong>
@@ -640,18 +667,10 @@ export default function BenefitsAdminClient() {
                             </p>
                           </div>
 
-                          {/* Duração da regra */}
                           <div className="flex items-center gap-3">
-                            <div className="flex items-center gap-2">
-                              <label className="text-[10px] font-bold text-slate-500">Duração:</label>
-                              <input
-                                type="number"
-                                value={rule.duration_days}
-                                onChange={e => updateRule(rule.id, 'duration_days', parseInt(e.target.value) || 30)}
-                                className="w-16 border border-slate-200 rounded-lg px-2 py-1 text-xs text-center focus:outline-none focus:ring-2 focus:ring-purple-500/30"
-                              />
-                              <span className="text-[10px] text-slate-400">dias</span>
-                            </div>
+                            <label className="text-[10px] font-bold text-slate-500">Duração:</label>
+                            <input type="number" value={rule.duration_days} onChange={e => updateRule(rule.id, 'duration_days', parseInt(e.target.value) || 30)} className="w-16 border border-slate-200 rounded-lg px-2 py-1 text-xs text-center focus:outline-none focus:ring-2 focus:ring-purple-500/30" />
+                            <span className="text-[10px] text-slate-400">dias</span>
                           </div>
                         </div>
                       ))}
@@ -663,15 +682,10 @@ export default function BenefitsAdminClient() {
           );
         })}
 
-        {/* Regras órfãs (sem benefício correspondente) */}
+        {/* Orphan rules */}
         {orphanRules.length > 0 && (
           <div className="bg-red-50 rounded-2xl border border-red-200 p-4">
-            <p className="text-xs font-bold text-red-600 mb-2">
-              Metas sem benefício correspondente ({orphanRules.length})
-            </p>
-            <p className="text-[11px] text-red-500 mb-3">
-              Estas metas apontam para slugs que não existem mais. Corrija ou remova.
-            </p>
+            <p className="text-xs font-bold text-red-600 mb-2">Metas sem benefício ({orphanRules.length})</p>
             {orphanRules.map(rule => (
               <div key={rule.id} className="bg-white rounded-xl border border-red-200 p-3 mb-2 flex items-center justify-between">
                 <div>
@@ -679,38 +693,28 @@ export default function BenefitsAdminClient() {
                   <p className="text-[11px] text-red-500">Slug: {rule.benefit_slug}</p>
                 </div>
                 <div className="flex items-center gap-2">
-                  <select
-                    value={rule.benefit_slug}
-                    onChange={e => updateRule(rule.id, 'benefit_slug', e.target.value)}
-                    className="border border-red-200 rounded-lg px-2 py-1 text-xs bg-white"
-                  >
+                  <select value={rule.benefit_slug} onChange={e => updateRule(rule.id, 'benefit_slug', e.target.value)} className="border border-red-200 rounded-lg px-2 py-1 text-xs bg-white">
                     <option value="">Selecione...</option>
-                    {features.map(f => (
-                      <option key={f.slug} value={f.slug}>{f.name} ({f.slug})</option>
-                    ))}
+                    {features.map(f => <option key={f.slug} value={f.slug}>{f.name} ({f.slug})</option>)}
                   </select>
-                  <button onClick={() => removeRule(rule.id)} className="p-1 text-red-400 hover:text-red-600">
-                    <Trash2 className="w-4 h-4" />
-                  </button>
+                  <button onClick={() => removeRule(rule.id)} className="p-1 text-red-400 hover:text-red-600"><Trash2 className="w-4 h-4" /></button>
                 </div>
               </div>
             ))}
           </div>
         )}
 
-        {/* Adicionar benefício */}
+        {/* Add button */}
         <button
-          onClick={addFeature}
-          className="w-full border-2 border-dashed border-gray-200 rounded-2xl py-4 text-sm font-bold text-gray-400 hover:text-orange-500 hover:border-orange-300 transition flex items-center justify-center gap-2"
+          onClick={() => addFeature(activeTab)}
+          className={`w-full border-2 border-dashed rounded-2xl py-4 text-sm font-bold transition flex items-center justify-center gap-2 ${currentTabConfig.border} text-gray-400 hover:${currentTabConfig.color}`}
         >
-          <Plus className="w-4 h-4" /> Novo Benefício Premium
+          <Plus className="w-4 h-4" /> Novo Benefício para {currentTabConfig.label}
         </button>
 
-        {/* Feedback + Salvar */}
+        {/* Feedback + Save */}
         {msg && (
-          <p className={`text-center text-sm font-bold ${msg.startsWith('Erro') ? 'text-red-500' : 'text-emerald-600'}`}>
-            {msg}
-          </p>
+          <p className={`text-center text-sm font-bold ${msg.startsWith('Erro') ? 'text-red-500' : 'text-emerald-600'}`}>{msg}</p>
         )}
 
         <button

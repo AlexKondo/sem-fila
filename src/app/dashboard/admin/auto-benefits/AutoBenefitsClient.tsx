@@ -53,6 +53,7 @@ export default function AutoBenefitsClient() {
           duration_days: rule.duration_days,
           active: rule.active,
           sort_order: rule.sort_order,
+          target_audience: rule.target_audience || 'vendor',
         }));
         setRules(mapped);
         setOriginalIds(mapped.map(f => f.id!));
@@ -75,6 +76,7 @@ export default function AutoBenefitsClient() {
         duration_days: 30,
         active: true,
         sort_order: prev.length,
+        target_audience: 'vendor' as const,
         _isNew: true,
       },
     ]);

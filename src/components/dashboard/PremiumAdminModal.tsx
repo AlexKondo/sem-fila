@@ -63,6 +63,7 @@ export default function PremiumAdminModal({ isOpen, onClose }: Props) {
       free_for_all: false,
       trial_days: 0,
       sort_order: prev.length + 1,
+      target_audience: 'vendor' as const,
       created_at: '',
       updated_at: '',
     }]);
@@ -88,6 +89,7 @@ export default function PremiumAdminModal({ isOpen, onClose }: Props) {
       duration_days: 30,
       active: true,
       sort_order: prev.length + 1,
+      target_audience: 'vendor' as const,
       created_at: '',
       updated_at: '',
     }]);

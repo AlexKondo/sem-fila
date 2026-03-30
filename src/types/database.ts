@@ -194,6 +194,8 @@ export interface VendorSubscription {
   created_at: string;
 }
 
+export type BenefitAudience = 'vendor' | 'affiliate' | 'customer';
+
 export interface PremiumFeature {
   id: string;
   slug: string;
@@ -205,6 +207,7 @@ export interface PremiumFeature {
   free_for_all: boolean;
   trial_days: number;
   sort_order: number;
+  target_audience: BenefitAudience;
   created_at: string;
   updated_at: string;
 }
@@ -223,6 +226,7 @@ export interface AutoBenefitRule {
   duration_days: number;
   active: boolean;
   sort_order: number;
+  target_audience: BenefitAudience;
   created_at: string;
   updated_at: string;
 }
