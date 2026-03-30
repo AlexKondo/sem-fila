@@ -111,8 +111,6 @@ export default function BenefitsAdminClient() {
   const [rules, setRules] = useState<RuleDraft[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [running, setRunning] = useState(false);
-  const [runResult, setRunResult] = useState<string | null>(null);
   const [msg, setMsg] = useState('');
   const [originalFeatureIds, setOriginalFeatureIds] = useState<string[]>([]);
   const [originalRuleIds, setOriginalRuleIds] = useState<string[]>([]);
@@ -369,23 +367,7 @@ export default function BenefitsAdminClient() {
     }
   }
 
-  // ── Run auto-benefits evaluation ──
-  async function runNow() {
-    setRunning(true);
-    setRunResult(null);
-    try {
-      const res = await fetch(`/api/cron/auto-benefits?key=${encodeURIComponent(process.env.NEXT_PUBLIC_CRON_SECRET || '')}`, { method: 'GET' });
-      const data = await res.json();
-      if (res.ok) {
-        setRunResult(`${data.granted} concedidos, ${data.revoked} revogados (${data.vendorsEvaluated} vendors avaliados)`);
-      } else {
-        setRunResult(`Erro: ${data.error || 'Falha'}`);
-      }
-    } catch {
-      setRunResult('Erro de rede.');
-    }
-    setRunning(false);
-  }
+  // Auto-benefits roda via Vercel Cron (diariamente às 06:00 UTC)
 
   function rulesForSlug(slug: string) {
     return rules.filter(r => r.benefit_slug === slug);
@@ -457,28 +439,6 @@ export default function BenefitsAdminClient() {
         <div className={`rounded-2xl border ${currentTabConfig.border} ${currentTabConfig.bg} p-3 flex items-center gap-3`}>
           {(() => { const Icon = currentTabConfig.icon; return <Icon className={`w-5 h-5 ${currentTabConfig.color} flex-shrink-0`} />; })()}
           <p className={`text-xs font-medium ${currentTabConfig.color}`}>{currentTabConfig.desc}</p>
-        </div>
-
-        {/* Executar avaliação */}
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="font-bold text-sm text-gray-900">Executar Avaliação</p>
-              <p className="text-xs text-gray-500 mt-0.5">
-                Analisa todos os vendors com base nas metas ativas e automaticamente
-                <strong> concede</strong> benefícios para quem atingiu a meta e
-                <strong> revoga</strong> de quem não atinge mais.
-              </p>
-            </div>
-            <button
-              onClick={runNow}
-              disabled={running}
-              className="bg-emerald-500 text-white text-xs font-bold px-4 py-2 rounded-xl hover:bg-emerald-600 transition disabled:opacity-50 flex-shrink-0 ml-4"
-            >
-              {running ? 'Executando...' : 'Executar'}
-            </button>
-          </div>
-          {runResult && <p className="text-xs text-green-600 font-bold mt-2 border-t border-gray-50 pt-2">{runResult}</p>}
         </div>
 
         {/* ── BENEFÍCIOS do tab ativo ── */}
