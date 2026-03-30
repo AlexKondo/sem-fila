@@ -477,7 +477,7 @@ export default function VendorSettingsForm({ vendor, subscription }: { vendor: a
               <p className="text-xs text-slate-400 font-medium">
                 R$ {subscription.plan.price.toFixed(2)}/mês
                 {subscription.expiresAt && (
-                  <> — Renova em {new Date(subscription.expiresAt).toLocaleDateString('pt-BR')}</>
+                  <> — Renova em {new Date(subscription.expiresAt).toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' })}</>
                 )}
               </p>
             </div>

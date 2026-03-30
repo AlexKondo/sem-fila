@@ -108,6 +108,7 @@ export default function AdminSettingsClient() {
   async function handleSave() {
     setLoading(true);
     const supabase = createClient();
+    const errors: string[] = [];
 
     const updates = [
       { key: 'platform_fee', value: String(platformFee) },
@@ -118,7 +119,8 @@ export default function AdminSettingsClient() {
     ];
 
     for (const item of updates) {
-      await supabase.from('platform_config').upsert({ key: item.key, value: item.value });
+      const { error } = await supabase.from('platform_config').upsert({ key: item.key, value: item.value });
+      if (error) errors.push(`Config "${item.key}": ${error.message}`);
     }
 
     // Salva planos — busca IDs existentes para detectar deletados
@@ -129,7 +131,8 @@ export default function AdminSettingsClient() {
     // Deleta planos removidos
     for (const id of existingIds) {
       if (!currentIds.has(id)) {
-        await supabase.from('subscription_plans').delete().eq('id', id);
+        const { error } = await supabase.from('subscription_plans').delete().eq('id', id);
+        if (error) errors.push(`Deletar plano: ${error.message}`);
       }
     }
 
@@ -147,13 +150,21 @@ export default function AdminSettingsClient() {
       };
 
       if (plan.id && !plan._isNew) {
-        await supabase.from('subscription_plans').update(payload).eq('id', plan.id);
+        const { error } = await supabase.from('subscription_plans').update(payload).eq('id', plan.id);
+        if (error) errors.push(`Atualizar "${plan.name}": ${error.message}`);
       } else {
-        await supabase.from('subscription_plans').insert(payload);
+        const { error } = await supabase.from('subscription_plans').insert(payload);
+        if (error) errors.push(`Criar "${plan.name}": ${error.message}`);
       }
     }
 
     setLoading(false);
+
+    if (errors.length > 0) {
+      alert(`Erro ao salvar:\n\n${errors.join('\n')}`);
+      return;
+    }
+
     alert('Configurações salvas com sucesso!');
 
     // Recarrega planos para pegar IDs novos
@@ -350,15 +361,18 @@ export default function AdminSettingsClient() {
                       <p className="text-[10px] text-green-600 font-bold mt-1">Ilimitado</p>
                     )}
                   </div>
-                  <div className="col-span-2 sm:col-span-1 flex flex-col gap-2">
-                    <label className="flex items-center gap-2 cursor-pointer">
+                  <div className="col-span-2 sm:col-span-1 flex flex-col gap-3">
+                    <label className="flex items-start gap-2 cursor-pointer">
                       <input
                         type="checkbox"
                         checked={plan.ia_included}
                         onChange={(e) => updatePlan(idx, 'ia_included', e.target.checked)}
-                        className="w-4 h-4 rounded border-gray-300 text-orange-600 focus:ring-orange-500"
+                        className="w-4 h-4 rounded border-gray-300 text-orange-600 focus:ring-orange-500 mt-0.5"
                       />
-                      <span className="text-xs font-bold text-gray-700">IA Inclusa</span>
+                      <div>
+                        <span className="text-xs font-bold text-gray-700 block">Fotos com IA Inclusas</span>
+                        <span className="text-[10px] text-gray-400 leading-tight block">Vendor gera fotos e descrições por IA sem comprar pacote avulso</span>
+                      </div>
                     </label>
                     <label className="flex items-center gap-2 cursor-pointer">
                       <input
@@ -419,7 +433,7 @@ export default function AdminSettingsClient() {
                     <span className="text-[10px] font-black uppercase tracking-widest bg-red-50 text-red-500 px-2 py-0.5 rounded-full">Inativo</span>
                   )}
                   {plan.ia_included && (
-                    <span className="text-[10px] font-black uppercase tracking-widest bg-purple-50 text-purple-600 px-2 py-0.5 rounded-full">IA Inclusa</span>
+                    <span className="text-[10px] font-black uppercase tracking-widest bg-purple-50 text-purple-600 px-2 py-0.5 rounded-full">Fotos com IA</span>
                   )}
                 </div>
               </div>

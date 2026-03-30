@@ -111,7 +111,7 @@ export default function VendorPremiumStore({ vendorId }: Props) {
                       )}
                       {isActive && sub?.expires_at && (
                         <p className="text-[11px] text-slate-400">
-                          Expira em {new Date(sub.expires_at).toLocaleDateString('pt-BR')}
+                          Expira em {new Date(sub.expires_at).toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' })}
                           {isAuto && ' (concedido por desempenho)'}
                         </p>
                       )}

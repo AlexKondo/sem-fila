@@ -219,7 +219,7 @@ export default function VendorPlansModal({ isOpen, onClose, onlyShowAi, vendorId
                         </p>
                         {currentPlan.expiresAt && (
                           <p className="text-[10px] text-green-600 mt-1">
-                            Seu plano atual ({currentPlan.name}) renova em {new Date(currentPlan.expiresAt).toLocaleDateString('pt-BR')} &mdash; faltam {getDaysRemaining()} dias.
+                            Seu plano atual ({currentPlan.name}) renova em {new Date(currentPlan.expiresAt).toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' })} &mdash; faltam {getDaysRemaining()} dias.
                           </p>
                         )}
                       </div>

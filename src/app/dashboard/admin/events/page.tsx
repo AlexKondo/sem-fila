@@ -53,8 +53,8 @@ export default async function AdminEventsPage() {
                   </p>
                   {event.start_date && (
                     <p className="text-xs text-gray-400 mt-1">
-                      {new Date(event.start_date).toLocaleDateString('pt-BR')}
-                      {event.end_date ? ` a ${new Date(event.end_date).toLocaleDateString('pt-BR')}` : ''}
+                      {new Date(event.start_date.includes('T') ? event.start_date : `${event.start_date}T12:00:00`).toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' })}
+                      {event.end_date ? ` a ${new Date(event.end_date.includes('T') ? event.end_date : `${event.end_date}T12:00:00`).toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' })}` : ''}
                       {event.start_time ? ` • ${event.start_time.slice(0, 5)}` : ''}
                       {event.end_time ? ` - ${event.end_time.slice(0, 5)}` : ''}
                     </p>

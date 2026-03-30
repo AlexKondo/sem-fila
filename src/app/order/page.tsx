@@ -157,7 +157,7 @@ export default function OrderPage() {
                     <div>
                       <p className="font-semibold text-slate-800 text-sm">{(order.vendors as any)?.name || 'Barraca'}</p>
                       <p className="text-xs text-slate-400">
-                        #{order.pickup_code} • {new Date(order.created_at).toLocaleDateString('pt-BR')}
+                        #{order.pickup_code} • {new Date(order.created_at).toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' })}
                       </p>
                     </div>
                     <div className="text-right">

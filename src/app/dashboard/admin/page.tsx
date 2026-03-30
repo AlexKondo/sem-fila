@@ -115,7 +115,7 @@ export default async function AdminDashboardPage() {
                       <div key={event.id} className="p-4 flex items-center justify-between hover:bg-gray-50 transition">
                         <div>
                           <p className="text-sm font-bold text-gray-800">{event.name}</p>
-                          <p className="text-[10px] text-gray-400">{new Date(event.created_at).toLocaleDateString()}</p>
+                          <p className="text-[10px] text-gray-400">{new Date(event.created_at).toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' })}</p>
                         </div>
                         <Link href={`/dashboard/admin/events/${event.id}`} className="text-[10px] font-black text-orange-600 bg-orange-50 px-2.5 py-1 rounded-full uppercase">Relatórios</Link>
                       </div>

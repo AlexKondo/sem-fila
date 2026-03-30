@@ -583,7 +583,7 @@ export function SupportPanel({ vendorId }: Props) {
                   <p className="text-[11px] text-blue-700">{t.admin_reply}</p>
                 </div>
               )}
-              <p className="text-[9px] text-gray-300 mt-1">{new Date(t.created_at).toLocaleDateString('pt-BR')}</p>
+              <p className="text-[9px] text-gray-300 mt-1">{new Date(t.created_at).toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' })}</p>
             </div>
           ))}
         </div>

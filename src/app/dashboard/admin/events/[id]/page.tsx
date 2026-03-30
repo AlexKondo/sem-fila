@@ -3,6 +3,14 @@ import { createClient } from '@/lib/supabase/server';
 import Link from 'next/link';
 import { formatCurrency } from '@/lib/utils';
 
+const TZ = 'America/Sao_Paulo';
+/** Formata data como dd/mm/aaaa no fuso de Brasília */
+function fmtDate(d: string) {
+  // start_date vem como 'YYYY-MM-DD' (sem hora) — adiciona T12:00 para evitar off-by-one
+  const iso = d.includes('T') ? d : `${d}T12:00:00`;
+  return new Date(iso).toLocaleDateString('pt-BR', { timeZone: TZ });
+}
+
 interface Props {
   params: Promise<{ id: string }>;
 }
@@ -129,8 +137,8 @@ export default async function EventReportPage({ params }: Props) {
               <div>
                 <p className="text-gray-400 font-bold uppercase text-[10px]">Data</p>
                 <p className="font-bold text-gray-900">
-                  {new Date(event.start_date).toLocaleDateString('pt-BR')}
-                  {event.end_date ? ` - ${new Date(event.end_date).toLocaleDateString('pt-BR')}` : ''}
+                  {fmtDate(event.start_date)}
+                  {event.end_date ? ` - ${fmtDate(event.end_date)}` : ''}
                 </p>
               </div>
             )}

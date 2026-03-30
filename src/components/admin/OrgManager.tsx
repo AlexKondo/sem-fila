@@ -299,7 +299,7 @@ export default function OrgManager({ initialOrgs }: { initialOrgs: Org[] }) {
                           {event.start_date && (
                             <p className="text-xs text-gray-500 flex items-center gap-1 mt-0.5">
                               <Calendar className="w-3 h-3" />
-                              {new Date(event.start_date).toLocaleDateString('pt-BR')}
+                              {new Date(event.start_date).toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' })}
                             </p>
                           )}
                           <p className="text-xs text-gray-400 mt-1">

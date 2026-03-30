@@ -221,7 +221,7 @@ export default function RankingClient() {
                       </div>
                       <p className="text-xs text-gray-400">
                         {sub.price_paid ? `R$ ${Number(sub.price_paid).toFixed(2)}` : 'Gratuito'}
-                        {sub.expires_at && ` · Expira ${new Date(sub.expires_at).toLocaleDateString('pt-BR')}`}
+                        {sub.expires_at && ` · Expira ${new Date(sub.expires_at).toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' })}`}
                         {expired && <span className="text-red-500 font-bold ml-1">(EXPIRADO)</span>}
                       </p>
                     </div>
