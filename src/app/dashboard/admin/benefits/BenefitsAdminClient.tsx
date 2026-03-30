@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
-import { ToggleLeft, ToggleRight, Plus, Trash2, Save, Zap, ChevronDown, ChevronUp, Eye, Store, Users, UserCheck } from 'lucide-react';
+import { ToggleLeft, ToggleRight, Plus, Trash2, Save, Zap, ChevronDown, ChevronUp, Store, Users, UserCheck } from 'lucide-react';
 import type { PremiumFeature, AutoBenefitRule, AutoBenefitMetric, AutoBenefitOperator, BenefitAudience } from '@/types/database';
 
 // ── Audience config ──
@@ -117,7 +117,6 @@ export default function BenefitsAdminClient() {
   const [originalFeatureIds, setOriginalFeatureIds] = useState<string[]>([]);
   const [originalRuleIds, setOriginalRuleIds] = useState<string[]>([]);
   const [expandedFeatures, setExpandedFeatures] = useState<Set<string>>(new Set());
-  const [showPreview, setShowPreview] = useState(false);
   const [showValidation, setShowValidation] = useState(false);
   const [activeTab, setActiveTab] = useState<BenefitAudience>('vendor');
 
@@ -423,13 +422,6 @@ export default function BenefitsAdminClient() {
               Configure benefícios e regras automáticas por público
             </p>
           </div>
-          <button
-            onClick={() => setShowPreview(!showPreview)}
-            className={`flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-xl transition ${showPreview ? 'bg-orange-500 text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}
-          >
-            <Eye className="w-3.5 h-3.5" />
-            Preview
-          </button>
         </div>
 
         {/* Audience Tabs */}
@@ -467,35 +459,26 @@ export default function BenefitsAdminClient() {
           <p className={`text-xs font-medium ${currentTabConfig.color}`}>{currentTabConfig.desc}</p>
         </div>
 
-        {/* Preview dos selos */}
-        {showPreview && (
-          <div className="bg-white rounded-2xl border border-orange-200 shadow-sm p-4">
-            <p className="text-xs font-bold text-orange-600 uppercase mb-3">Preview — Como o cliente vê os selos (vendor)</p>
-            <div className="bg-gray-50 rounded-xl p-4 flex flex-wrap gap-2">
-              {features.filter(f => f.active && f.target_audience === 'vendor').map(f => (
-                <BadgePreview key={f.id} slug={f.slug} />
-              ))}
-              {features.filter(f => f.active && f.target_audience === 'vendor').length === 0 && (
-                <p className="text-xs text-gray-400">Nenhum benefício vendor ativo</p>
-              )}
-            </div>
-          </div>
-        )}
-
         {/* Executar avaliação */}
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex items-center justify-between">
-          <div>
-            <p className="font-bold text-sm text-gray-900">Executar Avaliação</p>
-            <p className="text-xs text-gray-400">Avalia contra regras ativas e concede/revoga benefícios.</p>
-            {runResult && <p className="text-xs text-green-600 font-bold mt-1">{runResult}</p>}
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="font-bold text-sm text-gray-900">Executar Avaliação</p>
+              <p className="text-xs text-gray-500 mt-0.5">
+                Analisa todos os vendors com base nas metas ativas e automaticamente
+                <strong> concede</strong> benefícios para quem atingiu a meta e
+                <strong> revoga</strong> de quem não atinge mais.
+              </p>
+            </div>
+            <button
+              onClick={runNow}
+              disabled={running}
+              className="bg-emerald-500 text-white text-xs font-bold px-4 py-2 rounded-xl hover:bg-emerald-600 transition disabled:opacity-50 flex-shrink-0 ml-4"
+            >
+              {running ? 'Executando...' : 'Executar'}
+            </button>
           </div>
-          <button
-            onClick={runNow}
-            disabled={running}
-            className="bg-emerald-500 text-white text-xs font-bold px-4 py-2 rounded-xl hover:bg-emerald-600 transition disabled:opacity-50 flex-shrink-0"
-          >
-            {running ? 'Executando...' : 'Executar'}
-          </button>
+          {runResult && <p className="text-xs text-green-600 font-bold mt-2 border-t border-gray-50 pt-2">{runResult}</p>}
         </div>
 
         {/* ── BENEFÍCIOS do tab ativo ── */}
