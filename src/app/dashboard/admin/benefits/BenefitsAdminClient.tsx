@@ -29,6 +29,26 @@ const OPERATOR_OPTIONS: { value: AutoBenefitOperator; label: string }[] = [
   { value: '=', label: '= (igual a)' },
 ];
 
+// ── Catálogo de benefícios implementáveis no sistema ──
+const BENEFIT_CATALOG: { slug: string; name: string; description: string; audience: BenefitAudience }[] = [
+  // Vendors
+  { slug: 'destaque_plataforma', name: 'Destaque na Plataforma', description: 'Barraca aparece em destaque no topo da listagem do evento com badge exclusivo.', audience: 'vendor' },
+  { slug: 'selo_top_vendas', name: 'Selo Top Vendas', description: 'Selo "Top Vendas" visível para clientes quando sua barraca está entre as mais vendidas.', audience: 'vendor' },
+  { slug: 'selo_entrega_rapida', name: 'Selo Entrega Rápida', description: 'Badge de entrega rápida visível para clientes quando tempo médio de preparo é baixo.', audience: 'vendor' },
+  { slug: 'relatorio_faturamento', name: 'Relatório de Faturamento', description: 'Relatórios detalhados de faturamento por faixa: diário, semanal e mensal, com comparativo.', audience: 'vendor' },
+  { slug: 'painel_eficiencia', name: 'Painel de Eficiência', description: 'Acompanhe tempo médio de preparo, taxa de cancelamento e ranking de velocidade.', audience: 'vendor' },
+  { slug: 'analise_cardapio', name: 'Análise de Cardápio com IA', description: 'Saiba quais pratos vendem mais, margem e receba sugestões de otimização via IA.', audience: 'vendor' },
+  { slug: 'fotos_ia', name: 'Fotos e Descrições com IA', description: 'Gere fotos profissionais e descrições otimizadas para seus pratos usando inteligência artificial.', audience: 'vendor' },
+  { slug: 'suporte_prioritario', name: 'Suporte Prioritário', description: 'Atendimento prioritário via chat com tempo de resposta reduzido.', audience: 'vendor' },
+  // Afiliados
+  { slug: 'comissao_premium', name: 'Comissão Premium', description: 'Taxa de comissão aumentada para afiliados com melhor desempenho.', audience: 'affiliate' },
+  { slug: 'painel_afiliado', name: 'Painel Avançado de Afiliado', description: 'Dashboard completo com métricas de conversão, cliques e comissões detalhadas.', audience: 'affiliate' },
+  // Clientes
+  { slug: 'frete_gratis', name: 'Frete Grátis', description: 'Entrega sem custo para clientes com alto volume de pedidos.', audience: 'customer' },
+  { slug: 'desconto_fidelidade', name: 'Desconto Fidelidade', description: 'Desconto automático para clientes frequentes.', audience: 'customer' },
+  { slug: 'acesso_antecipado', name: 'Acesso Antecipado', description: 'Veja novos cardápios e promoções antes de todos.', audience: 'customer' },
+];
+
 // ── Card unificado: 1 benefício = feature + regra (opcional) ──
 interface BenefitCard {
   // Feature fields
@@ -117,10 +137,24 @@ export default function BenefitsAdminClient() {
     });
   }, []);
 
+  const availableSlugs = useCallback((audience: BenefitAudience, currentSlug?: string) => {
+    const usedSlugs = cards.filter(c => c.target_audience === audience && c.slug !== currentSlug).map(c => c.slug);
+    return BENEFIT_CATALOG.filter(b => b.audience === audience && !usedSlugs.includes(b.slug));
+  }, [cards]);
+
   const addCard = useCallback((audience: BenefitAudience) => {
+    const available = BENEFIT_CATALOG.filter(
+      b => b.audience === audience && !cards.some(c => c.slug === b.slug)
+    );
+    if (available.length === 0) {
+      setMsg('Todos os benefícios disponíveis para esta categoria já foram adicionados.');
+      setTimeout(() => setMsg(''), 4000);
+      return;
+    }
+    const first = available[0];
     const id = `new_${Date.now()}`;
     setCards(prev => [...prev, {
-      featureId: id, slug: '', name: '', description: '', price: 0,
+      featureId: id, slug: first.slug, name: first.name, description: first.description, price: 0,
       duration_days: 30, active: true, free_for_all: false, trial_days: 0,
       sort_order: prev.filter(c => c.target_audience === audience).length,
       target_audience: audience, _isNewFeature: true,
@@ -130,7 +164,7 @@ export default function BenefitsAdminClient() {
       threshold: 0, rule_duration_days: 30, ruleActive: true, _isNewRule: true,
     }]);
     setExpandedCards(prev => new Set([...prev, id]));
-  }, []);
+  }, [cards]);
 
   const removeCard = useCallback((featureId: string) => {
     const card = cards.find(c => c.featureId === featureId);
@@ -140,25 +174,28 @@ export default function BenefitsAdminClient() {
     setCards(prev => prev.filter(c => c.featureId !== featureId));
   }, [cards]);
 
+  const selectBenefitType = useCallback((featureId: string, slug: string) => {
+    const catalogItem = BENEFIT_CATALOG.find(b => b.slug === slug);
+    if (!catalogItem) return;
+    setCards(prev => prev.map(c => {
+      if (c.featureId !== featureId) return c;
+      return { ...c, slug: catalogItem.slug, name: catalogItem.name, description: catalogItem.description };
+    }));
+  }, []);
+
   const updateCard = useCallback((featureId: string, field: keyof BenefitCard, value: any) => {
     setCards(prev => prev.map(c => {
       if (c.featureId !== featureId) return c;
-      const updated = { ...c, [field]: value };
-      if (field === 'name' && c._isNewFeature) {
-        updated.slug = String(value)
-          .toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-          .replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '');
-      }
-      return updated;
+      return { ...c, [field]: value };
     }));
   }, []);
 
   // ── Save all ──
   async function saveAll() {
-    const invalid = cards.filter(c => c._isNewFeature && (!c.name || !c.slug));
+    const invalid = cards.filter(c => !c.slug || !c.name);
     if (invalid.length > 0) {
       setShowValidation(true);
-      setMsg(`Erro: Preencha o nome dos ${invalid.length} benefício(s) incompleto(s)`);
+      setMsg(`Erro: Selecione o tipo de ${invalid.length} benefício(s) incompleto(s)`);
       setTimeout(() => setMsg(''), 5000);
       return;
     }
@@ -363,8 +400,8 @@ export default function BenefitsAdminClient() {
                   </div>
                 </div>
 
-                <p className="font-bold text-gray-900 text-sm">{card.name || <span className="text-gray-300 italic">Sem nome</span>}</p>
-                {card.description && <p className="text-xs text-gray-400 mt-0.5">{card.description}</p>}
+                <p className="font-bold text-gray-900 text-sm">{card.name || <span className="text-gray-300 italic">Selecione um benefício</span>}</p>
+                {!isExpanded && card.description && <p className="text-xs text-gray-400 mt-0.5 line-clamp-1">{card.description}</p>}
 
                 {/* Resumo quando fechado */}
                 {!isExpanded && card.hasAutoRule && card.threshold > 0 && (
@@ -377,31 +414,42 @@ export default function BenefitsAdminClient() {
               {/* Detalhes expandidos */}
               {isExpanded && (
                 <div className="border-t border-gray-100 p-4 space-y-4">
-                  {/* Nome + Descrição */}
+                  {/* Tipo de benefício (dropdown) */}
                   <div>
-                    <label className="text-[11px] font-bold text-gray-500 uppercase block mb-1">Nome do benefício</label>
-                    <input
-                      value={card.name}
-                      onChange={e => updateCard(card.featureId, 'name', e.target.value)}
-                      placeholder="Ex: Destaque na Plataforma"
-                      className={`w-full border rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/30 ${
-                        showValidation && card._isNewFeature && !card.name ? 'border-red-400 bg-red-50' : 'border-gray-200'
-                      }`}
-                    />
-                    {showValidation && card._isNewFeature && !card.name && (
-                      <p className="text-[10px] text-red-500 font-bold mt-0.5">Obrigatório</p>
+                    <label className="text-[11px] font-bold text-gray-500 uppercase block mb-1">Tipo de benefício</label>
+                    <select
+                      value={card.slug}
+                      onChange={e => selectBenefitType(card.featureId, e.target.value)}
+                      disabled={!card._isNewFeature}
+                      className={`w-full border rounded-xl px-3 py-2 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-orange-500/30 bg-white ${
+                        showValidation && !card.slug ? 'border-red-400 bg-red-50' : 'border-gray-200'
+                      } ${!card._isNewFeature ? 'opacity-70 cursor-not-allowed' : ''}`}
+                    >
+                      {card._isNewFeature ? (
+                        <>
+                          {availableSlugs(card.target_audience, card.slug).map(b => (
+                            <option key={b.slug} value={b.slug}>{b.name}</option>
+                          ))}
+                          {/* Include current if already selected but "used" */}
+                          {!availableSlugs(card.target_audience, card.slug).find(b => b.slug === card.slug) && (
+                            <option value={card.slug}>{card.name}</option>
+                          )}
+                        </>
+                      ) : (
+                        <option value={card.slug}>{card.name}</option>
+                      )}
+                    </select>
+                    {showValidation && !card.slug && (
+                      <p className="text-[10px] text-red-500 font-bold mt-0.5">Selecione um benefício</p>
                     )}
                   </div>
 
-                  <div>
-                    <label className="text-[11px] font-bold text-gray-500 uppercase block mb-1">Descrição</label>
-                    <input
-                      value={card.description}
-                      onChange={e => updateCard(card.featureId, 'description', e.target.value)}
-                      placeholder="Descreva o que este benefício oferece"
-                      className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/30"
-                    />
-                  </div>
+                  {/* Descrição (auto-preenchida, editável) */}
+                  {card.description && (
+                    <p className="text-xs text-gray-500 bg-gray-50 rounded-lg px-3 py-2 leading-relaxed">
+                      {card.description}
+                    </p>
+                  )}
 
                   {/* ── ATIVAÇÃO POR PAGAMENTO ── */}
                   <div className="bg-emerald-50 rounded-xl p-3 space-y-2">
@@ -556,12 +604,24 @@ export default function BenefitsAdminClient() {
           );
         })}
 
-        <button
-          onClick={() => addCard(activeTab)}
-          className={`w-full border-2 border-dashed rounded-2xl py-4 text-sm font-bold transition flex items-center justify-center gap-2 ${currentTabConfig.border} text-gray-400 hover:${currentTabConfig.color}`}
-        >
-          <Plus className="w-4 h-4" /> Novo Benefício para {currentTabConfig.label}
-        </button>
+        {(() => {
+          const remaining = BENEFIT_CATALOG.filter(
+            b => b.audience === activeTab && !cards.some(c => c.slug === b.slug)
+          ).length;
+          return remaining > 0 ? (
+            <button
+              onClick={() => addCard(activeTab)}
+              className={`w-full border-2 border-dashed rounded-2xl py-4 text-sm font-bold transition flex items-center justify-center gap-2 ${currentTabConfig.border} text-gray-400 hover:${currentTabConfig.color}`}
+            >
+              <Plus className="w-4 h-4" /> Novo Benefício para {currentTabConfig.label}
+              <span className="text-[10px] opacity-60">({remaining} disponíveis)</span>
+            </button>
+          ) : (
+            <div className={`w-full border-2 border-dashed rounded-2xl py-4 text-xs text-center text-gray-300 ${currentTabConfig.border}`}>
+              Todos os benefícios para {currentTabConfig.label} já foram adicionados
+            </div>
+          );
+        })()}
 
         {msg && (
           <div className={`fixed bottom-20 left-1/2 -translate-x-1/2 z-[100] px-6 py-3 rounded-2xl shadow-2xl font-bold text-sm max-w-[90vw] text-center ${
