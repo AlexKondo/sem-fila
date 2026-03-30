@@ -233,7 +233,7 @@ export default function EventHubClient({
                 onChange={e => handleVendorSelect(e.target.value)}
                 className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400 bg-white"
               >
-                <option value="">— Digitar email manualmente —</option>
+                <option value="">Selecione kiosks / barracas / food trucks existentes</option>
                 {availableVendors.length > 0
                   ? availableVendors.map(v => (
                       <option key={v.id} value={v.id}>
