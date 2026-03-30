@@ -33,11 +33,19 @@ export default async function OrgEventDetailPage({ params }: { params: Promise<{
     .eq('event_id', eventId)
     .order('invited_at', { ascending: false });
 
-  // Busca vendors com receita (pedidos do evento)
+  // Busca vendors do evento (para receita)
   const { data: vendors } = await supabase
     .from('vendors')
     .select('id, name')
     .eq('event_id', eventId);
+
+  // Busca todos os vendors convidáveis (kiosk e food_truck, não restaurant)
+  const { data: allVendors } = await supabase
+    .from('vendors')
+    .select('id, name, owner_id, profiles!vendors_owner_id_fkey(email)')
+    .eq('active', true)
+    .in('vendor_type', ['kiosk', 'food_truck'])
+    .order('name');
 
   // Receita por vendor
   const vendorRevenue: Record<string, number> = {};
@@ -81,6 +89,11 @@ export default async function OrgEventDetailPage({ params }: { params: Promise<{
         initialBooths={booths ?? []}
         initialInvitations={invitations ?? []}
         revenueData={revenueData}
+        availableVendors={(allVendors ?? []).map(v => ({
+          id: v.id,
+          name: v.name,
+          email: (v.profiles as any)?.email ?? '',
+        }))}
       />
     </main>
   );

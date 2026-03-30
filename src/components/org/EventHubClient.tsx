@@ -34,6 +34,12 @@ type RevenueItem = {
   revenue: number;
 };
 
+type AvailableVendor = {
+  id: string;
+  name: string;
+  email: string;
+};
+
 type EventData = {
   id: string;
   name: string;
@@ -65,11 +71,13 @@ export default function EventHubClient({
   initialBooths,
   initialInvitations,
   revenueData,
+  availableVendors = [],
 }: {
   event: EventData;
   initialBooths: Booth[];
   initialInvitations: Invitation[];
   revenueData: RevenueItem[];
+  availableVendors?: AvailableVendor[];
 }) {
   const [tab, setTab] = useState<Tab>('invitations');
   const [invitations, setInvitations] = useState<Invitation[]>(initialInvitations);
@@ -80,6 +88,7 @@ export default function EventHubClient({
   const [inviteFee, setInviteFee] = useState(String(event.default_booth_fee));
   const [inviteSending, setInviteSending] = useState(false);
   const [inviteError, setInviteError] = useState('');
+  const [selectedVendorId, setSelectedVendorId] = useState('');
 
   // ── Layout ──
   const GRID_SIZE = 12;
@@ -87,23 +96,39 @@ export default function EventHubClient({
   const [placingBooth, setPlacingBooth] = useState(false);
   const [savingLayout, setSavingLayout] = useState(false);
 
+  const handleVendorSelect = useCallback((vendorId: string) => {
+    setSelectedVendorId(vendorId);
+    if (vendorId) {
+      const vendor = availableVendors.find(v => v.id === vendorId);
+      if (vendor) setInviteEmail(vendor.email);
+    } else {
+      setInviteEmail('');
+    }
+  }, [availableVendors]);
+
   const sendInvite = useCallback(async () => {
     if (!inviteEmail.trim()) { setInviteError('Email obrigatório.'); return; }
     setInviteError(''); setInviteSending(true);
     const supabase = createClient();
 
-    const { data, error } = await supabase.from('event_vendor_invitations').insert({
+    const insertData: Record<string, any> = {
       event_id: event.id,
       vendor_email: inviteEmail.trim(),
       fee_amount: parseFloat(inviteFee) || 0,
-    }).select('*, vendors(name)').single();
+    };
+    if (selectedVendorId) insertData.vendor_id = selectedVendorId;
+
+    const { data, error } = await supabase.from('event_vendor_invitations')
+      .insert(insertData)
+      .select('*, vendors(name)').single();
 
     if (error) { setInviteError(error.message); setInviteSending(false); return; }
     setInvitations(prev => [data as Invitation, ...prev]);
     setInviteEmail('');
+    setSelectedVendorId('');
     setInviteFee(String(event.default_booth_fee));
     setInviteSending(false);
-  }, [inviteEmail, inviteFee, event.id, event.default_booth_fee]);
+  }, [inviteEmail, inviteFee, selectedVendorId, event.id, event.default_booth_fee]);
 
   const deleteInvite = useCallback(async (id: string) => {
     const supabase = createClient();
@@ -199,10 +224,31 @@ export default function EventHubClient({
           <div className="bg-white rounded-2xl shadow-sm p-4 space-y-3">
             <h3 className="font-semibold text-gray-900 text-sm">Convidar fornecedor</h3>
             {inviteError && <p className="text-red-600 text-xs">{inviteError}</p>}
+
+            {/* Selecionar vendor existente */}
+            {availableVendors.length > 0 && (
+              <div>
+                <label className="text-xs text-gray-500 mb-1 block">Selecionar fornecedor existente</label>
+                <select
+                  value={selectedVendorId}
+                  onChange={e => handleVendorSelect(e.target.value)}
+                  className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400 bg-white"
+                >
+                  <option value="">— Digitar email manualmente —</option>
+                  {availableVendors.map(v => (
+                    <option key={v.id} value={v.id}>
+                      {v.name} {v.email ? `(${v.email})` : ''}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            {/* Email + taxa + enviar */}
             <div className="flex gap-2">
               <input
                 type="email" placeholder="Email do fornecedor"
-                value={inviteEmail} onChange={e => setInviteEmail(e.target.value)}
+                value={inviteEmail} onChange={e => { setInviteEmail(e.target.value); setSelectedVendorId(''); }}
                 className="flex-1 border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400"
               />
               <input
@@ -228,7 +274,9 @@ export default function EventHubClient({
               <div key={inv.id} className="bg-white rounded-2xl shadow-sm p-4 flex items-center justify-between">
                 <div>
                   <div className="flex items-center gap-2">
-                    <p className="font-medium text-gray-900 text-sm">{inv.vendor_email}</p>
+                    <p className="font-medium text-gray-900 text-sm">
+                      {inv.vendors?.name ? `${inv.vendors.name} · ` : ''}{inv.vendor_email}
+                    </p>
                     <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${STATUS_COLORS[inv.status] ?? 'bg-gray-100 text-gray-500'}`}>
                       {STATUS_LABELS[inv.status] ?? inv.status}
                     </span>
