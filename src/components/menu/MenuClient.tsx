@@ -10,12 +10,37 @@ import type { MenuItem, Vendor } from '@/types/database';
 
 const P = '#ec5b13';
 
+// Configuração visual dos selos por slug
+const BADGE_CONFIG: Record<string, { label: string; bg: string; text: string; border: string; icon: string }> = {
+  destaque_plataforma: {
+    label: 'Destaque',
+    bg: 'bg-amber-50', text: 'text-amber-600', border: 'border-amber-200',
+    icon: 'M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z',
+  },
+  selo_top_vendas: {
+    label: 'Top Vendas',
+    bg: 'bg-orange-50', text: 'text-orange-600', border: 'border-orange-200',
+    icon: 'M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z',
+  },
+  painel_eficiencia: {
+    label: 'Atendimento Eficiente',
+    bg: 'bg-emerald-50', text: 'text-emerald-600', border: 'border-emerald-200',
+    icon: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z',
+  },
+  analise_cardapio: {
+    label: 'Preparo Rápido',
+    bg: 'bg-sky-50', text: 'text-sky-600', border: 'border-sky-200',
+    icon: 'M13 10V3L4 14h7v7l9-11h-7z',
+  },
+};
+
 interface MenuClientProps {
   vendor: Vendor;
   items: MenuItem[];
   mesa?: string;
   waitTime: string;
   hasFeaturedBadge?: boolean;
+  activeBadges?: string[];
 }
 
 interface Extra { name: string; price: number; }
@@ -86,7 +111,7 @@ const ItemList = memo(function ItemList({ items, waitTime, onAdd }: { items: Men
   );
 });
 
-export default function MenuClient({ vendor, items, mesa, waitTime, hasFeaturedBadge }: MenuClientProps) {
+export default function MenuClient({ vendor, items, mesa, waitTime, hasFeaturedBadge, activeBadges = [] }: MenuClientProps) {
   const [selectedCat, setSelectedCat] = useState('Todos');
   const [searchQuery, setSearchQuery] = useState('');
   const deferredSearchQuery = useDeferredValue(searchQuery);
@@ -246,14 +271,18 @@ export default function MenuClient({ vendor, items, mesa, waitTime, hasFeaturedB
               )}
             </div>
             <div>
-              <div className="flex items-center gap-1.5">
+              <div className="flex items-center gap-1.5 flex-wrap">
                 <h2 className="text-slate-900 text-lg font-bold leading-tight tracking-tight">{vendor.name}</h2>
-                {hasFeaturedBadge && (
-                  <span className="inline-flex items-center gap-0.5 bg-amber-50 text-amber-600 text-[9px] font-black px-1.5 py-0.5 rounded-full border border-amber-200 uppercase whitespace-nowrap">
-                    <svg className="w-2.5 h-2.5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-                    Destaque
-                  </span>
-                )}
+                {activeBadges.map(slug => {
+                  const cfg = BADGE_CONFIG[slug];
+                  if (!cfg) return null;
+                  return (
+                    <span key={slug} className={`inline-flex items-center gap-0.5 ${cfg.bg} ${cfg.text} text-[9px] font-black px-1.5 py-0.5 rounded-full border ${cfg.border} uppercase whitespace-nowrap`}>
+                      <svg className="w-2.5 h-2.5" fill="currentColor" viewBox="0 0 24 24"><path d={cfg.icon}/></svg>
+                      {cfg.label}
+                    </span>
+                  );
+                })}
               </div>
               <p className="text-xs text-slate-500">
                 {mesa ? `Mesa ${mesa} • ` : ''}{waitTime}

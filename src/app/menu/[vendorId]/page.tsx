@@ -53,19 +53,26 @@ export default async function MenuPage({ params, searchParams }: Props) {
     { data: items },
     { data: pastOrders },
     { count: activeOrders },
-    { data: featuredFeature },
-    { data: featuredSub },
+    { data: allFeatures },
+    { data: vendorSubs },
   ] = await Promise.all([
     supabase.from('menu_items').select('*').eq('vendor_id', vendor.id).eq('available', true).order('position', { ascending: true }),
     supabase.from('orders').select('created_at, updated_at').eq('vendor_id', vendor.id).eq('status', 'delivered').order('created_at', { ascending: false }).limit(3),
     supabase.from('orders').select('*', { count: 'exact', head: true }).eq('vendor_id', vendor.id).in('status', ['received', 'preparing', 'almost_ready']),
-    supabase.from('premium_features').select('free_for_all').eq('slug', 'destaque_plataforma').eq('active', true).single(),
-    supabase.from('vendor_subscriptions').select('active, expires_at').eq('vendor_id', vendor.id).eq('feature', 'destaque_plataforma').single(),
+    supabase.from('premium_features').select('slug, free_for_all').eq('active', true),
+    supabase.from('vendor_subscriptions').select('feature, active, expires_at').eq('vendor_id', vendor.id),
   ]);
 
-  // Verifica selo destaque: free_for_all ou subscription ativa
-  const hasFeaturedBadge = featuredFeature?.free_for_all === true ||
-    (featuredSub?.active === true && (!featuredSub.expires_at || new Date(featuredSub.expires_at) > new Date()));
+  // Calcula selos ativos: free_for_all ou subscription ativa e não expirada
+  const now = new Date();
+  const freeForAllSlugs = new Set((allFeatures || []).filter(f => f.free_for_all).map(f => f.slug));
+  const activeSubs = new Set(
+    (vendorSubs || [])
+      .filter(s => s.active && (!s.expires_at || new Date(s.expires_at) > now))
+      .map(s => s.feature)
+  );
+  const activeBadges = [...new Set([...freeForAllSlugs, ...activeSubs])];
+  const hasFeaturedBadge = activeBadges.includes('destaque_plataforma');
 
   let realAvgTime = 0; // Começa em 0 para indicar que não há histórico real
 
@@ -97,6 +104,7 @@ export default async function MenuPage({ params, searchParams }: Props) {
       mesa={mesa}
       waitTime={waitTime}
       hasFeaturedBadge={hasFeaturedBadge}
+      activeBadges={activeBadges}
     />
   );
 }

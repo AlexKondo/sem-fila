@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import Link from 'next/link';
-import { Users, Building2, CalendarDays, Store, ShoppingBag, TrendingUp, DollarSign, Settings, Award, Trophy, BarChart2, Sparkles, Zap } from 'lucide-react';
+import { Users, Building2, CalendarDays, Store, ShoppingBag, TrendingUp, DollarSign, Settings, Award, Trophy, BarChart2, Sparkles } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
 import LogoutButton from '@/components/ui/LogoutButton';
 
@@ -133,8 +133,7 @@ export default async function AdminDashboardPage() {
                 { href: '/dashboard/admin/organizations', label: 'Organizações', icon: Building2, desc: 'Empresas e grandes organizadores' },
                 { href: '/dashboard/admin/gamification', label: 'Níveis de Bonificação', icon: Trophy, desc: 'Configure bronze, prata, ouro e platina' },
                 { href: '/dashboard/admin/ranking', label: 'Ranking & Monetização', icon: BarChart2, desc: 'Rankings globais e assinaturas premium' },
-                { href: '/dashboard/admin/premium-features', label: 'Benefícios Premium', icon: Sparkles, desc: 'Configure benefícios que vendors podem comprar' },
-                { href: '/dashboard/admin/auto-benefits', label: 'Benefícios Automáticos', icon: Zap, desc: 'Regras por faturamento, eficiência e avaliação' },
+                { href: '/dashboard/admin/benefits', label: 'Benefícios & Metas', icon: Sparkles, desc: 'Benefícios premium e metas automáticas em uma tela' },
                 { href: '/dashboard/admin/settings', label: 'Planos e Preços', icon: DollarSign, desc: 'Gerencie quanto cada quiosque paga' },
               ].map(({ href, label, icon: Icon, desc }) => (
                 <Link
