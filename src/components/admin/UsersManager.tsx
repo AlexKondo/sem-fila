@@ -177,6 +177,19 @@ const UserCard = React.memo(function UserCard({
               className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
             />
           </div>
+          <div>
+            <label className="text-xs text-gray-500 ml-1">Cargo</label>
+            <select
+              value={u.role}
+              disabled={savingId === u.id}
+              onChange={(e) => onChangeRole(u.id, e.target.value as AppRole)}
+              className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 disabled:opacity-50"
+            >
+              {(Object.keys(ROLE_LABELS) as AppRole[]).map((role) => (
+                <option key={role} value={role}>{ROLE_LABELS[role]}</option>
+              ))}
+            </select>
+          </div>
         </div>
       ) : (
         <div className="flex items-start justify-between">
@@ -239,38 +252,24 @@ const UserCard = React.memo(function UserCard({
             </p>
           </div>
 
-          <div className="flex items-center gap-2 ml-3 flex-shrink-0">
-            {!isSelf && (
-              <>
-                <select
-                  value={u.role}
-                  disabled={savingId === u.id}
-                  onChange={(e) => onChangeRole(u.id, e.target.value as AppRole)}
-                  className="border border-gray-200 rounded-xl px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-orange-400 disabled:opacity-50"
-                >
-                  {(Object.keys(ROLE_LABELS) as AppRole[]).map((role) => (
-                    <option key={role} value={role}>{ROLE_LABELS[role]}</option>
-                  ))}
-                </select>
-
-                <button
-                  onClick={() => onStartEdit(u)}
-                  className="p-1.5 rounded-lg text-gray-400 hover:bg-gray-100 hover:text-gray-600"
-                  title="Editar"
-                >
-                  <Pencil className="w-4 h-4" />
-                </button>
-
-                <button
-                  onClick={() => onDelete(u)}
-                  className="p-1.5 rounded-lg text-gray-400 hover:bg-red-50 hover:text-red-500"
-                  title="Excluir"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
-              </>
-            )}
-          </div>
+          {!isSelf && (
+            <div className="flex items-center gap-1 ml-3 flex-shrink-0">
+              <button
+                onClick={() => onStartEdit(u)}
+                className="p-1.5 rounded-lg text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+                title="Editar"
+              >
+                <Pencil className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => onDelete(u)}
+                className="p-1.5 rounded-lg text-gray-400 hover:bg-red-50 hover:text-red-500"
+                title="Excluir"
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
+            </div>
+          )}
         </div>
       )}
     </div>
