@@ -119,7 +119,7 @@ export default function AdminSettingsClient() {
     ];
 
     for (const item of updates) {
-      const { error } = await supabase.from('platform_config').upsert({ key: item.key, value: item.value });
+      const { error } = await supabase.from('platform_config').upsert({ key: item.key, value: item.value }, { onConflict: 'key' });
       if (error) errors.push(`Config "${item.key}": ${error.message}`);
     }
 

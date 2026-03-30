@@ -1,10 +1,16 @@
 -- Políticas de escrita para platform_admin em platform_config e subscription_plans
--- Ambas tabelas só tinham SELECT, impedindo o admin de salvar qualquer coisa.
 
 -- ========== platform_config ==========
-CREATE POLICY "Admin gerencia configs"
+CREATE POLICY "Admin insere configs"
   ON public.platform_config
-  FOR ALL
+  FOR INSERT
+  WITH CHECK (
+    EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'platform_admin')
+  );
+
+CREATE POLICY "Admin atualiza configs"
+  ON public.platform_config
+  FOR UPDATE
   USING (
     EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'platform_admin')
   )
@@ -13,12 +19,26 @@ CREATE POLICY "Admin gerencia configs"
   );
 
 -- ========== subscription_plans ==========
-CREATE POLICY "Admin gerencia planos"
+CREATE POLICY "Admin insere planos"
   ON public.subscription_plans
-  FOR ALL
+  FOR INSERT
+  WITH CHECK (
+    EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'platform_admin')
+  );
+
+CREATE POLICY "Admin atualiza planos"
+  ON public.subscription_plans
+  FOR UPDATE
   USING (
     EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'platform_admin')
   )
   WITH CHECK (
+    EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'platform_admin')
+  );
+
+CREATE POLICY "Admin deleta planos"
+  ON public.subscription_plans
+  FOR DELETE
+  USING (
     EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'platform_admin')
   );
