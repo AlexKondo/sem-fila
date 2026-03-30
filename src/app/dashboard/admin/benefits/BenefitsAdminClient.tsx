@@ -532,8 +532,13 @@ export default function BenefitsAdminClient() {
                           value={feature.name}
                           onChange={e => updateFeature(feature.id, 'name', e.target.value)}
                           placeholder="Ex: Destaque Plataforma"
-                          className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/30"
+                          className={`w-full border rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/30 ${
+                            feature._isNew && !feature.name ? 'border-red-400 bg-red-50' : 'border-gray-200'
+                          }`}
                         />
+                        {feature._isNew && !feature.name && (
+                          <p className="text-[10px] text-red-500 font-bold mt-0.5">Obrigatório</p>
+                        )}
                       </div>
                       <div>
                         <label className="text-[11px] font-bold text-gray-500 uppercase block mb-1">Slug</label>
@@ -675,12 +680,19 @@ export default function BenefitsAdminClient() {
                             </div>
                           </div>
 
-                          <input
-                            value={rule.name}
-                            onChange={e => updateRule(rule.id, 'name', e.target.value)}
-                            placeholder="Nome da meta (ex: Faturamento > R$ 5.000)"
-                            className="w-full border border-slate-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/30"
-                          />
+                          <div>
+                            <input
+                              value={rule.name}
+                              onChange={e => updateRule(rule.id, 'name', e.target.value)}
+                              placeholder="Nome da meta (ex: Faturamento > R$ 5.000)"
+                              className={`w-full border rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/30 ${
+                                rule._isNew && !rule.name ? 'border-red-400 bg-red-50' : 'border-slate-200'
+                              }`}
+                            />
+                            {rule._isNew && !rule.name && (
+                              <p className="text-[10px] text-red-500 font-bold mt-0.5">Preencha o nome para salvar esta meta</p>
+                            )}
+                          </div>
 
                           <div className="grid grid-cols-3 gap-2">
                             <select value={rule.metric} onChange={e => updateRule(rule.id, 'metric', e.target.value)} className="border border-slate-200 rounded-lg px-2 py-1.5 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-purple-500/30">
