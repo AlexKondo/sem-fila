@@ -13,27 +13,27 @@ export default async function VendorEventPage() {
   const { vendor } = await resolveVendor(supabase, user.id, { select: 'id, name, event_id' });
   if (!vendor) redirect('/dashboard/vendor');
 
+  // 1. Busca convites pendentes DESTE vendor específico
+  //    - Por vendor_id (convite vinculado direto)
+  //    - Ou por email sem vendor_id (convite genérico por email)
   const { data: profile } = await supabase.from('profiles').select('email').eq('id', user.id).single();
-  const profileEmail = profile?.email;
-  const authEmail = user.email;
+  const emails = [...new Set([user.email, profile?.email].filter(Boolean))];
 
-  // 1. Busca convites SEM join (evita falha por RLS na tabela events)
-  // Filtra apenas convites do vendor atual:
-  //   - vendor_id = este vendor  OU
-  //   - vendor_email = email do dono E vendor_id é nulo (convite por email, sem vendor vinculado ainda)
-  const orConditions = [`vendor_id.eq.${vendor.id}`];
-  if (authEmail) orConditions.push(`and(vendor_email.eq.${authEmail},vendor_id.is.null)`);
-  if (profileEmail && profileEmail !== authEmail) orConditions.push(`and(vendor_email.eq.${profileEmail},vendor_id.is.null)`);
+  const conditions = [`vendor_id.eq.${vendor.id}`];
+  for (const email of emails) {
+    conditions.push(`and(vendor_email.eq.${email},vendor_id.is.null)`);
+  }
 
   const { data: rawInvitations } = await supabase
     .from('event_vendor_invitations')
     .select('*')
-    .or(orConditions.join(','))
+    .or(conditions.join(','))
     .eq('status', 'pending')
     .order('invited_at', { ascending: false });
 
-  // 2. Busca dados dos eventos separadamente (sem depender de RLS do vendor)
-  const eventIds = [...new Set((rawInvitations ?? []).map(i => i.event_id).filter(Boolean))];
+  // 2. Enriquece convites com dados do evento (queries separadas por causa de RLS)
+  const invitations = rawInvitations ?? [];
+  const eventIds = [...new Set(invitations.map(i => i.event_id).filter(Boolean))];
 
   let eventsMap: Record<string, any> = {};
   if (eventIds.length > 0) {
@@ -45,37 +45,23 @@ export default async function VendorEventPage() {
     if (events) {
       const orgIds = [...new Set(events.map(e => e.organization_id).filter(Boolean))];
       let orgsMap: Record<string, any> = {};
-
       if (orgIds.length > 0) {
-        const { data: orgs } = await supabase
-          .from('organizations')
-          .select('id, name')
-          .in('id', orgIds);
-        if (orgs) {
-          for (const org of orgs) orgsMap[org.id] = org;
-        }
+        const { data: orgs } = await supabase.from('organizations').select('id, name').in('id', orgIds);
+        if (orgs) for (const org of orgs) orgsMap[org.id] = org;
       }
-
       for (const ev of events) {
-        eventsMap[ev.id] = {
-          ...ev,
-          organizations: orgsMap[ev.organization_id] || null,
-        };
+        eventsMap[ev.id] = { ...ev, organizations: orgsMap[ev.organization_id] || null };
       }
     }
   }
 
-  // 3. Monta os convites com dados do evento embutidos
-  const invitations = (rawInvitations ?? []).map(inv => ({
+  const enrichedInvitations = invitations.map(inv => ({
     ...inv,
     events: eventsMap[inv.event_id] || null,
   }));
 
-  // 4. Busca evento ativo e barraca
-  const [
-    { data: activeEvent },
-    { data: booth }
-  ] = await Promise.all([
+  // 3. Busca evento ativo e barraca
+  const [{ data: activeEvent }, { data: booth }] = await Promise.all([
     vendor.event_id
       ? supabase.from('events').select('*, organizations(name)').eq('id', vendor.event_id).single()
       : Promise.resolve({ data: null }),
@@ -87,7 +73,7 @@ export default async function VendorEventPage() {
       <VendorEventClient
         vendorId={vendor.id}
         activeEvent={activeEvent}
-        invitations={invitations}
+        invitations={enrichedInvitations}
         booth={booth}
       />
     </div>
