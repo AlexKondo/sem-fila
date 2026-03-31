@@ -50,7 +50,7 @@ export default async function VendorDashboardPage() {
     <>
       <div className="max-w-2xl mx-auto px-4 pb-2 text-center">
         <div className="inline-flex items-center gap-2">
-          <span className="text-sm font-bold text-slate-900">Pedidos</span>
+          <span className="text-sm font-bold text-slate-900 dark:text-white">Pedidos</span>
           {pendingCount > 0 && (
             <span className="text-[11px] font-bold px-2 py-0.5 rounded-full text-white" style={{ backgroundColor: P }}>
               {pendingCount}

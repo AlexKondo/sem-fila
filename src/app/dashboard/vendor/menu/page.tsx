@@ -23,7 +23,7 @@ export default async function VendorMenuPage() {
     .order('position', { ascending: true });
 
   return (
-    <main className="min-h-screen bg-gray-50">
+    <main className="min-h-screen bg-gray-50 dark:bg-slate-900 transition-colors duration-300">
       <MenuManager 
         initialItems={items ?? []} 
         vendorId={vendor.id} 
