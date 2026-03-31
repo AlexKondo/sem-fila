@@ -1,8 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
-import { User, Phone, Mail, Shield, LogOut } from 'lucide-react';
+import { User, Phone, Mail, Shield, CreditCard, Trash2, ShieldCheck } from 'lucide-react';
 import LogoutButton from '@/components/ui/LogoutButton';
 import type { Profile, AppRole } from '@/types/database';
 
@@ -182,13 +182,100 @@ export default function ProfileForm({ profile, email }: Props) {
           {saving ? 'Salvando...' : 'Salvar alterações'}
         </button>
 
-        <div className="pt-4 border-t border-gray-100 flex flex-col items-center gap-2">
-          <p className="text-[10px] text-gray-400 font-medium uppercase tracking-widest">Gerenciar Conta</p>
-          <LogoutButton 
-            className="w-full flex items-center justify-center gap-2 text-red-500 font-bold text-sm py-3 rounded-xl border-2 border-transparent hover:bg-red-50 hover:border-red-100 transition-all active:scale-95"
-          />
-        </div>
       </form>
+
+      {/* Cartão Salvo */}
+      <SavedCardSection />
+
+      {/* Sair */}
+      <div className="pt-4 border-t border-gray-100 flex flex-col items-center gap-2">
+        <p className="text-[10px] text-gray-400 font-medium uppercase tracking-widest">Gerenciar Conta</p>
+        <LogoutButton
+          className="w-full flex items-center justify-center gap-2 text-red-500 font-bold text-sm py-3 rounded-xl border-2 border-transparent hover:bg-red-50 hover:border-red-100 transition-all active:scale-95"
+        />
+      </div>
+    </div>
+  );
+}
+
+function SavedCardSection() {
+  const [cardLast4, setCardLast4] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [removing, setRemoving] = useState(false);
+
+  useEffect(() => {
+    const supabase = createClient();
+    supabase.auth.getUser().then(async ({ data: { user } }) => {
+      if (!user) { setLoading(false); return; }
+      const { data } = await supabase
+        .from('profiles')
+        .select('asaas_card_last4')
+        .eq('id', user.id)
+        .single();
+      setCardLast4(data?.asaas_card_last4 ?? null);
+      setLoading(false);
+    });
+  }, []);
+
+  async function handleRemoveCard() {
+    if (!confirm('Remover o cartão salvo? Você precisará digitá-lo novamente na próxima compra.')) return;
+    setRemoving(true);
+    const supabase = createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      await supabase.from('profiles').update({
+        asaas_card_token: null,
+        asaas_card_last4: null,
+      }).eq('id', user.id);
+      setCardLast4(null);
+    }
+    setRemoving(false);
+  }
+
+  if (loading) return null;
+
+  return (
+    <div className="pt-4 border-t border-gray-100 space-y-3">
+      <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Pagamento</p>
+
+      {cardLast4 ? (
+        <>
+          <div className="relative overflow-hidden bg-slate-900 rounded-2xl p-5 text-white shadow-lg">
+            <div className="absolute top-0 right-0 p-4 opacity-20">
+              <CreditCard className="w-14 h-14" />
+            </div>
+            <div className="relative z-10">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-3">Cartão Salvo</p>
+              <p className="text-lg font-black tracking-tight">**** **** **** {cardLast4}</p>
+              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">Ativo para compras</p>
+            </div>
+            <div className="absolute inset-0 bg-gradient-to-br from-orange-500/10 to-transparent pointer-events-none" />
+          </div>
+
+          <div className="flex items-start gap-3 bg-emerald-50/50 rounded-xl p-3">
+            <ShieldCheck className="w-4 h-4 text-emerald-500 mt-0.5 flex-shrink-0" />
+            <p className="text-[11px] text-slate-500 leading-relaxed">
+              Dados sensíveis não são armazenados. Usamos token seguro do processador de pagamentos.
+            </p>
+          </div>
+
+          <button
+            onClick={handleRemoveCard}
+            disabled={removing}
+            className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-white border border-red-100 text-red-500 font-bold text-sm hover:bg-red-50 transition-all active:scale-95 disabled:opacity-50"
+          >
+            <Trash2 className="w-4 h-4" />
+            {removing ? 'Removendo...' : 'Remover cartão'}
+          </button>
+        </>
+      ) : (
+        <div className="flex items-center gap-3 bg-slate-50 rounded-xl p-4">
+          <CreditCard className="w-5 h-5 text-slate-300 flex-shrink-0" />
+          <p className="text-sm text-slate-400">
+            Nenhum cartão salvo. Ao pagar com cartão, você poderá salvá-lo.
+          </p>
+        </div>
+      )}
     </div>
   );
 }
