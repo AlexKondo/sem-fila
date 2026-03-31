@@ -33,6 +33,37 @@ export default function VendorEventClient({ vendorId, activeEvent, invitations: 
     setInvites(initialInvites || []);
   }, [initialInvites]);
 
+  // Realtime: novo convite enviado pelo event manager aparece imediatamente
+  useEffect(() => {
+    if (!vendorId) return;
+    const supabase = createClient();
+
+    const channel = supabase
+      .channel(`vendor-invites-${vendorId}`)
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'event_vendor_invitations', filter: `vendor_id=eq.${vendorId}` },
+        async (payload) => {
+          const newInvite = payload.new as any;
+          // Busca dados do evento para enriquecer o convite
+          const { data: ev } = await supabase
+            .from('events')
+            .select('id, name, location, start_date, start_time, organizations(name), layout_url, rules, address')
+            .eq('id', newInvite.event_id)
+            .single();
+
+          setInvites(prev => {
+            // Evita duplicata
+            if (prev.some(i => i.id === newInvite.id)) return prev;
+            return [{ ...newInvite, events: ev ?? null }, ...prev];
+          });
+        }
+      )
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, [vendorId]);
+
   const handleInvite = useCallback(async (inviteId: string, action: 'accepted' | 'rejected') => {
     setActingOn(inviteId);
     const supabase = createClient();
