@@ -71,7 +71,7 @@ function LoginPageContent() {
     const role = (profile as any)?.role;
 
     const ADMIN_EMAIL = 'alexandre.kondo@gmail.com';
-    let dest = '/login-user';
+    let dest = '/scan';
     if (role === 'platform_admin' || authData.user.email === ADMIN_EMAIL) {
       dest = '/dashboard/admin';
     } else if (role === 'org_admin') {
@@ -164,18 +164,10 @@ function LoginPageContent() {
             </button>
           </form>
 
-          <div className="text-center mt-8 pb-12 space-y-3">
+          <div className="text-center mt-8 pb-12">
             <p className="text-slate-500 text-sm">
               Não tem conta?{' '}
-              <Link href="/register" className="font-bold ml-1" style={{ color: P }}>Criar conta de fornecedor</Link>
-            </p>
-            <p className="text-slate-400 text-xs">
-              Organiza eventos?{' '}
-              <Link href="/register-org" className="font-semibold hover:underline text-purple-600">Criar conta de organizador</Link>
-            </p>
-            <p className="text-slate-400 text-xs">
-              É cliente?{' '}
-              <Link href="/login-user" className="font-semibold hover:underline text-slate-500">Acessar minha conta</Link>
+              <Link href="/register" className="font-bold ml-1" style={{ color: P }}>Criar conta</Link>
             </p>
           </div>
         </div>
