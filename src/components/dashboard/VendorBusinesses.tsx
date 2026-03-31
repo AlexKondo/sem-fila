@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
+import ThemeToggle from '@/components/ui/ThemeToggle';
 
 export default function VendorBusinesses({ vendors, currentVendorId }: { vendors: any[]; currentVendorId: string }) {
   const [showModal, setShowModal] = useState(false);
@@ -89,7 +90,10 @@ export default function VendorBusinesses({ vendors, currentVendorId }: { vendors
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm px-4">
           <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 w-full max-w-md shadow-xl border border-slate-100 dark:border-slate-800">
             <div className="flex items-center justify-between mb-5">
-              <h3 className="text-lg font-bold text-slate-900 dark:text-white">Nova Marca</h3>
+              <div className="flex items-center gap-3">
+                <ThemeToggle />
+                <h3 className="text-lg font-bold text-slate-900 dark:text-white">Nova Marca</h3>
+              </div>
               <button onClick={() => { setShowModal(false); setError(''); }} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-xl leading-none">&times;</button>
             </div>
 

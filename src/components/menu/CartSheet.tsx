@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { formatCurrency } from '@/lib/utils';
 import type { Vendor } from '@/types/database';
 import { createClient } from '@/lib/supabase/client';
+import ThemeToggle from '@/components/ui/ThemeToggle';
 
 const STORAGE_KEY = 'qp_customer';
 const P = '#ec5b13';
@@ -467,13 +468,16 @@ export default function CartSheet({ vendor, tableNumber }: CartSheetProps) {
       {isOpen && (
         <div className="fixed inset-0 z-50 flex flex-col justify-end">
           <div className="absolute inset-0 bg-black/40" onClick={() => setIsOpen(false)} />
-          <div className="relative bg-white rounded-t-3xl max-h-[90vh] flex flex-col">
+          <div className="relative bg-white dark:bg-slate-900 rounded-t-3xl max-h-[90vh] flex flex-col border-t dark:border-slate-800 shadow-2xl">
             <div className="flex justify-center pt-3 pb-2">
-              <div className="w-10 h-1 bg-slate-200 rounded-full" />
+              <div className="w-10 h-1 bg-slate-200 dark:bg-slate-800 rounded-full" />
             </div>
-            <div className="flex items-center justify-between px-5 pb-3 border-b border-slate-100">
-              <h2 className="font-bold text-slate-900 text-lg">{step === 'identify' ? 'Seus dados' : step === 'pix' ? 'Pagamento PIX' : 'Seu pedido'}</h2>
-              <button onClick={() => setIsOpen(false)} className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500">
+            <div className="flex items-center justify-between px-5 pb-3 border-b border-slate-100 dark:border-slate-800">
+              <div className="flex items-center gap-3">
+                <ThemeToggle />
+                <h2 className="font-bold text-slate-900 dark:text-white text-lg">{step === 'identify' ? 'Seus dados' : step === 'pix' ? 'Pagamento PIX' : 'Seu pedido'}</h2>
+              </div>
+              <button onClick={() => setIsOpen(false)} className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>

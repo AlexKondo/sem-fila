@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { Sparkles, Clock, ImageIcon, Type, ChevronDown } from 'lucide-react';
 import VendorPlansModal from './VendorPlansModal';
+import ThemeToggle from '@/components/ui/ThemeToggle';
 
 const P = '#ec5b13';
 
@@ -659,15 +660,19 @@ export default function VendorSettingsForm({ vendor, subscription }: { vendor: a
 
       {/* Modal de Confirmação de Exclusão */}
       {showDeleteModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
-          <div className="bg-white rounded-3xl p-6 w-full max-w-md shadow-2xl border border-red-100">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm px-4">
+          <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 w-full max-w-md shadow-2xl border border-red-100 dark:border-red-900/20">
+            <div className="flex justify-between items-center mb-4">
+              <ThemeToggle />
+              <div className="w-8" />
+            </div>
             <div className="flex flex-col items-center text-center mb-5">
-              <div className="w-14 h-14 rounded-full bg-red-100 flex items-center justify-center mb-3">
-                <svg className="w-7 h-7 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" /></svg>
+              <div className="w-14 h-14 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center mb-3">
+                <svg className="w-7 h-7 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" /></svg>
               </div>
-              <h3 className="text-lg font-black text-slate-900">Tem certeza absoluta?</h3>
-              <p className="text-sm text-slate-500 mt-2 leading-relaxed">
-                Esta ação vai <span className="font-bold text-red-600">apagar permanentemente</span> a marca <span className="font-bold">&quot;{vendor.name}&quot;</span> e todos os seus dados:
+              <h3 className="text-lg font-black text-slate-900 dark:text-white">Tem certeza absoluta?</h3>
+              <p className="text-sm text-slate-500 dark:text-slate-400 mt-2 leading-relaxed">
+                Esta ação vai <span className="font-bold text-red-600 dark:text-red-400">apagar permanentemente</span> a marca <span className="font-bold">&quot;{vendor.name}&quot;</span> e todos os seus dados:
               </p>
               <ul className="text-xs text-slate-500 mt-3 space-y-1 text-left w-full bg-red-50 p-3 rounded-xl">
                 <li className="flex items-center gap-2"><span className="text-red-400">&#10005;</span> Todos os pedidos</li>
@@ -686,7 +691,7 @@ export default function VendorSettingsForm({ vendor, subscription }: { vendor: a
               <button
                 type="button"
                 onClick={() => { setShowDeleteModal(false); setDeleteError(''); }}
-                className="flex-1 h-12 bg-slate-100 text-slate-600 font-bold rounded-xl text-sm transition hover:bg-slate-200"
+                className="flex-1 h-12 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 font-bold rounded-xl text-sm transition hover:bg-slate-200 dark:hover:bg-slate-700"
               >
                 Cancelar
               </button>

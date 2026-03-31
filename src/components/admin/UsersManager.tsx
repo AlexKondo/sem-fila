@@ -5,6 +5,7 @@ import React from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { formatDate } from '@/lib/utils';
 import { Copy, Check, Trash2, Pencil, X, Save, Mail, Phone, CreditCard, Cake } from 'lucide-react';
+import ThemeToggle from '@/components/ui/ThemeToggle';
 import type { AppRole } from '@/types/database';
 
 const ROLE_LABELS: Record<AppRole, string> = {
@@ -423,8 +424,11 @@ export default function UsersManager({ initialUsers, currentUserId }: Props) {
       {/* Modal de confirmao de excluso */}
       {deleteConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 dark:bg-black/60 backdrop-blur-sm">
-          <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 mx-4 max-w-sm w-full shadow-2xl border border-slate-100 dark:border-slate-800 animate-in fade-in zoom-in duration-200">
-            <h3 className="font-bold text-gray-900 dark:text-white text-base">Excluir usurio?</h3>
+          <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 mx-4 max-w-sm w-full shadow-2xl border border-slate-100 dark:border-slate-800 animate-in fade-in zoom-in duration-200 relative">
+            <div className="absolute top-4 left-4">
+              <ThemeToggle />
+            </div>
+            <h3 className="font-bold text-gray-900 dark:text-white text-base mt-2">Excluir usurio?</h3>
             <p className="text-sm text-gray-500 dark:text-slate-400 mt-2">
               Tem certeza que deseja excluir <strong>{deleteConfirm.name ?? 'Sem nome'}</strong>?
               Esta ao nǜo pode ser desfeita.

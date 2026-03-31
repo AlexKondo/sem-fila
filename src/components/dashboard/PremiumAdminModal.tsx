@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { X, Plus, Trash2, Save } from 'lucide-react';
+import ThemeToggle from '@/components/ui/ThemeToggle';
 import type { PremiumFeature, AutoBenefitRule, AutoBenefitMetric, AutoBenefitOperator } from '@/types/database';
 
 const METRIC_OPTIONS: { value: AutoBenefitMetric; label: string }[] = [
@@ -177,27 +178,30 @@ export default function PremiumAdminModal({ isOpen, onClose }: Props) {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[9999] flex items-start justify-center bg-black/50 p-4 overflow-y-auto">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl my-8">
+    <div className="fixed inset-0 z-[9999] flex items-start justify-center bg-black/50 backdrop-blur-sm p-4 overflow-y-auto">
+      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-2xl my-8 border dark:border-slate-800">
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b">
-          <h2 className="text-lg font-bold text-slate-900">Gerenciar Benefícios e Metas</h2>
-          <button onClick={onClose} className="p-1 rounded-lg hover:bg-slate-100">
-            <X className="w-5 h-5 text-slate-400" />
-          </button>
+        <div className="flex items-center justify-between p-4 border-b dark:border-slate-800">
+          <h2 className="text-lg font-bold text-slate-900 dark:text-white">Gerenciar Benefícios e Metas</h2>
+          <div className="flex items-center gap-2">
+            <ThemeToggle />
+            <button onClick={onClose} className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+              <X className="w-5 h-5 text-slate-400" />
+            </button>
+          </div>
         </div>
 
         {/* Tabs */}
-        <div className="flex border-b">
+        <div className="flex border-b dark:border-slate-800">
           <button
             onClick={() => setTab('features')}
-            className={`flex-1 py-3 text-sm font-bold transition ${tab === 'features' ? 'text-orange-600 border-b-2 border-orange-500' : 'text-slate-400'}`}
+            className={`flex-1 py-3 text-sm font-bold transition-all ${tab === 'features' ? 'text-orange-600 border-b-2 border-orange-500 bg-orange-50/10' : 'text-slate-400 hover:text-slate-500'}`}
           >
             Benefícios Premium ({features.length})
           </button>
           <button
             onClick={() => setTab('rules')}
-            className={`flex-1 py-3 text-sm font-bold transition ${tab === 'rules' ? 'text-orange-600 border-b-2 border-orange-500' : 'text-slate-400'}`}
+            className={`flex-1 py-3 text-sm font-bold transition-all ${tab === 'rules' ? 'text-orange-600 border-b-2 border-orange-500 bg-orange-50/10' : 'text-slate-400 hover:text-slate-500'}`}
           >
             Metas Automáticas ({rules.length})
           </button>

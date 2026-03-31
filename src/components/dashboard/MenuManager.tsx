@@ -8,6 +8,7 @@ import { MenuItemSchema } from '@/lib/validations/menu';
 import { Plus, Edit2, Trash2, ToggleLeft, ToggleRight } from 'lucide-react';
 import type { MenuItem } from '@/types/database';
 import VendorPlansModal from './VendorPlansModal';
+import ThemeToggle from '@/components/ui/ThemeToggle';
 
 interface MenuManagerProps {
   initialItems: MenuItem[];
@@ -219,11 +220,14 @@ export default function MenuManager({ initialItems, vendorId, aiEnabled, aiCredi
 
       {/* Modal de formulário */}
       {isFormOpen && editingItem && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40">
-          <div className="bg-white dark:bg-slate-800 rounded-t-3xl w-full max-w-lg p-6 space-y-4 max-h-[90vh] overflow-y-auto border-t dark:border-slate-700">
-            <h2 className="text-lg font-bold text-gray-900 dark:text-white">
-              {editingItem.id ? 'Editar item' : 'Novo item'}
-            </h2>
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 backdrop-blur-sm">
+          <div className="bg-white dark:bg-slate-900 rounded-t-3xl w-full max-w-lg p-6 space-y-4 max-h-[90vh] overflow-y-auto border-t dark:border-slate-800 shadow-2xl relative">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-bold text-gray-900 dark:text-white">
+                {editingItem.id ? 'Editar item' : 'Novo item'}
+              </h2>
+              <ThemeToggle />
+            </div>
 
             {formError && (
               <div className="bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-400 text-sm px-3 py-2 rounded-lg">{formError}</div>

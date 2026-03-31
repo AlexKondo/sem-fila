@@ -3,6 +3,7 @@
 import React from 'react';
 import { Check, Zap, ShieldCheck, X } from 'lucide-react';
 import VendorCheckoutModal from './VendorCheckoutModal';
+import ThemeToggle from '@/components/ui/ThemeToggle';
 
 const P = '#ec5b13';
 
@@ -144,6 +145,9 @@ export default function VendorPlansModal({ isOpen, onClose, onlyShowAi, vendorId
     <>
       <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-in fade-in duration-300">
         <div className="bg-white dark:bg-slate-950 rounded-[40px] w-full max-w-4xl max-h-[90vh] overflow-y-auto relative shadow-2xl no-scrollbar border dark:border-slate-800">
+          <div className="absolute top-6 left-6 z-20">
+            <ThemeToggle />
+          </div>
           <button
             onClick={onClose}
             className="absolute top-6 right-6 p-2 rounded-full bg-slate-50 dark:bg-slate-800 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-slate-600 dark:hover:text-slate-200 transition-all z-20"

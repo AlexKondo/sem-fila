@@ -7,6 +7,7 @@ import { formatCurrency, getItemImage } from '@/lib/utils';
 import { createClient } from '@/lib/supabase/client';
 import CartSheet from './CartSheet';
 import type { MenuItem, Vendor } from '@/types/database';
+import ThemeToggle from '@/components/ui/ThemeToggle';
 
 const P = '#ec5b13';
 
@@ -63,7 +64,7 @@ interface Extra { name: string; price: number; }
 /* ─── Menu Item Card (memoizado) ─── */
 const MenuItemCard = memo(function MenuItemCard({ item, waitTime, onAdd }: { item: MenuItem; waitTime: string; onAdd: (item: MenuItem) => void }) {
   return (
-    <div className="flex gap-4 p-3 bg-white rounded-2xl shadow-sm border border-slate-100">
+    <div className="flex gap-4 p-3 bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700">
       <div className="relative w-28 h-28 shrink-0 rounded-xl overflow-hidden">
         <Image 
           src={item.image_url || getItemImage(item.name, item.category ?? undefined)} 
@@ -110,7 +111,7 @@ const MenuItemCard = memo(function MenuItemCard({ item, waitTime, onAdd }: { ite
 const ItemList = memo(function ItemList({ items, waitTime, onAdd }: { items: MenuItem[]; waitTime: string; onAdd: (item: MenuItem) => void }) {
   if (items.length === 0) {
     return (
-      <div className="bg-white rounded-2xl border border-slate-100 p-12 text-center shadow-sm">
+      <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 p-12 text-center shadow-sm">
         <p className="text-4xl mb-3">🍽️</p>
         <p className="text-slate-400 text-sm">Nenhum item disponível nesta categoria.</p>
       </div>
@@ -317,12 +318,13 @@ export default function MenuClient({ vendor, items, mesa, waitTime, hasFeaturedB
   }, [extrasModal, extraQty]);
 
   return (
-    <div className="relative flex min-h-screen w-full flex-col max-w-md mx-auto pb-24" style={{ backgroundColor: '#f8f6f6' }}>
+    <div className="relative flex min-h-screen w-full flex-col max-w-md mx-auto pb-24 bg-slate-50 dark:bg-slate-950 transition-colors">
       {/* Sticky header */}
-      <header className="sticky top-0 z-50 border-b border-slate-200" style={{ backgroundColor: 'rgba(248,246,246,0.95)', backdropFilter: 'blur(8px)' }}>
+      <header className="sticky top-0 z-50 border-b border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md">
         <div className="flex items-center p-4 justify-between">
           <div className="flex items-center gap-3">
-            <div className="flex w-10 h-10 items-center justify-center rounded-full" style={{ backgroundColor: P + '1a' }}>
+            <ThemeToggle />
+            <div className="flex w-10 h-10 items-center justify-center rounded-full bg-orange-500/10 dark:bg-orange-500/20">
               {vendor.logo_url ? (
                 <Image src={vendor.logo_url} alt={vendor.name} width={40} height={40} className="w-10 h-10 rounded-full object-cover" />
               ) : (
@@ -356,12 +358,12 @@ export default function MenuClient({ vendor, items, mesa, waitTime, hasFeaturedB
 
             <div>
             {customerName ? (
-              <Link href="/profile?edit=true" className="flex items-center gap-1.5 bg-orange-50 border border-orange-200/50 rounded-xl px-3 py-1.5 text-xs font-black text-orange-600 shadow-sm active:scale-95 transition-all">
+              <Link href="/profile?edit=true" className="flex items-center gap-1.5 bg-orange-50 dark:bg-orange-950/30 border border-orange-200/50 dark:border-orange-500/20 rounded-xl px-3 py-1.5 text-xs font-black text-orange-600 dark:text-orange-400 shadow-sm active:scale-95 transition-all">
                 <span className="w-1.5 h-1.5 rounded-full bg-orange-600 animate-pulse" />
                 <span>{customerName.toUpperCase()}</span>
               </Link>
             ) : (
-              <Link href="/login-user" className="w-10 h-10 rounded-xl bg-white border border-slate-100 flex items-center justify-center text-slate-400 active:scale-95 transition-all shadow-sm">
+              <Link href="/login-user" className="w-10 h-10 rounded-xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 flex items-center justify-center text-slate-400 dark:text-slate-500 active:scale-95 transition-all shadow-sm">
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                 </svg>
@@ -373,7 +375,7 @@ export default function MenuClient({ vendor, items, mesa, waitTime, hasFeaturedB
 
         {/* Search bar + Help */}
         <div className="px-4 pb-3 flex items-center gap-2">
-          <div className="flex-1 flex items-center rounded-xl h-12 bg-slate-100 border-none gap-3 px-4">
+          <div className="flex-1 flex items-center rounded-xl h-12 bg-slate-100 dark:bg-slate-800 border-none gap-3 px-4">
             <svg className="w-5 h-5 text-slate-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
@@ -382,7 +384,7 @@ export default function MenuClient({ vendor, items, mesa, waitTime, hasFeaturedB
               placeholder="Buscar no cardápio…"
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
-              className="bg-transparent border-none outline-none text-slate-800 w-full text-base"
+              className="bg-transparent border-none outline-none text-slate-800 dark:text-white w-full text-base"
             />
             {searchQuery && (
               <button onClick={() => setSearchQuery('')} className="text-slate-400 hover:text-slate-600 flex-shrink-0">
@@ -395,7 +397,7 @@ export default function MenuClient({ vendor, items, mesa, waitTime, hasFeaturedB
             <button
               onClick={handleCallWaiter}
               disabled={callStatus === 'loading'}
-              className="h-14 w-48 shrink-0 bg-white border border-slate-200 rounded-2xl flex flex-col items-center justify-center gap-0.5 text-[11px] font-bold text-slate-500 hover:text-orange-600 hover:border-orange-200 transition-all active:scale-95 shadow-md disabled:opacity-50"
+              className="h-14 w-48 shrink-0 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl flex flex-col items-center justify-center gap-0.5 text-[11px] font-bold text-slate-500 dark:text-slate-400 hover:text-orange-600 dark:hover:text-orange-400 hover:border-orange-200 transition-all active:scale-95 shadow-md disabled:opacity-50"
             >
               <span className="text-xl leading-none">🛎️</span>
               <span className="leading-tight whitespace-nowrap">Chamar Garçom</span>
@@ -410,7 +412,7 @@ export default function MenuClient({ vendor, items, mesa, waitTime, hasFeaturedB
 
         {/* Category tabs dinâmicas */}
         <div className="overflow-x-auto no-scrollbar">
-          <div className="flex px-4 gap-6 border-b border-slate-100">
+          <div className="flex px-4 gap-6 border-b border-slate-100 dark:border-slate-800">
             {categories.map((cat) => (
               <button
                 key={cat}
@@ -429,7 +431,7 @@ export default function MenuClient({ vendor, items, mesa, waitTime, hasFeaturedB
 
       {/* Content */}
       <main className="px-4 py-6 space-y-6">
-        <h3 className="text-lg font-bold text-slate-900">{selectedCat === 'Todos' ? 'Cardápio Completo' : selectedCat}</h3>
+        <h3 className="text-lg font-bold text-slate-900 dark:text-white">{selectedCat === 'Todos' ? 'Cardápio Completo' : selectedCat}</h3>
 
         <ItemList items={filteredItems} waitTime={waitTime} onAdd={handleAddToCart} />
       </main>
@@ -439,16 +441,16 @@ export default function MenuClient({ vendor, items, mesa, waitTime, hasFeaturedB
       {/* Extras Modal */}
       {extrasModal && (
         <div className="fixed inset-0 z-[100] flex items-end justify-center bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="w-full max-w-md bg-white rounded-t-3xl shadow-2xl overflow-hidden animate-in slide-in-from-bottom-4 duration-300">
+          <div className="w-full max-w-md bg-white dark:bg-slate-900 rounded-t-3xl shadow-2xl overflow-hidden animate-in slide-in-from-bottom-4 duration-300 border-t dark:border-slate-800">
             <div className="flex justify-center pt-3 pb-1">
-              <div className="w-10 h-1 bg-slate-200 rounded-full" />
+              <div className="w-10 h-1 bg-slate-200 dark:bg-slate-800 rounded-full" />
             </div>
-            <div className="px-5 py-3 border-b border-slate-100 flex justify-between items-center">
+            <div className="px-5 py-3 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center">
               <div>
-                <h2 className="font-bold text-slate-900">{extrasModal.name}</h2>
+                <h2 className="font-bold text-slate-900 dark:text-white">{extrasModal.name}</h2>
                 <p className="text-sm" style={{ color: P }}>{formatCurrency(extrasModal.price)}</p>
               </div>
-              <button onClick={() => setExtrasModal(null)} className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-400">
+              <button onClick={() => setExtrasModal(null)} className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400 dark:text-slate-500">
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
               </button>
             </div>
@@ -462,21 +464,21 @@ export default function MenuClient({ vendor, items, mesa, waitTime, hasFeaturedB
                     <div
                       key={idx}
                       className={`w-full flex items-center justify-between p-3 rounded-xl border-2 transition-all ${
-                        qty > 0 ? 'border-orange-500 bg-orange-50' : 'border-slate-100 bg-white'
+                        qty > 0 ? 'border-orange-500 bg-orange-50 dark:bg-orange-950/20' : 'border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900'
                       }`}
                     >
-                      <span className="text-sm font-semibold text-slate-800">{extra.name}</span>
+                      <span className="text-sm font-semibold text-slate-800 dark:text-slate-200">{extra.name}</span>
                       <div className="flex items-center gap-3">
                         <span className="text-sm font-bold" style={{ color: P }}>+{formatCurrency(extra.price)}</span>
                         <div className="flex items-center gap-2">
-                          <button
-                            onClick={() => changeExtraQty(extra, -1)}
-                            disabled={qty === 0}
-                            className="w-7 h-7 rounded-lg border border-slate-200 flex items-center justify-center text-slate-600 hover:bg-slate-50 disabled:opacity-30"
-                          >
-                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M20 12H4" /></svg>
-                          </button>
-                          <span className="w-5 text-center text-sm font-bold text-slate-900">{qty}</span>
+                           <button
+                             onClick={() => changeExtraQty(extra, -1)}
+                             disabled={qty === 0}
+                             className="w-7 h-7 rounded-lg border border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-30"
+                           >
+                             <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M20 12H4" /></svg>
+                           </button>
+                           <span className="w-5 text-center text-sm font-bold text-slate-900 dark:text-white">{qty}</span>
                           <button
                             onClick={() => changeExtraQty(extra, 1)}
                             className="w-7 h-7 rounded-lg flex items-center justify-center text-white"
@@ -522,8 +524,8 @@ export default function MenuClient({ vendor, items, mesa, waitTime, hasFeaturedB
       {/* Alerta de mensagem do garçom (fullscreen com som) */}
       {tableAlert && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-6 bg-black/80 backdrop-blur-sm animate-in fade-in duration-300">
-          <div className="w-full max-w-sm bg-white rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300">
-            <div className="bg-blue-500 p-5 text-center">
+          <div className="w-full max-w-sm bg-white dark:bg-slate-900 rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300 border dark:border-slate-800">
+            <div className="bg-blue-500 dark:bg-blue-600 p-5 text-center">
               <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-3 animate-pulse">
                 <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
@@ -532,7 +534,7 @@ export default function MenuClient({ vendor, items, mesa, waitTime, hasFeaturedB
               <p className="text-white/80 text-xs font-bold uppercase tracking-widest">Mensagem do Garçom</p>
             </div>
             <div className="p-6 text-center">
-              <p className="text-lg font-bold text-gray-900 leading-snug mb-6">{tableAlert}</p>
+              <p className="text-lg font-bold text-gray-900 dark:text-white leading-snug mb-6">{tableAlert}</p>
               <button
                 onClick={() => {
                   setTableAlert(null);
@@ -555,16 +557,20 @@ function WaiterModal({ mesa, onClose, onConfirm, status, onReset }: { mesa?: str
   const [modalMesa, setModalMesa] = useState('');
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="w-full max-w-xs bg-white rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+      <div className="w-full max-w-xs bg-white dark:bg-slate-900 rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 border dark:border-slate-800">
+        <div className="flex justify-between items-center pt-3 px-5">
+          <ThemeToggle />
+          <div className="w-8" />
+        </div>
         <div className="p-6 text-center">
-          <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
+          <div className="w-16 h-16 bg-orange-100 dark:bg-orange-950/20 rounded-full flex items-center justify-center mx-auto mb-4">
             <span className="text-3xl">🛎️</span>
           </div>
 
           {status === 'idle' && (
             <>
-              <h3 className="text-xl font-bold text-slate-900 mb-2">Chamar Garçom</h3>
-              <p className="text-sm text-slate-500 mb-6">
+              <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">Chamar Garçom</h3>
+              <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">
                 {mesa ? `Confirmar chamada para a mesa ${mesa}?` : 'Informe o número da sua mesa para que possamos te encontrar.'}
               </p>
 
@@ -577,14 +583,14 @@ function WaiterModal({ mesa, onClose, onConfirm, status, onReset }: { mesa?: str
                   value={modalMesa}
                   onChange={(e) => setModalMesa(e.target.value)}
                   placeholder="Ex: 12, Balcão..."
-                  className="w-full h-12 bg-slate-50 border border-slate-200 rounded-xl px-4 text-center text-lg font-bold mb-4 focus:outline-none focus:ring-2 focus:ring-orange-500/50"
+                  className="w-full h-12 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-4 text-center text-lg font-bold mb-4 focus:outline-none focus:ring-2 focus:ring-orange-500/50 text-slate-900 dark:text-white"
                 />
               )}
 
               <div className="grid grid-cols-2 gap-3">
                 <button
                   onClick={onClose}
-                  className="h-12 rounded-xl font-bold text-slate-500 bg-slate-100 active:scale-95 transition-all"
+                  className="h-12 rounded-xl font-bold text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 active:scale-95 transition-all hover:bg-slate-200 dark:hover:bg-slate-700"
                 >
                   Cancelar
                 </button>

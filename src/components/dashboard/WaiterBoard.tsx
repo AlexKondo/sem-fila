@@ -9,6 +9,7 @@ import {
   ChevronDown, ChevronUp, ArrowRight, MessageCircle, Send,
   ScanLine, X, ShoppingBag
 } from 'lucide-react';
+import ThemeToggle from '@/components/ui/ThemeToggle';
 import type { VendorTable, QueueEntry, TableStatus } from '@/types/database';
 
 interface WaiterCall {
@@ -976,9 +977,12 @@ export default function WaiterBoard({ initialReadyOrders, initialWaiterCalls, in
                         <p className="text-[10px] text-gray-400 dark:text-slate-500 font-bold uppercase">Mesa {msgModal.table}</p>
                       </div>
                     </div>
-                    <button onClick={() => setMsgModal(null)} className="w-8 h-8 rounded-full bg-gray-100 dark:bg-slate-800 flex items-center justify-center text-gray-400 dark:text-slate-500">
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-                    </button>
+                    <div className="flex items-center gap-2">
+                       <ThemeToggle />
+                       <button onClick={() => setMsgModal(null)} className="w-8 h-8 rounded-full bg-gray-100 dark:bg-slate-800 flex items-center justify-center text-gray-400 dark:text-slate-500 transition-colors">
+                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                       </button>
+                    </div>
                   </div>
 
                   <p className="text-[10px] font-bold text-gray-400 dark:text-slate-600 uppercase tracking-wide mb-2">Mensagens rápidas</p>

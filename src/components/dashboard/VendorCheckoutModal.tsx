@@ -2,6 +2,7 @@
 
 import React, { useState, useCallback, memo } from 'react';
 import { X, ShieldCheck } from 'lucide-react';
+import ThemeToggle from '@/components/ui/ThemeToggle';
 
 const P = '#ec5b13';
 const ringStyle = { '--tw-ring-color': P } as React.CSSProperties;
@@ -176,16 +177,19 @@ export default function VendorCheckoutModal({ isOpen, onClose, vendorId, product
 
   return (
     <div className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm">
-      <div className="relative bg-white w-full max-w-md rounded-t-3xl sm:rounded-3xl max-h-[90vh] flex flex-col shadow-2xl">
+      <div className="relative bg-white dark:bg-slate-900 w-full max-w-md rounded-t-3xl sm:rounded-3xl max-h-[90vh] flex flex-col shadow-2xl border dark:border-slate-800">
         {/* Header */}
         <div className="flex justify-center pt-3 pb-1 sm:hidden">
-          <div className="w-10 h-1 bg-slate-200 rounded-full" />
+          <div className="w-10 h-1 bg-slate-200 dark:bg-slate-800 rounded-full" />
         </div>
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
-          <h2 className="font-bold text-slate-900 text-lg">
-            {step === 'pix' ? 'Pagamento PIX' : step === 'success' ? 'Tudo certo!' : 'Checkout'}
-          </h2>
-          <button onClick={handleClose} className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 hover:bg-slate-200 transition">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 dark:border-slate-800">
+          <div className="flex items-center gap-3">
+            <ThemeToggle />
+            <h2 className="font-bold text-slate-900 dark:text-white text-lg">
+              {step === 'pix' ? 'Pagamento PIX' : step === 'success' ? 'Tudo certo!' : 'Checkout'}
+            </h2>
+          </div>
+          <button onClick={handleClose} className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition">
             <X className="w-4 h-4" />
           </button>
         </div>
@@ -195,11 +199,11 @@ export default function VendorCheckoutModal({ isOpen, onClose, vendorId, product
           <>
             <div className="overflow-y-auto flex-1 px-6 py-5 space-y-5">
               {/* Resumo */}
-              <div className="bg-slate-50 rounded-2xl p-4 border border-slate-100">
-                <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Você está adquirindo</p>
-                <p className="text-base font-black text-slate-900">{product.name}</p>
+              <div className="bg-slate-50 dark:bg-slate-950/50 rounded-2xl p-4 border border-slate-100 dark:border-slate-800">
+                <p className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1">Voc está adquirindo</p>
+                <p className="text-base font-black text-slate-900 dark:text-white">{product.name}</p>
                 <div className="flex items-baseline gap-1 mt-1">
-                  <span className="text-2xl font-black text-slate-900">R$ {product.price}</span>
+                  <span className="text-2xl font-black text-slate-900 dark:text-white">R$ {product.price}</span>
                 </div>
               </div>
 
