@@ -5,6 +5,8 @@ import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 import type { RankingSetting, VendorSubscription, PremiumFeature } from '@/types/database';
 
+import ThemeToggle from '@/components/ui/ThemeToggle';
+
 const FEATURE_LABELS: Record<string, { label: string; desc: string }> = {
   vendor_ranking: { label: 'Ranking de Vendedores', desc: 'Exibe posição dos quiosques por vendas e avaliações' },
   dish_ranking:   { label: 'Ranking de Pratos',     desc: 'Exibe os pratos mais pedidos na plataforma' },
@@ -82,47 +84,50 @@ export default function RankingClient() {
   }
 
   if (loading) return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+    <div className="min-h-screen bg-gray-50 dark:bg-slate-950 flex items-center justify-center transition-colors">
       <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500" />
     </div>
   );
 
   return (
-    <main className="min-h-screen bg-gray-50">
-      <header className="bg-white border-b border-gray-100 sticky top-0 z-40">
-        <div className="max-w-4xl mx-auto px-4 py-3 flex items-center gap-3">
-          <Link href="/dashboard/admin" className="p-2 text-gray-400 hover:text-gray-900 transition">
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-            </svg>
-          </Link>
-          <div>
-            <h1 className="font-bold text-gray-900 leading-none">Ranking & Monetização</h1>
-            <p className="text-[10px] text-gray-400 uppercase font-bold tracking-tighter">Features premium da plataforma</p>
+    <main className="min-h-screen bg-gray-50 dark:bg-slate-950 transition-colors duration-300">
+      <header className="bg-white dark:bg-slate-900 border-b border-gray-100 dark:border-slate-800 sticky top-0 z-40 transition-colors">
+        <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Link href="/dashboard/admin" className="p-2 text-gray-400 hover:text-gray-900 dark:hover:text-white transition">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+              </svg>
+            </Link>
+            <div>
+              <h1 className="font-bold text-gray-900 dark:text-white leading-none">Ranking & Monetização</h1>
+              <p className="text-[10px] text-gray-400 dark:text-slate-500 uppercase font-bold tracking-tighter">Features premium da plataforma</p>
+            </div>
           </div>
+          <ThemeToggle />
         </div>
       </header>
 
       <div className="max-w-4xl mx-auto px-4 py-6 space-y-6">
         <section>
-          <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">Rankings Globais</h2>
+          <h2 className="text-sm font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide mb-3">Rankings Globais</h2>
           <div className="grid gap-3">
             {settings.map(setting => {
               const info = FEATURE_LABELS[setting.feature] ?? { label: setting.feature, desc: '' };
               return (
-                <div key={setting.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex items-center justify-between">
+                <div key={setting.id} className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-100 dark:border-slate-800 shadow-sm p-4 flex items-center justify-between transition-colors">
                   <div>
-                    <p className="font-bold text-gray-900 text-sm">{info.label}</p>
-                    <p className="text-xs text-gray-400 mt-0.5">{info.desc}</p>
+                    <p className="font-bold text-gray-900 dark:text-white text-sm">{info.label}</p>
+                    <p className="text-xs text-gray-400 dark:text-slate-500 mt-0.5">{info.desc}</p>
                   </div>
                   <button
                     onClick={() => toggleFeature(setting.id, setting.active)}
                     disabled={toggling === setting.id}
                     className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                      setting.active ? 'bg-orange-500' : 'bg-gray-200'
+                      setting.active ? 'bg-orange-500' : 'bg-gray-200 dark:bg-slate-700'
                     } disabled:opacity-50`}
                   >
-                    <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${
+                    <span className={`inline-block h-4 w-4 transform rounded-full bg-white dark:bg-slate-300 shadow transition-transform ${
                       setting.active ? 'translate-x-6' : 'translate-x-1'
                     }`} />
                   </button>
@@ -133,56 +138,56 @@ export default function RankingClient() {
         </section>
 
         <section>
-          <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">Nova Assinatura Premium</h2>
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 space-y-3">
+          <h2 className="text-sm font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide mb-3">Nova Assinatura Premium</h2>
+          <div className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-100 dark:border-slate-800 shadow-sm p-4 space-y-3 transition-colors">
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="text-xs font-bold text-gray-500 block mb-1">Quiosque</label>
+                <label className="text-xs font-bold text-gray-500 dark:text-slate-400 block mb-1">Quiosque</label>
                 <select
                   value={newSub.vendor_id}
                   onChange={e => setNewSub(v => ({ ...v, vendor_id: e.target.value }))}
-                  className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/30"
+                  className="w-full border border-gray-200 dark:border-slate-700 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/30 bg-white dark:bg-slate-950 text-slate-900 dark:text-white"
                 >
-                  <option value="">Selecione…</option>
-                  {vendors.map(v => <option key={v.id} value={v.id}>{v.name}</option>)}
+                  <option value="" className="dark:bg-slate-900">Selecione…</option>
+                  {vendors.map(v => <option key={v.id} value={v.id} className="dark:bg-slate-900">{v.name}</option>)}
                 </select>
               </div>
               <div>
-                <label className="text-xs font-bold text-gray-500 block mb-1">Feature</label>
+                <label className="text-xs font-bold text-gray-500 dark:text-slate-400 block mb-1">Feature</label>
                 <select
                   value={newSub.feature}
                   onChange={e => setNewSub(v => ({ ...v, feature: e.target.value }))}
-                  className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/30"
+                  className="w-full border border-gray-200 dark:border-slate-700 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/30 bg-white dark:bg-slate-950 text-slate-900 dark:text-white"
                 >
                   {premiumFeatures.map(pf => (
-                    <option key={pf.slug} value={pf.slug}>{pf.name}</option>
+                    <option key={pf.slug} value={pf.slug} className="dark:bg-slate-900">{pf.name}</option>
                   ))}
                 </select>
               </div>
               <div>
-                <label className="text-xs font-bold text-gray-500 block mb-1">Valor pago (R$)</label>
+                <label className="text-xs font-bold text-gray-500 dark:text-slate-400 block mb-1">Valor pago (R$)</label>
                 <input
                   type="number" step="0.01"
                   value={newSub.price_paid}
                   onChange={e => setNewSub(v => ({ ...v, price_paid: e.target.value }))}
                   placeholder="0,00"
-                  className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/30"
+                  className="w-full border border-gray-200 dark:border-slate-700 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/30 bg-white dark:bg-slate-950 text-slate-900 dark:text-white"
                 />
               </div>
               <div>
-                <label className="text-xs font-bold text-gray-500 block mb-1">Válido por (dias)</label>
+                <label className="text-xs font-bold text-gray-500 dark:text-slate-400 block mb-1">Válido por (dias)</label>
                 <input
                   type="number"
                   value={newSub.expires_days}
                   onChange={e => setNewSub(v => ({ ...v, expires_days: e.target.value }))}
-                  className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/30"
+                  className="w-full border border-gray-200 dark:border-slate-700 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/30 bg-white dark:bg-slate-950 text-slate-900 dark:text-white"
                 />
               </div>
             </div>
             <button
               onClick={addSubscription}
               disabled={addingNewSub || !newSub.vendor_id}
-              className="w-full bg-orange-500 text-white text-sm font-bold py-2.5 rounded-xl hover:bg-orange-600 transition disabled:opacity-50"
+              className="w-full bg-orange-500 text-white text-sm font-bold py-2.5 rounded-xl hover:bg-orange-600 transition disabled:opacity-50 shadow-lg shadow-orange-500/20 active:scale-95"
             >
               {addingNewSub ? 'Adicionando…' : 'Adicionar Assinatura'}
             </button>
@@ -190,12 +195,12 @@ export default function RankingClient() {
         </section>
 
         <section>
-          <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
+          <h2 className="text-sm font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide mb-3">
             Assinaturas Premium ({subs.length})
           </h2>
           <div className="grid gap-3">
             {subs.length === 0 ? (
-              <div className="bg-white rounded-2xl border border-gray-100 p-8 text-center text-gray-400 text-sm">
+              <div className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-100 dark:border-slate-800 p-8 text-center text-gray-400 dark:text-slate-600 text-sm transition-colors">
                 Nenhuma assinatura ativa.
               </div>
             ) : (
@@ -213,13 +218,13 @@ export default function RankingClient() {
                 const info = { label: pf?.name ?? SLUG_LABELS[sub.feature] ?? sub.feature.replace(/_/g, ' '), desc: pf?.description ?? '' };
                 const expired = sub.expires_at ? new Date(sub.expires_at) < new Date() : false;
                 return (
-                  <div key={sub.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex items-center justify-between">
+                  <div key={sub.id} className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-100 dark:border-slate-800 shadow-sm p-4 flex items-center justify-between transition-colors">
                     <div>
                       <div className="flex items-center gap-2 mb-1">
-                        <p className="font-bold text-gray-900 text-sm">{sub.vendors?.name ?? 'Vendor'}</p>
-                        <span className="text-[10px] font-black bg-orange-50 text-orange-600 px-2 py-0.5 rounded-full uppercase">{info.label}</span>
+                        <p className="font-bold text-gray-900 dark:text-white text-sm">{sub.vendors?.name ?? 'Vendor'}</p>
+                        <span className="text-[10px] font-black bg-orange-50 dark:bg-orange-950/20 text-orange-600 px-2 py-0.5 rounded-full uppercase">{info.label}</span>
                       </div>
-                      <p className="text-xs text-gray-400">
+                      <p className="text-xs text-gray-400 dark:text-slate-500">
                         {sub.price_paid ? `R$ ${Number(sub.price_paid).toFixed(2)}` : 'Gratuito'}
                         {sub.expires_at && ` · Expira ${new Date(sub.expires_at).toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' })}`}
                         {expired && <span className="text-red-500 font-bold ml-1">(EXPIRADO)</span>}
@@ -228,10 +233,10 @@ export default function RankingClient() {
                     <button
                       onClick={() => toggleSub(sub.id, sub.active)}
                       className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                        sub.active && !expired ? 'bg-orange-500' : 'bg-gray-200'
+                        sub.active && !expired ? 'bg-orange-500' : 'bg-gray-200 dark:bg-slate-700'
                       }`}
                     >
-                      <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${
+                      <span className={`inline-block h-4 w-4 transform rounded-full bg-white dark:bg-slate-300 shadow transition-transform ${
                         sub.active && !expired ? 'translate-x-6' : 'translate-x-1'
                       }`} />
                     </button>

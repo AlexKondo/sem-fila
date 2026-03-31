@@ -65,19 +65,19 @@ export default function VendorAccountForm({ profile }: { profile: any }) {
   }
 
   return (
-    <div className="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
+    <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800 overflow-hidden transition-colors duration-300">
       <button
         type="button"
         onClick={() => setExpanded(!expanded)}
-        className="w-full flex items-center justify-between p-6 hover:bg-slate-50/50 transition"
+        className="w-full flex items-center justify-between p-6 hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition border-none"
       >
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-2xl flex items-center justify-center bg-orange-100 text-orange-600">
+          <div className="w-10 h-10 rounded-2xl flex items-center justify-center bg-orange-100 dark:bg-orange-950/30 text-orange-600 dark:text-orange-400">
              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
           </div>
           <div className="text-left">
-            <h2 className="text-lg font-bold text-slate-900">Meus Dados Pessoais</h2>
-            <p className="text-xs text-slate-400 font-medium tracking-tight">Informações do seu cadastro no QuickPick</p>
+            <h2 className="text-lg font-bold text-slate-900 dark:text-white">Meus Dados Pessoais</h2>
+            <p className="text-xs text-slate-400 dark:text-slate-500 font-medium tracking-tight">Informações do seu cadastro no QuickPick</p>
           </div>
         </div>
         <ChevronDown className={`w-5 h-5 text-slate-400 transition-transform duration-300 ${expanded ? 'rotate-180' : ''}`} />
@@ -86,51 +86,52 @@ export default function VendorAccountForm({ profile }: { profile: any }) {
       {expanded && (
       <form onSubmit={handleUpdateProfile} className="space-y-4 px-6 pb-6">
         <div>
-          <label className="block text-xs font-bold text-slate-500 mb-1 ml-1 uppercase tracking-widest">Nome Completo</label>
+          <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1 ml-1 uppercase tracking-widest">Nome Completo *</label>
           <input
             value={name} onChange={e => setName(e.target.value)}
-            className="w-full h-12 bg-slate-50 border border-slate-200 rounded-xl px-4 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/50"
+            required
+            className="w-full h-12 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-4 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/50 text-slate-900 dark:text-white transition-colors"
           />
         </div>
 
         <div>
-          <label className="block text-xs font-bold text-slate-500 mb-1 ml-1 uppercase tracking-widest">Email</label>
+          <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1 ml-1 uppercase tracking-widest">Email</label>
           <input
             value={profile.email || ''}
             disabled
-            className="w-full h-12 bg-slate-100 border border-slate-200 rounded-xl px-4 text-sm text-slate-400 cursor-not-allowed"
+            className="w-full h-12 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-800 rounded-xl px-4 text-sm text-slate-400 dark:text-slate-500 cursor-not-allowed"
           />
-          <p className="text-[10px] text-slate-400 mt-1 ml-1">O email não pode ser alterado.</p>
+          <p className="text-[10px] text-slate-400 dark:text-slate-600 mt-1 ml-1 font-medium">O email não pode ser alterado.</p>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label className="block text-xs font-bold text-slate-500 mb-1 ml-1 uppercase tracking-widest">Celular</label>
+            <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1 ml-1 uppercase tracking-widest">Celular</label>
             <input
               value={phone} onChange={e => setPhone(maskPhone(e.target.value))}
-              className="w-full h-12 bg-slate-50 border border-slate-200 rounded-xl px-4 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/50"
+              className="w-full h-12 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-4 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/50 text-slate-900 dark:text-white transition-colors"
             />
           </div>
           <div>
-            <label className="block text-xs font-bold text-slate-500 mb-1 ml-1 uppercase tracking-widest">CPF ou CNPJ</label>
+            <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1 ml-1 uppercase tracking-widest">CPF ou CNPJ</label>
             <input
               value={cnpj} onChange={e => setCnpj(maskCPF_CNPJ(e.target.value))}
-              className="w-full h-12 bg-slate-50 border border-slate-200 rounded-xl px-4 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/50"
+              className="w-full h-12 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-4 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/50 text-slate-900 dark:text-white transition-colors"
             />
           </div>
         </div>
 
         <div>
-          <label className="block text-xs font-bold text-slate-500 mb-1 ml-1 uppercase tracking-widest">Endereço <span className="text-slate-300 font-normal normal-case">(opcional)</span></label>
+          <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1 ml-1 uppercase tracking-widest">Endereço <span className="text-slate-300 dark:text-slate-700 font-normal normal-case">(opcional)</span></label>
           <input
             value={address} onChange={e => setAddress(e.target.value)}
             placeholder="Rua, número, cidade"
-            className="w-full h-12 bg-slate-50 border border-slate-200 rounded-xl px-4 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/50"
+            className="w-full h-12 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-4 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/50 text-slate-900 dark:text-white transition-colors"
           />
         </div>
 
         {msg.text && (
-          <div className={`p-3 rounded-xl text-xs font-bold ${msg.type === 'error' ? 'bg-red-50 text-red-600' : 'bg-green-50 text-green-600'}`}>
+          <div className={`p-4 rounded-xl text-xs font-bold border transition-colors ${msg.type === 'error' ? 'bg-red-50 dark:bg-red-950/20 text-red-600 border-red-100 dark:border-red-900/30' : 'bg-green-50 dark:bg-green-950/20 text-green-600 border-green-100 dark:border-green-900/30'}`}>
             {msg.text}
           </div>
         )}

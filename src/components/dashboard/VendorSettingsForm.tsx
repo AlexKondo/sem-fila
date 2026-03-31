@@ -190,62 +190,62 @@ export default function VendorSettingsForm({ vendor, subscription }: { vendor: a
     <form onSubmit={handleSave} className="space-y-6">
       
       {/* Bloco 1: Operação e Logística */}
-      <section className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
-        <button type="button" onClick={() => toggleSection('operacao')} className="w-full flex items-center justify-between p-5 hover:bg-slate-50/50 transition">
-          <h2 className="text-sm font-bold text-gray-900 uppercase tracking-wide">1. Operação e Logística</h2>
-          <ChevronDown className={`w-5 h-5 text-slate-400 transition-transform duration-300 ${openSections.operacao ? 'rotate-180' : ''}`} />
+      <section className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 overflow-hidden transition-colors">
+        <button type="button" onClick={() => toggleSection('operacao')} className="w-full flex items-center justify-between p-5 hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition">
+          <h2 className="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-wide">1. Operação e Logística</h2>
+          <ChevronDown className={`w-5 h-5 text-slate-400 dark:text-slate-500 transition-transform duration-300 ${openSections.operacao ? 'rotate-180' : ''}`} />
         </button>
 
         {openSections.operacao && <div className="space-y-4 px-5 pb-5">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Qual é o seu tipo de negócio?</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Qual é o seu tipo de negócio?</label>
             <select
               value={businessType}
               onChange={(e) => handleBusinessTypeChange(e.target.value)}
-              className="w-full h-12 bg-gray-50 border border-slate-200 rounded-xl px-4 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/50"
+              className="w-full h-12 bg-gray-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-4 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/50 text-slate-900 dark:text-white transition-colors"
             >
-              <option value="kiosk">Quiosque / Barraca em Evento</option>
-              <option value="restaurant">Restaurante Tradicional</option>
-              <option value="restaurant_kilo">Restaurante por Kilo</option>
-              <option value="bar">Bar / Pub</option>
-              <option value="foodtruck">Food Truck</option>
+              <option value="kiosk" className="dark:bg-slate-900">Quiosque / Barraca em Evento</option>
+              <option value="restaurant" className="dark:bg-slate-900">Restaurante Tradicional</option>
+              <option value="restaurant_kilo" className="dark:bg-slate-900">Restaurante por Kilo</option>
+              <option value="bar" className="dark:bg-slate-900">Bar / Pub</option>
+              <option value="foodtruck" className="dark:bg-slate-900">Food Truck</option>
             </select>
-            <p className="text-xs text-gray-400 mt-1">Ao escolher "Restaurante", a entrega na mesa é ativada automaticamente.</p>
+            <p className="text-xs text-gray-400 dark:text-slate-500 mt-1">Ao escolher "Restaurante", a entrega na mesa é ativada automaticamente.</p>
           </div>
 
-          <label className="flex items-center gap-3 p-3 border border-slate-100 rounded-xl cursor-pointer hover:bg-slate-50 transition">
+          <label className="flex items-center gap-3 p-3 border border-slate-100 dark:border-slate-800 rounded-xl cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50 transition">
             <div className="relative flex items-center">
               <input 
                 type="checkbox" 
                 checked={deliversToTable}
                 onChange={(e) => setDeliversToTable(e.target.checked)}
-                className="peer shrink-0 appearance-none w-5 h-5 border border-slate-300 rounded-md bg-white checked:bg-orange-500 checked:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-500/50 transition-colors"
+                className="peer shrink-0 appearance-none w-5 h-5 border border-slate-300 dark:border-slate-700 rounded-md bg-white dark:bg-slate-950 checked:bg-orange-500 checked:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-500/50 transition-all"
                 disabled={businessType === 'restaurant'}
               />
               <svg className="absolute w-5 h-5 text-white pointer-events-none hidden peer-checked:block p-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
             </div>
             <div className="flex-1">
-              <p className="text-sm font-bold text-gray-700">Fazemos entrega até a mesa</p>
-              <p className="text-xs text-gray-400">Ative se você possui garçons que cruzam o evento ou salão.</p>
+              <p className="text-sm font-bold text-gray-700 dark:text-slate-200">Fazemos entrega até a mesa</p>
+              <p className="text-xs text-gray-400 dark:text-slate-500">Ative se você possui garçons que cruzam o evento ou salão.</p>
             </div>
           </label>
 
           {/* Campo de preço por kg — só para restaurante por kilo */}
           {businessType === 'restaurant_kilo' && (
-            <div className="ml-8 p-3 bg-orange-50/40 border border-orange-100 rounded-xl">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+            <div className="ml-8 p-3 bg-orange-50/40 dark:bg-orange-950/10 border border-orange-100 dark:border-orange-900/30 rounded-xl transition-colors">
+              <label className="block text-sm font-medium text-gray-700 dark:text-orange-400 mb-1">
                 Valor por Kg (R$)
               </label>
               <div className="relative">
-                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-medium text-sm">R$</span>
+                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 dark:text-slate-600 font-medium text-sm">R$</span>
                 <input
                   type="number" min="0" step="0.50"
                   value={pricePerKg} onChange={(e) => setPricePerKg(Number(e.target.value))}
                   placeholder="Ex: 69.90"
-                  className="w-full h-12 bg-white border border-slate-200 rounded-xl pl-10 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/50"
+                  className="w-full h-12 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl pl-10 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/50 text-slate-900 dark:text-white transition-colors"
                 />
               </div>
-              <p className="text-[10px] text-gray-400 mt-1">
+              <p className="text-[10px] text-gray-400 dark:text-slate-500 mt-1">
                 O cliente pesará o prato e informará o peso. O valor será calculado automaticamente.
               </p>
             </div>
@@ -253,135 +253,135 @@ export default function VendorSettingsForm({ vendor, subscription }: { vendor: a
 
           {/* Campo de mesas — só para restaurante/bar que têm gestão de mesas */}
           {deliversToTable && ['restaurant', 'restaurant_kilo', 'bar'].includes(businessType) && (
-            <div className="ml-8 p-3 bg-orange-50/40 border border-orange-100 rounded-xl">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+            <div className="ml-8 p-3 bg-orange-50/40 dark:bg-orange-950/10 border border-orange-100 dark:border-orange-900/30 rounded-xl transition-colors">
+              <label className="block text-sm font-medium text-gray-700 dark:text-orange-400 mb-1">
                 Número total de mesas do estabelecimento
               </label>
               <input
                 type="number" min="0" max="500" step="1"
                 value={numTables} onChange={(e) => setNumTables(Number(e.target.value))}
                 placeholder="Ex: 20"
-                className="w-full h-12 bg-white border border-slate-200 rounded-xl px-4 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/50"
+                className="w-full h-12 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-4 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/50 text-slate-900 dark:text-white transition-colors"
               />
-              <p className="text-[10px] text-gray-400 mt-1">
+              <p className="text-[10px] text-gray-400 dark:text-slate-500 mt-1 font-medium">
                 O cliente verá botões de Mesa 1 a Mesa {numTables || 'N'}, mais a opção &quot;Para Viagem&quot;.
               </p>
             </div>
           )}
 
-          <label className="flex items-center gap-3 p-3 border border-slate-100 rounded-xl cursor-pointer hover:bg-slate-50 transition border-l-4 border-l-orange-500">
+          <label className="flex items-center gap-3 p-3 border border-slate-100 dark:border-slate-800 rounded-xl cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50 transition border-l-4 border-l-orange-500">
             <div className="relative flex items-center">
               <input 
                 type="checkbox" 
                 checked={allowWaiterCalls}
                 onChange={(e) => setAllowWaiterCalls(e.target.checked)}
-                className="peer shrink-0 appearance-none w-5 h-5 border border-slate-300 rounded-md bg-white checked:bg-orange-500 checked:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-500/50 transition-colors"
+                className="peer shrink-0 appearance-none w-5 h-5 border border-slate-300 dark:border-slate-700 rounded-md bg-white dark:bg-slate-950 checked:bg-orange-500 checked:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-500/50 transition-all"
               />
               <svg className="absolute w-5 h-5 text-white pointer-events-none hidden peer-checked:block p-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
             </div>
             <div className="flex-1">
-              <p className="text-sm font-bold text-gray-700">Ativar a função CHAMAR GARÇOM</p>
-              <p className="text-[11px] text-orange-600 font-medium">Faz o celular do garçom vibrar e piscar um alarme na tela por 5 segundos</p>
+              <p className="text-sm font-bold text-gray-700 dark:text-slate-200">Ativar a função CHAMAR GARÇOM</p>
+              <p className="text-[11px] text-orange-600 dark:text-orange-400 font-bold uppercase tracking-tight">Faz o celular do garçom vibrar e piscar um alarme na tela por 5 segundos</p>
             </div>
           </label>
         </div>}
       </section>
 
       {/* Bloco 1.5: Preferências de Alerta */}
-      <section className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
-        <button type="button" onClick={() => toggleSection('notificacao')} className="w-full flex items-center justify-between p-5 hover:bg-slate-50/50 transition">
-          <h2 className="text-sm font-bold text-gray-900 uppercase tracking-wide">2. Preferências de Notificação</h2>
-          <ChevronDown className={`w-5 h-5 text-slate-400 transition-transform duration-300 ${openSections.notificacao ? 'rotate-180' : ''}`} />
+      <section className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 overflow-hidden transition-colors">
+        <button type="button" onClick={() => toggleSection('notificacao')} className="w-full flex items-center justify-between p-5 hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition">
+          <h2 className="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-wide">2. Preferências de Notificação</h2>
+          <ChevronDown className={`w-5 h-5 text-slate-400 dark:text-slate-500 transition-transform duration-300 ${openSections.notificacao ? 'rotate-180' : ''}`} />
         </button>
         {openSections.notificacao && <div className="px-5 pb-5">
-        <label className="flex items-center gap-3 p-3 bg-orange-50/30 border border-orange-100 rounded-xl cursor-pointer hover:bg-orange-50 transition">
+        <label className="flex items-center gap-3 p-3 bg-orange-50/30 dark:bg-orange-950/20 border border-orange-100 dark:border-orange-900/30 rounded-xl cursor-pointer hover:bg-orange-50 dark:hover:bg-orange-900/40 transition">
           <div className="relative flex items-center">
             <input
               type="checkbox"
               checked={alertsEnabled}
               onChange={(e) => setAlertsEnabled(e.target.checked)}
-              className="peer shrink-0 appearance-none w-5 h-5 border border-orange-200 rounded-md bg-white checked:bg-orange-600 checked:border-orange-600 focus:outline-none focus:ring-2 focus:ring-orange-500/50 transition-colors"
+              className="peer shrink-0 appearance-none w-5 h-5 border border-orange-200 dark:border-orange-900/50 rounded-md bg-white dark:bg-slate-950 checked:bg-orange-600 checked:border-orange-600 focus:outline-none focus:ring-2 focus:ring-orange-500/50 transition-all"
             />
             <svg className="absolute w-5 h-5 text-white pointer-events-none hidden peer-checked:block p-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
           </div>
           <div className="flex-1">
-            <p className="text-sm font-bold text-gray-800">Ativar Alertas Sonoros (Beep)</p>
-            <p className="text-[11px] text-gray-500 font-medium">Toca um bipe quando novos pedidos chegarem ou quando o garçom for chamado.</p>
+            <p className="text-sm font-bold text-gray-800 dark:text-slate-200">Ativar Alertas Sonoros (Beep)</p>
+            <p className="text-[11px] text-gray-500 dark:text-slate-500 font-bold">Toca um bipe quando novos pedidos chegarem ou quando o garçom for chamado.</p>
           </div>
         </label>
         </div>}
       </section>
 
       {/* Bloco 2: Cobranças */}
-      <section className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
-        <button type="button" onClick={() => toggleSection('cobrancas')} className="w-full flex items-center justify-between p-5 hover:bg-slate-50/50 transition">
-          <h2 className="text-sm font-bold text-gray-900 uppercase tracking-wide">3. Cobranças e Taxas</h2>
-          <ChevronDown className={`w-5 h-5 text-slate-400 transition-transform duration-300 ${openSections.cobrancas ? 'rotate-180' : ''}`} />
+      <section className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 overflow-hidden transition-colors">
+        <button type="button" onClick={() => toggleSection('cobrancas')} className="w-full flex items-center justify-between p-5 hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition">
+          <h2 className="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-wide">3. Cobranças e Taxas</h2>
+          <ChevronDown className={`w-5 h-5 text-slate-400 dark:text-slate-500 transition-transform duration-300 ${openSections.cobrancas ? 'rotate-180' : ''}`} />
         </button>
 
         {openSections.cobrancas && <div className="px-5 pb-5">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Tarifa de Serviço / Gorjeta (%)</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-slate-400 mb-1">Tarifa de Serviço / Gorjeta (%)</label>
             <div className="relative">
               <input
                 type="number" min="0" max="100" step="1"
                 value={serviceFee} onChange={(e) => setServiceFee(e.target.value)}
                 placeholder="Ex: 10"
-                className="w-full h-12 bg-gray-50 border border-slate-200 rounded-xl pl-4 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/50"
+                className="w-full h-12 bg-gray-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl pl-4 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/50 text-slate-900 dark:text-white transition-colors"
               />
-              <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 text-sm">%</span>
+              <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 dark:text-slate-600 text-sm font-bold">%</span>
             </div>
-            <p className="text-[10px] text-gray-400 mt-1">Comum em restaurantes (0% = sem taxa).</p>
+            <p className="text-[10px] text-gray-400 dark:text-slate-500 mt-1 font-medium italic">Comum em restaurantes (0% = sem taxa).</p>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Couvert Artístico (R$ fixo)</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-slate-400 mb-1">Couvert Artístico (R$ fixo)</label>
             <div className="relative">
-              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-medium text-sm">R$</span>
+              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 dark:text-slate-600 font-bold text-sm">R$</span>
               <input
                 type="number" min="0" step="0.5"
                 value={couvert} onChange={(e) => setCouvert(e.target.value)}
                 placeholder="0.00"
-                className="w-full h-12 bg-gray-50 border border-slate-200 rounded-xl pl-10 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/50"
+                className="w-full h-12 bg-gray-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl pl-10 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/50 text-slate-900 dark:text-white transition-colors"
               />
             </div>
-            <p className="text-[10px] text-gray-400 mt-1">Soma-se um valor fixo a cada conta/pessoa.</p>
+            <p className="text-[10px] text-gray-400 dark:text-slate-500 mt-1 font-medium italic">Soma-se um valor fixo a cada conta/pessoa.</p>
           </div>
         </div>
         </div>}
       </section>
 
       {/* Bloco 3: Cupons e Ofertas */}
-      <section className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
-        <button type="button" onClick={() => toggleSection('descontos')} className="w-full flex items-center justify-between p-5 hover:bg-slate-50/50 transition">
-          <h2 className="text-sm font-bold text-gray-900 uppercase tracking-wide">4. Vendas e Descontos</h2>
-          <ChevronDown className={`w-5 h-5 text-slate-400 transition-transform duration-300 ${openSections.descontos ? 'rotate-180' : ''}`} />
+      <section className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 overflow-hidden transition-colors">
+        <button type="button" onClick={() => toggleSection('descontos')} className="w-full flex items-center justify-between p-5 hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition">
+          <h2 className="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-wide">4. Vendas e Descontos</h2>
+          <ChevronDown className={`w-5 h-5 text-slate-400 dark:text-slate-500 transition-transform duration-300 ${openSections.descontos ? 'rotate-180' : ''}`} />
         </button>
 
         {openSections.descontos && <div className="px-5 pb-5">
         <div className="grid grid-cols-1 sm:grid-cols-5 gap-4">
           <div className="sm:col-span-3">
-            <label className="block text-sm font-medium text-gray-700 mb-1">Código de Cupom Global</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-slate-400 mb-1">Código de Cupom Global</label>
             <input
               type="text" maxLength={20}
               value={couponCode} onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
               placeholder="Ex: QUINTA10"
-              className="w-full h-12 bg-gray-50 border border-slate-200 rounded-xl px-4 text-sm font-bold uppercase focus:outline-none focus:ring-2 focus:ring-orange-500/50 placeholder-gray-300"
+              className="w-full h-12 bg-gray-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-4 text-sm font-bold uppercase focus:outline-none focus:ring-2 focus:ring-orange-500/50 text-slate-900 dark:text-white placeholder-gray-300 dark:placeholder-slate-700 transition-colors"
             />
-            <p className="text-[10px] text-gray-400 mt-1">Se os clientes digitarem isto, ganham desconto.</p>
+            <p className="text-[10px] text-gray-400 dark:text-slate-500 mt-1 italic font-medium">Se os clientes digitarem isto, ganham desconto.</p>
           </div>
 
           <div className="sm:col-span-2">
-            <label className="block text-sm font-medium text-gray-700 mb-1">Desconto (%)</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-slate-400 mb-1">Desconto (%)</label>
             <div className="relative">
               <input
                 type="number" min="0" max="100" step="5"
                 value={couponDiscount} onChange={(e) => setCouponDiscount(e.target.value)}
                 placeholder="Ex: 10"
-                className="w-full h-12 bg-gray-50 border border-slate-200 rounded-xl pl-4 pr-10 text-sm font-bold text-orange-600 focus:outline-none focus:ring-2 focus:ring-orange-500/50"
+                className="w-full h-12 bg-gray-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl pl-4 pr-10 text-sm font-black text-orange-600 dark:text-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-500/50 transition-colors"
               />
-              <span className="absolute right-4 top-1/2 -translate-y-1/2 text-orange-600 font-bold text-sm">%</span>
+              <span className="absolute right-4 top-1/2 -translate-y-1/2 text-orange-600 dark:text-orange-500 font-black text-sm">%</span>
             </div>
           </div>
         </div>
@@ -389,55 +389,55 @@ export default function VendorSettingsForm({ vendor, subscription }: { vendor: a
       </section>
 
       {/* Bloco 4: Inteligência Artificial de Fotos */}
-      <section className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden relative">
+      <section className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 overflow-hidden relative transition-colors">
         <div className="absolute top-0 right-0 p-4 opacity-5 pointer-events-none">
-           <svg className="w-20 h-20" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l2.4 7.2h7.6l-6.1 4.5 2.3 7.3-6.2-4.5-6.2 4.5 2.3-7.3-6.1-4.5h7.6z"/></svg>
+           <svg className="w-20 h-20 text-slate-400 dark:text-slate-600" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l2.4 7.2h7.6l-6.1 4.5 2.3 7.3-6.2-4.5-6.2 4.5 2.3-7.3-6.1-4.5h7.6z"/></svg>
         </div>
 
-        <button type="button" onClick={() => toggleSection('ia')} className="w-full flex items-center justify-between p-5 hover:bg-slate-50/50 transition relative z-10">
+        <button type="button" onClick={() => toggleSection('ia')} className="w-full flex items-center justify-between p-5 hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition relative z-10">
           <div className="flex items-center gap-3">
-            <h2 className="text-sm font-bold text-gray-900 uppercase tracking-wide">5. Inteligência Artificial de Fotos</h2>
-            <div className={`px-2 py-0.5 rounded text-[10px] font-black uppercase ${aiPhotoEnabled ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-400'}`}>
+            <h2 className="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-wide">5. Inteligência Artificial de Fotos</h2>
+            <div className={`px-2 py-0.5 rounded text-[10px] font-black uppercase ${aiPhotoEnabled ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400' : 'bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-600'}`}>
               {aiPhotoEnabled ? 'Ativo' : 'Pausado'}
             </div>
           </div>
-          <ChevronDown className={`w-5 h-5 text-slate-400 transition-transform duration-300 ${openSections.ia ? 'rotate-180' : ''}`} />
+          <ChevronDown className={`w-5 h-5 text-slate-400 dark:text-slate-500 transition-transform duration-300 ${openSections.ia ? 'rotate-180' : ''}`} />
         </button>
 
         {openSections.ia && <div className="px-5 pb-5">
 
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 rounded-xl bg-orange-50/50 border border-orange-100/50">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 rounded-xl bg-orange-50/50 dark:bg-orange-950/10 border border-orange-100/50 dark:border-orange-900/20">
            <div className="flex items-center gap-4">
               <div className="w-12 h-12 rounded-xl bg-orange-500 text-white flex items-center justify-center font-black text-lg shadow-sm">
                 {aiPhotoCredits}
               </div>
               <div>
-                <p className="text-xs font-black text-slate-700 uppercase tracking-tight">Créditos Disponíveis</p>
-                <p className="text-[11px] text-slate-400 font-medium">Melhore suas fotos de pratos automaticamente.</p>
+                <p className="text-xs font-black text-slate-700 dark:text-slate-200 uppercase tracking-tight">Créditos Disponíveis</p>
+                <p className="text-[11px] text-slate-400 dark:text-slate-500 font-medium tracking-tight">Melhore suas fotos de pratos automaticamente.</p>
               </div>
            </div>
            <button 
              type="button" 
              onClick={() => setIsPlansModalOpen(true)}
-             className="px-4 py-2 bg-white border border-orange-200 text-orange-600 rounded-lg text-xs font-bold hover:bg-orange-50 transition shadow-sm"
+             className="px-4 py-2 bg-white dark:bg-slate-800 border border-orange-200 dark:border-orange-900/50 text-orange-600 dark:text-orange-400 rounded-lg text-xs font-bold hover:bg-orange-50 dark:hover:bg-slate-700 transition shadow-sm"
            >
              Comprar + fotos
            </button>
         </div>
 
-        <label className="flex items-center gap-3 p-3 mt-4 border border-slate-100 rounded-xl cursor-pointer hover:bg-slate-50 transition">
+        <label className="flex items-center gap-3 p-3 mt-4 border border-slate-100 dark:border-slate-800 rounded-xl cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50 transition">
           <div className="relative flex items-center">
             <input
               type="checkbox"
               checked={aiPhotoEnabled}
               onChange={(e) => setAiPhotoEnabled(e.target.checked)}
-              className="peer shrink-0 appearance-none w-5 h-5 border border-slate-300 rounded-md bg-white checked:bg-orange-600 checked:border-orange-600 focus:outline-none focus:ring-2 focus:ring-orange-500/50 transition-colors"
+              className="peer shrink-0 appearance-none w-5 h-5 border border-slate-300 dark:border-slate-700 rounded-md bg-white dark:bg-slate-950 checked:bg-orange-600 checked:border-orange-600 focus:outline-none focus:ring-2 focus:ring-orange-500/50 transition-all"
             />
             <svg className="absolute w-5 h-5 text-white pointer-events-none hidden peer-checked:block p-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
           </div>
           <div className="flex-1">
-            <p className="text-sm font-bold text-gray-800">Habilitar Geração de Imagem com IA</p>
-            <p className="text-[11px] text-gray-500 font-medium leading-relaxed">
+            <p className="text-sm font-bold text-gray-800 dark:text-slate-200">Habilitar Geração de Imagem com IA</p>
+            <p className="text-[11px] text-gray-500 dark:text-slate-500 font-medium leading-relaxed">
               O sistema pegará a foto original do prato e gerará {aiImagesPerCredit} opções melhoradas para você escolher a &quot;Foto Ideal&quot;.
               Cobra 1 crédito por item editado.
             </p>
@@ -448,37 +448,37 @@ export default function VendorSettingsForm({ vendor, subscription }: { vendor: a
         <button
           type="button"
           onClick={() => setShowUsage(!showUsage)}
-          className="flex items-center gap-2 mt-4 text-xs font-bold text-slate-500 hover:text-orange-600 transition"
+          className="flex items-center gap-2 mt-5 text-[11px] font-black text-slate-500 dark:text-slate-600 hover:text-orange-600 uppercase tracking-widest transition"
         >
           <Clock className="w-3.5 h-3.5" />
           {showUsage ? 'Ocultar histórico de uso' : 'Ver histórico de uso de créditos'}
         </button>
 
         {showUsage && (
-          <div className="mt-3 border border-slate-100 rounded-xl overflow-hidden">
+          <div className="mt-3 border border-slate-100 dark:border-slate-800 rounded-xl overflow-hidden shadow-sm transition-colors">
             {usageLoading ? (
-              <div className="flex items-center justify-center py-6">
-                <div className="w-5 h-5 border-2 border-orange-200 border-t-orange-500 animate-spin rounded-full" />
+              <div className="flex items-center justify-center py-8">
+                <div className="w-6 h-6 border-2 border-orange-200 dark:border-orange-900/50 border-t-orange-500 animate-spin rounded-full" />
               </div>
             ) : aiUsage.length === 0 ? (
-              <p className="text-xs text-slate-400 text-center py-6 font-medium">Nenhum crédito utilizado ainda.</p>
+              <p className="text-xs text-slate-400 dark:text-slate-600 text-center py-8 font-bold italic">Nenhum crédito utilizado ainda.</p>
             ) : (
-              <div className="max-h-60 overflow-y-auto divide-y divide-slate-50">
+              <div className="max-h-60 overflow-y-auto divide-y divide-slate-50 dark:divide-slate-800 animate-in fade-in slide-in-from-top-1 duration-300">
                 {aiUsage.map(u => (
-                  <div key={u.id} className="flex items-center gap-3 px-4 py-2.5 hover:bg-slate-50/50">
-                    <div className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 ${u.type === 'image' ? 'bg-orange-100 text-orange-600' : 'bg-blue-100 text-blue-600'}`}>
-                      {u.type === 'image' ? <ImageIcon className="w-3.5 h-3.5" /> : <Type className="w-3.5 h-3.5" />}
+                  <div key={u.id} className="flex items-center gap-3 px-4 py-3 hover:bg-slate-50/50 dark:hover:bg-slate-800/30">
+                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${u.type === 'image' ? 'bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400' : 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400'}`}>
+                      {u.type === 'image' ? <ImageIcon className="w-4 h-4" /> : <Type className="w-4 h-4" />}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-xs font-bold text-slate-700 truncate">
+                      <p className="text-xs font-bold text-slate-700 dark:text-slate-200 truncate">
                         {u.type === 'image' ? 'Melhoria de Foto' : 'Melhoria de Descrição'}
-                        {u.menu_item_name && <span className="text-slate-400 font-medium"> — {u.menu_item_name}</span>}
+                        {u.menu_item_name && <span className="text-slate-400 dark:text-slate-500 font-medium"> — {u.menu_item_name}</span>}
                       </p>
-                      {u.prompt && <p className="text-[10px] text-slate-400 truncate">{u.prompt}</p>}
+                      {u.prompt && <p className="text-[10px] text-slate-400 dark:text-slate-600 truncate font-medium">{u.prompt}</p>}
                     </div>
                     <div className="text-right shrink-0">
-                      <p className="text-[10px] font-bold text-red-500">-{u.credits_used}</p>
-                      <p className="text-[9px] text-slate-300">
+                      <p className="text-[10px] font-black text-red-500 dark:text-red-400">-{u.credits_used}</p>
+                      <p className="text-[9px] text-slate-300 dark:text-slate-700 font-bold">
                         {new Date(u.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
                       </p>
                     </div>
@@ -493,22 +493,22 @@ export default function VendorSettingsForm({ vendor, subscription }: { vendor: a
 
       {/* Bloco 5: Plano e Consumo */}
       {subscription.isPaid && subscription.plan ? (
-        <section className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
-          <button type="button" onClick={() => toggleSection('plano')} className="w-full flex items-center justify-between p-5 hover:bg-slate-50/50 transition">
+        <section className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 overflow-hidden transition-colors">
+          <button type="button" onClick={() => toggleSection('plano')} className="w-full flex items-center justify-between p-5 hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition">
             <div className="flex items-center gap-3">
-              <h2 className="text-sm font-bold text-gray-900 uppercase tracking-wide">6. Meu Plano</h2>
-              <div className="px-2 py-0.5 rounded text-[10px] font-black uppercase bg-green-100 text-green-700">
+              <h2 className="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-wide">6. Meu Plano</h2>
+              <div className="px-2 py-0.5 rounded text-[10px] font-black uppercase bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400">
                 Ativo
               </div>
             </div>
-            <ChevronDown className={`w-5 h-5 text-slate-400 transition-transform duration-300 ${openSections.plano ? 'rotate-180' : ''}`} />
+            <ChevronDown className={`w-5 h-5 text-slate-400 dark:text-slate-500 transition-transform duration-300 ${openSections.plano ? 'rotate-180' : ''}`} />
           </button>
 
           {openSections.plano && <div className="px-5 pb-5">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-5">
             <div>
-              <h3 className="text-lg font-black text-slate-900">Plano {subscription.plan.name}</h3>
-              <p className="text-xs text-slate-400 font-medium">
+              <h3 className="text-lg font-black text-slate-900 dark:text-white">Plano {subscription.plan.name}</h3>
+              <p className="text-xs text-slate-400 dark:text-slate-500 font-bold tracking-tight">
                 R$ {subscription.plan.price.toFixed(2)}/mês
                 {subscription.expiresAt && (
                   <> — Renova em {new Date(subscription.expiresAt).toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' })}</>
@@ -518,23 +518,23 @@ export default function VendorSettingsForm({ vendor, subscription }: { vendor: a
             <button
               type="button"
               onClick={() => setIsPlansModalOpen(true)}
-              className="px-4 py-2 bg-slate-100 text-slate-600 rounded-xl text-xs font-bold hover:bg-slate-200 transition"
+              className="px-4 py-2 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-xl text-xs font-bold hover:bg-slate-200 dark:hover:bg-slate-700 transition"
             >
               Trocar Plano
             </button>
           </div>
 
           {/* Barra de consumo */}
-          <div className="bg-slate-50 rounded-xl p-4">
+          <div className="bg-slate-50 dark:bg-slate-950 rounded-xl p-5 border border-slate-100 dark:border-slate-800 transition-colors">
             <div className="flex items-center justify-between mb-2">
-              <p className="text-xs font-bold text-slate-600">Pedidos este mês</p>
+              <p className="text-[11px] font-black text-slate-600 dark:text-slate-400 uppercase tracking-widest">Pedidos este mês</p>
               <p className="text-xs font-black" style={{ color: subscription.exceeded ? '#ef4444' : P }}>
                 {subscription.ordersThisMonth} / {subscription.orderLimit >= 99999 ? '∞' : subscription.orderLimit}
               </p>
             </div>
-            <div className="h-3 bg-slate-200 rounded-full overflow-hidden">
+            <div className="h-3 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden shadow-inner">
               <div
-                className="h-full rounded-full transition-all duration-700"
+                className="h-full rounded-full transition-all duration-700 shadow-sm"
                 style={{
                   width: subscription.orderLimit >= 99999
                     ? '100%'
@@ -548,17 +548,17 @@ export default function VendorSettingsForm({ vendor, subscription }: { vendor: a
               />
             </div>
             {subscription.exceeded && (
-              <div className="mt-3 flex items-center gap-2 bg-red-50 text-red-600 px-3 py-2 rounded-xl">
-                <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" /></svg>
-                <p className="text-[11px] font-bold">
+              <div className="mt-4 flex items-center gap-3 bg-red-50 dark:bg-red-950/20 text-red-600 dark:text-red-400 px-4 py-3 rounded-xl border border-red-100/50 dark:border-red-900/20">
+                <svg className="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" /></svg>
+                <p className="text-[11px] font-black leading-tight uppercase tracking-tight">
                   Limite excedido! Novos pedidos serão bloqueados a partir de amanhã.{' '}
-                  <button type="button" onClick={() => setIsPlansModalOpen(true)} className="underline hover:text-red-700">Fazer upgrade</button>
+                  <button type="button" onClick={() => setIsPlansModalOpen(true)} className="underline hover:text-red-700 dark:hover:text-red-300">Fazer upgrade</button>
                 </p>
               </div>
             )}
             {!subscription.exceeded && subscription.ordersThisMonth / subscription.orderLimit > 0.8 && (
-              <p className="text-[10px] text-amber-600 font-bold mt-2">
-                Você está próximo do limite. Considere fazer upgrade para não perder vendas.
+              <p className="text-[10px] text-amber-600 dark:text-amber-500 font-black uppercase tracking-tight mt-3">
+                Você está próximo do limite. Fique atento para não perder vendas.
               </p>
             )}
           </div>
@@ -623,27 +623,27 @@ export default function VendorSettingsForm({ vendor, subscription }: { vendor: a
       )}
 
       {/* Bloco 7: Zona de Perigo — Apagar Marca */}
-      <section className="bg-white rounded-2xl shadow-sm border border-red-100 overflow-hidden">
-        <button type="button" onClick={() => toggleSection('perigo')} className="w-full flex items-center justify-between p-5 hover:bg-red-50/30 transition">
-          <h2 className="text-sm font-bold text-red-600 uppercase tracking-wide">7. Zona de Perigo</h2>
-          <ChevronDown className={`w-5 h-5 text-red-400 transition-transform duration-300 ${openSections.perigo ? 'rotate-180' : ''}`} />
+      <section className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-red-100 dark:border-red-900/20 overflow-hidden transition-colors">
+        <button type="button" onClick={() => toggleSection('perigo')} className="w-full flex items-center justify-between p-5 hover:bg-red-50/30 dark:hover:bg-red-900/10 transition">
+          <h2 className="text-sm font-bold text-red-600 dark:text-red-500 uppercase tracking-wide">7. Zona de Perigo</h2>
+          <ChevronDown className={`w-5 h-5 text-red-400 dark:text-red-700 transition-transform duration-300 ${openSections.perigo ? 'rotate-180' : ''}`} />
         </button>
         {openSections.perigo && <div className="px-5 pb-5">
-        <p className="text-xs text-slate-500 mb-4">Ao apagar esta marca, todos os pedidos, itens do cardápio, configurações e dados associados serão permanentemente removidos.</p>
+        <p className="text-xs text-slate-500 dark:text-slate-500 mb-4 font-medium italic">Ao apagar esta marca, todos os pedidos, itens do cardápio, configurações e dados associados serão permanentemente removidos.</p>
 
-        <label className="flex items-center gap-3 p-3 border border-red-100 rounded-xl cursor-pointer hover:bg-red-50/30 transition mb-3">
+        <label className="flex items-center gap-3 p-4 border border-red-100 dark:border-red-900/30 rounded-xl cursor-pointer hover:bg-red-50/30 dark:hover:bg-red-900/20 transition mb-4">
           <div className="relative flex items-center">
             <input
               type="checkbox"
               checked={confirmDelete}
               onChange={(e) => setConfirmDelete(e.target.checked)}
-              className="peer shrink-0 appearance-none w-5 h-5 border border-red-300 rounded-md bg-white checked:bg-red-600 checked:border-red-600 focus:outline-none focus:ring-2 focus:ring-red-500/50 transition-colors"
+              className="peer shrink-0 appearance-none w-5 h-5 border border-red-300 dark:border-red-900/50 rounded-md bg-white dark:bg-slate-950 checked:bg-red-600 checked:border-red-600 focus:outline-none focus:ring-2 focus:ring-red-500/50 transition-all"
             />
             <svg className="absolute w-5 h-5 text-white pointer-events-none hidden peer-checked:block p-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
           </div>
           <div className="flex-1">
-            <p className="text-sm font-bold text-red-700">Sim, desejo apagar a marca &quot;{vendor.name}&quot;</p>
-            <p className="text-[11px] text-slate-400 font-medium">Marque esta caixa para habilitar o botão de exclusão.</p>
+            <p className="text-sm font-black text-red-700 dark:text-red-400">Sim, desejo apagar a marca &quot;{vendor.name}&quot;</p>
+            <p className="text-[11px] text-slate-400 dark:text-slate-600 font-bold uppercase tracking-tight">Marque esta caixa para habilitar o botão de exclusão.</p>
           </div>
         </label>
 
@@ -651,7 +651,7 @@ export default function VendorSettingsForm({ vendor, subscription }: { vendor: a
           type="button"
           disabled={!confirmDelete || deleting}
           onClick={() => setShowDeleteModal(true)}
-          className="w-full h-12 bg-red-600 text-white font-bold rounded-xl text-sm transition hover:bg-red-700 disabled:opacity-30 disabled:cursor-not-allowed"
+          className="w-full h-12 bg-red-600 text-white font-black rounded-xl text-xs uppercase tracking-widest transition hover:bg-red-700 disabled:opacity-30 disabled:grayscale-100 disabled:cursor-not-allowed shadow-lg shadow-red-500/20"
         >
           {deleting ? 'Apagando...' : 'Apagar Marca Permanentemente'}
         </button>

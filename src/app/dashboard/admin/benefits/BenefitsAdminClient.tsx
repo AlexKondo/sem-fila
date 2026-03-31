@@ -6,6 +6,8 @@ import { createClient } from '@/lib/supabase/client';
 import { ToggleLeft, ToggleRight, Plus, Trash2, Save, ChevronDown, ChevronUp, Store, Users, UserCheck, DollarSign, Zap } from 'lucide-react';
 import type { AutoBenefitMetric, AutoBenefitOperator, BenefitAudience } from '@/types/database';
 
+import ThemeToggle from '@/components/ui/ThemeToggle';
+
 // ── Audience config ──
 const AUDIENCE_TABS: { value: BenefitAudience; label: string; icon: typeof Store; color: string; bg: string; border: string; desc: string }[] = [
   { value: 'vendor', label: 'Vendors', icon: Store, color: 'text-orange-600', bg: 'bg-orange-50', border: 'border-orange-200', desc: 'Benefícios para barracas/quiosques' },
@@ -302,29 +304,32 @@ export default function BenefitsAdminClient() {
   const countPerTab = (aud: BenefitAudience) => cards.filter(c => c.target_audience === aud).length;
 
   if (loading) return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+    <div className="min-h-screen bg-gray-50 dark:bg-slate-950 flex items-center justify-center transition-colors">
       <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500" />
     </div>
   );
 
   return (
-    <main className="min-h-screen bg-gray-50">
-      <header className="bg-white border-b border-gray-100 sticky top-0 z-40">
-        <div className="max-w-4xl mx-auto px-4 py-3 flex items-center gap-3">
-          <Link href="/dashboard/admin" className="p-2 text-gray-400 hover:text-gray-900 transition">
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-            </svg>
-          </Link>
-          <div className="flex-1">
-            <h1 className="font-bold text-gray-900 leading-none">Benefícios & Metas</h1>
-            <p className="text-[10px] text-gray-400 uppercase font-bold tracking-tighter">
-              Defina benefícios e como são ativados
-            </p>
+    <main className="min-h-screen bg-gray-50 dark:bg-slate-950 transition-colors duration-300">
+      <header className="bg-white dark:bg-slate-900 border-b border-gray-100 dark:border-slate-800 sticky top-0 z-40 transition-colors">
+        <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Link href="/dashboard/admin" className="p-2 text-gray-400 hover:text-gray-900 dark:hover:text-white transition">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+              </svg>
+            </Link>
+            <div className="flex-1">
+              <h1 className="font-bold text-gray-900 dark:text-white leading-none">Benefícios & Metas</h1>
+              <p className="text-[10px] text-gray-400 dark:text-slate-500 uppercase font-bold tracking-tighter">
+                Defina benefícios e como são ativados
+              </p>
+            </div>
           </div>
+          <ThemeToggle />
         </div>
 
-        <div className="max-w-4xl mx-auto px-4 flex border-t border-gray-50">
+        <div className="max-w-4xl mx-auto px-4 flex border-t border-gray-50 dark:border-slate-800">
           {AUDIENCE_TABS.map(tab => {
             const Icon = tab.icon;
             const count = countPerTab(tab.value);
@@ -334,13 +339,13 @@ export default function BenefitsAdminClient() {
                 key={tab.value}
                 onClick={() => setActiveTab(tab.value)}
                 className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-bold transition border-b-2 ${
-                  isActive ? `${tab.color} border-current` : 'text-gray-400 border-transparent hover:text-gray-600'
+                  isActive ? `${tab.color} border-current` : 'text-gray-400 dark:text-slate-500 border-transparent hover:text-gray-600 dark:hover:text-slate-300'
                 }`}
               >
                 <Icon className="w-4 h-4" />
                 {tab.label}
                 {count > 0 && (
-                  <span className={`text-[10px] px-1.5 py-0 rounded-full ${isActive ? tab.bg : 'bg-gray-100'}`}>
+                  <span className={`text-[10px] px-1.5 py-0 rounded-full transition-colors ${isActive ? `${tab.bg} dark:bg-opacity-20` : 'bg-gray-100 dark:bg-slate-800'}`}>
                     {count}
                   </span>
                 )}
@@ -352,14 +357,14 @@ export default function BenefitsAdminClient() {
 
       <div className="max-w-4xl mx-auto px-4 py-6 space-y-4">
 
-        <div className={`rounded-2xl border ${currentTabConfig.border} ${currentTabConfig.bg} p-3 flex items-center gap-3`}>
+        <div className={`rounded-2xl border transition-colors ${currentTabConfig.border} dark:border-opacity-30 ${currentTabConfig.bg} dark:bg-opacity-10 p-3 flex items-center gap-3`}>
           {(() => { const Icon = currentTabConfig.icon; return <Icon className={`w-5 h-5 ${currentTabConfig.color} flex-shrink-0`} />; })()}
           <p className={`text-xs font-medium ${currentTabConfig.color}`}>{currentTabConfig.desc}</p>
         </div>
 
         {tabCards.length === 0 && (
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 text-center">
-            <p className="text-gray-400 text-sm">Nenhum benefício para <strong>{currentTabConfig.label}</strong> ainda.</p>
+          <div className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-100 dark:border-slate-800 shadow-sm p-8 text-center transition-colors">
+            <p className="text-gray-400 dark:text-slate-500 text-sm">Nenhum benefício para <strong>{currentTabConfig.label}</strong> ainda.</p>
           </div>
         )}
 
@@ -368,44 +373,44 @@ export default function BenefitsAdminClient() {
           const metricInfo = METRIC_OPTIONS.find(m => m.value === card.metric);
 
           return (
-            <div key={card.featureId} className={`bg-white rounded-2xl border shadow-sm overflow-hidden ${currentTabConfig.border}`}>
+            <div key={card.featureId} className={`bg-white dark:bg-slate-900 rounded-2xl border shadow-sm overflow-hidden transition-colors ${currentTabConfig.border} dark:border-opacity-30`}>
               {/* Header do card */}
               <div className="p-4">
                 <div className="flex items-center justify-between mb-1">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <span className={`text-[10px] font-black px-2 py-0.5 rounded-full uppercase ${card.active ? 'bg-green-50 text-green-600' : 'bg-gray-100 text-gray-400'}`}>
+                    <span className={`text-[10px] font-black px-2 py-0.5 rounded-full uppercase ${card.active ? 'bg-green-50 dark:bg-green-950/20 text-green-600' : 'bg-gray-100 dark:bg-slate-800 text-gray-400 dark:text-slate-500'}`}>
                       {card.active ? 'Ativo' : 'Inativo'}
                     </span>
                     {card._isNewFeature && (
-                      <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-blue-50 text-blue-600 uppercase">Novo</span>
+                      <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-blue-50 dark:bg-blue-950/20 text-blue-600 uppercase">Novo</span>
                     )}
                     {card.price > 0 && (
-                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600 flex items-center gap-0.5">
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/20 text-emerald-600 flex items-center gap-0.5">
                         <DollarSign className="w-2.5 h-2.5" /> R$ {card.price.toFixed(2)}
                       </span>
                     )}
                     {card.hasAutoRule && card.threshold > 0 && (
-                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-50 text-purple-600 flex items-center gap-0.5">
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-50 dark:bg-purple-950/20 text-purple-600 flex items-center gap-0.5">
                         <Zap className="w-2.5 h-2.5" /> Meta automática
                       </span>
                     )}
                   </div>
                   <div className="flex items-center gap-1">
-                    <button onClick={() => toggleExpand(card.featureId)} className="p-1.5 text-gray-400 hover:text-gray-600 rounded-lg transition">
+                    <button onClick={() => toggleExpand(card.featureId)} className="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-slate-300 rounded-lg transition">
                       {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
                     </button>
-                    <button onClick={() => removeCard(card.featureId)} className="p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition">
+                    <button onClick={() => removeCard(card.featureId)} className="p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-lg transition">
                       <Trash2 className="w-4 h-4" />
                     </button>
                   </div>
                 </div>
 
-                <p className="font-bold text-gray-900 text-sm">{card.name || <span className="text-gray-300 italic">Selecione um benefício</span>}</p>
-                {!isExpanded && card.description && <p className="text-xs text-gray-400 mt-0.5 line-clamp-1">{card.description}</p>}
+                <p className="font-bold text-gray-900 dark:text-white text-sm">{card.name || <span className="text-gray-300 dark:text-slate-700 italic">Selecione um benefício</span>}</p>
+                {!isExpanded && card.description && <p className="text-xs text-gray-400 dark:text-slate-500 mt-0.5 line-clamp-1">{card.description}</p>}
 
                 {/* Resumo quando fechado */}
                 {!isExpanded && card.hasAutoRule && card.threshold > 0 && (
-                  <p className="text-[11px] text-purple-600 mt-1">
+                  <p className="text-[11px] text-purple-600 dark:text-purple-400 mt-1 font-medium">
                     Meta: {metricInfo?.label} {card.operator} {card.threshold} {metricInfo?.unit}
                   </p>
                 )}
@@ -413,30 +418,30 @@ export default function BenefitsAdminClient() {
 
               {/* Detalhes expandidos */}
               {isExpanded && (
-                <div className="border-t border-gray-100 p-4 space-y-4">
+                <div className="border-t border-gray-100 dark:border-slate-800 p-4 space-y-4 transition-colors">
                   {/* Tipo de benefício (dropdown) */}
                   <div>
-                    <label className="text-[11px] font-bold text-gray-500 uppercase block mb-1">Tipo de benefício</label>
+                    <label className="text-[11px] font-bold text-gray-500 dark:text-slate-400 uppercase block mb-1">Tipo de benefício</label>
                     <select
                       value={card.slug}
                       onChange={e => selectBenefitType(card.featureId, e.target.value)}
                       disabled={!card._isNewFeature}
-                      className={`w-full border rounded-xl px-3 py-2 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-orange-500/30 bg-white ${
-                        showValidation && !card.slug ? 'border-red-400 bg-red-50' : 'border-gray-200'
+                      className={`w-full border rounded-xl px-3 py-2 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-orange-500/30 bg-white dark:bg-slate-950 text-slate-900 dark:text-white transition-all ${
+                        showValidation && !card.slug ? 'border-red-400 bg-red-50 dark:bg-red-950/20 transition-colors' : 'border-gray-200 dark:border-slate-700'
                       } ${!card._isNewFeature ? 'opacity-70 cursor-not-allowed' : ''}`}
                     >
                       {card._isNewFeature ? (
                         <>
                           {availableSlugs(card.target_audience, card.slug).map(b => (
-                            <option key={b.slug} value={b.slug}>{b.name}</option>
+                            <option key={b.slug} value={b.slug} className="dark:bg-slate-900">{b.name}</option>
                           ))}
                           {/* Include current if already selected but "used" */}
                           {!availableSlugs(card.target_audience, card.slug).find(b => b.slug === card.slug) && (
-                            <option value={card.slug}>{card.name}</option>
+                            <option value={card.slug} className="dark:bg-slate-900">{card.name}</option>
                           )}
                         </>
                       ) : (
-                        <option value={card.slug}>{card.name}</option>
+                        <option value={card.slug} className="dark:bg-slate-900">{card.name}</option>
                       )}
                     </select>
                     {showValidation && !card.slug && (
@@ -446,53 +451,53 @@ export default function BenefitsAdminClient() {
 
                   {/* Descrição (auto-preenchida, editável) */}
                   {card.description && (
-                    <p className="text-xs text-gray-500 bg-gray-50 rounded-lg px-3 py-2 leading-relaxed">
+                    <p className="text-xs text-gray-500 dark:text-slate-400 bg-gray-50 dark:bg-slate-800/50 rounded-lg px-3 py-2 leading-relaxed transition-colors border border-gray-100 dark:border-slate-800">
                       {card.description}
                     </p>
                   )}
 
                   {/* ── ATIVAÇÃO POR PAGAMENTO ── */}
-                  <div className="bg-emerald-50 rounded-xl p-3 space-y-2">
+                  <div className="bg-emerald-50 dark:bg-emerald-950/20 rounded-xl p-3 space-y-2 border border-emerald-100 dark:border-emerald-900/30 transition-colors">
                     <div className="flex items-center gap-2">
-                      <DollarSign className="w-4 h-4 text-emerald-600" />
-                      <p className="text-xs font-bold text-emerald-700">Ativação por pagamento</p>
+                      <DollarSign className="w-4 h-4 text-emerald-600 dark:text-emerald-500" />
+                      <p className="text-xs font-bold text-emerald-700 dark:text-emerald-400">Ativação por pagamento</p>
                     </div>
                     <div className="grid grid-cols-2 gap-3">
                       <div>
-                        <label className="text-[10px] font-bold text-emerald-600 uppercase block mb-1">Preço (R$)</label>
+                        <label className="text-[10px] font-bold text-emerald-600 dark:text-emerald-500 uppercase block mb-1">Preço (R$)</label>
                         <input
                           type="number" step="0.01"
                           value={card.price}
                           onChange={e => updateCard(card.featureId, 'price', parseFloat(e.target.value) || 0)}
-                          className="w-full border border-emerald-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400/30 bg-white"
+                          className="w-full border border-emerald-200 dark:border-emerald-800/50 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400/30 bg-white dark:bg-slate-950 text-emerald-900 dark:text-emerald-100"
                         />
                       </div>
                       <div>
-                        <label className="text-[10px] font-bold text-emerald-600 uppercase block mb-1">Duração (dias)</label>
+                        <label className="text-[10px] font-bold text-emerald-600 dark:text-emerald-500 uppercase block mb-1">Duração (dias)</label>
                         <input
                           type="number"
                           value={card.duration_days}
                           onChange={e => updateCard(card.featureId, 'duration_days', parseInt(e.target.value) || 30)}
-                          className="w-full border border-emerald-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400/30 bg-white"
+                          className="w-full border border-emerald-200 dark:border-emerald-800/50 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400/30 bg-white dark:bg-slate-950 text-emerald-900 dark:text-emerald-100"
                         />
                       </div>
                     </div>
                     {card.price > 0 && (
-                      <p className="text-[10px] text-emerald-600">
+                      <p className="text-[10px] text-emerald-600 dark:text-emerald-500 font-medium">
                         Cobra <strong>R$ {card.price.toFixed(2)}</strong> via Asaas por <strong>{card.duration_days} dias</strong>
                       </p>
                     )}
                     {card.price === 0 && (
-                      <p className="text-[10px] text-emerald-500 italic">Preço R$ 0 = não disponível para compra</p>
+                      <p className="text-[10px] text-emerald-500 dark:text-emerald-600/70 italic">Preço R$ 0 = não disponível para compra</p>
                     )}
                   </div>
 
                   {/* ── ATIVAÇÃO POR META AUTOMÁTICA ── */}
-                  <div className={`rounded-xl p-3 space-y-2 ${card.hasAutoRule ? 'bg-purple-50' : 'bg-gray-50'}`}>
+                  <div className={`rounded-xl p-3 space-y-2 border transition-colors ${card.hasAutoRule ? 'bg-purple-50 dark:bg-purple-950/20 border-purple-100 dark:border-purple-900/30' : 'bg-gray-50 dark:bg-slate-800/40 border-gray-100 dark:border-slate-800'}`}>
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <Zap className={`w-4 h-4 ${card.hasAutoRule ? 'text-purple-600' : 'text-gray-400'}`} />
-                        <p className={`text-xs font-bold ${card.hasAutoRule ? 'text-purple-700' : 'text-gray-500'}`}>
+                        <Zap className={`w-4 h-4 ${card.hasAutoRule ? 'text-purple-600 dark:text-purple-400' : 'text-gray-400 dark:text-slate-600'}`} />
+                        <p className={`text-xs font-bold ${card.hasAutoRule ? 'text-purple-700 dark:text-purple-300' : 'text-gray-500 dark:text-slate-500'}`}>
                           Ativação automática por meta
                         </p>
                       </div>
@@ -502,8 +507,8 @@ export default function BenefitsAdminClient() {
                         className="flex-shrink-0"
                       >
                         {card.hasAutoRule
-                          ? <ToggleRight className="w-6 h-6 text-purple-500" />
-                          : <ToggleLeft className="w-6 h-6 text-gray-300" />
+                          ? <ToggleRight className="w-6 h-6 text-purple-500 dark:text-purple-400" />
+                          : <ToggleLeft className="w-6 h-6 text-gray-300 dark:text-slate-700" />
                         }
                       </button>
                     </div>
@@ -514,40 +519,40 @@ export default function BenefitsAdminClient() {
                           <select
                             value={card.metric}
                             onChange={e => updateCard(card.featureId, 'metric', e.target.value)}
-                            className="border border-purple-200 rounded-lg px-2 py-1.5 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-purple-400/30"
+                            className="border border-purple-200 dark:border-purple-800/50 rounded-lg px-2 py-1.5 text-xs bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-purple-400/30"
                           >
-                            {METRIC_OPTIONS.map(m => <option key={m.value} value={m.value}>{m.label}</option>)}
+                            {METRIC_OPTIONS.map(m => <option key={m.value} value={m.value} className="dark:bg-slate-900">{m.label}</option>)}
                           </select>
                           <select
                             value={card.operator}
                             onChange={e => updateCard(card.featureId, 'operator', e.target.value)}
-                            className="border border-purple-200 rounded-lg px-2 py-1.5 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-purple-400/30"
+                            className="border border-purple-200 dark:border-purple-800/50 rounded-lg px-2 py-1.5 text-xs bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-purple-400/30"
                           >
-                            {OPERATOR_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+                            {OPERATOR_OPTIONS.map(o => <option key={o.value} value={o.value} className="dark:bg-slate-900">{o.label}</option>)}
                           </select>
                           <input
                             type="number" step="0.01"
                             value={card.threshold}
-                            onChange={e => updateCard(card.featureId, 'threshold', parseFloat(e.target.value) || 0)}
+                            onChange={updateCard ? (e => updateCard(card.featureId, 'threshold', parseFloat(e.target.value) || 0)) : undefined}
                             placeholder="Valor"
-                            className="border border-purple-200 rounded-lg px-2 py-1.5 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-purple-400/30"
+                            className="border border-purple-200 dark:border-purple-800/50 rounded-lg px-2 py-1.5 text-xs bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-purple-400/30"
                           />
                         </div>
 
                         <div className="flex items-center gap-3">
-                          <label className="text-[10px] font-bold text-purple-600">Duração da meta:</label>
+                          <label className="text-[10px] font-bold text-purple-600 dark:text-purple-400 uppercase">Duração da meta:</label>
                           <input
                             type="number"
                             value={card.rule_duration_days}
                             onChange={e => updateCard(card.featureId, 'rule_duration_days', parseInt(e.target.value) || 30)}
-                            className="w-16 border border-purple-200 rounded-lg px-2 py-1 text-xs text-center bg-white focus:outline-none focus:ring-2 focus:ring-purple-400/30"
+                            className="w-16 border border-purple-200 dark:border-purple-800/50 rounded-lg px-2 py-1 text-xs text-center bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-purple-400/30 font-bold"
                           />
-                          <span className="text-[10px] text-purple-500">dias</span>
+                          <span className="text-[10px] text-purple-500 dark:text-purple-400/70 font-bold">dias</span>
                         </div>
 
                         {card.threshold > 0 && (
-                          <div className="bg-purple-100/50 rounded-lg px-3 py-1.5">
-                            <p className="text-[11px] text-purple-700 font-medium">
+                          <div className="bg-purple-100/50 dark:bg-purple-900/30 rounded-lg px-3 py-1.5 border border-purple-200/30 transition-colors">
+                            <p className="text-[11px] text-purple-700 dark:text-purple-300 font-medium leading-relaxed">
                               Concedido automaticamente quando <strong>{metricInfo?.label}</strong>
                               {' '}{card.operator} <strong>{card.threshold} {metricInfo?.unit}</strong>
                               {' '}por <strong>{card.rule_duration_days}d</strong>
@@ -558,34 +563,34 @@ export default function BenefitsAdminClient() {
                     )}
 
                     {!card.hasAutoRule && (
-                      <p className="text-[10px] text-gray-400 italic">Desativado. Ative para conceder automaticamente por desempenho.</p>
+                      <p className="text-[10px] text-gray-400 dark:text-slate-600 italic">Desativado. Ative para conceder automaticamente por desempenho.</p>
                     )}
                   </div>
 
                   {/* ── Opções gerais ── */}
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                    <div className="flex items-center gap-3 bg-amber-50 rounded-xl px-3 py-2.5">
+                    <div className="flex items-center gap-3 bg-amber-50 dark:bg-amber-950/20 rounded-xl px-3 py-2.5 border border-amber-100 dark:border-amber-900/30 transition-colors">
                       <button type="button" onClick={() => updateCard(card.featureId, 'free_for_all', !card.free_for_all)} className="flex-shrink-0">
-                        {card.free_for_all ? <ToggleRight className="w-6 h-6 text-amber-500" /> : <ToggleLeft className="w-6 h-6 text-gray-300" />}
+                        {card.free_for_all ? <ToggleRight className="w-6 h-6 text-amber-500" /> : <ToggleLeft className="w-6 h-6 text-gray-300 dark:text-slate-700" />}
                       </button>
                       <div>
-                        <p className="text-[11px] font-bold text-amber-700">Grátis p/ todos</p>
-                        <p className="text-[9px] text-amber-500">{card.free_for_all ? 'Sim' : 'Não'}</p>
+                        <p className="text-[11px] font-bold text-amber-700 dark:text-amber-400">Grátis p/ todos</p>
+                        <p className="text-[9px] text-amber-500 dark:text-amber-600/70 uppercase font-black">{card.free_for_all ? 'Sim' : 'Não'}</p>
                       </div>
                     </div>
-                    <div className="flex items-center gap-3 bg-blue-50 rounded-xl px-3 py-2.5">
+                    <div className="flex items-center gap-3 bg-blue-50 dark:bg-blue-950/20 rounded-xl px-3 py-2.5 border border-blue-100 dark:border-blue-900/30 transition-colors">
                       <input
                         type="number" min="0"
                         value={card.trial_days}
                         onChange={e => updateCard(card.featureId, 'trial_days', parseInt(e.target.value) || 0)}
-                        className="w-16 border border-blue-200 rounded-lg px-2 py-1 text-sm text-center font-bold focus:outline-none focus:ring-2 focus:ring-blue-400/30 flex-shrink-0"
+                        className="w-16 border border-blue-200 dark:border-blue-800/50 rounded-lg px-2 py-1 text-sm text-center font-black focus:outline-none focus:ring-2 focus:ring-blue-400/30 flex-shrink-0 bg-white dark:bg-slate-950 text-blue-900 dark:text-blue-100"
                       />
                       <div>
-                        <p className="text-[11px] font-bold text-blue-700">Dias de teste</p>
-                        <p className="text-[9px] text-blue-500">{card.trial_days > 0 ? `${card.trial_days}d grátis` : 'Sem teste'}</p>
+                        <p className="text-[11px] font-bold text-blue-700 dark:text-blue-400">Dias de teste</p>
+                        <p className="text-[9px] text-blue-500 dark:text-blue-600/70 font-bold uppercase">{card.trial_days > 0 ? `${card.trial_days}d grátis` : 'Sem teste'}</p>
                       </div>
                     </div>
-                    <label className="flex items-center gap-3 bg-green-50 rounded-xl px-3 py-2.5 cursor-pointer">
+                    <label className="flex items-center gap-3 bg-green-50 dark:bg-green-950/20 rounded-xl px-3 py-2.5 cursor-pointer border border-green-100 dark:border-green-900/30 transition-colors">
                       <input
                         type="checkbox"
                         checked={card.active}
@@ -593,8 +598,8 @@ export default function BenefitsAdminClient() {
                         className="w-4 h-4 accent-green-500 flex-shrink-0"
                       />
                       <div>
-                        <p className="text-[11px] font-bold text-green-700">Ativo</p>
-                        <p className="text-[9px] text-green-500">{card.active ? 'Visível' : 'Oculto'}</p>
+                        <p className="text-[11px] font-bold text-green-700 dark:text-green-400">Ativo</p>
+                        <p className="text-[9px] text-green-500 dark:text-green-600/70 font-bold uppercase">{card.active ? 'Visível' : 'Oculto'}</p>
                       </div>
                     </label>
                   </div>
@@ -611,13 +616,13 @@ export default function BenefitsAdminClient() {
           return remaining > 0 ? (
             <button
               onClick={() => addCard(activeTab)}
-              className={`w-full border-2 border-dashed rounded-2xl py-4 text-sm font-bold transition flex items-center justify-center gap-2 ${currentTabConfig.border} text-gray-400 hover:${currentTabConfig.color}`}
+              className={`w-full border-2 border-dashed rounded-2xl py-4 text-sm font-black transition flex items-center justify-center gap-2 transition-all active:scale-[0.98] ${currentTabConfig.border} dark:border-opacity-30 text-gray-400 dark:text-slate-600 hover:${currentTabConfig.color} hover:bg-white dark:hover:bg-slate-900 hover:shadow-sm`}
             >
               <Plus className="w-4 h-4" /> Novo Benefício para {currentTabConfig.label}
               <span className="text-[10px] opacity-60">({remaining} disponíveis)</span>
             </button>
           ) : (
-            <div className={`w-full border-2 border-dashed rounded-2xl py-4 text-xs text-center text-gray-300 ${currentTabConfig.border}`}>
+            <div className={`w-full border-2 border-dashed rounded-2xl py-4 text-xs text-center text-gray-300 dark:text-slate-800 ${currentTabConfig.border} dark:border-opacity-10`}>
               Todos os benefícios para {currentTabConfig.label} já foram adicionados
             </div>
           );

@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server';
 import BrandSwitchButton from '@/components/dashboard/BrandSwitchButton';
+import ThemeToggle from '@/components/ui/ThemeToggle';
 
 interface Vendor {
   id: string;
@@ -67,9 +68,14 @@ export default async function VendorOverview({ vendors, userId }: Props) {
   return (
     <div className="max-w-2xl mx-auto px-4 pt-5 pb-10 space-y-6">
 
+      <div className="flex items-center justify-between mb-2">
+        <h2 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-widest">Painel Geral</h2>
+        <ThemeToggle />
+      </div>
+
       {/* Sumário Global */}
       <section>
-        <h2 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Resumo Geral — Todas as Marcas</h2>
+        <h2 className="text-[10px] font-black text-slate-400 dark:text-slate-600 uppercase tracking-widest mb-3 px-1">Todas as Marcas</h2>
         <div className="grid grid-cols-2 gap-3">
           {[
             { label: 'Receita total', value: fmt(totalRevenue) },
@@ -139,8 +145,8 @@ export default async function VendorOverview({ vendors, userId }: Props) {
 
 function Micro({ label, value }: { label: string; value: string }) {
   return (
-    <div className="bg-slate-50 dark:bg-slate-950 rounded-xl px-3 py-2">
-      <p className="text-[10px] text-slate-400 dark:text-slate-500 font-medium">{label}</p>
+    <div className="bg-slate-50 dark:bg-slate-950 rounded-xl px-3 py-2 transition-colors border border-transparent dark:border-slate-800/50">
+      <p className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-tight">{label}</p>
       <p className="text-sm font-black text-slate-800 dark:text-slate-200">{value}</p>
     </div>
   );
