@@ -10,11 +10,18 @@ interface VendorEventClientProps {
   activeEvent: any | null;
   invitations: any[];
   booth: any | null;
+  hasInvitesForOtherBrands?: boolean;
 }
 
 type View = 'list' | 'invite-detail' | 'event-detail';
 
-export default function VendorEventClient({ vendorId, activeEvent, invitations: initialInvites, booth }: VendorEventClientProps) {
+export default function VendorEventClient({ 
+  vendorId, 
+  activeEvent, 
+  invitations: initialInvites, 
+  booth, 
+  hasInvitesForOtherBrands 
+}: VendorEventClientProps) {
   const router = useRouter();
   const [invites, setInvites] = useState(initialInvites || []);
   const [actingOn, setActingOn] = useState<string | null>(null);
@@ -285,6 +292,19 @@ export default function VendorEventClient({ vendorId, activeEvent, invitations: 
   // ── Tela principal (lista limpa) ──
   return (
     <div className="max-w-2xl mx-auto px-4 pb-12 space-y-6">
+      {/* Banner de aviso para convites em outras marcas do mesmo dono */}
+      {hasInvitesForOtherBrands && (
+        <div className="bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-900/20 rounded-2xl p-4 flex items-center gap-4 transition-colors">
+          <div className="w-10 h-10 rounded-xl bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center shrink-0">
+            <Building className="w-5 h-5 text-amber-600 dark:text-amber-400" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-bold text-amber-800 dark:text-amber-200">Atenção!</p>
+            <p className="text-[11px] text-amber-700 dark:text-amber-400">Você possui convites pendentes em outras marcas. Use o botão <b>"Trocar Marca"</b> no topo para vê-los.</p>
+          </div>
+        </div>
+      )}
+
       {/* Convites Pendentes */}
       {invites.length > 0 && (
         <section className="space-y-3">
@@ -349,7 +369,8 @@ export default function VendorEventClient({ vendorId, activeEvent, invitations: 
             <div className="flex items-center justify-between">
               <div className="min-w-0 flex-1">
                 <h3 className="font-bold text-lg">{activeEvent.name}</h3>
-                <div className="flex items-center gap-3 mt-1 text-xs text-purple-200">
+                <p className="text-[10px] font-bold text-purple-200/70 uppercase tracking-widest mt-0.5">Clique para ver detalhes, regras e mapa</p>
+                <div className="flex items-center gap-3 mt-2 text-xs text-purple-200">
                   {activeEvent.organizations?.name && (
                     <span className="flex items-center gap-1">
                       <Building className="w-3 h-3" /> {activeEvent.organizations.name}

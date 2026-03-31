@@ -17,11 +17,17 @@ export default function ThemeProvider({ children }: { children: React.ReactNode 
   const [theme, setTheme] = useState<Theme>('light');
 
   useEffect(() => {
-    // 1. Identifica o tema que o script inline aplicou
-    const isDark = document.documentElement.classList.contains('dark');
+    // 1. Identifica o tema que o script inline aplicou na DOM
+    // Fazemos isso de forma síncrona dentro do useEffect para evitar resets
+    const html = document.documentElement;
+    const isDark = html.classList.contains('dark');
+    
     setTheme(isDark ? 'dark' : 'light');
+    
+    // 2. Sincroniza o color-scheme do sistema
+    html.style.colorScheme = isDark ? 'dark' : 'light';
 
-    // 2. Garante que a transição de cor só ocorra após esta primeira leitura
+    // 3. Garante que a transição de cor só ocorra após esta primeira leitura
     // O USER já adicionou CSS para 'html.hydrated body' no globals.css
     setTimeout(() => {
       document.documentElement.classList.add('hydrated');

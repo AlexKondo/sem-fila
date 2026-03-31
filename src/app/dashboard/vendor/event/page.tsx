@@ -10,23 +10,34 @@ export default async function VendorEventPage() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect('/login');
 
-  const { vendor } = await resolveVendor(supabase, user.id, { select: 'id, name, event_id' });
+  const { vendor, vendors } = await resolveVendor(supabase, user.id, { select: 'id, name, event_id' });
   if (!vendor) redirect('/dashboard/vendor');
 
   // 1. Busca convites pendentes (por vendor_id OU e-mail do perfil)
   const { data: profile } = await supabase.from('profiles').select('email').eq('id', user.id).single();
   const userEmail = profile?.email;
 
+  // Busca convites APENAS para os vendors que este usuário é dono ou para o seu e-mail
+  const allVendorIds = vendors.map(v => v.id);
+  
   const query = supabase
     .from('event_vendor_invitations')
     .select('*')
     .eq('status', 'pending');
 
-  const orConditions = [`vendor_id.eq.${vendor.id}`];
+  const orConditions = [`vendor_id.in.(${allVendorIds.join(',')})`];
   if (userEmail) orConditions.push(`vendor_email.eq.${userEmail}`);
   query.or(orConditions.join(','));
 
   const { data: rawInvitations } = await query.order('invited_at', { ascending: false });
+
+  // Filtra convites que pertencem especificamente ao vendor ATUAL selecionado
+  const currentVendorInvites = rawInvitations?.filter(inv => 
+    inv.vendor_id === vendor.id || (inv.vendor_id === null && inv.vendor_email === userEmail)
+  ) || [];
+
+  // Verifica se existem convites para OUTRAS marcas do mesmo dono
+  const hasInvitesForOtherBrands = (rawInvitations?.length || 0) > currentVendorInvites.length;
 
   // 2. Enriquece convites com dados do evento (queries separadas por causa de RLS)
   const invitations = rawInvitations ?? [];
@@ -73,8 +84,12 @@ export default async function VendorEventPage() {
       <VendorEventClient
         vendorId={vendor.id}
         activeEvent={activeEvent}
-        invitations={enrichedInvitations}
+        invitations={currentVendorInvites.map(inv => ({
+          ...inv,
+          events: eventsMap[inv.event_id] || null,
+        }))}
         booth={booth}
+        hasInvitesForOtherBrands={hasInvitesForOtherBrands}
       />
     </div>
   );
