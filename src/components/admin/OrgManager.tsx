@@ -140,7 +140,7 @@ export default function OrgManager({ initialOrgs }: { initialOrgs: Org[] }) {
   }
 
   return (
-    <div className="max-w-3xl mx-auto px-4 py-4 space-y-4">
+    <div className="max-w-3xl mx-auto px-4 py-4 space-y-4 transition-colors duration-300">
       {/* Botão nova organização */}
       <button
         onClick={() => setShowOrgForm(true)}
@@ -151,9 +151,9 @@ export default function OrgManager({ initialOrgs }: { initialOrgs: Org[] }) {
 
       {/* Formulário nova org */}
       {showOrgForm && (
-        <div className="bg-white rounded-2xl shadow-sm p-5 space-y-3">
-          <h3 className="font-semibold text-gray-900">Nova organização</h3>
-          {error && <p className="text-red-600 text-sm">{error}</p>}
+        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm p-5 space-y-3 border border-gray-100 dark:border-slate-800">
+          <h3 className="font-semibold text-gray-900 dark:text-white">Nova organização</h3>
+          {error && <p className="text-red-600 dark:text-red-400 text-sm">{error}</p>}
           <input
             placeholder="Nome (ex: Shopping Iguatemi)"
             value={orgForm.name}
@@ -162,16 +162,16 @@ export default function OrgManager({ initialOrgs }: { initialOrgs: Org[] }) {
               const slug = name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
               setOrgForm({ name, slug });
             }}
-            className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
+            className="w-full border border-gray-300 dark:border-slate-700 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 bg-white dark:bg-slate-950 text-slate-900 dark:text-white"
           />
           <input
             placeholder="Slug (ex: shopping-iguatemi)"
             value={orgForm.slug}
             onChange={(e) => setOrgForm((p) => ({ ...p, slug: e.target.value }))}
-            className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
+            className="w-full border border-gray-300 dark:border-slate-700 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 bg-white dark:bg-slate-950 text-slate-900 dark:text-white"
           />
           <div className="flex gap-2">
-            <button onClick={() => setShowOrgForm(false)} className="flex-1 border border-gray-300 text-gray-700 py-2 rounded-xl text-sm">Cancelar</button>
+            <button onClick={() => setShowOrgForm(false)} className="flex-1 border border-gray-300 dark:border-slate-700 text-gray-700 dark:text-slate-400 py-2 rounded-xl text-sm hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors">Cancelar</button>
             <button onClick={createOrg} disabled={saving} className="flex-1 bg-orange-500 text-white py-2 rounded-xl text-sm font-semibold disabled:opacity-50">
               {saving ? 'Salvando...' : 'Criar'}
             </button>
@@ -181,13 +181,13 @@ export default function OrgManager({ initialOrgs }: { initialOrgs: Org[] }) {
 
       {/* Lista de orgs */}
       {orgs.length === 0 ? (
-        <div className="text-center py-16 text-gray-400">
+        <div className="text-center py-16 text-gray-400 dark:text-slate-600">
           <p className="text-4xl mb-3">🏢</p>
           <p>Nenhuma organização criada ainda.</p>
         </div>
       ) : (
         orgs.map((org) => (
-          <div key={org.id} className="bg-white rounded-2xl shadow-sm overflow-hidden">
+          <div key={org.id} className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm overflow-hidden border border-gray-100 dark:border-slate-800 transition-colors">
             {/* Header da org */}
             {editingOrg === org.id ? (
               <div className="px-4 py-3 space-y-2">
@@ -198,17 +198,17 @@ export default function OrgManager({ initialOrgs }: { initialOrgs: Org[] }) {
                     setEditOrgForm((p) => ({ ...p, name }));
                   }}
                   placeholder="Nome"
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
+                  className="w-full border border-gray-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 bg-white dark:bg-slate-950 text-slate-900 dark:text-white"
                 />
                 <input
                   value={editOrgForm.slug}
                   onChange={(e) => setEditOrgForm((p) => ({ ...p, slug: e.target.value }))}
                   placeholder="Slug"
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
+                  className="w-full border border-gray-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 bg-white dark:bg-slate-950 text-slate-900 dark:text-white"
                 />
-                {error && <p className="text-red-600 text-xs">{error}</p>}
+                {error && <p className="text-red-600 dark:text-red-400 text-xs">{error}</p>}
                 <div className="flex gap-2">
-                  <button onClick={() => setEditingOrg(null)} className="flex-1 border border-gray-200 text-gray-600 py-1.5 rounded-lg text-xs flex items-center justify-center gap-1">
+                  <button onClick={() => setEditingOrg(null)} className="flex-1 border border-gray-200 dark:border-slate-700 text-gray-600 dark:text-slate-400 py-1.5 rounded-lg text-xs flex items-center justify-center gap-1 hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors">
                     <X className="w-3 h-3" /> Cancelar
                   </button>
                   <button onClick={() => saveEditOrg(org.id)} disabled={saving} className="flex-1 bg-orange-500 text-white py-1.5 rounded-lg text-xs font-semibold disabled:opacity-50 flex items-center justify-center gap-1">
@@ -220,21 +220,21 @@ export default function OrgManager({ initialOrgs }: { initialOrgs: Org[] }) {
               <div className="flex items-center justify-between px-4 py-4">
                 <button
                   onClick={() => setExpandedOrg(expandedOrg === org.id ? null : org.id)}
-                  className="flex-1 flex items-center justify-between hover:bg-gray-50 transition text-left"
+                  className="flex-1 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-slate-800/50 transition text-left"
                 >
                   <div>
-                    <p className="font-semibold text-gray-900">{org.name}</p>
-                    <p className="text-xs text-gray-500">/{org.slug} · {org.events.length} evento{org.events.length !== 1 ? 's' : ''}</p>
+                    <p className="font-semibold text-gray-900 dark:text-white">{org.name}</p>
+                    <p className="text-xs text-gray-500 dark:text-slate-400">/{org.slug} · {org.events.length} evento{org.events.length !== 1 ? 's' : ''}</p>
                   </div>
                   {expandedOrg === org.id
-                    ? <ChevronDown className="w-4 h-4 text-gray-400" />
-                    : <ChevronRight className="w-4 h-4 text-gray-400" />
+                    ? <ChevronDown className="w-4 h-4 text-gray-400 dark:text-slate-600" />
+                    : <ChevronRight className="w-4 h-4 text-gray-400 dark:text-slate-600" />
                   }
                 </button>
                 <div className="flex items-center gap-1 ml-2 flex-shrink-0">
                   <button
                     onClick={() => { setEditingOrg(org.id); setEditOrgForm({ name: org.name, slug: org.slug }); setError(''); }}
-                    className="p-1.5 text-gray-400 hover:text-orange-500 hover:bg-orange-50 rounded-lg transition"
+                    className="p-1.5 text-gray-400 dark:text-slate-500 hover:text-orange-500 dark:hover:text-orange-400 hover:bg-orange-50 dark:hover:bg-orange-900/30 rounded-lg transition"
                     title="Editar"
                   >
                     <Pencil className="w-4 h-4" />
@@ -242,12 +242,12 @@ export default function OrgManager({ initialOrgs }: { initialOrgs: Org[] }) {
                   {confirmDelete === `org-${org.id}` ? (
                     <div className="flex items-center gap-1">
                       <button onClick={() => deleteOrg(org.id)} className="p-1.5 text-white bg-red-500 hover:bg-red-600 rounded-lg transition text-[10px] font-bold px-2">Sim</button>
-                      <button onClick={() => setConfirmDelete(null)} className="p-1.5 text-gray-500 bg-gray-100 hover:bg-gray-200 rounded-lg transition text-[10px] font-bold px-2">Não</button>
+                      <button onClick={() => setConfirmDelete(null)} className="p-1.5 text-gray-500 dark:text-slate-400 bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 rounded-lg transition text-[10px] font-bold px-2">Não</button>
                     </div>
                   ) : (
                     <button
                       onClick={() => setConfirmDelete(`org-${org.id}`)}
-                      className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition"
+                      className="p-1.5 text-gray-400 dark:text-slate-500 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition"
                       title="Excluir"
                     >
                       <Trash2 className="w-4 h-4" />
@@ -259,9 +259,9 @@ export default function OrgManager({ initialOrgs }: { initialOrgs: Org[] }) {
 
             {/* Eventos da org */}
             {expandedOrg === org.id && (
-              <div className="border-t border-gray-100 px-4 pb-4 space-y-3 pt-3">
+              <div className="border-t border-gray-100 dark:border-slate-800 px-4 pb-4 space-y-3 pt-3">
                 {org.events.map((event) => (
-                  <div key={event.id} className="bg-gray-50 rounded-xl p-3">
+                  <div key={event.id} className="bg-gray-50 dark:bg-slate-950/50 rounded-xl p-3 border border-transparent dark:border-slate-800/50">
                     {editingEvent === event.id ? (
                       <div className="space-y-2">
                         {[
@@ -276,12 +276,12 @@ export default function OrgManager({ initialOrgs }: { initialOrgs: Org[] }) {
                             placeholder={placeholder}
                             value={editEventForm[key as keyof typeof editEventForm]}
                             onChange={(e) => setEditEventForm((p) => ({ ...p, [key]: e.target.value }))}
-                            className="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
+                            className="w-full border border-gray-200 dark:border-slate-700 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
                           />
                         ))}
-                        {error && <p className="text-red-600 text-xs">{error}</p>}
+                        {error && <p className="text-red-600 dark:text-red-400 text-xs">{error}</p>}
                         <div className="flex gap-2">
-                          <button onClick={() => setEditingEvent(null)} className="flex-1 border border-gray-200 text-gray-600 py-1.5 rounded-lg text-xs">Cancelar</button>
+                          <button onClick={() => setEditingEvent(null)} className="flex-1 border border-gray-200 dark:border-slate-700 text-gray-600 dark:text-slate-400 py-1.5 rounded-lg text-xs hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors">Cancelar</button>
                           <button onClick={() => saveEditEvent(event.id, org.id)} disabled={saving} className="flex-1 bg-orange-500 text-white py-1.5 rounded-lg text-xs font-semibold disabled:opacity-50">
                             {saving ? '...' : 'Salvar'}
                           </button>
@@ -290,27 +290,27 @@ export default function OrgManager({ initialOrgs }: { initialOrgs: Org[] }) {
                     ) : (
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
-                          <p className="font-medium text-gray-900 text-sm">{event.name}</p>
+                          <p className="font-medium text-gray-900 dark:text-white text-sm">{event.name}</p>
                           {event.location && (
-                            <p className="text-xs text-gray-500 flex items-center gap-1 mt-0.5">
+                            <p className="text-xs text-gray-500 dark:text-slate-400 flex items-center gap-1 mt-0.5">
                               <MapPin className="w-3 h-3" /> {event.location}
                             </p>
                           )}
                           {event.start_date && (
-                            <p className="text-xs text-gray-500 flex items-center gap-1 mt-0.5">
+                            <p className="text-xs text-gray-500 dark:text-slate-400 flex items-center gap-1 mt-0.5">
                               <Calendar className="w-3 h-3" />
                               {new Date(event.start_date).toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' })}
                             </p>
                           )}
-                          <p className="text-xs text-gray-400 mt-1">
+                          <p className="text-xs text-gray-400 dark:text-slate-500 mt-1">
                             {event.vendors.length} barraca{event.vendors.length !== 1 ? 's' : ''}
                           </p>
                         </div>
                         <div className="flex items-center gap-1 flex-shrink-0 ml-2">
                           <button
                             onClick={() => toggleEventActive(event.id, org.id, event.active)}
-                            className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${
-                              event.active ? 'bg-green-100 text-green-700' : 'bg-gray-200 text-gray-500'
+                            className={`text-[10px] px-2 py-0.5 rounded-full font-bold transition-colors ${
+                              event.active ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400' : 'bg-gray-200 dark:bg-slate-700 text-gray-500 dark:text-slate-400'
                             }`}
                           >
                             {event.active ? 'Ativo' : 'Inativo'}
@@ -326,7 +326,7 @@ export default function OrgManager({ initialOrgs }: { initialOrgs: Org[] }) {
                               });
                               setError('');
                             }}
-                            className="p-1 text-gray-400 hover:text-orange-500 hover:bg-orange-50 rounded-lg transition"
+                            className="p-1 text-gray-400 dark:text-slate-500 hover:text-orange-500 dark:hover:text-orange-400 hover:bg-orange-50 dark:hover:bg-orange-950/20 rounded-lg transition"
                             title="Editar"
                           >
                             <Pencil className="w-3.5 h-3.5" />
@@ -334,12 +334,12 @@ export default function OrgManager({ initialOrgs }: { initialOrgs: Org[] }) {
                           {confirmDelete === `event-${event.id}` ? (
                             <div className="flex items-center gap-1">
                               <button onClick={() => deleteEvent(event.id, org.id)} className="text-white bg-red-500 hover:bg-red-600 rounded-lg text-[10px] font-bold px-2 py-1">Sim</button>
-                              <button onClick={() => setConfirmDelete(null)} className="text-gray-500 bg-gray-100 hover:bg-gray-200 rounded-lg text-[10px] font-bold px-2 py-1">Não</button>
+                              <button onClick={() => setConfirmDelete(null)} className="text-gray-500 dark:text-slate-400 bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 rounded-lg text-[10px] font-bold px-2 py-1">Não</button>
                             </div>
                           ) : (
                             <button
                               onClick={() => setConfirmDelete(`event-${event.id}`)}
-                              className="p-1 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition"
+                              className="p-1 text-gray-400 dark:text-slate-500 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition"
                               title="Excluir"
                             >
                               <Trash2 className="w-3.5 h-3.5" />
@@ -353,9 +353,9 @@ export default function OrgManager({ initialOrgs }: { initialOrgs: Org[] }) {
 
                 {/* Formulário novo evento */}
                 {showEventForm === org.id ? (
-                  <div className="border border-gray-200 rounded-xl p-3 space-y-2">
-                    <p className="text-sm font-medium text-gray-700">Novo evento</p>
-                    {error && <p className="text-red-600 text-xs">{error}</p>}
+                  <div className="border border-gray-200 dark:border-slate-700 rounded-xl p-3 space-y-2 bg-white dark:bg-slate-900/50 transition-colors">
+                    <p className="text-sm font-medium text-gray-700 dark:text-slate-300">Novo evento</p>
+                    {error && <p className="text-red-600 dark:text-red-400 text-xs">{error}</p>}
                     {[
                       { key: 'name', placeholder: 'Nome do evento', type: 'text' },
                       { key: 'location', placeholder: 'Local (opcional)', type: 'text' },
@@ -368,11 +368,11 @@ export default function OrgManager({ initialOrgs }: { initialOrgs: Org[] }) {
                         placeholder={placeholder}
                         value={eventForm[key as keyof typeof eventForm]}
                         onChange={(e) => setEventForm((p) => ({ ...p, [key]: e.target.value }))}
-                        className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
+                        className="w-full border border-gray-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 bg-white dark:bg-slate-950 text-slate-900 dark:text-white"
                       />
                     ))}
                     <div className="flex gap-2">
-                      <button onClick={() => setShowEventForm(null)} className="flex-1 border border-gray-200 text-gray-600 py-1.5 rounded-lg text-xs">Cancelar</button>
+                      <button onClick={() => setShowEventForm(null)} className="flex-1 border border-gray-200 dark:border-slate-700 text-gray-600 dark:text-slate-400 py-1.5 rounded-lg text-xs hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors">Cancelar</button>
                       <button onClick={() => createEvent(org.id)} disabled={saving} className="flex-1 bg-orange-500 text-white py-1.5 rounded-lg text-xs font-semibold disabled:opacity-50">
                         {saving ? '...' : 'Criar evento'}
                       </button>
@@ -381,7 +381,7 @@ export default function OrgManager({ initialOrgs }: { initialOrgs: Org[] }) {
                 ) : (
                   <button
                     onClick={() => { setShowEventForm(org.id); setError(''); }}
-                    className="w-full border border-dashed border-gray-300 text-gray-500 text-sm py-2 rounded-xl hover:border-orange-400 hover:text-orange-500 transition flex items-center justify-center gap-1"
+                    className="w-full border border-dashed border-gray-300 dark:border-slate-700 text-gray-500 dark:text-slate-500 text-sm py-2 rounded-xl hover:border-orange-400 dark:hover:border-orange-950 hover:text-orange-500 dark:hover:text-orange-400 transition flex items-center justify-center gap-1"
                   >
                     <Plus className="w-3.5 h-3.5" /> Adicionar evento
                   </button>

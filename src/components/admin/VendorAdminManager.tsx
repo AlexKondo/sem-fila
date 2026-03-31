@@ -104,7 +104,7 @@ export default function VendorAdminManager({ initialVendors, events }: Props) {
   }
 
   return (
-    <div className="max-w-3xl mx-auto px-4 py-4 space-y-4">
+    <div className="max-w-3xl mx-auto px-4 py-4 space-y-4 transition-colors duration-300">
       <button
         onClick={() => setShowForm(true)}
         className="w-full bg-orange-500 text-white font-semibold py-3 rounded-2xl hover:bg-orange-600 transition flex items-center justify-center gap-2"
@@ -199,7 +199,7 @@ export default function VendorAdminManager({ initialVendors, events }: Props) {
         </div>
       ) : (
         vendors.map((vendor) => (
-          <div key={vendor.id} className={`bg-white dark:bg-slate-900 rounded-2xl shadow-sm p-4 border border-slate-100 dark:border-slate-800 ${!vendor.active ? 'opacity-60' : ''}`}>
+          <div key={vendor.id} className={`bg-white dark:bg-slate-900 rounded-2xl shadow-sm p-4 border border-slate-100 dark:border-slate-800 transition-colors ${!vendor.active ? 'opacity-60' : ''}`}>
             <div className="flex items-start justify-between mb-2">
               <div>
                 <div className="flex items-center gap-2">

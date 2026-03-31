@@ -604,10 +604,10 @@ export default function WaiterBoard({ initialReadyOrders, initialWaiterCalls, in
   }), [tables, callingTables, pendingCalls, mergeGroups, getMergedNumbers, getMergedCapacity]);
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-2 space-y-4">
+    <div className="max-w-2xl mx-auto px-4 py-2 space-y-4 transition-colors duration-300">
 
       {/* Abas */}
-      <div className="flex bg-gray-100 dark:bg-slate-800 p-1 rounded-2xl overflow-x-auto">
+      <div className="flex bg-gray-100 dark:bg-slate-800 p-1 rounded-2xl overflow-x-auto transition-colors">
         {([
           ...(hasTableManagement ? [
             { key: 'tables' as const, icon: LayoutGrid, label: 'Mesas', badge: callingTables.size > 0 ? callingTables.size : null, badgeColor: 'bg-red-500' },
@@ -728,13 +728,13 @@ export default function WaiterBoard({ initialReadyOrders, initialWaiterCalls, in
               </h2>
               <div className="space-y-2">
                 {orders.map(order => (
-                  <div key={order.id} className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 p-3 flex items-center justify-between">
+                  <div key={order.id} className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 p-3 flex items-center justify-between transition-colors">
                     <div>
                       <p className="font-black text-gray-900 dark:text-white text-sm">COD: {order.pickup_code}</p>
-                      {order.table_number && <p className="text-orange-600 dark:text-orange-400 font-black text-xs italic">MESA {order.table_number}</p>}
+                      {order.table_number && <p className="text-orange-600 dark:text-orange-500 font-black text-xs italic">MESA {order.table_number}</p>}
                       <p className="text-[10px] text-gray-400 dark:text-slate-500 mt-0.5">{order.order_items.map(i => `${i.quantity}x ${i.menu_items?.name}`).join(', ')}</p>
                     </div>
-                    <button onClick={() => markDelivered(order.id)} className="bg-green-500 text-white text-[10px] font-black px-3 py-2 rounded-xl hover:bg-green-600 transition">ENTREGUE</button>
+                    <button onClick={() => markDelivered(order.id)} className="bg-green-500 text-white text-[10px] font-black px-3 py-2 rounded-xl hover:bg-green-600 transition shadow-lg shadow-green-500/20 active:scale-90">ENTREGUE</button>
                   </div>
                 ))}
               </div>
@@ -802,14 +802,14 @@ export default function WaiterBoard({ initialReadyOrders, initialWaiterCalls, in
               <Users className="w-4 h-4" /> Fila de espera ({waitingQueue.length})
             </h2>
             {waitingQueue.length === 0 ? (
-              <div className="text-center py-8 bg-white dark:bg-slate-900 rounded-3xl border border-dashed border-gray-200 dark:border-slate-800 text-gray-400 dark:text-slate-600">
+              <div className="text-center py-8 bg-white dark:bg-slate-900 rounded-3xl border border-dashed border-gray-200 dark:border-slate-800 text-gray-400 dark:text-slate-600 transition-colors">
                 <p className="text-3xl mb-1">🎉</p>
                 <p className="text-xs font-medium">Nenhum cliente na fila</p>
               </div>
             ) : (
               <div className="space-y-2">
                 {waitingQueue.map((entry, i) => (
-                  <div key={entry.id} className="bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-2xl p-3 flex items-center justify-between shadow-sm">
+                  <div key={entry.id} className="bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-2xl p-3 flex items-center justify-between shadow-sm transition-colors">
                     <div className="flex items-center gap-3">
                       <div className="w-8 h-8 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400 rounded-full flex items-center justify-center font-black text-sm">
                         {i + 1}
@@ -871,7 +871,7 @@ export default function WaiterBoard({ initialReadyOrders, initialWaiterCalls, in
           <section>
             <h2 className="flex items-center gap-2 text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-3">Chamadas de mesa ({pendingCalls.length})</h2>
             {pendingCalls.length === 0 ? (
-              <div className="text-center py-8 bg-white dark:bg-slate-900 rounded-3xl border border-dashed border-gray-200 dark:border-slate-800 text-gray-400 dark:text-slate-600">
+              <div className="text-center py-8 bg-white dark:bg-slate-900 rounded-3xl border border-dashed border-gray-200 dark:border-slate-800 text-gray-400 dark:text-slate-600 transition-colors">
                 <p className="text-3xl mb-1">🛎️</p><p className="text-xs">Nenhuma mesa chamando.</p>
               </div>
             ) : (
@@ -902,13 +902,13 @@ export default function WaiterBoard({ initialReadyOrders, initialWaiterCalls, in
               <CheckCircle className="w-4 h-4 text-green-500" /> Pronto para entregar ({orders.length})
             </h2>
             {orders.length === 0 ? (
-              <div className="text-center py-8 bg-white dark:bg-slate-900 rounded-3xl border border-dashed border-gray-200 dark:border-slate-800 text-gray-400 dark:text-slate-600">
+              <div className="text-center py-8 bg-white dark:bg-slate-900 rounded-3xl border border-dashed border-gray-200 dark:border-slate-800 text-gray-400 dark:text-slate-600 transition-colors">
                 <p className="text-3xl mb-1">🏃‍♂️</p><p className="text-xs">Tudo entregue!</p>
               </div>
             ) : (
               <div className="space-y-3">
                 {orders.map(order => (
-                  <div key={order.id} className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 p-4">
+                  <div key={order.id} className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 p-4 transition-colors">
                     <div className="flex items-center justify-between mb-2">
                       <div>
                         <p className="font-black text-gray-900 dark:text-white">COD: {order.pickup_code}</p>
@@ -1094,7 +1094,7 @@ function WaiterQrScanner({ onDetected }: { onDetected: (data: string) => void })
 
   if (cameraError) {
     return (
-      <div className="text-center py-10 bg-white dark:bg-slate-900 rounded-2xl border border-dashed border-gray-200 dark:border-slate-800">
+      <div className="text-center py-10 bg-white dark:bg-slate-900 rounded-2xl border border-dashed border-gray-200 dark:border-slate-800 transition-colors">
         <p className="text-3xl mb-2">📷</p>
         <p className="text-xs text-red-500 font-medium">{cameraError}</p>
       </div>
@@ -1284,7 +1284,7 @@ function CustomerItemPanel({
       </div>
 
       {/* Seção: Prato por quilo */}
-      <div className="bg-amber-50 dark:bg-amber-950/20 rounded-2xl border border-amber-200 dark:border-amber-900/50 p-4 space-y-3">
+      <div className="bg-amber-50 dark:bg-amber-950/20 rounded-2xl border border-amber-200 dark:border-amber-900/50 p-4 space-y-3 transition-colors">
         <h4 className="text-xs font-black text-amber-700 dark:text-amber-400 uppercase tracking-wide flex items-center gap-1.5">
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l3 9a5.002 5.002 0 01-6.001 0M18 7l-3 9m-3-9l-3-9m3 9V4" /></svg>
           Prato por quilo
@@ -1321,7 +1321,7 @@ function CustomerItemPanel({
         <button
           onClick={addWeightItem}
           disabled={!weightInput || !pricePerKg}
-          className="w-full bg-amber-500 text-white text-xs font-bold py-2.5 rounded-xl hover:bg-amber-600 transition disabled:opacity-40"
+          className="w-full bg-amber-500 text-white text-xs font-bold py-2.5 rounded-xl hover:bg-amber-600 transition disabled:opacity-40 shadow-lg shadow-amber-500/20"
         >
           Adicionar prato pesado
         </button>
