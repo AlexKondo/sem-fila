@@ -77,10 +77,12 @@ export default function VendorEventClient({ vendorId, activeEvent, invitations: 
               <div key={invite.id} className="bg-white dark:bg-slate-900 rounded-3xl border border-orange-100 dark:border-orange-950/30 shadow-sm p-5 space-y-4 transition-all hover:shadow-md">
                 <div className="flex justify-between items-start">
                   <div>
-                    <h3 className="font-bold text-lg text-slate-900 dark:text-white">{invite.events?.name}</h3>
-                    <p className="text-xs text-slate-400 dark:text-slate-500 flex items-center gap-1">
-                      <Building className="w-3 h-3" /> Organizado por {invite.events?.organizations?.name}
-                    </p>
+                    <h3 className="font-bold text-lg text-slate-900 dark:text-white">{invite.events?.name || 'Evento'}</h3>
+                    {invite.events?.organizations?.name && (
+                      <p className="text-xs text-slate-400 dark:text-slate-500 flex items-center gap-1">
+                        <Building className="w-3 h-3" /> Organizado por {invite.events.organizations.name}
+                      </p>
+                    )}
                   </div>
                   <div className="text-right">
                     <p className="text-[10px] font-black text-orange-600 uppercase tracking-widest">Taxa de Participação</p>
@@ -88,16 +90,22 @@ export default function VendorEventClient({ vendorId, activeEvent, invitations: 
                   </div>
                 </div>
                 
-                <div className="flex items-center gap-4 text-xs text-slate-500 dark:text-slate-400 py-2 border-y border-slate-100 dark:border-slate-800">
-                  <div className="flex items-center gap-1.5">
-                    <Calendar className="w-3.5 h-3.5" />
-                    {new Date(invite.events?.start_date).toLocaleDateString('pt-BR')}
+                {(invite.events?.start_date || invite.events?.location) && (
+                  <div className="flex items-center gap-4 text-xs text-slate-500 dark:text-slate-400 py-2 border-y border-slate-100 dark:border-slate-800">
+                    {invite.events?.start_date && (
+                      <div className="flex items-center gap-1.5">
+                        <Calendar className="w-3.5 h-3.5" />
+                        {new Date(invite.events.start_date).toLocaleDateString('pt-BR')}
+                      </div>
+                    )}
+                    {invite.events?.location && (
+                      <div className="flex items-center gap-1.5">
+                        <MapPin className="w-3.5 h-3.5" />
+                        {invite.events.location}
+                      </div>
+                    )}
                   </div>
-                  <div className="flex items-center gap-1.5">
-                    <MapPin className="w-3.5 h-3.5" />
-                    {invite.events?.location}
-                  </div>
-                </div>
+                )}
 
                 <div className="flex gap-2">
                   <button
