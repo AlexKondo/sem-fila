@@ -186,7 +186,7 @@ export default async function OrgDashboardPage() {
                           <span className="text-gray-400 dark:text-slate-500">/{invitesByEvent[event.id].total}</span>
                         </span>
                         {invitesByEvent[event.id].rejected > 0 && (
-                          <span className="text-red-500 dark:text-red-400">{invitesByEvent[event.id].rejected}✗</span>
+                          <span className="text-red-500 dark:text-red-400">{invitesByEvent[event.id].rejected}</span>
                         )}
                       </span>
                     )}
