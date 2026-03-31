@@ -231,7 +231,7 @@ export default function RegisterPage() {
                 </InputIcon>
               </Field>
             ) : (
-              <Field label="Nome da organização" required hint="Ex. Festa Beneficente do Morango">
+              <Field label="Nome da sua empresa" required>
                 <InputIcon icon={<CalendarIcon />}>
                   <input
                     type="text" required value={orgName} onChange={e => setOrgName(e.target.value)}
