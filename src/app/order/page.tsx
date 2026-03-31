@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import Link from 'next/link';
 import { ArrowLeft, Clock, CheckCircle, Package, Receipt, ShoppingBag } from 'lucide-react';
+import BottomNav from '@/components/ui/BottomNav';
 
 interface Order {
   id: string;
@@ -171,6 +172,7 @@ export default function OrderPage() {
           </>
         )}
       </main>
+      <BottomNav />
     </div>
   );
 }

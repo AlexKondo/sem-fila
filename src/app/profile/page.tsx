@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import ProfileForm from '@/components/profile/ProfileForm';
+import BottomNav from '@/components/ui/BottomNav';
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
 
@@ -33,6 +34,7 @@ export default async function ProfilePage() {
       <div className="max-w-lg mx-auto w-full px-4 py-6 flex-1">
         <ProfileForm profile={profile} email={user.email ?? ''} />
       </div>
+      <BottomNav />
     </main>
   );
 }
