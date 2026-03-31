@@ -18,6 +18,7 @@ type Booth = {
 
 type Invitation = {
   id: string;
+  vendor_id: string | null;
   vendor_email: string;
   fee_amount: number;
   status: string;
