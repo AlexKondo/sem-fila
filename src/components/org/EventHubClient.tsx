@@ -49,7 +49,7 @@ type EventData = {
   [key: string]: any;
 };
 
-type Tab = 'invitations' | 'layout' | 'revenue';
+type Tab = 'invitations' | 'layout' | 'revenue' | 'configs';
 
 const STATUS_LABELS: Record<string, string> = {
   pending: 'Pendente',
@@ -89,6 +89,13 @@ export default function EventHubClient({
   const [inviteSending, setInviteSending] = useState(false);
   const [inviteError, setInviteError] = useState('');
   const [selectedVendorId, setSelectedVendorId] = useState('');
+
+  const [eventName, setEventName] = useState(event.name || '');
+  const [eventLocation, setEventLocation] = useState(event.location || '');
+  const [eventAddress, setEventAddress] = useState(event.address || '');
+  const [eventRules, setEventRules] = useState(event.rules || '');
+  const [eventLayoutUrl, setEventLayoutUrl] = useState(event.layout_url || '');
+  const [savingConfigs, setSavingConfigs] = useState(false);
 
   const GRID_SIZE = 12;
   const [boothLabel, setBoothLabel] = useState('');
@@ -200,6 +207,28 @@ export default function EventHubClient({
     window.location.reload();
   }, [booths, invitations]);
 
+  const saveConfigs = useCallback(async () => {
+    setSavingConfigs(true);
+    const supabase = createClient();
+    const { error } = await supabase
+      .from('events')
+      .update({
+        name: eventName,
+        location: eventLocation,
+        address: eventAddress,
+        rules: eventRules,
+        layout_url: eventLayoutUrl
+      })
+      .eq('id', event.id);
+
+    if (error) {
+      alert(`Erro ao salvar: ${error.message}`);
+    } else {
+      alert('Configurações salvas com sucesso!');
+    }
+    setSavingConfigs(false);
+  }, [event.id, eventName, eventLocation, eventAddress, eventRules, eventLayoutUrl]);
+
   const totalRevenue = revenueData.reduce((acc, r) => acc + r.revenue, 0);
 
   return (
@@ -209,6 +238,7 @@ export default function EventHubClient({
           { key: 'invitations' as Tab, label: 'Convites', icon: <Users className="w-4 h-4" /> },
           { key: 'layout' as Tab, label: 'Layout', icon: <LayoutGrid className="w-4 h-4" /> },
           { key: 'revenue' as Tab, label: 'Faturamento', icon: <DollarSign className="w-4 h-4" /> },
+          { key: 'configs' as Tab, label: 'Configs', icon: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg> },
         ].map(t => (
           <button
             key={t.key}
@@ -297,6 +327,70 @@ export default function EventHubClient({
               </div>
             ))
           )}
+        </div>
+      )}
+
+      {tab === 'configs' && (
+        <div className="space-y-4">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm p-5 border border-slate-100 dark:border-slate-800 transition-colors space-y-4">
+            <h3 className="font-bold text-gray-900 dark:text-white flex items-center gap-2">
+              <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+              Editar Detalhes do Evento
+            </h3>
+
+            <div className="space-y-3">
+              <div>
+                <label className="text-xs font-bold text-gray-500 uppercase tracking-widest ml-1">Nome do Evento</label>
+                <input
+                  type="text" value={eventName} onChange={e => setEventName(e.target.value)}
+                  className="w-full border border-gray-200 dark:border-slate-800 rounded-xl px-4 py-3 text-sm bg-white dark:bg-slate-950 text-slate-900 dark:text-white focus:ring-2 focus:ring-purple-400 focus:outline-none"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-bold text-gray-500 uppercase tracking-widest ml-1">Local</label>
+                  <input
+                    type="text" value={eventLocation} onChange={e => setEventLocation(e.target.value)}
+                    className="w-full border border-gray-200 dark:border-slate-800 rounded-xl px-4 py-3 text-sm bg-white dark:bg-slate-950 text-slate-900 dark:text-white focus:ring-2 focus:ring-purple-400 focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-bold text-gray-500 uppercase tracking-widest ml-1">Layout (Link Imagem/Drive)</label>
+                  <input
+                    type="text" value={eventLayoutUrl} onChange={e => setEventLayoutUrl(e.target.value)}
+                    placeholder="URL com o mapa das mesas"
+                    className="w-full border border-gray-200 dark:border-slate-800 rounded-xl px-4 py-3 text-sm bg-white dark:bg-slate-950 text-slate-900 dark:text-white focus:ring-2 focus:ring-purple-400 focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="text-xs font-bold text-gray-500 uppercase tracking-widest ml-1">Endereço Completo</label>
+                <input
+                  type="text" value={eventAddress} onChange={e => setEventAddress(e.target.value)}
+                  className="w-full border border-gray-200 dark:border-slate-800 rounded-xl px-4 py-3 text-sm bg-white dark:bg-slate-950 text-slate-900 dark:text-white focus:ring-2 focus:ring-purple-400 focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-bold text-gray-500 uppercase tracking-widest ml-1">Regras do Evento</label>
+                <textarea
+                  value={eventRules} onChange={e => setEventRules(e.target.value)}
+                  rows={6} placeholder="Descreva as obrigações, horários de montagem, taxas extras e orientações gerais..."
+                  className="w-full border border-gray-200 dark:border-slate-800 rounded-xl px-4 py-3 text-sm bg-white dark:bg-slate-950 text-slate-900 dark:text-white focus:ring-2 focus:ring-purple-400 focus:outline-none"
+                />
+              </div>
+            </div>
+
+            <button
+              onClick={saveConfigs}
+              disabled={savingConfigs}
+              className="w-full bg-purple-600 text-white font-black py-4 rounded-xl shadow-lg shadow-purple-500/20 active:scale-95 transition disabled:opacity-50"
+            >
+              {savingConfigs ? 'Salvando...' : 'SALVAR CONFIGURAÇÕES'}
+            </button>
+          </div>
         </div>
       )}
 

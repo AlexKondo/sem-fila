@@ -44,6 +44,8 @@ export interface Event {
   location: string | null;
   address: string | null;
   description: string | null;
+  rules: string | null;
+  layout_url: string | null;
   start_date: string | null;
   end_date: string | null;
   start_time: string | null;
@@ -258,6 +260,18 @@ export interface StaffInvite {
   created_at: string;
 }
 
+export interface EventVendorInvitation {
+  id: string;
+  event_id: string;
+  vendor_id: string | null;
+  vendor_email: string;
+  fee_amount: number;
+  status: 'pending' | 'accepted' | 'rejected';
+  accepted_at: string | null;
+  rejected_at: string | null;
+  created_at: string;
+}
+
 // ============================================================
 // Entregas / Entregadores
 // ============================================================
@@ -347,6 +361,7 @@ export type Database = {
       premium_features: { Row: PremiumFeature; Insert: Omit<PremiumFeature, 'id' | 'created_at' | 'updated_at'>; Update: Partial<PremiumFeature>; Relationships: never[] };
       staff_schedules: { Row: StaffSchedule; Insert: Omit<StaffSchedule, 'id' | 'created_at'>; Update: Partial<StaffSchedule>; Relationships: never[] };
       staff_invites: { Row: StaffInvite; Insert: Omit<StaffInvite, 'id' | 'created_at' | 'token'>; Update: Partial<StaffInvite>; Relationships: never[] };
+      event_vendor_invitations: { Row: EventVendorInvitation; Insert: Omit<EventVendorInvitation, 'id' | 'created_at' | 'status'>; Update: Partial<EventVendorInvitation>; Relationships: never[] };
       deliveries: { Row: Delivery; Insert: Omit<Delivery, 'id' | 'assigned_at' | 'created_at'>; Update: Partial<Delivery>; Relationships: never[] };
       vendor_tables: { Row: VendorTable; Insert: Omit<VendorTable, 'id' | 'created_at' | 'updated_at'>; Update: Partial<VendorTable>; Relationships: never[] };
       queue_entries: { Row: QueueEntry; Insert: Omit<QueueEntry, 'id' | 'created_at' | 'updated_at'>; Update: Partial<QueueEntry>; Relationships: never[] };
