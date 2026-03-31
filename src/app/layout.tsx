@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import UserNotifications from '@/components/notifications/UserNotifications';
+import ThemeProvider from '@/components/ui/ThemeProvider';
 
 export const metadata: Metadata = {
   title: 'QuickPick — Sem fila, só sabor',
@@ -34,9 +35,11 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-title" content="QuickPick" />
         <link rel="apple-touch-icon" href="/icons/icon-192.png" />
       </head>
-      <body style={{ backgroundColor: '#f8f6f6', color: '#0f172a' }}>
-        {children}
-        <UserNotifications />
+      <body>
+        <ThemeProvider>
+          {children}
+          <UserNotifications />
+        </ThemeProvider>
         <script
           dangerouslySetInnerHTML={{
             __html: `

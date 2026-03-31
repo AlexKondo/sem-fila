@@ -43,7 +43,7 @@ export default function BottomNav() {
   ];
 
   return (
-    <nav className="bg-white border-t border-slate-200 pb-8 pt-2">
+    <nav className="bg-white dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700 pb-8 pt-2">
       <div className="flex justify-around items-center px-4">
         {tabs.map((tab) => (
           <Link

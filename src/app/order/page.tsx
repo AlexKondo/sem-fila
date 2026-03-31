@@ -72,12 +72,12 @@ export default function OrderPage() {
   const pastOrders = orders.filter(o => o.status === 'delivered');
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col">
-      <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-slate-100 px-6 py-4 flex items-center gap-4">
-        <Link href="/scan" className="p-2 rounded-full hover:bg-slate-100 text-slate-700 transition">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-900 flex flex-col">
+      <header className="sticky top-0 z-50 bg-white/80 dark:bg-slate-800/80 backdrop-blur-md border-b border-slate-100 dark:border-slate-700 px-6 py-4 flex items-center gap-4">
+        <Link href="/scan" className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 transition">
           <ArrowLeft className="w-5 h-5" />
         </Link>
-        <h1 className="text-xl font-bold text-slate-900">Meus Pedidos</h1>
+        <h1 className="text-xl font-bold text-slate-900 dark:text-white">Meus Pedidos</h1>
       </header>
 
       <main className="flex-1 max-w-lg mx-auto w-full px-4 py-6 space-y-6">

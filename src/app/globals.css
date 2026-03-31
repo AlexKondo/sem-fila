@@ -1,9 +1,15 @@
 @import url('https://fonts.googleapis.com/css2?family=Public+Sans:wght@300;400;500;600;700&display=swap');
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
   --color-primary: #ec5b13;
   --color-bg: #f8f6f6;
+}
+
+.dark {
+  --color-bg: #0f172a;
 }
 
 * {
@@ -16,6 +22,12 @@ body {
   color: #0f172a;
   -webkit-font-smoothing: antialiased;
   min-height: 100dvh;
+}
+
+.dark body,
+body:where(.dark *) {
+  background-color: var(--color-bg);
+  color: #e2e8f0;
 }
 
 /* Hide scrollbar on mobile, keep scroll */

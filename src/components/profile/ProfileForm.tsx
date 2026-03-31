@@ -67,15 +67,15 @@ export default function ProfileForm({ profile, email }: Props) {
   }
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm p-5 space-y-4">
+    <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm p-5 space-y-4">
       {/* Avatar */}
       <div className="flex items-center gap-4">
-        <div className="w-16 h-16 rounded-2xl bg-orange-100 flex items-center justify-center text-orange-500 text-2xl font-bold select-none">
+        <div className="w-16 h-16 rounded-2xl bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center text-orange-500 text-2xl font-bold select-none">
           {name ? name[0].toUpperCase() : '?'}
         </div>
         <div>
-          <p className="font-semibold text-gray-900">{name || 'Sem nome'}</p>
-          <span className="inline-flex items-center gap-1 text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full mt-1">
+          <p className="font-semibold text-gray-900 dark:text-white">{name || 'Sem nome'}</p>
+          <span className="inline-flex items-center gap-1 text-xs bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-slate-300 px-2 py-0.5 rounded-full mt-1">
             <Shield className="w-3 h-3" />
             {ROLE_LABELS[profile?.role ?? 'customer']}
           </span>
@@ -92,20 +92,20 @@ export default function ProfileForm({ profile, email }: Props) {
 
         {/* Email (somente leitura) */}
         <div>
-          <label className="block text-xs font-medium text-gray-500 mb-1 flex items-center gap-1">
+          <label className="block text-xs font-medium text-gray-500 dark:text-slate-400 mb-1 flex items-center gap-1">
             <Mail className="w-3 h-3" /> Email
           </label>
           <input
             type="email"
             value={email}
             disabled
-            className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-gray-50 text-gray-400 cursor-not-allowed"
+            className="w-full border border-gray-200 dark:border-slate-600 rounded-xl px-3 py-2.5 text-sm bg-gray-50 dark:bg-slate-700/50 text-gray-400 dark:text-slate-500 cursor-not-allowed"
           />
         </div>
 
         {/* Nome */}
         <div>
-          <label className="block text-xs font-medium text-gray-500 mb-1 flex items-center gap-1">
+          <label className="block text-xs font-medium text-gray-500 dark:text-slate-400 mb-1 flex items-center gap-1">
             <User className="w-3 h-3" /> Nome
           </label>
           <input
@@ -113,13 +113,13 @@ export default function ProfileForm({ profile, email }: Props) {
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="Seu nome completo"
-            className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
+            className="w-full border border-gray-300 dark:border-slate-600 rounded-xl px-3 py-2.5 text-sm bg-white dark:bg-slate-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-400"
           />
         </div>
 
         {/* Telefone */}
         <div>
-          <label className="block text-xs font-medium text-gray-500 mb-1 flex items-center gap-1">
+          <label className="block text-xs font-medium text-gray-500 dark:text-slate-400 mb-1 flex items-center gap-1">
             <Phone className="w-3 h-3" /> WhatsApp / Telefone
           </label>
           <input
@@ -134,33 +134,33 @@ export default function ProfileForm({ profile, email }: Props) {
               setPhone(f);
             }}
             placeholder="(11) 99999-9999"
-            className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
+            className="w-full border border-gray-300 dark:border-slate-600 rounded-xl px-3 py-2.5 text-sm bg-white dark:bg-slate-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-400"
           />
         </div>
 
         {/* CPF e Aniversário */}
-        <div className="pt-2 border-t border-gray-100 mt-2 space-y-4">
+        <div className="pt-2 border-t border-gray-100 dark:border-slate-700 mt-2 space-y-4">
           <div>
-            <label className="block text-xs font-medium text-gray-500 mb-1">CPF</label>
+            <label className="block text-xs font-medium text-gray-500 dark:text-slate-400 mb-1">CPF</label>
             <input
               type="text"
               value={cpf}
               onChange={(e) => setCpf(maskCpf(e.target.value))}
               placeholder="000.000.000-00"
-              className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
+              className="w-full border border-gray-300 dark:border-slate-600 rounded-xl px-3 py-2.5 text-sm bg-white dark:bg-slate-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-400"
             />
           </div>
 
-          <div className="bg-orange-50/50 p-4 rounded-xl border border-orange-100">
+          <div className="bg-orange-50/50 dark:bg-orange-900/20 p-4 rounded-xl border border-orange-100 dark:border-orange-800/30">
             <label className="block text-xs font-bold text-orange-800 mb-2">🎁 Aniversário para Promoções</label>
             <div className="grid grid-cols-2 gap-2">
               <input 
                 type="number" min="1" max="31" value={birthdayDay} onChange={e => setBirthdayDay(e.target.value)} placeholder="Dia"
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-orange-400"
+                className="w-full border border-gray-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-slate-700 dark:text-white focus:outline-none focus:ring-1 focus:ring-orange-400"
               />
               <select 
                 value={birthdayMonth} onChange={e => setBirthdayMonth(e.target.value)}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-orange-400"
+                className="w-full border border-gray-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-slate-700 dark:text-white focus:outline-none focus:ring-1 focus:ring-orange-400"
               >
                 <option value="">Mês</option>
                 {['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'].map((m, i) => (
@@ -188,7 +188,7 @@ export default function ProfileForm({ profile, email }: Props) {
       <SavedCardSection />
 
       {/* Sair */}
-      <div className="pt-4 border-t border-gray-100 flex flex-col items-center gap-2">
+      <div className="pt-4 border-t border-gray-100 dark:border-slate-700 flex flex-col items-center gap-2">
         <p className="text-[10px] text-gray-400 font-medium uppercase tracking-widest">Gerenciar Conta</p>
         <LogoutButton
           className="w-full flex items-center justify-center gap-2 text-red-500 font-bold text-sm py-3 rounded-xl border-2 border-transparent hover:bg-red-50 hover:border-red-100 transition-all active:scale-95"
@@ -235,7 +235,7 @@ function SavedCardSection() {
   if (loading) return null;
 
   return (
-    <div className="pt-4 border-t border-gray-100 space-y-3">
+    <div className="pt-4 border-t border-gray-100 dark:border-slate-700 space-y-3">
       <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Pagamento</p>
 
       {cardLast4 ? (
