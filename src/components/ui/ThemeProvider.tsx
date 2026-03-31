@@ -15,8 +15,21 @@ export default function ThemeProvider({ children }: { children: React.ReactNode 
   const [theme, setTheme] = useState<Theme>('light');
 
   useEffect(() => {
-    const isDark = document.documentElement.classList.contains('dark');
-    setTheme(isDark ? 'dark' : 'light');
+    // Restaura tema do localStorage ou usa preferência do sistema
+    const savedTheme = localStorage.getItem('theme') as Theme | null;
+    let currentTheme: Theme = 'light';
+
+    if (savedTheme) {
+      currentTheme = savedTheme;
+    } else {
+      // Fallback para preferência do sistema
+      const isDark = document.documentElement.classList.contains('dark');
+      currentTheme = isDark ? 'dark' : 'light';
+    }
+
+    // Aplica o tema
+    setTheme(currentTheme);
+    document.documentElement.classList.toggle('dark', currentTheme === 'dark');
 
     // Observer to sync if class changes externally
     const observer = new MutationObserver(() => {

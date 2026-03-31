@@ -289,12 +289,12 @@ export default function VendorEventClient({ vendorId, activeEvent, invitations: 
               <button
                 key={invite.id}
                 onClick={() => { setSelectedInvite(invite); setView('invite-detail'); }}
-                className="w-full text-left bg-white dark:bg-slate-900 rounded-2xl border border-orange-100 dark:border-orange-950/30 shadow-sm p-4 transition-all hover:shadow-md hover:border-orange-300 dark:hover:border-orange-800 active:scale-[0.98]"
+                className="w-full text-left bg-gradient-to-br from-orange-500 to-amber-600 rounded-2xl p-5 text-white shadow-lg transition-all hover:shadow-xl active:scale-[0.98]"
               >
                 <div className="flex items-center justify-between">
                   <div className="min-w-0 flex-1">
-                    <h3 className="font-bold text-slate-900 dark:text-white truncate">{invite.events?.name || 'Evento'}</h3>
-                    <div className="flex items-center gap-3 mt-1 text-xs text-slate-400 dark:text-slate-500">
+                    <h3 className="font-bold text-lg">{invite.events?.name || 'Evento'}</h3>
+                    <div className="flex items-center gap-3 mt-1 text-xs text-orange-100">
                       {invite.events?.organizations?.name && (
                         <span className="flex items-center gap-1">
                           <Building className="w-3 h-3" /> {invite.events.organizations.name}
@@ -305,11 +305,16 @@ export default function VendorEventClient({ vendorId, activeEvent, invitations: 
                           <Calendar className="w-3 h-3" /> {new Date(invite.events.start_date).toLocaleDateString('pt-BR')}
                         </span>
                       )}
+                      {invite.events?.location && (
+                        <span className="flex items-center gap-1">
+                          <MapPin className="w-3 h-3" /> {invite.events.location}
+                        </span>
+                      )}
                     </div>
                   </div>
                   <div className="flex items-center gap-3 ml-3">
-                    <p className="text-xs font-black text-orange-600">R$ {Number(invite.fee_amount).toFixed(2)}</p>
-                    <ChevronRight className="w-5 h-5 text-slate-300 dark:text-slate-600" />
+                    <p className="text-xs font-black text-orange-50">R$ {Number(invite.fee_amount).toFixed(2)}</p>
+                    <ChevronRight className="w-5 h-5 text-orange-200" />
                   </div>
                 </div>
               </button>
