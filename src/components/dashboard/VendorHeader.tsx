@@ -45,12 +45,54 @@ export default function VendorHeader({ vendorName, userName, cnpjFormatted, vend
   const [pendingInvites, setPendingInvites] = React.useState(0);
   const [alertingMesa, setAlertingMesa] = React.useState<string | null>(null);
 
+  // Ref para manter vendorEventId atualizado dentro dos callbacks do realtime
+  const vendorEventIdRef = React.useRef(vendorEventId);
+  React.useEffect(() => { vendorEventIdRef.current = vendorEventId; }, [vendorEventId]);
+
+  // Ref do supabase client (estável)
+  const supabaseRef = React.useRef(createClient());
+
+  // Busca contagem de convites pendentes — extraída para poder ser chamada de qualquer lugar
+  const fetchInvites = React.useCallback(async () => {
+    const supabase = supabaseRef.current;
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    const { data: profile } = await supabase.from('profiles').select('email').eq('id', user.id).single();
+    const profileEmail = profile?.email;
+    const authEmail = user.email;
+
+    const orConditions = [`vendor_id.eq.${vendorId}`];
+    if (authEmail) orConditions.push(`and(vendor_email.eq.${authEmail},vendor_id.is.null)`);
+    if (profileEmail && profileEmail !== authEmail) orConditions.push(`and(vendor_email.eq.${profileEmail},vendor_id.is.null)`);
+
+    let query = supabase
+      .from('event_vendor_invitations')
+      .select('id', { count: 'exact', head: true })
+      .eq('status', 'pending')
+      .or(orConditions.join(','));
+
+    // Não contar convites de eventos que o vendor já participa
+    const currentEventId = vendorEventIdRef.current;
+    if (currentEventId) {
+      query = query.neq('event_id', currentEventId);
+    }
+
+    const { count } = await query;
+    setPendingInvites(count || 0);
+  }, [vendorId]);
+
+  // Re-fetch convites sempre que vendorEventId mudar (ex: após aceitar convite e router.refresh())
+  React.useEffect(() => {
+    if (vendorId) fetchInvites();
+  }, [vendorId, vendorEventId, fetchInvites]);
+
   React.useEffect(() => {
     if (!vendorId) return;
 
-    const supabase = createClient();
+    const supabase = supabaseRef.current;
 
-    // Busca inicial de chamadas pendentes e convites pendentes
+    // Busca inicial de chamadas pendentes
     supabase
       .from('waiter_calls')
       .select('id', { count: 'exact', head: true })
@@ -59,35 +101,6 @@ export default function VendorHeader({ vendorName, userName, cnpjFormatted, vend
       .then(({ count }) => {
         setPendingCalls(count || 0);
       });
-
-    const fetchInvites = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-      
-      const { data: profile } = await supabase.from('profiles').select('email').eq('id', user.id).single();
-      const profileEmail = profile?.email;
-      const authEmail = user.email;
-
-      const orConditions = [`vendor_id.eq.${vendorId}`];
-      if (authEmail) orConditions.push(`and(vendor_email.eq.${authEmail},vendor_id.is.null)`);
-      if (profileEmail && profileEmail !== authEmail) orConditions.push(`and(vendor_email.eq.${profileEmail},vendor_id.is.null)`);
-
-      let query = supabase
-        .from('event_vendor_invitations')
-        .select('id', { count: 'exact', head: true })
-        .eq('status', 'pending')
-        .or(orConditions.join(','));
-
-      // Não contar convites de eventos que o vendor já participa
-      if (vendorEventId) {
-        query = query.neq('event_id', vendorEventId);
-      }
-
-      const { count } = await query;
-      setPendingInvites(count || 0);
-    };
-
-    fetchInvites();
 
     // Inscrição Realtime para atualizar o badge e disparar alertas globais
     const channelCalls = supabase
@@ -144,7 +157,7 @@ export default function VendorHeader({ vendorName, userName, cnpjFormatted, vend
       supabase.removeChannel(channelCalls);
       supabase.removeChannel(channelInvites);
     };
-  }, [vendorId]);
+  }, [vendorId, fetchInvites]);
 
   const firstName = userName ? userName.split(' ')[0] : '';
   const fullDisplayName = firstName ? `${vendorName} | ${firstName}` : vendorName;
