@@ -22,6 +22,10 @@ body {
   color: #0f172a;
   -webkit-font-smoothing: antialiased;
   min-height: 100dvh;
+}
+
+/* Só anima tema APÓS hidratação — evita flash no reload */
+html.hydrated body {
   transition: background-color 0.3s ease, color 0.3s ease;
 }
 

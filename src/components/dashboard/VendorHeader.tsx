@@ -45,64 +45,58 @@ export default function VendorHeader({ vendorName, userName, cnpjFormatted, vend
   const [pendingInvites, setPendingInvites] = React.useState(0);
   const [alertingMesa, setAlertingMesa] = React.useState<string | null>(null);
 
-  // Ref para manter vendorEventId atualizado dentro dos callbacks do realtime
+  // Refs para valores atualizados dentro de callbacks (evita stale closures)
   const vendorEventIdRef = React.useRef(vendorEventId);
-  React.useEffect(() => { vendorEventIdRef.current = vendorEventId; }, [vendorEventId]);
-
-  // Ref do supabase client (estável)
-  const supabaseRef = React.useRef(createClient());
-
-  // Busca contagem de convites pendentes — extraída para poder ser chamada de qualquer lugar
-  const fetchInvites = React.useCallback(async () => {
-    const supabase = supabaseRef.current;
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
-
-    const { data: profile } = await supabase.from('profiles').select('email').eq('id', user.id).single();
-    const profileEmail = profile?.email;
-    const authEmail = user.email;
-
-    const orConditions = [`vendor_id.eq.${vendorId}`];
-    if (authEmail) orConditions.push(`and(vendor_email.eq.${authEmail},vendor_id.is.null)`);
-    if (profileEmail && profileEmail !== authEmail) orConditions.push(`and(vendor_email.eq.${profileEmail},vendor_id.is.null)`);
-
-    let query = supabase
-      .from('event_vendor_invitations')
-      .select('id', { count: 'exact', head: true })
-      .eq('status', 'pending')
-      .or(orConditions.join(','));
-
-    // Não contar convites de eventos que o vendor já participa
-    const currentEventId = vendorEventIdRef.current;
-    if (currentEventId) {
-      query = query.neq('event_id', currentEventId);
-    }
-
-    const { count } = await query;
-    setPendingInvites(count || 0);
-  }, [vendorId]);
-
-  // Re-fetch convites sempre que vendorEventId mudar (ex: após aceitar convite e router.refresh())
-  React.useEffect(() => {
-    if (vendorId) fetchInvites();
-  }, [vendorId, vendorEventId, fetchInvites]);
+  vendorEventIdRef.current = vendorEventId;
 
   React.useEffect(() => {
     if (!vendorId) return;
 
-    const supabase = supabaseRef.current;
+    const supabase = createClient();
+    let cancelled = false;
 
-    // Busca inicial de chamadas pendentes
+    // ── Função para buscar contagem de convites pendentes ──
+    async function fetchInvites() {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user || cancelled) return;
+
+      const { data: profile } = await supabase.from('profiles').select('email').eq('id', user.id).single();
+      const profileEmail = profile?.email;
+      const authEmail = user.email;
+
+      const orConditions = [`vendor_id.eq.${vendorId}`];
+      if (authEmail) orConditions.push(`and(vendor_email.eq.${authEmail},vendor_id.is.null)`);
+      if (profileEmail && profileEmail !== authEmail) orConditions.push(`and(vendor_email.eq.${profileEmail},vendor_id.is.null)`);
+
+      let query = supabase
+        .from('event_vendor_invitations')
+        .select('id', { count: 'exact', head: true })
+        .eq('status', 'pending')
+        .or(orConditions.join(','));
+
+      // Usar ref para sempre ter o valor mais atual
+      const currentEventId = vendorEventIdRef.current;
+      if (currentEventId) {
+        query = query.neq('event_id', currentEventId);
+      }
+
+      const { count } = await query;
+      if (!cancelled) setPendingInvites(count || 0);
+    }
+
+    // ── Busca inicial ──
     supabase
       .from('waiter_calls')
       .select('id', { count: 'exact', head: true })
       .eq('vendor_id', vendorId)
       .eq('status', 'pending')
       .then(({ count }) => {
-        setPendingCalls(count || 0);
+        if (!cancelled) setPendingCalls(count || 0);
       });
 
-    // Inscrição Realtime para atualizar o badge e disparar alertas globais
+    fetchInvites();
+
+    // ── Realtime: chamadas de garçom ──
     const channelCalls = supabase
       .channel(`header-waiter-${vendorId}`)
       .on('postgres_changes', {
@@ -111,17 +105,15 @@ export default function VendorHeader({ vendorName, userName, cnpjFormatted, vend
         table: 'waiter_calls',
         filter: `vendor_id=eq.${vendorId}`
       }, (payload) => {
-        // Atualiza contagem
         supabase
           .from('waiter_calls')
           .select('id', { count: 'exact', head: true })
           .eq('vendor_id', vendorId)
           .eq('status', 'pending')
           .then(({ count }) => {
-            setPendingCalls(count || 0);
+            if (!cancelled) setPendingCalls(count || 0);
           });
 
-        // Alerta sonoro e visual global em novas chamadas
         if (payload.eventType === 'INSERT') {
           const newCall = payload.new as any;
           setAlertingMesa(newCall.table_number);
@@ -130,7 +122,7 @@ export default function VendorHeader({ vendorName, userName, cnpjFormatted, vend
       })
       .subscribe();
 
-    // Inscrição Realtime para convites
+    // ── Realtime: convites ──
     const channelInvites = supabase
       .channel(`header-invites-${vendorId}`)
       .on('postgres_changes', {
@@ -154,10 +146,11 @@ export default function VendorHeader({ vendorName, userName, cnpjFormatted, vend
     }
 
     return () => {
+      cancelled = true;
       supabase.removeChannel(channelCalls);
       supabase.removeChannel(channelInvites);
     };
-  }, [vendorId, fetchInvites]);
+  }, [vendorId, vendorEventId]);
 
   const firstName = userName ? userName.split(' ')[0] : '';
   const fullDisplayName = firstName ? `${vendorName} | ${firstName}` : vendorName;

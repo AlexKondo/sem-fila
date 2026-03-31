@@ -31,6 +31,11 @@ function subscribeToTheme(callback: () => void) {
 export default function ThemeProvider({ children }: { children: React.ReactNode }) {
   const theme = useSyncExternalStore(subscribeToTheme, getThemeSnapshot, getServerSnapshot);
 
+  // Marca como hidratado para habilitar transições CSS (evita flash no reload)
+  React.useEffect(() => {
+    document.documentElement.classList.add('hydrated');
+  }, []);
+
   const toggleTheme = useCallback(() => {
     const next: Theme = theme === 'light' ? 'dark' : 'light';
     document.documentElement.classList.toggle('dark', next === 'dark');
