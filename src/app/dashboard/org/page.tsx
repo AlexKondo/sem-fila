@@ -100,8 +100,11 @@ export default async function OrgDashboardPage() {
               <Users className="w-4 h-4 text-blue-500" />
               <p className="text-xs text-gray-500 dark:text-slate-400">Convites</p>
             </div>
-            <p className="text-2xl font-bold text-gray-900 dark:text-white">{totalInvites}</p>
-            <p className="text-xs text-green-600 dark:text-green-500">{paidInvites} confirmado{paidInvites !== 1 ? 's' : ''}</p>
+            <p className="text-2xl font-bold text-gray-900 dark:text-white">
+              <span className="text-green-600 dark:text-green-500">{paidInvites}</span>
+              <span className="text-gray-400 dark:text-slate-500">/{totalInvites}</span>
+            </p>
+            <p className="text-xs text-gray-400 dark:text-slate-500">confirmados</p>
           </div>
         </div>
 
