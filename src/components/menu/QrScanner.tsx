@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { createClient } from '@/lib/supabase/client';
 
 const P = '#ec5b13'; // primary
 const SCAN_INTERVAL = 200; // ms entre scans
@@ -116,15 +117,16 @@ export default function QrScanner() {
   }
 
   const [isManualOpen, setIsManualOpen] = useState(false);
+  const [isMyQrOpen, setIsMyQrOpen] = useState(false);
 
-  // Para liberar CPU durante a digitação no modal manual
+  // Para liberar CPU durante a digitação no modal manual ou meu QR
   useEffect(() => {
-    if (isManualOpen) {
+    if (isManualOpen || isMyQrOpen) {
       stopCamera();
     } else if (!detected) {
       startCamera();
     }
-  }, [isManualOpen, detected, stopCamera, startCamera]);
+  }, [isManualOpen, isMyQrOpen, detected, stopCamera, startCamera]);
 
   return (
     <div className="relative flex min-h-screen flex-col" style={{ backgroundColor: '#f8f6f6' }}>
@@ -182,6 +184,18 @@ export default function QrScanner() {
               <p className="text-slate-600 font-medium">Aponte a câmera para o código QR para fazer seu pedido</p>
             </div>
 
+            {/* Botão Meu QR Code */}
+            <button
+              onClick={() => setIsMyQrOpen(true)}
+              className="mb-6 flex items-center gap-2 px-5 py-3 rounded-xl font-semibold text-sm transition-all active:scale-95 border-2 border-dashed"
+              style={{ borderColor: P, color: P }}
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
+              </svg>
+              Meu QR Code
+            </button>
+
             {/* Scanner viewfinder — exatamente como o asset */}
             <div className="relative w-full max-w-sm aspect-square flex items-center justify-center">
               {/* Corner brackets */}
@@ -236,9 +250,17 @@ export default function QrScanner() {
 
             {/* Custom Manual Code Modal */}
             {isManualOpen && (
-              <ManualEntryModal 
-                onClose={() => setIsManualOpen(false)} 
-                onConfirm={(code) => router.push(`/menu/${code.trim()}`)} 
+              <ManualEntryModal
+                onClose={() => setIsManualOpen(false)}
+                onConfirm={(code) => router.push(`/menu/${code.trim()}`)}
+                P={P}
+              />
+            )}
+
+            {/* Meu QR Code Modal */}
+            {isMyQrOpen && (
+              <MyQrCodeModal
+                onClose={() => setIsMyQrOpen(false)}
                 P={P}
               />
             )}
@@ -268,6 +290,92 @@ export default function QrScanner() {
           </Link>
         </div>
       </nav>
+    </div>
+  );
+}
+
+function MyQrCodeModal({ onClose, P }: { onClose: () => void; P: string }) {
+  const router = useRouter();
+  const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [userName, setUserName] = useState('');
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+
+      if (!user) {
+        // Não está logado — redireciona para login
+        router.push('/login?redirect=/scan');
+        return;
+      }
+
+      // Busca nome do perfil
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('name')
+        .eq('id', user.id)
+        .single();
+
+      if (cancelled) return;
+      setUserName(profile?.name || user.email || '');
+
+      // Gera QR Code com o user ID
+      const QRCode = (await import('qrcode')).default;
+      const qrPayload = JSON.stringify({ type: 'customer', id: user.id });
+      const dataUrl = await QRCode.toDataURL(qrPayload, {
+        width: 280,
+        margin: 2,
+        color: { dark: '#0f172a', light: '#ffffff' },
+        errorCorrectionLevel: 'H',
+      });
+
+      if (cancelled) return;
+      setQrDataUrl(dataUrl);
+      setLoading(false);
+    })();
+    return () => { cancelled = true; };
+  }, [router]);
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-6">
+      <div className="bg-white rounded-2xl w-full max-w-sm p-6 shadow-xl text-center">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-bold text-slate-900">Meu QR Code</h3>
+          <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        {loading ? (
+          <div className="py-12 flex flex-col items-center gap-3">
+            <div className="w-8 h-8 border-3 border-slate-200 border-t-orange-500 rounded-full animate-spin" style={{ borderTopColor: P }} />
+            <p className="text-sm text-slate-500">Carregando...</p>
+          </div>
+        ) : (
+          <>
+            {userName && (
+              <p className="text-sm text-slate-600 mb-3">
+                <span className="font-bold text-slate-900">{userName}</span>
+              </p>
+            )}
+            {qrDataUrl && (
+              <div className="flex justify-center mb-4">
+                <div className="p-3 bg-white rounded-2xl border-2 border-slate-100 shadow-sm">
+                  <img src={qrDataUrl} alt="Meu QR Code" className="w-56 h-56" />
+                </div>
+              </div>
+            )}
+            <p className="text-xs text-slate-400 leading-relaxed">
+              Apresente este QR Code ao fornecedor para que ele registre seus pedidos diretamente na sua conta.
+            </p>
+          </>
+        )}
+      </div>
     </div>
   );
 }
