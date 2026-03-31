@@ -1,7 +1,22 @@
 import Link from 'next/link';
-import { QrCode, ShoppingBag, Clock, ScanLine, Check, LogIn } from 'lucide-react';
+import { QrCode, ShoppingBag, Clock, ScanLine, Check, LogIn, User } from 'lucide-react';
+import { createClient } from '@/lib/supabase/server';
 
-export default function LandingPage() {
+export default async function LandingPage() {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  let firstName: string | null = null;
+  if (user) {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('full_name')
+      .eq('id', user.id)
+      .single();
+    if (profile?.full_name) {
+      firstName = profile.full_name.split(' ')[0];
+    }
+  }
   return (
     <main className="min-h-screen" style={{ backgroundColor: '#f8f6f6' }}>
       {/* Header — só logo, zero distração */}
@@ -14,10 +29,17 @@ export default function LandingPage() {
           </div>
           <span className="text-lg font-black tracking-tight text-slate-900">QuickPick</span>
         </div>
-        <Link href="/login" className="flex items-center gap-1.5 text-sm font-semibold text-slate-600 hover:text-slate-900 transition-colors">
-          <LogIn className="w-4 h-4" />
-          Entrar
-        </Link>
+        {firstName ? (
+          <span className="flex items-center gap-1.5 text-sm font-semibold text-slate-700">
+            <User className="w-4 h-4" />
+            Bem-vindo, {firstName}
+          </span>
+        ) : (
+          <Link href="/login" className="flex items-center gap-1.5 text-sm font-semibold text-slate-600 hover:text-slate-900 transition-colors">
+            <LogIn className="w-4 h-4" />
+            Entrar
+          </Link>
+        )}
       </header>
 
       {/* Hero — cliente escaneia e pede */}
