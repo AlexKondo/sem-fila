@@ -10,11 +10,12 @@ export default async function LandingPage() {
   if (user) {
     const { data: profile } = await supabase
       .from('profiles')
-      .select('full_name')
+      .select('name, full_name')
       .eq('id', user.id)
       .single();
-    if (profile?.full_name) {
-      firstName = profile.full_name.split(' ')[0];
+    const displayName = profile?.full_name || profile?.name;
+    if (displayName) {
+      firstName = displayName.split(' ')[0];
     }
   }
   return (
