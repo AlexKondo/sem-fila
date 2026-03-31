@@ -100,13 +100,13 @@ export default function VendorDashboardClient({
 
       {/* Alerta de limite de pedidos excedido */}
       {orderLimitAlert && (
-        <div className="bg-red-50 border-2 border-red-200 rounded-2xl p-4 flex items-start gap-3 animate-in fade-in slide-in-from-top-2 duration-500">
-          <div className="w-10 h-10 rounded-xl bg-red-100 flex items-center justify-center shrink-0">
-            <svg className="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" /></svg>
+        <div className="bg-red-50 dark:bg-red-950/20 border-2 border-red-200 dark:border-red-900/30 rounded-2xl p-4 flex items-start gap-3 animate-in fade-in slide-in-from-top-2 duration-500">
+          <div className="w-10 h-10 rounded-xl bg-red-100 dark:bg-red-900/40 flex items-center justify-center shrink-0">
+            <svg className="w-5 h-5 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" /></svg>
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-black text-red-700">Limite de pedidos excedido!</p>
-            <p className="text-xs text-red-600 font-medium mt-0.5">
+            <p className="text-sm font-black text-red-700 dark:text-red-400">Limite de pedidos excedido!</p>
+            <p className="text-xs text-red-600 dark:text-red-500 font-medium mt-0.5">
               Plano {orderLimitAlert.planName}: {orderLimitAlert.ordersThisMonth} pedidos usados de {orderLimitAlert.orderLimit >= 99999 ? 'ilimitado' : orderLimitAlert.orderLimit}.
               Novos pedidos serão bloqueados a partir de amanhã.
             </p>
@@ -122,7 +122,7 @@ export default function VendorDashboardClient({
 
       {/* Sumário Geral — todos os negócios */}
       {globalSummary && (
-        <div className="bg-gradient-to-br from-slate-900 to-slate-800 rounded-3xl p-5 text-white shadow-lg">
+        <div className="bg-gradient-to-br from-slate-900 to-slate-800 dark:from-slate-950 dark:to-slate-900 rounded-3xl p-5 text-white shadow-lg border border-white/5">
           <div className="flex items-center justify-between mb-4">
             <div>
               <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Visão Geral</p>
@@ -175,20 +175,20 @@ export default function VendorDashboardClient({
 
       {/* Header with loading */}
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-black text-slate-900">{vendorName}</h1>
+        <h1 className="text-xl font-black text-slate-900 dark:text-white">{vendorName}</h1>
         {isPending && <Loader2 className="w-5 h-5 text-orange-500 animate-spin" />}
       </div>
 
       {/* Period Selectors Row */}
       <div className="flex flex-col md:flex-row gap-3 items-center">
         {/* Quick Period Selector (1/4 de largura no desktop) */}
-        <div className="w-full md:w-1/4 flex bg-slate-100 p-1 rounded-2xl h-12">
+        <div className="w-full md:w-1/4 flex bg-slate-100 dark:bg-slate-800 p-1 rounded-2xl h-12">
           {['today', '7d', '30d'].map((p) => (
             <button
               key={p}
               onClick={() => handlePeriodChange(p)}
               className={`flex-1 py-1 text-[10px] font-black rounded-xl transition-all ${
-                currentPeriod === p ? 'bg-white shadow-sm text-orange-600' : 'text-slate-400'
+                currentPeriod === p ? 'bg-white dark:bg-slate-900 shadow-sm text-orange-600 dark:text-orange-500' : 'text-slate-400 dark:text-slate-500'
               }`}
             >
               {p === 'today' ? 'HOJE' : p.toUpperCase()}
@@ -197,21 +197,21 @@ export default function VendorDashboardClient({
         </div>
 
         {/* Custom Date Picker (Restante da largura) */}
-        <div className="w-full md:flex-1 bg-white rounded-3xl p-1 px-3 border border-slate-100 shadow-sm flex items-center gap-2 h-12">
-          <Calendar className="w-3.5 h-3.5 text-slate-300 hidden sm:block" />
+        <div className="w-full md:flex-1 bg-white dark:bg-slate-900 rounded-3xl p-1 px-3 border border-slate-100 dark:border-slate-800 shadow-sm flex items-center gap-2 h-12">
+          <Calendar className="w-3.5 h-3.5 text-slate-300 dark:text-slate-600 hidden sm:block" />
           <div className="flex-1 flex items-center gap-1.5">
             <input 
               type="date" 
               value={localStart}
               onChange={(e) => setLocalStart(e.target.value)}
-              className="w-full h-8 bg-transparent text-[11px] font-bold text-slate-600 focus:outline-none"
+              className="w-full h-8 bg-transparent text-[11px] font-bold text-slate-600 dark:text-slate-300 focus:outline-none"
             />
-            <span className="text-slate-300 text-xs">→</span>
+            <span className="text-slate-300 dark:text-slate-600 text-xs">→</span>
             <input 
               type="date" 
               value={localEnd}
               onChange={(e) => setLocalEnd(e.target.value)}
-              className="w-full h-8 bg-transparent text-[11px] font-bold text-slate-600 focus:outline-none"
+              className="w-full h-8 bg-transparent text-[11px] font-bold text-slate-600 dark:text-slate-300 focus:outline-none"
             />
           </div>
           <button 
@@ -277,13 +277,13 @@ export default function VendorDashboardClient({
       </div>
 
       {/* Gráfico de barras — Receita do Período */}
-      <div className="bg-white rounded-3xl p-5 border border-slate-100 shadow-sm">
+      <div className="bg-white dark:bg-slate-900 rounded-3xl p-5 border border-slate-100 dark:border-slate-800 shadow-sm">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h2 className="font-black text-slate-900 text-base">Vendas no Período</h2>
-            <p className="text-xs text-slate-400">Fluxo de receita (R$)</p>
+            <h2 className="font-black text-slate-900 dark:text-white text-base">Vendas no Período</h2>
+            <p className="text-xs text-slate-400 dark:text-slate-500">Fluxo de receita (R$)</p>
           </div>
-          <span className="text-[11px] font-black bg-slate-50 border border-slate-100 text-slate-400 px-3 py-1 rounded-full">{periodLabel}</span>
+          <span className="text-[11px] font-black bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 text-slate-400 dark:text-slate-600 px-3 py-1 rounded-full">{periodLabel}</span>
         </div>
         <div className="flex items-end gap-1 h-28">
           {chartData.map((d, i) => {
@@ -296,11 +296,11 @@ export default function VendorDashboardClient({
                   className="w-full rounded-t-md transition-all"
                   style={{
                     height: `${Math.max(pct * 100, d.total > 0 ? 6 : 2)}%`,
-                    backgroundColor: d.isNow ? P : d.total > 0 ? P + 'aa' : '#f1f5f9',
+                    backgroundColor: d.isNow ? P : d.total > 0 ? P + 'aa' : 'var(--chart-bg, #f1f5f9)',
                   }}
                 />
                 {showLabel && (
-                  <span className="text-[9px] text-slate-300 font-bold whitespace-nowrap">{d.label}</span>
+                  <span className="text-[9px] text-slate-300 dark:text-slate-700 font-bold whitespace-nowrap">{d.label}</span>
                 )}
               </div>
             );
@@ -309,15 +309,15 @@ export default function VendorDashboardClient({
 
         {/* Breakdown por vendor */}
         {globalSummary && globalSummary.vendors.length > 1 && (
-          <div className="mt-4 pt-4 border-t border-slate-50 space-y-2">
-            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Receita por Marca</p>
+          <div className="mt-4 pt-4 border-t border-slate-50 dark:border-slate-800 space-y-2">
+            <p className="text-[10px] font-black text-slate-400 dark:text-slate-600 uppercase tracking-widest mb-2">Receita por Marca</p>
             {globalSummary.vendors.map((v, i) => {
               const maxRev = Math.max(...globalSummary.vendors.map(x => x.revenue), 1);
               return (
                 <div key={v.id} className="flex items-center gap-2">
                   <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: VENDOR_COLORS[i % VENDOR_COLORS.length] }} />
-                  <span className="text-[11px] font-bold text-slate-600 truncate w-28">{v.name}</span>
-                  <div className="flex-1 h-2.5 bg-slate-50 rounded-full overflow-hidden">
+                  <span className="text-[11px] font-bold text-slate-600 dark:text-slate-400 truncate w-28">{v.name}</span>
+                  <div className="flex-1 h-2.5 bg-slate-50 dark:bg-slate-950 rounded-full overflow-hidden">
                     <div
                       className="h-full rounded-full transition-all duration-500"
                       style={{
@@ -326,7 +326,7 @@ export default function VendorDashboardClient({
                       }}
                     />
                   </div>
-                  <span className="text-[10px] font-black text-slate-500 shrink-0">{formatCurrency(v.revenue)}</span>
+                  <span className="text-[10px] font-black text-slate-500 dark:text-slate-600 shrink-0">{formatCurrency(v.revenue)}</span>
                 </div>
               );
             })}
@@ -335,14 +335,14 @@ export default function VendorDashboardClient({
       </div>
 
       {/* Eficiência */}
-      <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm">
+      <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-100 dark:border-slate-800 shadow-sm">
         <div className={globalSummary && globalSummary.vendors.length > 1 ? 'flex flex-col md:flex-row gap-6' : 'flex flex-col items-center'}>
           {/* Lado esquerdo: ring + totais */}
           <div className="flex flex-col items-center">
-            <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Eficiência do Período</p>
-            <div className="relative w-32 h-32">
+            <p className="text-xs font-bold text-slate-400 dark:text-slate-600 uppercase tracking-wider mb-3">Eficiência do Período</p>
+            <div className="relative">
               <svg className="w-32 h-32 -rotate-90" viewBox="0 0 100 100">
-                <circle cx="50" cy="50" r="45" fill="none" stroke="#f1f5f9" strokeWidth="10" />
+                <circle cx="50" cy="50" r="45" fill="none" stroke="currentColor" className="text-slate-100 dark:text-slate-950" strokeWidth="10" />
                 <circle
                   cx="50" cy="50" r="45" fill="none"
                   stroke={P} strokeWidth="10"
@@ -352,18 +352,18 @@ export default function VendorDashboardClient({
                 />
               </svg>
               <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <span className="text-2xl font-black text-slate-900">{efficiency != null ? `${efficiency}%` : '–'}</span>
-                <span className="text-[10px] text-slate-400 font-bold">READY RATE</span>
+                <span className="text-2xl font-black text-slate-900 dark:text-white">{efficiency != null ? `${efficiency}%` : '–'}</span>
+                <span className="text-[10px] text-slate-400 dark:text-slate-600 font-bold">READY RATE</span>
               </div>
             </div>
             <div className="flex gap-8 mt-5 text-center">
               <div>
-                <p className="text-xl font-black text-slate-900">{validCount}</p>
-                <p className="text-[10px] text-slate-400 font-bold uppercase">Pagos</p>
+                <p className="text-xl font-black text-slate-900 dark:text-white">{validCount}</p>
+                <p className="text-[10px] text-slate-400 dark:text-slate-600 font-bold uppercase">Pagos</p>
               </div>
               <div>
-                <p className="text-xl font-black text-slate-900">{readyCount}</p>
-                <p className="text-[10px] text-slate-400 font-bold uppercase">Prontos</p>
+                <p className="text-xl font-black text-slate-900 dark:text-white">{readyCount}</p>
+                <p className="text-[10px] text-slate-400 dark:text-slate-600 font-bold uppercase">Prontos</p>
               </div>
             </div>
           </div>
@@ -371,20 +371,20 @@ export default function VendorDashboardClient({
           {/* Lado direito: breakdown por vendor */}
           {globalSummary && globalSummary.vendors.length > 1 && (
             <div className="flex-1 flex flex-col justify-center min-w-0">
-              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Eficiência por Marca</p>
+              <p className="text-[10px] font-black text-slate-400 dark:text-slate-600 uppercase tracking-widest mb-3">Eficiência por Marca</p>
               <div className="space-y-3">
                 {globalSummary.vendors.map((v, i) => (
                   <div key={v.id}>
                     <div className="flex items-center justify-between mb-1">
                       <div className="flex items-center gap-1.5">
                         <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: VENDOR_COLORS[i % VENDOR_COLORS.length] }} />
-                        <span className="text-[11px] font-bold text-slate-600 truncate">{v.name}</span>
+                        <span className="text-[11px] font-bold text-slate-600 dark:text-slate-400 truncate">{v.name}</span>
                       </div>
                       <span className="text-[11px] font-black" style={{ color: VENDOR_COLORS[i % VENDOR_COLORS.length] }}>
                         {v.efficiency != null ? `${v.efficiency}%` : '–'}
                       </span>
                     </div>
-                    <div className="h-2.5 bg-slate-50 rounded-full overflow-hidden">
+                    <div className="h-2.5 bg-slate-50 dark:bg-slate-950 rounded-full overflow-hidden">
                       <div
                         className="h-full rounded-full transition-all duration-500"
                         style={{
@@ -394,8 +394,8 @@ export default function VendorDashboardClient({
                       />
                     </div>
                     <div className="flex justify-between mt-0.5">
-                      <span className="text-[9px] text-slate-300">{v.readyCount} prontos</span>
-                      <span className="text-[9px] text-slate-300">{v.validCount} pagos</span>
+                      <span className="text-[9px] text-slate-300 dark:text-slate-700">{v.readyCount} prontos</span>
+                      <span className="text-[9px] text-slate-300 dark:text-slate-700">{v.validCount} pagos</span>
                     </div>
                   </div>
                 ))}
@@ -406,15 +406,15 @@ export default function VendorDashboardClient({
       </div>
 
       {/* Tempo médio — barra visual */}
-      <div className="bg-white rounded-3xl p-5 border border-slate-100 shadow-sm">
+      <div className="bg-white dark:bg-slate-900 rounded-3xl p-5 border border-slate-100 dark:border-slate-800 shadow-sm">
         <div className="flex items-center justify-between mb-3">
-          <h2 className="font-black text-slate-900">Tempo Médio de Preparo</h2>
+          <h2 className="font-black text-slate-900 dark:text-white">Tempo Médio de Preparo</h2>
           <span className="text-2xl font-black" style={{ color: P }}>
             {avgMinutes != null ? `${avgMinutes} min` : '–'}
           </span>
         </div>
-        <p className="text-xs text-slate-400 mb-3">Média de tempo entre recebimento e entrega no período</p>
-        <div className="relative h-3 bg-slate-50 rounded-full overflow-hidden border border-slate-100">
+        <p className="text-xs text-slate-400 dark:text-slate-500 mb-3">Média de tempo entre recebimento e entrega no período</p>
+        <div className="relative h-3 bg-slate-50 dark:bg-slate-950 rounded-full overflow-hidden border border-slate-100 dark:border-slate-800">
           <div
             className="h-full rounded-full transition-all duration-700"
             style={{
@@ -426,7 +426,7 @@ export default function VendorDashboardClient({
             }}
           />
         </div>
-        <div className="flex justify-between text-[10px] text-slate-300 font-bold mt-1">
+        <div className="flex justify-between text-[10px] text-slate-300 dark:text-slate-700 font-bold mt-1">
           <span>0 min</span>
           <span className="text-green-400">Ótimo &lt;10</span>
           <span style={{ color: P }}>Bom &lt;20</span>
@@ -435,8 +435,8 @@ export default function VendorDashboardClient({
 
         {/* Breakdown por vendor */}
         {globalSummary && globalSummary.vendors.length > 1 && (
-          <div className="mt-4 pt-4 border-t border-slate-50 space-y-2.5">
-            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Tempo por Marca</p>
+          <div className="mt-4 pt-4 border-t border-slate-50 dark:border-slate-800 space-y-2.5">
+            <p className="text-[10px] font-black text-slate-400 dark:text-slate-600 uppercase tracking-widest mb-2">Tempo por Marca</p>
             {globalSummary.vendors.map((v, i) => {
               const prepColor = v.avgPrepTime == null ? '#94a3b8'
                 : v.avgPrepTime <= 10 ? '#22c55e'
@@ -447,13 +447,13 @@ export default function VendorDashboardClient({
                   <div className="flex items-center justify-between mb-1">
                     <div className="flex items-center gap-1.5">
                       <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: VENDOR_COLORS[i % VENDOR_COLORS.length] }} />
-                      <span className="text-[11px] font-bold text-slate-600 truncate">{v.name}</span>
+                      <span className="text-[11px] font-bold text-slate-600 dark:text-slate-400 truncate">{v.name}</span>
                     </div>
                     <span className="text-[11px] font-black" style={{ color: prepColor }}>
                       {v.avgPrepTime != null ? `${v.avgPrepTime} min` : '–'}
                     </span>
                   </div>
-                  <div className="h-2.5 bg-slate-50 rounded-full overflow-hidden">
+                  <div className="h-2.5 bg-slate-50 dark:bg-slate-950 rounded-full overflow-hidden">
                     <div
                       className="h-full rounded-full transition-all duration-500"
                       style={{
@@ -488,7 +488,7 @@ function KpiCard({
   const maxBar = vendorBars ? Math.max(...vendorBars.map(v => v.value), 1) : 1;
 
   return (
-    <div className="bg-white rounded-3xl p-4 border border-slate-100 shadow-sm relative overflow-hidden">
+    <div className="bg-white dark:bg-slate-900 rounded-3xl p-4 border border-slate-100 dark:border-slate-800 shadow-sm relative overflow-hidden">
       {badge && (
         <span className="absolute top-3 right-3 text-[9px] font-black px-2 py-0.5 rounded-full text-white" style={{ backgroundColor: accent }}>
           {badge}
@@ -499,9 +499,9 @@ function KpiCard({
         {/* Lado esquerdo: icone + valor */}
         <div className={vendorBars && vendorBars.length > 0 ? 'shrink-0' : ''}>
           <div className="text-2xl mb-2">{icon}</div>
-          <p className="text-[11px] text-slate-400 font-medium leading-none mb-1">{label}</p>
-          <p className="text-xl font-black text-slate-900 leading-tight">{value}</p>
-          <p className="text-[10px] text-slate-300 mt-1">{sub}</p>
+          <p className="text-[11px] text-slate-400 dark:text-slate-600 font-medium leading-none mb-1">{label}</p>
+          <p className="text-xl font-black text-slate-900 dark:text-white leading-tight">{value}</p>
+          <p className="text-[10px] text-slate-300 dark:text-slate-700 mt-1">{sub}</p>
         </div>
 
         {/* Lado direito: mini barras por vendor */}
@@ -509,7 +509,7 @@ function KpiCard({
           <div className="flex-1 flex flex-col justify-end gap-1.5 min-w-0 pt-2">
             {vendorBars.map((v, i) => (
               <div key={i} className="flex items-center gap-1.5">
-                <div className="flex-1 h-3 bg-slate-50 rounded-full overflow-hidden">
+                <div className="flex-1 h-3 bg-slate-50 dark:bg-slate-950 rounded-full overflow-hidden">
                   <div
                     className="h-full rounded-full transition-all duration-500"
                     style={{
@@ -518,14 +518,14 @@ function KpiCard({
                     }}
                   />
                 </div>
-                <span className="text-[8px] font-black text-slate-400 shrink-0 w-7 text-right">{v.label}</span>
+                <span className="text-[8px] font-black text-slate-400 dark:text-slate-600 shrink-0 w-7 text-right">{v.label}</span>
               </div>
             ))}
             <div className="flex gap-1 flex-wrap mt-0.5">
               {vendorBars.map((v, i) => (
                 <span key={i} className="flex items-center gap-0.5">
                   <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: VENDOR_COLORS[i % VENDOR_COLORS.length] }} />
-                  <span className="text-[7px] text-slate-300 font-bold truncate max-w-[60px]">{v.name}</span>
+                  <span className="text-[7px] text-slate-300 dark:text-slate-700 font-bold truncate max-w-[60px]">{v.name}</span>
                 </span>
               ))}
             </div>

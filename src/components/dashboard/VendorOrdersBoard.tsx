@@ -297,7 +297,7 @@ export default function VendorOrdersBoard({ initialOrders, vendorId }: Props) {
         {alertOrder && (
           <div
             onClick={() => setAlertOrder(null)}
-            className="fixed inset-0 z-[10000] bg-green-600 flex flex-col items-center justify-center p-8 text-white text-center cursor-pointer animate-in fade-in zoom-in duration-300"
+            className="fixed inset-0 z-[10000] bg-green-600 dark:bg-green-700 flex flex-col items-center justify-center p-8 text-white text-center cursor-pointer animate-in fade-in zoom-in duration-300"
           >
             <div className="w-32 h-32 bg-white/20 rounded-full flex items-center justify-center mb-8 animate-bounce">
               <svg className="w-20 h-20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -306,7 +306,7 @@ export default function VendorOrdersBoard({ initialOrders, vendorId }: Props) {
             </div>
             <h2 className="text-4xl font-black uppercase tracking-widest mb-2">Novo Pedido Recebido!</h2>
             <p className="text-xl font-bold opacity-80 mb-8">O pagamento foi confirmado e o pedido já está na fila.</p>
-            <div className="bg-white text-green-700 px-12 py-8 rounded-[40px] shadow-2xl space-y-2">
+            <div className="bg-white dark:bg-slate-900 text-green-700 dark:text-green-400 px-12 py-8 rounded-[40px] shadow-2xl space-y-2 border border-white/10">
                 <p className="text-sm font-black uppercase tracking-widest opacity-60">Código do Pedido</p>
                 <p className="text-7xl font-black italic">{alertOrder.pickup_code}</p>
             </div>
@@ -337,73 +337,42 @@ export default function VendorOrdersBoard({ initialOrders, vendorId }: Props) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const historicalOrders = orders
     .filter((o) => o.status === 'delivered' || (o.status === 'cancelled' && (o as any).payment_status === 'paid'))
-    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-
   return (
     <>
-    {alertOrder && (
-      <div
-        onClick={() => setAlertOrder(null)}
-        className="fixed inset-0 z-[10000] bg-green-600 flex flex-col items-center justify-center p-8 text-white text-center cursor-pointer animate-in fade-in zoom-in duration-300"
-      >
-        <div className="w-32 h-32 bg-white/20 rounded-full flex items-center justify-center mb-8 animate-bounce">
-          <svg className="w-20 h-20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-          </svg>
+      {alertOrder && (
+        <div
+          onClick={() => setAlertOrder(null)}
+          className="fixed inset-0 z-[10000] bg-green-600 dark:bg-green-700 flex flex-col items-center justify-center p-8 text-white text-center cursor-pointer animate-in fade-in zoom-in duration-300"
+        >
+          <div className="w-32 h-32 bg-white/20 rounded-full flex items-center justify-center mb-8 animate-bounce">
+            <svg className="w-20 h-20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+            </svg>
+          </div>
+          <h2 className="text-4xl font-black uppercase tracking-widest mb-2">Novo Pedido Recebido!</h2>
+          <p className="text-xl font-bold opacity-80 mb-8">O pagamento foi confirmado e o pedido já está na fila.</p>
+          <div className="bg-white dark:bg-slate-900 text-green-700 dark:text-green-400 px-12 py-8 rounded-[40px] shadow-2xl space-y-2 border border-white/10">
+              <p className="text-sm font-black uppercase tracking-widest opacity-60">Código do Pedido</p>
+              <p className="text-7xl font-black italic">{alertOrder.pickup_code}</p>
+          </div>
+          <button className="mt-12 bg-white/10 hover:bg-white/20 px-8 py-3 rounded-full font-bold uppercase tracking-widest transition-all">
+            Toque para fechar e ver detalhes
+          </button>
         </div>
-        <h2 className="text-4xl font-black uppercase tracking-widest mb-2">Novo Pedido Recebido!</h2>
-        <p className="text-xl font-bold opacity-80 mb-8">O pagamento foi confirmado e o pedido já está na fila.</p>
-        <div className="bg-white text-green-700 px-12 py-8 rounded-[40px] shadow-2xl space-y-2">
-            <p className="text-sm font-black uppercase tracking-widest opacity-60">Código do Pedido</p>
-            <p className="text-7xl font-black italic">{alertOrder.pickup_code}</p>
-        </div>
-        <button className="mt-12 bg-white/10 hover:bg-white/20 px-8 py-3 rounded-full font-bold uppercase tracking-widest transition-all">
-          Toque para fechar e ver detalhes
-        </button>
-      </div>
-    )}
-    {filterBar}
-    <div className="max-w-2xl mx-auto px-4 py-4 space-y-8">
-      {/* Fila de Produção */}
-      <div>
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="text-xs font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-orange-500 animate-pulse" />
-            Fila de Produção ({activeOrders.length})
-          </h2>
-        </div>
+      )}
+      {filterBar}
+      <div className="max-w-2xl mx-auto px-4 py-4 space-y-8">
+        {/* Fila de Produção */}
+        <div>
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-xs font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-orange-500 animate-pulse" />
+              Fila de Produção ({activeOrders.length})
+            </h2>
+          </div>
 
-        <div className="space-y-4">
-          {activeOrders.map((order) => (
-            <OrderCard
-              key={order.id}
-              order={order}
-              orderNumber={orderNumbers[order.id]}
-              onAdvance={advanceStatus}
-              onCancel={cancelOrder}
-            />
-          ))}
-
-          {activeOrders.length === 0 && (
-            <div className="text-center py-16 bg-white dark:bg-slate-800 border-2 border-dashed border-slate-100 dark:border-slate-700 rounded-[32px]">
-              <p className="text-4xl mb-3">🍳</p>
-              <p className="font-bold text-slate-900 dark:text-white">Nenhum pedido na fila</p>
-              <p className="text-xs text-slate-400 dark:text-slate-500">Aguardando novos clientes...</p>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Histórico de Entregues */}
-      <div className="bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-2xl p-4">
-        <h2 className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-4">
-          Histórico • Concluídos ({historicalOrders.length})
-        </h2>
-        <div className="space-y-3">
-          {historicalOrders.length === 0 ? (
-            <p className="text-xs text-slate-400 text-center py-4">Nenhum pedido processado ainda.</p>
-          ) : (
-            historicalOrders.map((order) => (
+          <div className="space-y-4">
+            {activeOrders.map((order) => (
               <OrderCard
                 key={order.id}
                 order={order}
@@ -411,11 +380,40 @@ export default function VendorOrdersBoard({ initialOrders, vendorId }: Props) {
                 onAdvance={advanceStatus}
                 onCancel={cancelOrder}
               />
-            ))
-          )}
+            ))}
+
+            {activeOrders.length === 0 && (
+              <div className="text-center py-16 bg-white dark:bg-slate-800 border-2 border-dashed border-slate-100 dark:border-slate-700 rounded-[32px]">
+                <p className="text-4xl mb-3">🍳</p>
+                <p className="font-bold text-slate-900 dark:text-white">Nenhum pedido na fila</p>
+                <p className="text-xs text-slate-400 dark:text-slate-500">Aguardando novos clientes...</p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Histórico de Entregues */}
+        <div className="bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-2xl p-4">
+          <h2 className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-4">
+            Histórico • Concluídos ({historicalOrders.length})
+          </h2>
+          <div className="space-y-3">
+            {historicalOrders.length === 0 ? (
+              <p className="text-xs text-slate-400 text-center py-4">Nenhum pedido processado ainda.</p>
+            ) : (
+              historicalOrders.map((order) => (
+                <OrderCard
+                  key={order.id}
+                  order={order}
+                  orderNumber={orderNumbers[order.id]}
+                  onAdvance={advanceStatus}
+                  onCancel={cancelOrder}
+                />
+              ))
+            )}
+          </div>
         </div>
       </div>
-    </div>
     </>
   );
 }
@@ -490,7 +488,7 @@ function OrderCard({
               </span>
             )}
             {isDelivered && timeDiffSec !== null && (
-              <span className="text-xs font-mono font-bold text-slate-500 bg-slate-200/50 px-1.5 rounded" title="Tempo total de preparo">
+              <span className="text-xs font-mono font-bold text-slate-500 dark:text-slate-400 bg-slate-200/50 dark:bg-slate-700 px-1.5 rounded" title="Tempo total de preparo">
                 ⏱️ {mins}m {secs}s
               </span>
             )}
@@ -521,7 +519,7 @@ function OrderCard({
                 {item.extras && item.extras.length > 0 && (
                   <div className="flex flex-wrap gap-1 mt-1">
                     {item.extras.map((e, idx) => (
-                      <span key={idx} className="text-[10px] font-black text-orange-600 bg-orange-50 px-1.5 py-0.5 rounded uppercase tracking-wider">
+                      <span key={idx} className="text-[10px] font-black text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-950/30 px-1.5 py-0.5 rounded uppercase tracking-wider">
                         + {e.name}
                       </span>
                     ))}
@@ -541,7 +539,7 @@ function OrderCard({
             <span className="font-bold text-gray-900 dark:text-white">{formatCurrency(order.total_price)}</span>
             <div className="flex items-center gap-3">
               {timeDiffSec !== null && (
-                <span className="text-xs font-mono font-medium text-slate-500 flex items-center gap-1">
+                <span className="text-xs font-mono font-medium text-slate-500 dark:text-slate-400 flex items-center gap-1">
                   <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                   {mins}m {secs}s
                 </span>
@@ -549,7 +547,7 @@ function OrderCard({
               {order.status !== 'delivered' && (
                 <button
                   onClick={(e) => { e.stopPropagation(); onCancel(order.id); }}
-                  className="text-xs text-red-500 border border-red-200 px-3 py-1.5 rounded-xl hover:bg-red-50 transition"
+                  className="text-xs text-red-500 dark:text-red-400 border border-red-200 dark:border-red-900/30 px-3 py-1.5 rounded-xl hover:bg-red-50 dark:hover:bg-red-950/20 transition"
                 >
                   Cancelar
                 </button>

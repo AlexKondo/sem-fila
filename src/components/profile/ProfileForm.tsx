@@ -84,10 +84,10 @@ export default function ProfileForm({ profile, email }: Props) {
 
       <form onSubmit={handleSave} className="space-y-3">
         {error && (
-          <div className="bg-red-50 text-red-700 text-sm px-3 py-2 rounded-lg">{error}</div>
+          <div className="bg-red-50 dark:bg-red-950/20 text-red-700 dark:text-red-400 text-sm px-3 py-2 rounded-lg border border-red-100 dark:border-red-900/30">{error}</div>
         )}
         {success && (
-          <div className="bg-green-50 text-green-700 text-sm px-3 py-2 rounded-lg">Perfil salvo com sucesso!</div>
+          <div className="bg-green-50 dark:bg-green-950/20 text-green-700 dark:text-green-400 text-sm px-3 py-2 rounded-lg border border-green-100 dark:border-green-900/30">Perfil salvo com sucesso!</div>
         )}
 
         {/* Email (somente leitura) */}
@@ -151,8 +151,8 @@ export default function ProfileForm({ profile, email }: Props) {
             />
           </div>
 
-          <div className="bg-orange-50/50 dark:bg-orange-900/20 p-4 rounded-xl border border-orange-100 dark:border-orange-800/30">
-            <label className="block text-xs font-bold text-orange-800 mb-2">🎁 Aniversário para Promoções</label>
+           <div className="bg-orange-50/50 dark:bg-orange-900/20 p-4 rounded-xl border border-orange-100 dark:border-orange-800/30">
+            <label className="block text-xs font-bold text-orange-800 dark:text-orange-400 mb-2">🎁 Aniversário para Promoções</label>
             <div className="grid grid-cols-2 gap-2">
               <input 
                 type="number" min="1" max="31" value={birthdayDay} onChange={e => setBirthdayDay(e.target.value)} placeholder="Dia"
@@ -162,13 +162,13 @@ export default function ProfileForm({ profile, email }: Props) {
                 value={birthdayMonth} onChange={e => setBirthdayMonth(e.target.value)}
                 className="w-full border border-gray-300 dark:border-slate-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-slate-700 dark:text-white focus:outline-none focus:ring-1 focus:ring-orange-400"
               >
-                <option value="">Mês</option>
+                <option value="" className="dark:bg-slate-800">Mês</option>
                 {['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'].map((m, i) => (
-                  <option key={m} value={i+1}>{m}</option>
+                  <option key={m} value={i+1} className="dark:bg-slate-800">{m}</option>
                 ))}
               </select>
             </div>
-            <p className="text-[10px] text-orange-600 mt-2">
+            <p className="text-[10px] text-orange-600 dark:text-orange-500 mt-2">
               * Sujeito a comprovação oficial para recebimento de prêmios.
             </p>
           </div>
@@ -191,7 +191,7 @@ export default function ProfileForm({ profile, email }: Props) {
       <div className="pt-4 border-t border-gray-100 dark:border-slate-700 flex flex-col items-center gap-2">
         <p className="text-[10px] text-gray-400 font-medium uppercase tracking-widest">Gerenciar Conta</p>
         <LogoutButton
-          className="w-full flex items-center justify-center gap-2 text-red-500 font-bold text-sm py-3 rounded-xl border-2 border-transparent hover:bg-red-50 hover:border-red-100 transition-all active:scale-95"
+          className="w-full flex items-center justify-center gap-2 text-red-500 font-bold text-sm py-3 rounded-xl border-2 border-transparent hover:bg-red-50 dark:hover:bg-red-950/20 hover:border-red-100 dark:hover:border-red-900/30 transition-all active:scale-95"
         />
       </div>
     </div>
@@ -240,21 +240,21 @@ function SavedCardSection() {
 
       {cardLast4 ? (
         <>
-          <div className="relative overflow-hidden bg-slate-900 rounded-2xl p-5 text-white shadow-lg">
+          <div className="relative overflow-hidden bg-slate-900 dark:bg-slate-950 rounded-2xl p-5 text-white shadow-lg border border-white/5">
             <div className="absolute top-0 right-0 p-4 opacity-20">
               <CreditCard className="w-14 h-14" />
             </div>
             <div className="relative z-10">
-              <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-3">Cartão Salvo</p>
+              <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-3">Cartão Salvo</p>
               <p className="text-lg font-black tracking-tight">**** **** **** {cardLast4}</p>
-              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">Ativo para compras</p>
+              <p className="text-[10px] text-slate-400 dark:text-slate-600 font-bold uppercase tracking-widest mt-1">Ativo para compras</p>
             </div>
             <div className="absolute inset-0 bg-gradient-to-br from-orange-500/10 to-transparent pointer-events-none" />
           </div>
 
-          <div className="flex items-start gap-3 bg-emerald-50/50 rounded-xl p-3">
+          <div className="flex items-start gap-3 bg-emerald-50/50 dark:bg-emerald-950/10 rounded-xl p-3 border border-emerald-100/30 dark:border-emerald-900/20">
             <ShieldCheck className="w-4 h-4 text-emerald-500 mt-0.5 flex-shrink-0" />
-            <p className="text-[11px] text-slate-500 leading-relaxed">
+            <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
               Dados sensíveis não são armazenados. Usamos token seguro do processador de pagamentos.
             </p>
           </div>
@@ -262,16 +262,16 @@ function SavedCardSection() {
           <button
             onClick={handleRemoveCard}
             disabled={removing}
-            className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-white border border-red-100 text-red-500 font-bold text-sm hover:bg-red-50 transition-all active:scale-95 disabled:opacity-50"
+            className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-white dark:bg-slate-800 border border-red-100 dark:border-red-900/30 text-red-500 font-bold text-sm hover:bg-red-50 dark:hover:bg-red-950/20 transition-all active:scale-95 disabled:opacity-50"
           >
             <Trash2 className="w-4 h-4" />
             {removing ? 'Removendo...' : 'Remover cartão'}
           </button>
         </>
       ) : (
-        <div className="flex items-center gap-3 bg-slate-50 rounded-xl p-4">
-          <CreditCard className="w-5 h-5 text-slate-300 flex-shrink-0" />
-          <p className="text-sm text-slate-400">
+        <div className="flex items-center gap-3 bg-slate-50 dark:bg-slate-900 rounded-xl p-4 border border-slate-100 dark:border-slate-800">
+          <CreditCard className="w-5 h-5 text-slate-300 dark:text-slate-700 flex-shrink-0" />
+          <p className="text-sm text-slate-400 dark:text-slate-600">
             Nenhum cartão salvo. Ao pagar com cartão, você poderá salvá-lo.
           </p>
         </div>

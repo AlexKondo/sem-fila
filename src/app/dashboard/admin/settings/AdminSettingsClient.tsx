@@ -185,26 +185,26 @@ export default function AdminSettingsClient() {
 
   if (fetching) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="w-10 h-10 border-4 border-orange-200 border-t-orange-500 animate-spin rounded-full" />
+      <div className="min-h-screen bg-gray-50 dark:bg-slate-950 flex items-center justify-center">
+        <div className="w-10 h-10 border-4 border-orange-200 dark:border-orange-900/30 border-t-orange-500 animate-spin rounded-full" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-20">
-      <header className="bg-white border-b border-gray-100 sticky top-0 z-40">
+    <div className="min-h-screen bg-gray-50 dark:bg-slate-950 pb-20 transition-colors duration-300">
+      <header className="bg-white dark:bg-slate-900 border-b border-gray-100 dark:border-slate-800 sticky top-0 z-40">
         <div className="max-w-3xl mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Link href="/dashboard/admin" className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 hover:text-gray-900 transition">
+            <Link href="/dashboard/admin" className="w-8 h-8 rounded-full bg-gray-100 dark:bg-slate-800 flex items-center justify-center text-gray-500 dark:text-slate-400 hover:text-gray-900 dark:hover:text-white transition">
               <ChevronLeft className="w-5 h-5" />
             </Link>
-            <h1 className="font-bold text-gray-900 leading-none">Ajustes da Plataforma</h1>
+            <h1 className="font-bold text-gray-900 dark:text-white leading-none">Ajustes da Plataforma</h1>
           </div>
           <button
             onClick={handleSave}
             disabled={loading}
-            className="flex items-center gap-2 bg-black text-white px-4 py-2 rounded-xl text-sm font-bold hover:bg-gray-800 transition disabled:opacity-50"
+            className="flex items-center gap-2 bg-black dark:bg-white text-white dark:text-black px-4 py-2 rounded-xl text-sm font-bold hover:bg-gray-800 dark:hover:bg-gray-100 transition disabled:opacity-50"
           >
             <Save className="w-4 h-4" />
             {loading ? 'Salvando...' : 'Salvar Tudo'}
@@ -217,60 +217,60 @@ export default function AdminSettingsClient() {
         <section>
           <div className="flex items-center gap-2 mb-4">
             <Sparkles className="w-4 h-4 text-orange-500" />
-            <h2 className="text-sm font-black text-gray-400 uppercase tracking-widest">Inteligência Artificial (IA)</h2>
+            <h2 className="text-sm font-black text-gray-400 dark:text-slate-500 uppercase tracking-widest">Inteligência Artificial (IA)</h2>
           </div>
-          <div className="bg-white rounded-[32px] p-8 border border-gray-100 shadow-sm space-y-6">
+          <div className="bg-white dark:bg-slate-900 rounded-[32px] p-8 border border-gray-100 dark:border-slate-800 shadow-sm space-y-6">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
                <div>
-                  <p className="font-bold text-gray-900 mb-1 leading-tight">Fotos por Pacote</p>
-                  <p className="text-[11px] text-gray-400 mb-3">Qtd de créditos que o vendor ganha ao comprar.</p>
+                  <p className="font-bold text-gray-900 dark:text-white mb-1 leading-tight">Fotos por Pacote</p>
+                  <p className="text-[11px] text-gray-400 dark:text-slate-500 mb-3">Qtd de créditos que o vendor ganha ao comprar.</p>
                   <input
                     type="number"
                     value={aiPackageSize}
                     onChange={(e) => setAiPackageSize(Number(e.target.value))}
-                    className="w-full h-12 bg-gray-50 border border-gray-100 rounded-xl px-4 font-bold text-gray-900 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                    className="w-full h-12 bg-gray-50 dark:bg-slate-950 border border-gray-100 dark:border-slate-800 rounded-xl px-4 font-bold text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
                   />
                </div>
                <div>
-                  <p className="font-bold text-gray-900 mb-1 leading-tight">Preço do Pacote</p>
-                  <p className="text-[11px] text-gray-400 mb-3">Valor de venda em Reais (R$).</p>
+                  <p className="font-bold text-gray-900 dark:text-white mb-1 leading-tight">Preço do Pacote</p>
+                  <p className="text-[11px] text-gray-400 dark:text-slate-500 mb-3">Valor de venda em Reais (R$).</p>
                   <div className="relative">
-                    <span className="absolute left-4 top-1/2 -translate-y-1/2 font-bold text-gray-400 text-sm">R$</span>
+                    <span className="absolute left-4 top-1/2 -translate-y-1/2 font-bold text-gray-400 dark:text-slate-600 text-sm">R$</span>
                     <input
                       type="number"
                       value={aiPackagePrice}
                       onChange={(e) => setAiPackagePrice(Number(e.target.value))}
-                      className="w-full h-12 bg-gray-50 border border-gray-100 rounded-xl pl-10 pr-4 font-bold text-gray-900 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                      className="w-full h-12 bg-gray-50 dark:bg-slate-950 border border-gray-100 dark:border-slate-800 rounded-xl pl-10 pr-4 font-bold text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
                     />
                   </div>
                </div>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
                <div>
-                  <p className="font-bold text-gray-900 mb-1 leading-tight">Imagens por Crédito</p>
-                  <p className="text-[11px] text-gray-400 mb-3">Sugestões de imagem geradas a cada uso de crédito.</p>
+                  <p className="font-bold text-gray-900 dark:text-white mb-1 leading-tight">Imagens por Crédito</p>
+                  <p className="text-[11px] text-gray-400 dark:text-slate-500 mb-3">Sugestões de imagem geradas a cada uso de crédito.</p>
                   <input
                     type="number"
                     min="1"
                     value={aiImagesPerCredit}
                     onChange={(e) => setAiImagesPerCredit(Number(e.target.value))}
-                    className="w-full h-12 bg-gray-50 border border-gray-100 rounded-xl px-4 font-bold text-gray-900 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                    className="w-full h-12 bg-gray-50 dark:bg-slate-950 border border-gray-100 dark:border-slate-800 rounded-xl px-4 font-bold text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
                   />
                </div>
                <div>
-                  <p className="font-bold text-gray-900 mb-1 leading-tight">Descrições por Crédito</p>
-                  <p className="text-[11px] text-gray-400 mb-3">Descrições IA geradas a cada uso de crédito.</p>
+                  <p className="font-bold text-gray-900 dark:text-white mb-1 leading-tight">Descrições por Crédito</p>
+                  <p className="text-[11px] text-gray-400 dark:text-slate-500 mb-3">Descrições IA geradas a cada uso de crédito.</p>
                   <input
                     type="number"
                     min="1"
                     value={aiDescriptionsPerCredit}
                     onChange={(e) => setAiDescriptionsPerCredit(Number(e.target.value))}
-                    className="w-full h-12 bg-gray-50 border border-gray-100 rounded-xl px-4 font-bold text-gray-900 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                    className="w-full h-12 bg-gray-50 dark:bg-slate-950 border border-gray-100 dark:border-slate-800 rounded-xl px-4 font-bold text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
                   />
                </div>
             </div>
-            <div className="p-4 bg-orange-50 rounded-2xl border border-orange-100">
-               <p className="text-[11px] text-orange-700 font-medium leading-relaxed">
+            <div className="p-4 bg-orange-50 dark:bg-orange-950/20 rounded-2xl border border-orange-100 dark:border-orange-900/50">
+               <p className="text-[11px] text-orange-700 dark:text-orange-400 font-medium leading-relaxed">
                   Cada crédito dá ao vendor <strong>{aiImagesPerCredit} sugestões de imagem + {aiDescriptionsPerCredit} descrição por IA</strong>. O custo de API (Claude) é coberto pelo valor do pacote. Recomendamos margem de lucro de pelo menos 50%.
                </p>
             </div>
@@ -282,7 +282,7 @@ export default function AdminSettingsClient() {
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
               <Calendar className="w-4 h-4 text-orange-500" />
-              <h2 className="text-sm font-black text-gray-400 uppercase tracking-widest">Assinaturas e Planos</h2>
+              <h2 className="text-sm font-black text-gray-400 dark:text-slate-500 uppercase tracking-widest">Assinaturas e Planos</h2>
             </div>
             <button
               type="button"
@@ -296,7 +296,7 @@ export default function AdminSettingsClient() {
 
           <div className="space-y-4">
             {plans.map((plan, idx) => (
-              <div key={plan.id || `new-${idx}`} className={`bg-white rounded-[32px] p-6 md:p-8 border shadow-sm transition-all ${plan.recommended ? 'border-orange-300 ring-2 ring-orange-100' : 'border-gray-100'} ${!plan.active ? 'opacity-60' : ''}`}>
+              <div key={plan.id || `new-${idx}`} className={`bg-white dark:bg-slate-900 rounded-[32px] p-6 md:p-8 border shadow-sm transition-all ${plan.recommended ? 'border-orange-300 dark:border-orange-700 ring-2 ring-orange-100 dark:ring-orange-950/30' : 'border-gray-100 dark:border-slate-800'} ${!plan.active ? 'opacity-60' : ''}`}>
 
                 {/* Header do plano */}
                 <div className="flex items-start justify-between gap-3 mb-6">
@@ -308,7 +308,7 @@ export default function AdminSettingsClient() {
                         value={plan.name}
                         onChange={(e) => updatePlan(idx, 'name', e.target.value)}
                         placeholder="Nome do plano"
-                        className="text-lg font-black text-gray-900 bg-transparent border-none outline-none w-full placeholder:text-gray-300"
+                        className="text-lg font-black text-gray-900 dark:text-white bg-transparent border-none outline-none w-full placeholder:text-gray-300 dark:placeholder:text-slate-700"
                       />
                     </div>
                   </div>
@@ -317,7 +317,7 @@ export default function AdminSettingsClient() {
                       type="button"
                       onClick={() => setRecommended(idx)}
                       title="Marcar como recomendado"
-                      className={`p-1.5 rounded-lg transition ${plan.recommended ? 'bg-orange-100 text-orange-600' : 'bg-gray-50 text-gray-300 hover:text-orange-400'}`}
+                      className={`p-1.5 rounded-lg transition ${plan.recommended ? 'bg-orange-100 dark:bg-orange-950/40 text-orange-600' : 'bg-gray-50 dark:bg-slate-800 text-gray-300 dark:text-slate-600 hover:text-orange-400'}`}
                     >
                       <Star className="w-4 h-4" fill={plan.recommended ? 'currentColor' : 'none'} />
                     </button>
@@ -325,7 +325,7 @@ export default function AdminSettingsClient() {
                       type="button"
                       onClick={() => removePlan(idx)}
                       title="Remover plano"
-                      className="p-1.5 rounded-lg bg-gray-50 text-gray-300 hover:text-red-500 hover:bg-red-50 transition"
+                      className="p-1.5 rounded-lg bg-gray-50 dark:bg-slate-800 text-gray-300 dark:text-slate-600 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/40 transition"
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
@@ -333,29 +333,29 @@ export default function AdminSettingsClient() {
                 </div>
 
                 {/* Campos principais */}
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-6">
+                <div className="grid grid-cols-2 gap-6 mb-6">
                   <div>
-                    <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wide mb-1.5">Preço (R$/mês)</p>
+                    <p className="text-[11px] font-bold text-gray-400 dark:text-slate-500 uppercase tracking-wide mb-1.5">Preço (R$/mês)</p>
                     <div className="relative">
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold text-gray-400">R$</span>
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold text-gray-400 dark:text-slate-600">R$</span>
                       <input
                         type="number"
                         min="0"
                         step="0.01"
                         value={plan.price}
                         onChange={(e) => updatePlan(idx, 'price', Number(e.target.value))}
-                        className="w-full h-10 bg-gray-50 border border-gray-100 rounded-xl pl-9 pr-3 font-bold text-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+                        className="w-full h-10 bg-gray-50 dark:bg-slate-950 border border-gray-100 dark:border-slate-800 rounded-xl pl-9 pr-3 font-bold text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
                       />
                     </div>
                   </div>
                   <div>
-                    <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wide mb-1.5">Limite Pedidos/mês</p>
+                    <p className="text-[11px] font-bold text-gray-400 dark:text-slate-500 uppercase tracking-wide mb-1.5">Limite Pedidos/mês</p>
                     <input
                       type="number"
                       min="1"
                       value={plan.order_limit}
                       onChange={(e) => updatePlan(idx, 'order_limit', Number(e.target.value))}
-                      className="w-full h-10 bg-gray-50 border border-gray-100 rounded-xl px-3 font-bold text-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+                      className="w-full h-10 bg-gray-50 dark:bg-slate-950 border border-gray-100 dark:border-slate-800 rounded-xl px-3 font-bold text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
                     />
                     {plan.order_limit >= 99999 && (
                       <p className="text-[10px] text-green-600 font-bold mt-1">Ilimitado</p>
@@ -367,10 +367,10 @@ export default function AdminSettingsClient() {
                         type="checkbox"
                         checked={plan.ia_included}
                         onChange={(e) => updatePlan(idx, 'ia_included', e.target.checked)}
-                        className="w-4 h-4 rounded border-gray-300 text-orange-600 focus:ring-orange-500 mt-0.5"
+                        className="w-4 h-4 rounded border-gray-300 dark:border-slate-700 text-orange-600 focus:ring-orange-500 mt-0.5 bg-transparent"
                       />
                       <div>
-                        <span className="text-xs font-bold text-gray-700 block">Fotos com IA Inclusas</span>
+                        <span className="text-xs font-bold text-gray-700 dark:text-slate-300 block">Fotos com IA Inclusas</span>
                         <span className="text-[10px] text-gray-400 leading-tight block">Vendor gera fotos e descrições por IA sem comprar pacote avulso</span>
                       </div>
                     </label>
@@ -379,21 +379,21 @@ export default function AdminSettingsClient() {
                         type="checkbox"
                         checked={plan.active}
                         onChange={(e) => updatePlan(idx, 'active', e.target.checked)}
-                        className="w-4 h-4 rounded border-gray-300 text-green-600 focus:ring-green-500"
+                        className="w-4 h-4 rounded border-gray-300 dark:border-slate-700 text-green-600 focus:ring-green-500 bg-transparent"
                       />
-                      <span className="text-xs font-bold text-gray-700">Ativo</span>
+                      <span className="text-xs font-bold text-gray-700 dark:text-slate-300">Ativo</span>
                     </label>
                   </div>
                 </div>
 
                 {/* Features / Vantagens */}
                 <div>
-                  <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wide mb-2">Vantagens exibidas ao vendor</p>
+                  <p className="text-[11px] font-bold text-gray-400 dark:text-slate-500 uppercase tracking-wide mb-2">Vantagens exibidas ao vendor</p>
                   <div className="flex flex-wrap gap-2 mb-3">
                     {plan.features.map((feat, fi) => (
-                      <span key={fi} className="inline-flex items-center gap-1 bg-gray-50 border border-gray-100 text-gray-700 text-xs font-bold px-2.5 py-1 rounded-lg">
+                      <span key={fi} className="inline-flex items-center gap-1 bg-gray-50 dark:bg-slate-950 border border-gray-100 dark:border-slate-800 text-gray-700 dark:text-slate-300 text-xs font-bold px-2.5 py-1 rounded-lg">
                         {feat}
-                        <button type="button" onClick={() => removeFeature(idx, fi)} className="text-gray-300 hover:text-red-500 transition ml-0.5">
+                        <button type="button" onClick={() => removeFeature(idx, fi)} className="text-gray-300 dark:text-slate-600 hover:text-red-500 transition ml-0.5">
                           <X className="w-3 h-3" />
                         </button>
                       </span>
@@ -409,12 +409,12 @@ export default function AdminSettingsClient() {
                       onChange={(e) => setNewFeatureInputs(prev => ({ ...prev, [idx]: e.target.value }))}
                       onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addFeature(idx); } }}
                       placeholder="Ex: Menu Sem Publicidade"
-                      className="flex-1 h-9 bg-gray-50 border border-gray-100 rounded-xl px-3 text-xs font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-orange-500 placeholder:text-gray-300"
+                      className="flex-1 h-9 bg-gray-50 dark:bg-slate-950 border border-gray-100 dark:border-slate-800 rounded-xl px-3 text-xs font-medium text-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500 placeholder:text-gray-300 dark:placeholder:text-slate-700"
                     />
                     <button
                       type="button"
                       onClick={() => addFeature(idx)}
-                      className="h-9 px-3 bg-gray-900 text-white rounded-xl text-xs font-bold hover:bg-gray-800 transition"
+                      className="h-9 px-3 bg-gray-900 dark:bg-white text-white dark:text-black rounded-xl text-xs font-bold hover:bg-gray-800 dark:hover:bg-gray-200 transition"
                     >
                       Adicionar
                     </button>
@@ -422,12 +422,12 @@ export default function AdminSettingsClient() {
                 </div>
 
                 {/* Badges */}
-                <div className="flex items-center gap-2 mt-4 pt-4 border-t border-gray-50">
+                <div className="flex items-center gap-2 mt-4 pt-4 border-t border-gray-50 dark:border-slate-800">
                   {plan.recommended && (
                     <span className="text-[10px] font-black uppercase tracking-widest bg-orange-100 text-orange-600 px-2 py-0.5 rounded-full">Recomendado</span>
                   )}
                   {plan.price === 0 && (
-                    <span className="text-[10px] font-black uppercase tracking-widest bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">Gratuito</span>
+                    <span className="text-[10px] font-black uppercase tracking-widest bg-gray-100 dark:bg-slate-800 text-gray-500 dark:text-slate-400 px-2 py-0.5 rounded-full">Gratuito</span>
                   )}
                   {!plan.active && (
                     <span className="text-[10px] font-black uppercase tracking-widest bg-red-50 text-red-500 px-2 py-0.5 rounded-full">Inativo</span>
@@ -440,8 +440,8 @@ export default function AdminSettingsClient() {
             ))}
 
             {plans.length === 0 && (
-              <div className="bg-white rounded-[32px] p-12 border border-gray-100 shadow-sm text-center">
-                <p className="text-sm text-gray-400 font-bold">Nenhum plano cadastrado.</p>
+              <div className="bg-white dark:bg-slate-900 rounded-[32px] p-12 border border-gray-100 dark:border-slate-800 shadow-sm text-center">
+                <p className="text-sm text-gray-400 dark:text-slate-500 font-bold">Nenhum plano cadastrado.</p>
                 <button type="button" onClick={addNewPlan} className="mt-4 bg-orange-500 text-white px-6 py-2 rounded-xl text-sm font-bold hover:bg-orange-600 transition">
                   Criar Primeiro Plano
                 </button>
@@ -454,13 +454,13 @@ export default function AdminSettingsClient() {
         <section>
           <div className="flex items-center gap-2 mb-4">
             <Percent className="w-4 h-4 text-orange-500" />
-            <h2 className="text-sm font-black text-gray-400 uppercase tracking-widest">Economia do App</h2>
+            <h2 className="text-sm font-black text-gray-400 dark:text-slate-500 uppercase tracking-widest">Economia do App</h2>
           </div>
-          <div className="bg-white rounded-[32px] p-8 border border-gray-100 shadow-sm space-y-6">
+          <div className="bg-white dark:bg-slate-900 rounded-[32px] p-8 border border-gray-100 dark:border-slate-800 shadow-sm space-y-6">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
               <div>
-                <p className="font-bold text-gray-900 mb-1">Taxa por Pedido (Plataforma)</p>
-                <p className="text-xs text-gray-400">Porcentagem retida de cada venda concluída.</p>
+                <p className="font-bold text-gray-900 dark:text-white mb-1">Taxa por Pedido (Plataforma)</p>
+                <p className="text-xs text-gray-400 dark:text-slate-500">Porcentagem retida de cada venda concluída.</p>
               </div>
               <div className="flex items-center gap-2">
                 <input

@@ -59,11 +59,11 @@ const STATUS_LABELS: Record<string, string> = {
 };
 
 const STATUS_COLORS: Record<string, string> = {
-  pending: 'bg-yellow-100 text-yellow-700',
-  accepted: 'bg-blue-100 text-blue-700',
-  paid: 'bg-green-100 text-green-700',
-  rejected: 'bg-red-100 text-red-700',
-  expired: 'bg-gray-100 text-gray-500',
+  pending: 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400',
+  accepted: 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400',
+  paid: 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400',
+  rejected: 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400',
+  expired: 'bg-gray-100 dark:bg-slate-800 text-gray-500 dark:text-slate-400',
 };
 
 export default function EventHubClient({
@@ -226,87 +226,87 @@ export default function EventHubClient({
         ))}
       </div>
 
-      {/* ═══════════ CONVITES ═══════════ */}
-      {tab === 'invitations' && (
-        <div className="space-y-4">
-          {/* Form de convite */}
-          <div className="bg-white rounded-2xl shadow-sm p-4 space-y-3">
-            <h3 className="font-semibold text-gray-900 text-sm">Convidar fornecedor</h3>
-            {inviteError && <p className="text-red-600 text-xs">{inviteError}</p>}
+      {/* ═══════════ CONVITES ══════════�           {/* Form de convite */}
+          <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm p-4 space-y-3 border border-slate-100 dark:border-slate-800">
+            <h3 className="font-semibold text-gray-900 dark:text-white text-sm">Convidar fornecedor</h3>
+            {inviteError && <p className="text-red-600 dark:text-red-400 text-xs">{inviteError}</p>}
 
             {/* Selecionar vendor existente */}
             <div>
-              <label className="text-xs text-gray-500 mb-1 block">Selecionar fornecedor existente</label>
+              <label className="text-xs text-gray-500 dark:text-slate-400 mb-1 block">Selecionar fornecedor existente</label>
               <select
                 value={selectedVendorId}
                 onChange={e => handleVendorSelect(e.target.value)}
-                className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400 bg-white"
+                className="w-full border border-gray-200 dark:border-slate-700 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400 bg-white dark:bg-slate-950 text-slate-900 dark:text-white"
               >
-                <option value="">Selecione kiosks / barracas / food trucks existentes</option>
+                <option value="" className="dark:bg-slate-900">Selecione kiosks / barracas / food trucks existentes</option>
                 {availableVendors.length > 0
                   ? availableVendors.map(v => (
-                      <option key={v.id} value={v.id}>
+                      <option key={v.id} value={v.id} className="dark:bg-slate-900">
                         {v.name} {v.email ? `(${v.email})` : ''}
                       </option>
                     ))
-                  : <option disabled>Nenhum fornecedor disponível</option>
+                  : <option disabled className="dark:bg-slate-900">Nenhum fornecedor disponível</option>
                 }
               </select>
             </div>
-
-            {/* Email + taxa + enviar */}
+o             {/* Email + taxa + enviar */}
             <div className="flex gap-2 items-end">
               <div className="flex-1">
-                <label className="text-xs text-gray-500 mb-1 block">Email</label>
+                <label className="text-xs text-gray-500 dark:text-slate-400 mb-1 block">Email</label>
                 <input
                   type="email" placeholder="Email do fornecedor"
                   value={inviteEmail} onChange={e => { setInviteEmail(e.target.value); setSelectedVendorId(''); }}
-                  className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400"
+                  className="w-full border border-gray-200 dark:border-slate-700 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400 bg-white dark:bg-slate-950 text-slate-900 dark:text-white"
                 />
               </div>
               <div className="w-24">
-                <label className="text-xs text-gray-500 mb-1 block">Taxa (R$)</label>
+                <label className="text-xs text-gray-500 dark:text-slate-400 mb-1 block">Taxa (R$)</label>
                 <input
                   type="number" placeholder="0.00" min="0" step="0.01"
                   value={inviteFee} onChange={e => setInviteFee(e.target.value)}
-                  className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400"
+                  className="w-full border border-gray-200 dark:border-slate-700 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400 bg-white dark:bg-slate-950 text-slate-900 dark:text-white"
                 />
               </div>
               <button onClick={sendInvite} disabled={inviteSending}
-                className="bg-purple-600 text-white px-4 py-2 rounded-xl hover:bg-purple-700 disabled:opacity-50 flex items-center gap-1 text-sm font-medium h-[38px]">
+                className="bg-purple-600 text-white px-4 py-2 rounded-xl hover:bg-purple-700 disabled:opacity-50 flex items-center gap-1 text-sm font-medium h-[38px] shadow-lg shadow-purple-500/20">
                 <Send className="w-4 h-4" />
               </button>
             </div>
           </div>
-
-          {/* Lista */}
+N           {/* Lista */}
           {invitations.length === 0 ? (
-            <div className="text-center py-12 text-gray-400">
+            <div className="text-center py-12 text-gray-400 dark:text-slate-600">
               <Users className="w-8 h-8 mx-auto mb-2" />
               <p className="text-sm">Nenhum convite enviado ainda.</p>
             </div>
           ) : (
             invitations.map(inv => (
-              <div key={inv.id} className="bg-white rounded-2xl shadow-sm p-4 flex items-center justify-between">
+              <div key={inv.id} className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm p-4 flex items-center justify-between border border-slate-100 dark:border-slate-800">
                 <div>
                   <div className="flex items-center gap-2">
-                    <p className="font-medium text-gray-900 text-sm">
+                    <p className="font-medium text-gray-900 dark:text-white text-sm">
                       {inv.vendors?.name ? `${inv.vendors.name} · ` : ''}{inv.vendor_email}
                     </p>
-                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${STATUS_COLORS[inv.status] ?? 'bg-gray-100 text-gray-500'}`}>
+                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold shadow-sm ${STATUS_COLORS[inv.status] ?? 'bg-gray-100 dark:bg-slate-800 text-gray-500 dark:text-slate-400'}`}>
                       {STATUS_LABELS[inv.status] ?? inv.status}
                     </span>
                   </div>
-                  <p className="text-xs text-gray-400 mt-0.5">
+                  <p className="text-xs text-gray-400 dark:text-slate-500 mt-0.5">
                     Taxa: R$ {Number(inv.fee_amount).toFixed(2)}
                     {inv.booth_id && ` · Barraca atribuída`}
                   </p>
-                  <p className="text-xs text-gray-400">
+                  <p className="text-xs text-gray-400 dark:text-slate-500">
                     Enviado: {new Date(inv.invited_at).toLocaleDateString('pt-BR')}
                   </p>
                 </div>
-                <button onClick={() => deleteInvite(inv.id)} className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg">
+                <button onClick={() => deleteInvite(inv.id)} className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-lg transition-colors">
                   <Trash2 className="w-4 h-4" />
+                </button>
+              </div>
+            ))
+          )}
+4" />
                 </button>
               </div>
             ))
@@ -314,15 +314,12 @@ export default function EventHubClient({
         </div>
       )}
 
-      {/* ═══════════ LAYOUT ═══════════ */}
-      {tab === 'layout' && (
-        <div className="space-y-4">
-          {/* Toolbar */}
-          <div className="bg-white rounded-2xl shadow-sm p-4 flex items-center gap-3 flex-wrap">
+      {/* ══════�           {/* Toolbar */}
+          <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm p-4 flex items-center gap-3 flex-wrap border border-slate-100 dark:border-slate-800">
             <button
               onClick={() => setPlacingBooth(!placingBooth)}
               className={`flex items-center gap-1 px-3 py-2 rounded-xl text-sm font-medium transition ${
-                placingBooth ? 'bg-purple-600 text-white' : 'bg-purple-50 text-purple-600 hover:bg-purple-100'
+                placingBooth ? 'bg-purple-600 text-white shadow-lg shadow-purple-500/20' : 'bg-purple-50 dark:bg-purple-950/20 text-purple-600 dark:text-purple-400 hover:bg-purple-100 dark:hover:bg-purple-900/30'
               }`}
             >
               <Plus className="w-4 h-4" /> {placingBooth ? 'Clique no grid...' : 'Adicionar barraca'}
@@ -332,22 +329,21 @@ export default function EventHubClient({
               <input
                 placeholder="Rótulo (ex: A1)"
                 value={boothLabel} onChange={e => setBoothLabel(e.target.value)}
-                className="border border-gray-200 rounded-xl px-3 py-2 text-sm w-28 focus:outline-none focus:ring-2 focus:ring-purple-400"
+                className="border border-gray-200 dark:border-slate-700 rounded-xl px-3 py-2 text-sm w-28 focus:outline-none focus:ring-2 focus:ring-purple-400 bg-white dark:bg-slate-950 text-slate-900 dark:text-white"
               />
             )}
 
             {event.booth_selection_mode === 'lottery' && (
               <button
                 onClick={runLottery}
-                className="flex items-center gap-1 px-3 py-2 rounded-xl text-sm font-medium bg-yellow-50 text-yellow-700 hover:bg-yellow-100 ml-auto"
+                className="flex items-center gap-1 px-3 py-2 rounded-xl text-sm font-medium bg-yellow-50 dark:bg-yellow-950/20 text-yellow-700 dark:text-yellow-400 hover:bg-yellow-100 dark:hover:bg-yellow-900/30 ml-auto transition-colors"
               >
                 <Shuffle className="w-4 h-4" /> Sortear barracas
               </button>
             )}
           </div>
-
-          {/* Grid do mapa */}
-          <div className="bg-white rounded-2xl shadow-sm p-4 overflow-x-auto">
+            {/* Grid do mapa */}
+          <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm p-4 overflow-x-auto border border-slate-100 dark:border-slate-800">
             <div
               className="grid gap-1 mx-auto"
               style={{
@@ -364,19 +360,19 @@ export default function EventHubClient({
                   return (
                     <div
                       key={idx}
-                      className={`aspect-square rounded-lg flex items-center justify-center text-[9px] font-bold relative group cursor-pointer ${
+                      className={`aspect-square rounded-lg flex items-center justify-center text-[9px] font-bold relative group cursor-pointer transition-all ${
                         booth.status === 'confirmed'
-                          ? 'bg-green-200 text-green-800'
+                          ? 'bg-green-200 dark:bg-green-900/60 text-green-800 dark:text-green-200'
                           : booth.status === 'reserved'
-                          ? 'bg-yellow-200 text-yellow-800'
-                          : 'bg-purple-200 text-purple-800'
+                          ? 'bg-yellow-200 dark:bg-yellow-900/60 text-yellow-800 dark:text-yellow-200'
+                          : 'bg-purple-200 dark:bg-purple-900/60 text-purple-800 dark:text-purple-200'
                       }`}
                       title={`${booth.label}${booth.vendors?.name ? ` - ${booth.vendors.name}` : ''}`}
                     >
                       {booth.label}
                       <button
                         onClick={() => deleteBooth(booth.id)}
-                        className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white rounded-full items-center justify-center text-[8px] hidden group-hover:flex"
+                        className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white rounded-full items-center justify-center text-[8px] hidden group-hover:flex shadow-sm"
                       >
                         ×
                       </button>
@@ -388,10 +384,10 @@ export default function EventHubClient({
                   <div
                     key={idx}
                     onClick={() => addBooth(x, y)}
-                    className={`aspect-square rounded-lg border border-dashed transition ${
+                    className={`aspect-square rounded-lg border border-dashed transition-all ${
                       placingBooth
-                        ? 'border-purple-300 bg-purple-50 cursor-pointer hover:bg-purple-100'
-                        : 'border-gray-200 bg-gray-50'
+                        ? 'border-purple-300 dark:border-purple-500/50 bg-purple-50 dark:bg-purple-950/30 cursor-pointer hover:bg-purple-100 dark:hover:bg-purple-900/40'
+                        : 'border-gray-200 dark:border-slate-800 bg-gray-50 dark:bg-slate-950/50'
                     }`}
                   />
                 );
@@ -399,40 +395,39 @@ export default function EventHubClient({
             </div>
 
             {/* Legenda */}
-            <div className="flex items-center gap-4 mt-4 text-[10px] text-gray-500 justify-center">
+            <div className="flex items-center gap-4 mt-4 text-[10px] text-gray-500 dark:text-slate-500 justify-center">
               <div className="flex items-center gap-1">
-                <div className="w-3 h-3 rounded bg-purple-200" /> Disponível
+                <div className="w-3 h-3 rounded bg-purple-200 dark:bg-purple-900/60" /> Disponível
               </div>
               <div className="flex items-center gap-1">
-                <div className="w-3 h-3 rounded bg-yellow-200" /> Reservada
+                <div className="w-3 h-3 rounded bg-yellow-200 dark:bg-yellow-900/60" /> Reservada
               </div>
               <div className="flex items-center gap-1">
-                <div className="w-3 h-3 rounded bg-green-200" /> Confirmada
+                <div className="w-3 h-3 rounded bg-green-200 dark:bg-green-900/60" /> Confirmada
               </div>
             </div>
           </div>
-
-          {/* Lista de barracas */}
+            {/* Lista de barracas */}
           {booths.length > 0 && (
-            <div className="bg-white rounded-2xl shadow-sm p-4">
-              <h3 className="font-semibold text-gray-900 text-sm mb-2">Barracas ({booths.length})</h3>
+            <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm p-4 border border-slate-100 dark:border-slate-800">
+              <h3 className="font-semibold text-gray-900 dark:text-white text-sm mb-2">Barracas ({booths.length})</h3>
               <div className="space-y-1">
                 {booths.map(b => (
-                  <div key={b.id} className="flex items-center justify-between text-sm py-1.5 border-b border-gray-50 last:border-0">
+                  <div key={b.id} className="flex items-center justify-between text-sm py-1.5 border-b border-gray-50 dark:border-slate-800/50 last:border-0">
                     <div className="flex items-center gap-2">
-                      <span className={`min-w-[4.5rem] h-6 px-2 rounded-lg flex items-center justify-center text-[10px] font-bold whitespace-nowrap ${
-                        b.status === 'confirmed' ? 'bg-green-200 text-green-800'
-                        : b.status === 'reserved' ? 'bg-yellow-200 text-yellow-800'
-                        : 'bg-purple-200 text-purple-800'
+                      <span className={`min-w-[4.5rem] h-6 px-2 rounded-lg flex items-center justify-center text-[10px] font-bold whitespace-nowrap shadow-sm ${
+                        b.status === 'confirmed' ? 'bg-green-200 dark:bg-green-900/60 text-green-800 dark:text-green-200'
+                        : b.status === 'reserved' ? 'bg-yellow-200 dark:bg-yellow-900/60 text-yellow-800 dark:text-yellow-200'
+                        : 'bg-purple-200 dark:bg-purple-900/60 text-purple-800 dark:text-purple-200'
                       }`}>
                         {b.label}
                       </span>
-                      <span className="text-gray-700">{b.vendors?.name || 'Vaga'}</span>
+                      <span className="text-gray-700 dark:text-slate-300 font-medium">{b.vendors?.name || 'Vaga'}</span>
                     </div>
                     <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${
-                      b.status === 'confirmed' ? 'bg-green-100 text-green-700'
-                      : b.status === 'reserved' ? 'bg-yellow-100 text-yellow-700'
-                      : 'bg-gray-100 text-gray-500'
+                      b.status === 'confirmed' ? 'bg-green-100 dark:bg-green-950/40 text-green-700 dark:text-green-400'
+                      : b.status === 'reserved' ? 'bg-yellow-100 dark:bg-yellow-950/40 text-yellow-700 dark:text-yellow-400'
+                      : 'bg-gray-100 dark:bg-slate-800 text-gray-500 dark:text-slate-400'
                     }`}>
                       {b.status === 'confirmed' ? 'Confirmada' : b.status === 'reserved' ? 'Reservada' : 'Disponível'}
                     </span>
@@ -441,23 +436,22 @@ export default function EventHubClient({
               </div>
             </div>
           )}
-        </div>
-      )}
-
-      {/* ═══════════ FATURAMENTO ═══════════ */}
-      {tab === 'revenue' && (
+'}
+                    </span>
+                  </div>
+                ))}       {tab === 'revenue' && (
         <div className="space-y-4">
           {/* Total geral */}
-          <div className="bg-white rounded-2xl shadow-sm p-5 text-center">
-            <p className="text-xs text-gray-500 mb-1">Faturamento Total do Evento</p>
-            <p className="text-3xl font-bold text-gray-900">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm p-5 text-center border border-slate-100 dark:border-slate-800">
+            <p className="text-xs text-gray-500 dark:text-slate-400 mb-1">Faturamento Total do Evento</p>
+            <p className="text-3xl font-black text-gray-900 dark:text-white">
               R$ {totalRevenue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
             </p>
           </div>
 
           {/* Por barraca */}
           {revenueData.length === 0 ? (
-            <div className="text-center py-12 text-gray-400">
+            <div className="text-center py-12 text-gray-400 dark:text-slate-600">
               <DollarSign className="w-8 h-8 mx-auto mb-2" />
               <p className="text-sm">Nenhuma barraca vinculada a este evento.</p>
             </div>
@@ -465,12 +459,19 @@ export default function EventHubClient({
             revenueData
               .sort((a, b) => b.revenue - a.revenue)
               .map(item => (
-                <div key={item.vendorId} className="bg-white rounded-2xl shadow-sm p-4 flex items-center justify-between">
+                <div key={item.vendorId} className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm p-4 flex items-center justify-between border border-slate-100 dark:border-slate-800">
                   <div>
-                    <p className="font-medium text-gray-900 text-sm">{item.vendorName}</p>
+                    <p className="font-bold text-gray-900 dark:text-white text-sm">{item.vendorName}</p>
                   </div>
-                  <p className="font-bold text-gray-900">
+                  <p className="font-black text-gray-900 dark:text-orange-500">
                     R$ {item.revenue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                  </p>
+                </div>
+              ))
+          )}
+        </div>
+      )}
+ R$ {item.revenue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                   </p>
                 </div>
               ))

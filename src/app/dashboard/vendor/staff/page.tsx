@@ -5,9 +5,9 @@ import { createClient } from '@/lib/supabase/client';
 import type { StaffSchedule } from '@/types/database';
 
 const ROLE_OPTIONS = [
-  { value: 'waitstaff', label: 'Garçom / Atendente', emoji: '🍽️', color: 'bg-blue-50 text-blue-600' },
-  { value: 'deliverer', label: 'Entregador',          emoji: '🛵', color: 'bg-green-50 text-green-600' },
-  { value: 'org_admin', label: 'Admin',               emoji: '🛡️', color: 'bg-purple-50 text-purple-600' },
+  { value: 'waitstaff', label: 'Garçom / Atendente', emoji: '🍽️', color: 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400' },
+  { value: 'deliverer', label: 'Entregador',          emoji: '🛵', color: 'bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-400' },
+  { value: 'org_admin', label: 'Admin',               emoji: '🛡️', color: 'bg-purple-50 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400' },
 ];
 
 type StaffWithProfile = StaffSchedule & {
@@ -156,7 +156,7 @@ export default function StaffPage() {
   }
 
   if (loading) return (
-    <div className="min-h-screen bg-[#f8f6f6] flex items-center justify-center">
+    <div className="min-h-screen bg-[#f8f6f6] dark:bg-slate-950 flex items-center justify-center">
       <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500" />
     </div>
   );
@@ -173,14 +173,14 @@ export default function StaffPage() {
     : staff.filter(m => (m.profiles?.role ?? 'waitstaff') === filterRole);
 
   return (
-    <main className="min-h-screen bg-[#f8f6f6] pb-20">
+    <main className="min-h-screen bg-[#f8f6f6] dark:bg-slate-950 pb-20 transition-colors duration-300">
       <div className="max-w-2xl mx-auto px-4 py-6 space-y-5">
 
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-xl font-black text-slate-900">Equipe</h1>
-            <p className="text-sm text-slate-400">{staff.length} funcionário(s) ativo(s)</p>
+            <h1 className="text-xl font-black text-slate-900 dark:text-white">Equipe</h1>
+            <p className="text-sm text-slate-400 dark:text-slate-500">{staff.length} funcionário(s) ativo(s)</p>
           </div>
           <button
             onClick={() => { setShowModal(true); setFormError(''); }}
@@ -191,13 +191,13 @@ export default function StaffPage() {
         </div>
 
         {/* Tabs filtro */}
-        <div className="flex gap-1 bg-white rounded-2xl p-1 border border-slate-100 shadow-sm overflow-x-auto no-scrollbar">
+        <div className="flex gap-1 bg-white dark:bg-slate-900 rounded-2xl p-1 border border-slate-100 dark:border-slate-800 shadow-sm overflow-x-auto no-scrollbar">
           {tabs.map(t => (
             <button
               key={t.key}
               onClick={() => setFilterRole(t.key)}
               className={`flex-1 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition ${
-                filterRole === t.key ? 'bg-orange-500 text-white shadow' : 'text-slate-400 hover:text-slate-600'
+                filterRole === t.key ? 'bg-orange-500 text-white shadow' : 'text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300'
               }`}
             >
               {t.label}
@@ -206,18 +206,18 @@ export default function StaffPage() {
         </div>
 
         {/* Tabela */}
-        <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm overflow-hidden">
           {/* Cabeçalho */}
-          <div className="grid grid-cols-[1fr_auto_auto] gap-4 px-4 py-3 border-b border-slate-50">
-            <span className="text-[11px] font-black text-slate-400 uppercase tracking-wider">Funcionário</span>
-            <span className="text-[11px] font-black text-slate-400 uppercase tracking-wider">Cargo</span>
-            <span className="text-[11px] font-black text-slate-400 uppercase tracking-wider">Ações</span>
+          <div className="grid grid-cols-[1fr_auto_auto] gap-4 px-4 py-3 border-b border-slate-50 dark:border-slate-800">
+            <span className="text-[11px] font-black text-slate-400 dark:text-slate-600 uppercase tracking-wider">Funcionário</span>
+            <span className="text-[11px] font-black text-slate-400 dark:text-slate-600 uppercase tracking-wider">Cargo</span>
+            <span className="text-[11px] font-black text-slate-400 dark:text-slate-600 uppercase tracking-wider">Ações</span>
           </div>
 
           {filtered.length === 0 ? (
             <div className="py-12 text-center">
               <p className="text-3xl mb-2">👥</p>
-              <p className="text-slate-400 text-sm">Nenhum funcionário encontrado.</p>
+              <p className="text-slate-400 dark:text-slate-600 text-sm">Nenhum funcionário encontrado.</p>
             </div>
           ) : (
             <div className="divide-y divide-slate-50">
@@ -228,15 +228,15 @@ export default function StaffPage() {
                 const initials = name.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase();
 
                 return (
-                  <div key={member.id} className="grid grid-cols-[1fr_auto_auto] gap-4 items-center px-4 py-3.5 hover:bg-slate-50/50 transition">
+                  <div key={member.id} className="grid grid-cols-[1fr_auto_auto] gap-4 items-center px-4 py-3.5 hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition">
                     {/* Funcionário */}
                     <div className="flex items-center gap-3 min-w-0">
-                      <div className="w-10 h-10 rounded-full bg-orange-50 text-orange-500 flex items-center justify-center font-black text-sm flex-shrink-0 border-2 border-orange-100">
+                      <div className="w-10 h-10 rounded-full bg-orange-50 dark:bg-orange-950/30 text-orange-500 flex items-center justify-center font-black text-sm flex-shrink-0 border-2 border-orange-100 dark:border-orange-900/50">
                         {initials}
                       </div>
                       <div className="min-w-0">
-                        <p className="font-bold text-slate-900 text-sm leading-none mb-0.5 truncate">{name}</p>
-                        <p className="text-[11px] text-slate-400 truncate">{roleInfo.emoji} {roleInfo.label}</p>
+                        <p className="font-bold text-slate-900 dark:text-slate-100 text-sm leading-none mb-0.5 truncate">{name}</p>
+                        <p className="text-[11px] text-slate-400 dark:text-slate-500 truncate">{roleInfo.emoji} {roleInfo.label}</p>
                       </div>
                     </div>
 
@@ -250,7 +250,7 @@ export default function StaffPage() {
                       <button
                         onClick={() => openEdit(member)}
                         title="Editar funcionário"
-                        className="w-8 h-8 flex items-center justify-center rounded-xl text-slate-300 hover:text-orange-500 hover:bg-orange-50 transition"
+                        className="w-8 h-8 flex items-center justify-center rounded-xl text-slate-300 dark:text-slate-600 hover:text-orange-500 dark:hover:text-orange-400 hover:bg-orange-50 dark:hover:bg-orange-950/30 transition"
                       >
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
@@ -260,7 +260,7 @@ export default function StaffPage() {
                         onClick={() => removeStaff(member.id)}
                         disabled={removing === member.id}
                         title="Remover funcionário"
-                        className="w-8 h-8 flex items-center justify-center rounded-xl text-slate-300 hover:text-red-500 hover:bg-red-50 transition disabled:opacity-40"
+                        className="w-8 h-8 flex items-center justify-center rounded-xl text-slate-300 dark:text-slate-600 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 transition disabled:opacity-40"
                       >
                         {removing === member.id ? (
                           <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
@@ -282,8 +282,8 @@ export default function StaffPage() {
 
           {/* Footer */}
           {staff.length > 0 && (
-            <div className="px-4 py-3 border-t border-slate-50">
-              <p className="text-xs text-slate-400">Mostrando {filtered.length} de {staff.length} funcionário(s)</p>
+            <div className="px-4 py-3 border-t border-slate-50 dark:border-slate-800">
+              <p className="text-xs text-slate-400 dark:text-slate-500">Mostrando {filtered.length} de {staff.length} funcionário(s)</p>
             </div>
           )}
         </div>
@@ -292,29 +292,29 @@ export default function StaffPage() {
       {/* Modal de Edição */}
       {editingMember && (
         <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => setEditingMember(null)}>
-          <div className="bg-white rounded-t-[32px] sm:rounded-[32px] p-6 w-full max-w-md" onClick={e => e.stopPropagation()}>
+          <div className="bg-white dark:bg-slate-900 rounded-t-[32px] sm:rounded-[32px] p-6 w-full max-w-md border border-slate-200 dark:border-slate-800" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-lg font-black text-slate-900">Editar Funcionário</h2>
-              <button onClick={() => setEditingMember(null)} className="text-slate-400 font-bold p-1 text-xl leading-none">✕</button>
+              <h2 className="text-lg font-black text-slate-900 dark:text-white">Editar Funcionário</h2>
+              <button onClick={() => setEditingMember(null)} className="text-slate-400 dark:text-slate-600 hover:text-slate-200 font-bold p-1 text-xl leading-none">✕</button>
             </div>
 
             <div className="space-y-3">
               <div>
-                <label className="text-xs font-bold text-slate-500 block mb-1">Nome completo *</label>
+                <label className="text-xs font-bold text-slate-500 dark:text-slate-400 block mb-1">Nome completo *</label>
                 <input
                   type="text"
                   value={editForm.name}
                   onChange={e => setEditForm(f => ({ ...f, name: e.target.value }))}
-                  className="w-full border border-slate-200 rounded-xl px-4 h-12 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/30"
+                  className="w-full border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 rounded-xl px-4 h-12 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/30 text-slate-900 dark:text-white"
                 />
               </div>
 
               <div>
-                <label className="text-xs font-bold text-slate-500 block mb-1">Função *</label>
+                <label className="text-xs font-bold text-slate-500 dark:text-slate-400 block mb-1">Função *</label>
                 <select
                   value={editForm.role}
                   onChange={e => setEditForm(f => ({ ...f, role: e.target.value }))}
-                  className="w-full border border-slate-200 rounded-xl px-4 h-12 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-orange-500/30"
+                  className="w-full border border-slate-200 dark:border-slate-800 rounded-xl px-4 h-12 text-sm bg-white dark:bg-slate-950 focus:outline-none focus:ring-2 focus:ring-orange-500/30 text-slate-900 dark:text-white"
                 >
                   {ROLE_OPTIONS.map(r => (
                     <option key={r.value} value={r.value}>{r.emoji} {r.label}</option>
@@ -323,18 +323,18 @@ export default function StaffPage() {
               </div>
 
               <div>
-                <label className="text-xs font-bold text-slate-500 block mb-1">Email</label>
+                <label className="text-xs font-bold text-slate-500 dark:text-slate-400 block mb-1">Email</label>
                 <input
                   type="email"
                   value={editForm.email}
                   readOnly
-                  className="w-full border border-slate-200 rounded-xl px-4 h-12 text-sm bg-slate-50 text-slate-400 cursor-not-allowed"
+                  className="w-full border border-slate-200 dark:border-slate-800 rounded-xl px-4 h-12 text-sm bg-slate-50 dark:bg-slate-800/50 text-slate-400 dark:text-slate-600 cursor-not-allowed"
                 />
-                <p className="text-[11px] text-slate-400 mt-1">O email não pode ser alterado.</p>
+                <p className="text-[11px] text-slate-400 dark:text-slate-600 mt-1">O email não pode ser alterado.</p>
               </div>
 
               <div>
-                <label className="text-xs font-bold text-slate-500 block mb-1">WhatsApp</label>
+                <label className="text-xs font-bold text-slate-500 dark:text-slate-400 block mb-1">WhatsApp</label>
                 <input
                   type="tel"
                   value={editForm.phone}
@@ -346,7 +346,7 @@ export default function StaffPage() {
                     setEditForm(f => ({ ...f, phone: masked }));
                   }}
                   placeholder="(11) 99999-9999"
-                  className="w-full border border-slate-200 rounded-xl px-4 h-12 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/30"
+                  className="w-full border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 rounded-xl px-4 h-12 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/30 text-slate-900 dark:text-white"
                 />
               </div>
 
@@ -369,32 +369,32 @@ export default function StaffPage() {
       {/* Modal de Cadastro */}
       {showModal && (
         <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm">
-          <div className="bg-white rounded-t-[32px] sm:rounded-[32px] p-6 w-full max-w-md">
+          <div className="bg-white dark:bg-slate-900 rounded-t-[32px] sm:rounded-[32px] p-6 w-full max-w-md border border-slate-200 dark:border-slate-800">
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-lg font-black text-slate-900">Cadastrar Funcionário</h2>
-              <button onClick={() => setShowModal(false)} className="text-slate-400 font-bold p-1 text-xl leading-none">✕</button>
+              <h2 className="text-lg font-black text-slate-900 dark:text-white">Cadastrar Funcionário</h2>
+              <button onClick={() => setShowModal(false)} className="text-slate-400 dark:text-slate-600 hover:text-slate-200 font-bold p-1 text-xl leading-none">✕</button>
             </div>
 
             <div className="space-y-3">
               {/* Nome */}
               <div>
-                <label className="text-xs font-bold text-slate-500 block mb-1">Nome completo *</label>
+                <label className="text-xs font-bold text-slate-500 dark:text-slate-400 block mb-1">Nome completo *</label>
                 <input
                   type="text"
                   value={form.name}
                   onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
                   placeholder="João da Silva"
-                  className="w-full border border-slate-200 rounded-xl px-4 h-12 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/30"
+                  className="w-full border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 rounded-xl px-4 h-12 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/30 text-slate-900 dark:text-white"
                 />
               </div>
 
               {/* Função — combobox */}
               <div>
-                <label className="text-xs font-bold text-slate-500 block mb-1">Função *</label>
+                <label className="text-xs font-bold text-slate-500 dark:text-slate-400 block mb-1">Função *</label>
                 <select
                   value={form.role}
                   onChange={e => setForm(f => ({ ...f, role: e.target.value }))}
-                  className="w-full border border-slate-200 rounded-xl px-4 h-12 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-orange-500/30"
+                  className="w-full border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 rounded-xl px-4 h-12 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/30 text-slate-900 dark:text-white"
                 >
                   {ROLE_OPTIONS.map(r => (
                     <option key={r.value} value={r.value}>{r.emoji} {r.label}</option>
@@ -404,19 +404,19 @@ export default function StaffPage() {
 
               {/* Email */}
               <div>
-                <label className="text-xs font-bold text-slate-500 block mb-1">Email *</label>
+                <label className="text-xs font-bold text-slate-500 dark:text-slate-400 block mb-1">Email *</label>
                 <input
                   type="email"
                   value={form.email}
                   onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
                   placeholder="funcionario@email.com"
-                  className="w-full border border-slate-200 rounded-xl px-4 h-12 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/30"
+                  className="w-full border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 rounded-xl px-4 h-12 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/30 text-slate-900 dark:text-white"
                 />
               </div>
 
               {/* WhatsApp */}
               <div>
-                <label className="text-xs font-bold text-slate-500 block mb-1">WhatsApp (opcional)</label>
+                <label className="text-xs font-bold text-slate-500 dark:text-slate-400 block mb-1">WhatsApp (opcional)</label>
                 <input
                   type="tel"
                   value={form.phone}
@@ -428,21 +428,21 @@ export default function StaffPage() {
                     setForm(f => ({ ...f, phone: masked }));
                   }}
                   placeholder="(11) 99999-9999"
-                  className="w-full border border-slate-200 rounded-xl px-4 h-12 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/30"
+                  className="w-full border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 rounded-xl px-4 h-12 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/30 text-slate-900 dark:text-white"
                 />
               </div>
 
               {/* Senha */}
               <div>
-                <label className="text-xs font-bold text-slate-500 block mb-1">Senha inicial *</label>
+                <label className="text-xs font-bold text-slate-500 dark:text-slate-400 block mb-1">Senha inicial *</label>
                 <input
                   type="text"
                   value={form.password}
                   onChange={e => setForm(f => ({ ...f, password: e.target.value }))}
                   placeholder="Ex: Burguer@2025"
-                  className="w-full border border-slate-200 rounded-xl px-4 h-12 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-orange-500/30"
+                  className="w-full border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 rounded-xl px-4 h-12 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-orange-500/30 text-slate-900 dark:text-white"
                 />
-                <p className="text-[11px] text-slate-400 mt-1">O funcionário pode alterar a senha depois do primeiro acesso.</p>
+                <p className="text-[11px] text-slate-400 dark:text-slate-600 mt-1">O funcionário pode alterar a senha depois do primeiro acesso.</p>
               </div>
 
               {formError && (

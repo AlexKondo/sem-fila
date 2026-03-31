@@ -49,19 +49,19 @@ interface SupportTicket {
 
 function LockedPanel({ title, icon: Icon, featureSlug, vendorId }: { title: string; icon: React.ElementType; featureSlug: string; vendorId: string }) {
   return (
-    <div className="relative bg-white rounded-2xl border border-gray-100 shadow-sm p-6 overflow-hidden">
-      <div className="absolute inset-0 bg-white/80 backdrop-blur-[2px] z-10 flex flex-col items-center justify-center">
-        <Lock className="w-8 h-8 text-gray-300 mb-2" />
-        <p className="text-sm font-bold text-gray-500">Recurso Premium</p>
-        <p className="text-xs text-gray-400 mt-1">Adquira em Configurações &gt; Benefícios Premium</p>
+    <div className="relative bg-white dark:bg-slate-900 rounded-2xl border border-gray-100 dark:border-slate-800 shadow-sm p-6 overflow-hidden">
+      <div className="absolute inset-0 bg-white/80 dark:bg-slate-900/80 backdrop-blur-[2px] z-10 flex flex-col items-center justify-center">
+        <Lock className="w-8 h-8 text-gray-300 dark:text-slate-700 mb-2" />
+        <p className="text-sm font-bold text-gray-500 dark:text-slate-500">Recurso Premium</p>
+        <p className="text-xs text-gray-400 dark:text-slate-600 mt-1">Adquira em Configurações &gt; Benefícios Premium</p>
       </div>
       <div className="flex items-center gap-2 mb-4">
-        <Icon className="w-5 h-5 text-gray-300" />
-        <h3 className="text-sm font-bold text-gray-300">{title}</h3>
+        <Icon className="w-5 h-5 text-gray-300 dark:text-slate-700" />
+        <h3 className="text-sm font-bold text-gray-300 dark:text-slate-700">{title}</h3>
       </div>
       <div className="grid grid-cols-3 gap-3">
         {[1, 2, 3].map(i => (
-          <div key={i} className="h-16 bg-gray-50 rounded-xl" />
+          <div key={i} className="h-16 bg-gray-50 dark:bg-slate-950 rounded-xl" />
         ))}
       </div>
     </div>
@@ -126,49 +126,49 @@ export function RevenueReport({ vendorId }: Props) {
   if (!data) return null;
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+    <div className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-100 dark:border-slate-800 shadow-sm p-5">
       <div className="flex items-center gap-2 mb-4">
         <TrendingUp className="w-5 h-5 text-orange-500" />
-        <h3 className="text-sm font-bold text-slate-900">Relatório de Faturamento</h3>
-        <span className="text-[9px] font-black bg-orange-50 text-orange-500 px-1.5 py-0.5 rounded-full uppercase flex items-center gap-0.5">
+        <h3 className="text-sm font-bold text-slate-900 dark:text-white">Relatório de Faturamento</h3>
+        <span className="text-[9px] font-black bg-orange-50 dark:bg-orange-950/20 text-orange-500 px-1.5 py-0.5 rounded-full uppercase flex items-center gap-0.5">
           <Sparkles className="w-2.5 h-2.5" /> Premium
         </span>
       </div>
 
       <div className="grid grid-cols-3 gap-3 mb-4">
-        <div className="bg-emerald-50 rounded-xl p-3">
-          <p className="text-[10px] text-emerald-600 font-bold uppercase">Hoje</p>
-          <p className="text-lg font-black text-emerald-800">{formatCurrency(data.today)}</p>
+        <div className="bg-emerald-50 dark:bg-emerald-950/20 rounded-xl p-3">
+          <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold uppercase">Hoje</p>
+          <p className="text-lg font-black text-emerald-800 dark:text-emerald-200">{formatCurrency(data.today)}</p>
         </div>
-        <div className="bg-blue-50 rounded-xl p-3">
-          <p className="text-[10px] text-blue-600 font-bold uppercase">7 dias</p>
-          <p className="text-lg font-black text-blue-800">{formatCurrency(data.week)}</p>
+        <div className="bg-blue-50 dark:bg-blue-950/20 rounded-xl p-3">
+          <p className="text-[10px] text-blue-600 dark:text-blue-400 font-bold uppercase">7 dias</p>
+          <p className="text-lg font-black text-blue-800 dark:text-blue-200">{formatCurrency(data.week)}</p>
         </div>
-        <div className="bg-purple-50 rounded-xl p-3">
-          <p className="text-[10px] text-purple-600 font-bold uppercase">Mês</p>
-          <p className="text-lg font-black text-purple-800">{formatCurrency(data.month)}</p>
+        <div className="bg-purple-50 dark:bg-purple-950/20 rounded-xl p-3">
+          <p className="text-[10px] text-purple-600 dark:text-purple-400 font-bold uppercase">Mês</p>
+          <p className="text-lg font-black text-purple-800 dark:text-purple-200">{formatCurrency(data.month)}</p>
         </div>
       </div>
 
       <div className="flex gap-3 mb-4">
-        <div className="flex-1 bg-gray-50 rounded-xl p-3">
-          <p className="text-[10px] text-gray-500 font-bold">Ticket médio</p>
-          <p className="text-sm font-black text-gray-900">{formatCurrency(data.avgTicket)}</p>
+        <div className="flex-1 bg-gray-50 dark:bg-slate-950 rounded-xl p-3">
+          <p className="text-[10px] text-gray-500 dark:text-slate-600 font-bold">Ticket médio</p>
+          <p className="text-sm font-black text-gray-900 dark:text-white">{formatCurrency(data.avgTicket)}</p>
         </div>
-        <div className="flex-1 bg-gray-50 rounded-xl p-3">
-          <p className="text-[10px] text-gray-500 font-bold">Pedidos no mês</p>
-          <p className="text-sm font-black text-gray-900">{data.orderCount}</p>
+        <div className="flex-1 bg-gray-50 dark:bg-slate-950 rounded-xl p-3">
+          <p className="text-[10px] text-gray-500 dark:text-slate-600 font-bold">Pedidos no mês</p>
+          <p className="text-sm font-black text-gray-900 dark:text-white">{data.orderCount}</p>
         </div>
       </div>
 
       {data.topItems.length > 0 && (
-        <div>
-          <p className="text-[10px] text-gray-500 font-bold uppercase mb-2">Top produtos por receita</p>
+        <div className="border-t border-gray-50 dark:border-slate-800 pt-4">
+          <p className="text-[10px] text-gray-500 dark:text-slate-600 font-bold uppercase mb-2">Top produtos por receita</p>
           <div className="space-y-1.5">
             {data.topItems.map((item, i) => (
               <div key={item.name} className="flex items-center justify-between text-xs">
-                <span className="text-gray-700 font-medium">{i + 1}. {item.name} <span className="text-gray-400">({item.qty}x)</span></span>
-                <span className="font-bold text-gray-900">{formatCurrency(item.revenue)}</span>
+                <span className="text-gray-700 dark:text-slate-400 font-medium">{i + 1}. {item.name} <span className="text-gray-400 dark:text-slate-600">({item.qty}x)</span></span>
+                <span className="font-bold text-gray-900 dark:text-white">{formatCurrency(item.revenue)}</span>
               </div>
             ))}
           </div>
@@ -227,40 +227,40 @@ export function EfficiencyPanel({ vendorId }: Props) {
   if (!data) return null;
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+    <div className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-100 dark:border-slate-800 shadow-sm p-5">
       <div className="flex items-center gap-2 mb-4">
         <BarChart3 className="w-5 h-5 text-blue-500" />
-        <h3 className="text-sm font-bold text-slate-900">Painel de Eficiência</h3>
-        <span className="text-[9px] font-black bg-blue-50 text-blue-500 px-1.5 py-0.5 rounded-full uppercase flex items-center gap-0.5">
+        <h3 className="text-sm font-bold text-slate-900 dark:text-white">Painel de Eficiência</h3>
+        <span className="text-[9px] font-black bg-blue-50 dark:bg-blue-950/20 text-blue-500 px-1.5 py-0.5 rounded-full uppercase flex items-center gap-0.5">
           <Sparkles className="w-2.5 h-2.5" /> Premium
         </span>
       </div>
 
       <div className="grid grid-cols-2 gap-3 mb-4">
-        <div className="bg-green-50 rounded-xl p-3 text-center">
-          <Clock className="w-5 h-5 text-green-500 mx-auto mb-1" />
-          <p className="text-2xl font-black text-green-800">{data.avgPrepTime}<span className="text-sm">min</span></p>
-          <p className="text-[10px] text-green-600 font-bold">Tempo médio</p>
+        <div className="bg-green-50 dark:bg-green-950/20 rounded-xl p-3 text-center transition-colors">
+          <Clock className="w-5 h-5 text-green-500 dark:text-green-400 mx-auto mb-1" />
+          <p className="text-2xl font-black text-green-800 dark:text-green-200">{data.avgPrepTime}<span className="text-sm">min</span></p>
+          <p className="text-[10px] text-green-600 dark:text-green-400 font-bold">Tempo médio</p>
         </div>
-        <div className="bg-emerald-50 rounded-xl p-3 text-center">
-          <BarChart3 className="w-5 h-5 text-emerald-500 mx-auto mb-1" />
-          <p className="text-2xl font-black text-emerald-800">{data.readyRate}%</p>
-          <p className="text-[10px] text-emerald-600 font-bold">Taxa de entrega</p>
+        <div className="bg-emerald-50 dark:bg-emerald-950/20 rounded-xl p-3 text-center transition-colors">
+          <BarChart3 className="w-5 h-5 text-emerald-500 dark:text-emerald-400 mx-auto mb-1" />
+          <p className="text-2xl font-black text-emerald-800 dark:text-emerald-200">{data.readyRate}%</p>
+          <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold">Taxa de entrega</p>
         </div>
       </div>
 
       <div className="grid grid-cols-3 gap-3">
-        <div className="bg-gray-50 rounded-xl p-3 text-center">
-          <p className="text-lg font-black text-gray-900">{data.totalDelivered}</p>
-          <p className="text-[10px] text-gray-500 font-bold">Entregues</p>
+        <div className="bg-gray-50 dark:bg-slate-950 rounded-xl p-3 text-center">
+          <p className="text-lg font-black text-gray-900 dark:text-white">{data.totalDelivered}</p>
+          <p className="text-[10px] text-gray-500 dark:text-slate-600 font-bold">Entregues</p>
         </div>
-        <div className="bg-red-50 rounded-xl p-3 text-center">
-          <p className="text-lg font-black text-red-700">{data.totalCancelled}</p>
-          <p className="text-[10px] text-red-500 font-bold">Cancelados</p>
+        <div className="bg-red-50 dark:bg-red-950/20 rounded-xl p-3 text-center">
+          <p className="text-lg font-black text-red-700 dark:text-red-400">{data.totalCancelled}</p>
+          <p className="text-[10px] text-red-500 dark:text-red-600 font-bold">Cancelados</p>
         </div>
-        <div className="bg-red-50 rounded-xl p-3 text-center">
-          <p className="text-lg font-black text-red-700">{data.cancelRate}%</p>
-          <p className="text-[10px] text-red-500 font-bold">Cancelamento</p>
+        <div className="bg-red-50 dark:bg-red-950/20 rounded-xl p-3 text-center">
+          <p className="text-lg font-black text-red-700 dark:text-red-400">{data.cancelRate}%</p>
+          <p className="text-[10px] text-red-500 dark:text-red-600 font-bold">Cancelamento</p>
         </div>
       </div>
     </div>
@@ -362,28 +362,28 @@ export function MenuAnalysisPanel({ vendorId }: Props) {
   };
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+    <div className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-100 dark:border-slate-800 shadow-sm p-5">
       <div className="flex items-center gap-2 mb-4">
         <UtensilsCrossed className="w-5 h-5 text-violet-500" />
-        <h3 className="text-sm font-bold text-slate-900">Análise de Cardápio</h3>
-        <span className="text-[9px] font-black bg-violet-50 text-violet-500 px-1.5 py-0.5 rounded-full uppercase flex items-center gap-0.5">
+        <h3 className="text-sm font-bold text-slate-900 dark:text-white">Análise de Cardápio</h3>
+        <span className="text-[9px] font-black bg-violet-50 dark:bg-violet-950/20 text-violet-500 px-1.5 py-0.5 rounded-full uppercase flex items-center gap-0.5">
           <Sparkles className="w-2.5 h-2.5" /> Premium
         </span>
       </div>
 
       {/* Resumo */}
       <div className="grid grid-cols-3 gap-3 mb-4">
-        <div className="bg-violet-50 rounded-xl p-3 text-center">
-          <p className="text-lg font-black text-violet-800">{items.length}</p>
-          <p className="text-[10px] text-violet-600 font-bold">Itens vendidos</p>
+        <div className="bg-violet-50 dark:bg-violet-950/20 rounded-xl p-3 text-center">
+          <p className="text-lg font-black text-violet-800 dark:text-violet-200">{items.length}</p>
+          <p className="text-[10px] text-violet-600 dark:text-violet-400 font-bold">Itens vendidos</p>
         </div>
-        <div className="bg-emerald-50 rounded-xl p-3 text-center">
-          <p className="text-lg font-black text-emerald-800">{formatCurrency(totalRevenue)}</p>
-          <p className="text-[10px] text-emerald-600 font-bold">Receita total</p>
+        <div className="bg-emerald-50 dark:bg-emerald-950/20 rounded-xl p-3 text-center">
+          <p className="text-lg font-black text-emerald-800 dark:text-emerald-200">{formatCurrency(totalRevenue)}</p>
+          <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold">Receita total</p>
         </div>
-        <div className="bg-amber-50 rounded-xl p-3 text-center">
-          <p className="text-lg font-black text-amber-800">{neverSold}</p>
-          <p className="text-[10px] text-amber-600 font-bold">Sem vendas</p>
+        <div className="bg-amber-50 dark:bg-amber-950/20 rounded-xl p-3 text-center">
+          <p className="text-lg font-black text-amber-800 dark:text-amber-200">{neverSold}</p>
+          <p className="text-[10px] text-amber-600 dark:text-amber-400 font-bold">Sem vendas</p>
         </div>
       </div>
 
@@ -396,12 +396,12 @@ export function MenuAnalysisPanel({ vendorId }: Props) {
               <div key={item.name} className="flex items-center justify-between text-xs">
                 <div className="flex items-center gap-1.5">
                   <TrendIcon trend={item.trend} />
-                  <span className="text-gray-700 font-medium">{i + 1}. {item.name}</span>
-                  <span className="text-gray-400">({item.qty}x)</span>
+                  <span className="text-gray-700 dark:text-slate-400 font-medium">{i + 1}. {item.name}</span>
+                  <span className="text-gray-400 dark:text-slate-600">({item.qty}x)</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-[10px] text-gray-400">{item.percentOfTotal.toFixed(0)}%</span>
-                  <span className="font-bold text-gray-900">{formatCurrency(item.revenue)}</span>
+                  <span className="text-[10px] text-gray-400 dark:text-slate-600">{item.percentOfTotal.toFixed(0)}%</span>
+                  <span className="font-bold text-gray-900 dark:text-white">{formatCurrency(item.revenue)}</span>
                 </div>
               </div>
             ))}
@@ -418,10 +418,10 @@ export function MenuAnalysisPanel({ vendorId }: Props) {
               <div key={item.name} className="flex items-center justify-between text-xs">
                 <div className="flex items-center gap-1.5">
                   <TrendIcon trend={item.trend} />
-                  <span className="text-gray-500">{item.name}</span>
-                  <span className="text-gray-300">({item.qty}x)</span>
+                  <span className="text-gray-500 dark:text-slate-500">{item.name}</span>
+                  <span className="text-gray-300 dark:text-slate-700">({item.qty}x)</span>
                 </div>
-                <span className="text-gray-400">{formatCurrency(item.revenue)}</span>
+                <span className="text-gray-400 dark:text-slate-600">{formatCurrency(item.revenue)}</span>
               </div>
             ))}
           </div>
@@ -429,19 +429,19 @@ export function MenuAnalysisPanel({ vendorId }: Props) {
       )}
 
       {/* Sugestoes */}
-      <div className="bg-violet-50 rounded-xl p-3 space-y-1.5">
-        <p className="text-[10px] text-violet-600 font-bold uppercase">Sugestoes</p>
+      <div className="bg-violet-50 dark:bg-violet-950/20 rounded-xl p-3 space-y-1.5 transition-colors">
+        <p className="text-[10px] text-violet-600 dark:text-violet-400 font-bold uppercase transition-colors">Sugestoes</p>
         {neverSold > 0 && (
-          <p className="text-xs text-violet-700">Voce tem <strong>{neverSold} itens</strong> sem vendas neste mes. Considere atualizar fotos/descricoes ou remover.</p>
+          <p className="text-xs text-violet-700 dark:text-violet-400 transition-colors">Voce tem <strong>{neverSold} itens</strong> sem vendas neste mes. Considere atualizar fotos/descricoes ou remover.</p>
         )}
         {topSellers.length > 0 && topSellers[0].percentOfTotal > 40 && (
-          <p className="text-xs text-violet-700">O item <strong>{topSellers[0].name}</strong> representa {topSellers[0].percentOfTotal.toFixed(0)}% da receita. Diversifique para reduzir risco.</p>
+          <p className="text-xs text-violet-700 dark:text-violet-400">O item <strong>{topSellers[0].name}</strong> representa {topSellers[0].percentOfTotal.toFixed(0)}% da receita. Diversifique para reduzir risco.</p>
         )}
         {lowPerformers.length > 0 && lowPerformers.some(i => i.trend === 'down') && (
-          <p className="text-xs text-violet-700">Itens com tendencia de queda: considere promover com desconto ou atualizar.</p>
+          <p className="text-xs text-violet-700 dark:text-violet-400">Itens com tendencia de queda: considere promover com desconto ou atualizar.</p>
         )}
         {items.length === 0 && (
-          <p className="text-xs text-violet-700">Nenhum dado de vendas ainda. Comece a receber pedidos para ver a analise.</p>
+          <p className="text-xs text-violet-700 dark:text-violet-400">Nenhum dado de vendas ainda. Comece a receber pedidos para ver a analise.</p>
         )}
       </div>
     </div>
@@ -516,18 +516,18 @@ export function SupportPanel({ vendorId }: Props) {
   };
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+    <div className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-100 dark:border-slate-800 shadow-sm p-5">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
           <Headphones className="w-5 h-5 text-rose-500" />
-          <h3 className="text-sm font-bold text-slate-900">Suporte Prioritário</h3>
-          <span className="text-[9px] font-black bg-rose-50 text-rose-500 px-1.5 py-0.5 rounded-full uppercase flex items-center gap-0.5">
+          <h3 className="text-sm font-bold text-slate-900 dark:text-white">Suporte Prioritário</h3>
+          <span className="text-[9px] font-black bg-rose-50 dark:bg-rose-950/20 text-rose-500 px-1.5 py-0.5 rounded-full uppercase flex items-center gap-0.5">
             <Sparkles className="w-2.5 h-2.5" /> VIP
           </span>
         </div>
         <button
           onClick={() => setShowForm(!showForm)}
-          className="flex items-center gap-1 text-xs font-bold text-rose-600 bg-rose-50 px-3 py-1.5 rounded-lg hover:bg-rose-100 transition"
+          className="flex items-center gap-1 text-xs font-bold text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/30 px-3 py-1.5 rounded-lg hover:bg-rose-100 dark:hover:bg-rose-900/40 transition"
         >
           <MessageSquarePlus className="w-3.5 h-3.5" /> Novo ticket
         </button>
@@ -535,19 +535,19 @@ export function SupportPanel({ vendorId }: Props) {
 
       {/* Form */}
       {showForm && (
-        <div className="bg-rose-50 rounded-xl p-3 mb-4 space-y-2">
+        <div className="bg-rose-50 dark:bg-rose-950/20 rounded-xl p-3 mb-4 space-y-2">
           <input
             value={subject}
             onChange={e => setSubject(e.target.value)}
             placeholder="Assunto"
-            className="w-full border border-rose-200 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-rose-400/30"
+            className="w-full border border-rose-200 dark:border-rose-900/50 rounded-lg px-3 py-2 text-sm bg-white dark:bg-slate-950 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-rose-400/30"
           />
           <textarea
             value={message}
             onChange={e => setMessage(e.target.value)}
             placeholder="Descreva seu problema ou solicitação..."
             rows={3}
-            className="w-full border border-rose-200 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-rose-400/30 resize-none"
+            className="w-full border border-rose-200 dark:border-rose-900/50 rounded-lg px-3 py-2 text-sm bg-white dark:bg-slate-950 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-rose-400/30 resize-none"
           />
           <button
             onClick={submitTicket}
@@ -563,27 +563,27 @@ export function SupportPanel({ vendorId }: Props) {
       {/* Tickets list */}
       {tickets.length === 0 ? (
         <div className="text-center py-6">
-          <Headphones className="w-8 h-8 text-gray-200 mx-auto mb-2" />
-          <p className="text-xs text-gray-400">Nenhum ticket ainda. Precisou de ajuda? Abra um ticket acima.</p>
+          <Headphones className="w-8 h-8 text-gray-200 dark:text-slate-800 mx-auto mb-2" />
+          <p className="text-xs text-gray-400 dark:text-slate-600">Nenhum ticket ainda. Precisou de ajuda? Abra um ticket acima.</p>
         </div>
       ) : (
         <div className="space-y-2">
           {tickets.map(t => (
-            <div key={t.id} className="border border-gray-100 rounded-xl p-3">
+            <div key={t.id} className="border border-gray-100 dark:border-slate-800 rounded-xl p-3">
               <div className="flex items-center justify-between mb-1">
-                <p className="text-xs font-bold text-gray-900">{t.subject}</p>
-                <span className={`text-[9px] font-black px-1.5 py-0.5 rounded-full uppercase ${STATUS_COLORS[t.status] || 'bg-gray-100 text-gray-500'}`}>
+                <p className="text-xs font-bold text-gray-900 dark:text-white">{t.subject}</p>
+                <span className={`text-[9px] font-black px-1.5 py-0.5 rounded-full uppercase ${STATUS_COLORS[t.status] || 'bg-gray-100 dark:bg-slate-800 text-gray-500 dark:text-slate-400'}`}>
                   {STATUS_LABELS[t.status] || t.status}
                 </span>
               </div>
-              <p className="text-[11px] text-gray-500 line-clamp-2">{t.message}</p>
+              <p className="text-[11px] text-gray-500 dark:text-slate-500 line-clamp-2">{t.message}</p>
               {t.admin_reply && (
-                <div className="mt-2 bg-blue-50 rounded-lg p-2">
-                  <p className="text-[10px] font-bold text-blue-600 mb-0.5">Resposta da equipe:</p>
-                  <p className="text-[11px] text-blue-700">{t.admin_reply}</p>
+                <div className="mt-2 bg-blue-50 dark:bg-blue-950/30 rounded-lg p-2">
+                  <p className="text-[10px] font-bold text-blue-600 dark:text-blue-400 mb-0.5">Resposta da equipe:</p>
+                  <p className="text-[11px] text-blue-700 dark:text-blue-300">{t.admin_reply}</p>
                 </div>
               )}
-              <p className="text-[9px] text-gray-300 mt-1">{new Date(t.created_at).toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' })}</p>
+              <p className="text-[9px] text-gray-300 dark:text-slate-700 mt-1">{new Date(t.created_at).toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' })}</p>
             </div>
           ))}
         </div>
