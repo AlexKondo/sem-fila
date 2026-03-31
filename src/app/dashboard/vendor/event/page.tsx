@@ -11,9 +11,8 @@ export default async function VendorEventPage() {
   const { vendor } = await resolveVendor(supabase, user.id, { select: 'id, name, event_id' });
   if (!vendor) redirect('/dashboard/vendor');
 
-  // Busca o email do perfil para capturar convites enviados apenas por email
-  const { data: profile } = await supabase.from('profiles').select('email').eq('id', user.id).single();
-  const userEmail = profile?.email;
+  // Busca o email do usuário logado diretamente do auth (mais confiável)
+  const userEmail = user.email;
 
   // Busca o evento atual do vendor, convites pendentes e atribuição de barraca
   const [

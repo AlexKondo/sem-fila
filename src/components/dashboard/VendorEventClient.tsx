@@ -123,7 +123,7 @@ export default function VendorEventClient({ vendorId, activeEvent, invitations: 
       )}
 
       {/* Evento Ativo */}
-      {activeEvent ? (
+      {activeEvent && (
         <section className="space-y-6">
           <div className="bg-gradient-to-br from-purple-600 to-indigo-700 rounded-[2.5rem] p-8 text-white shadow-2xl relative overflow-hidden">
             <div className="absolute top-0 right-0 p-8 opacity-10">
@@ -155,7 +155,6 @@ export default function VendorEventClient({ vendorId, activeEvent, invitations: 
           </div>
 
           <div className="grid gap-4">
-            {/* Sua Barraca / Posição */}
             <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800 p-6 flex items-center justify-between transition-colors shadow-sm">
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 rounded-2xl bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
@@ -180,7 +179,6 @@ export default function VendorEventClient({ vendorId, activeEvent, invitations: 
               )}
             </div>
 
-            {/* Regras e Orientações */}
             <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800 p-8 transition-colors shadow-sm space-y-4">
               <div className="flex items-center gap-2 mb-2">
                 <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
@@ -202,7 +200,6 @@ export default function VendorEventClient({ vendorId, activeEvent, invitations: 
               </div>
             </div>
             
-            {/* Endereço Completo */}
             {activeEvent.address && (
               <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800 p-6 transition-colors shadow-sm">
                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Endereço do Evento</p>
@@ -211,7 +208,10 @@ export default function VendorEventClient({ vendorId, activeEvent, invitations: 
             )}
           </div>
         </section>
-      ) : invites.length === 0 ? (
+      )}
+
+      {/* Caso não tenha evento nem convites */}
+      {!activeEvent && invites.length === 0 && (
         <div className="text-center py-20 bg-slate-50/50 dark:bg-slate-900/30 rounded-[3rem] border-2 border-dashed border-slate-200 dark:border-slate-800">
           <Calendar className="w-12 h-12 text-slate-300 dark:text-slate-700 mx-auto mb-4" />
           <h2 className="text-xl font-bold text-slate-900 dark:text-white">Nenhum evento ativo</h2>
@@ -219,7 +219,17 @@ export default function VendorEventClient({ vendorId, activeEvent, invitations: 
             Você não está participando de nenhum evento no momento e não possui convites pendentes.
           </p>
         </div>
-      ) : null}
+      )}
+
+      {/* Caso tenha convites mas nenhum evento ativo */}
+      {!activeEvent && invites.length > 0 && (
+        <div className="text-center py-10 bg-slate-50/30 dark:bg-slate-900/10 rounded-[2.5rem] border border-orange-100 dark:border-orange-900/20">
+          <p className="text-sm text-slate-500 dark:text-slate-400 px-4">
+            Você possui <b>{invites.length} convite{invites.length !== 1 ? 's' : ''}</b> pendente{invites.length !== 1 ? 's' : ''}. <br/> 
+            Responda acima para ter acesso aos detalhes e ao mapa do evento.
+          </p>
+        </div>
+      )}
     </div>
   );
 }
