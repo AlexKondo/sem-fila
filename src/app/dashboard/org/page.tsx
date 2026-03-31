@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server';
 import Link from 'next/link';
 import { Calendar, Users, MapPin, DollarSign, Plus, ChevronRight } from 'lucide-react';
 import LogoutButton from '@/components/ui/LogoutButton';
+import EditOrgName from './EditOrgName';
 
 export default async function OrgDashboardPage() {
   const supabase = await createClient();
@@ -71,7 +72,7 @@ export default async function OrgDashboardPage() {
       <header className="bg-white border-b border-gray-100 sticky top-0 z-40">
         <div className="max-w-3xl mx-auto px-4 py-3 flex items-center justify-between">
           <div>
-            <h1 className="font-bold text-gray-900 text-lg">{orgName ?? 'Minha Organização'}</h1>
+            <EditOrgName orgId={orgId} currentName={orgName ?? 'Minha Organização'} />
             <p className="text-xs text-gray-400">Painel do Organizador</p>
           </div>
           <LogoutButton />
