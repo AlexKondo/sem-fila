@@ -166,7 +166,7 @@ export default function MenuManager({ initialItems, vendorId, aiEnabled, aiCredi
       </button>
 
       {items.length === 0 ? (
-        <div className="text-center py-16 text-gray-400">
+        <div className="text-center py-16 text-gray-400 dark:text-slate-500">
           <p className="text-4xl mb-3">📋</p>
           <p>Seu cardápio está vazio.</p>
         </div>
@@ -180,7 +180,7 @@ export default function MenuManager({ initialItems, vendorId, aiEnabled, aiCredi
               <>
                 {categories.map(cat => (
                   <div key={cat} className="space-y-2">
-                    <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest px-1">📂 {cat}</h3>
+                    <h3 className="text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest px-1">📂 {cat}</h3>
                     <div className="space-y-2">
                       {items.filter(i => i.category === cat).map((item) => (
                         <MenuItemCard 
@@ -197,7 +197,7 @@ export default function MenuManager({ initialItems, vendorId, aiEnabled, aiCredi
 
                 {uncategorized.length > 0 && (
                   <div className="space-y-2">
-                    <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest px-1">📂 Geral / Sem Categoria</h3>
+                    <h3 className="text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest px-1">📂 Geral / Sem Categoria</h3>
                     <div className="space-y-2">
                       {uncategorized.map((item) => (
                         <MenuItemCard 
@@ -220,33 +220,33 @@ export default function MenuManager({ initialItems, vendorId, aiEnabled, aiCredi
       {/* Modal de formulário */}
       {isFormOpen && editingItem && (
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40">
-          <div className="bg-white rounded-t-3xl w-full max-w-lg p-6 space-y-4 max-h-[90vh] overflow-y-auto">
-            <h2 className="text-lg font-bold text-gray-900">
+          <div className="bg-white dark:bg-slate-800 rounded-t-3xl w-full max-w-lg p-6 space-y-4 max-h-[90vh] overflow-y-auto border-t dark:border-slate-700">
+            <h2 className="text-lg font-bold text-gray-900 dark:text-white">
               {editingItem.id ? 'Editar item' : 'Novo item'}
             </h2>
 
             {formError && (
-              <div className="bg-red-50 text-red-700 text-sm px-3 py-2 rounded-lg">{formError}</div>
+              <div className="bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-400 text-sm px-3 py-2 rounded-lg">{formError}</div>
             )}
 
             {/* Nome do item (obrigatório antes da IA) */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Nome</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Nome</label>
               <input
                 type="text"
                 required
                 placeholder="Ex: Coxinha de frango"
                 value={(editingItem as any).name || ''}
                 onChange={e => setEditingItem(p => ({ ...p!, name: e.target.value }))}
-                className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+                className="w-full border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 text-slate-900 dark:text-white"
               />
             </div>
 
             {/* Upload de Imagem */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Foto do Produto</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Foto do Produto</label>
               <div className="flex items-center gap-4">
-                <div className="w-20 h-20 rounded-2xl bg-gray-100 flex items-center justify-center text-3xl border-2 border-dashed border-gray-200 cursor-pointer overflow-hidden relative group">
+                <div className="w-20 h-20 rounded-2xl bg-gray-100 dark:bg-slate-900 flex items-center justify-center text-3xl border-2 border-dashed border-gray-200 dark:border-slate-700 cursor-pointer overflow-hidden relative group">
                   <div className="relative w-full h-full group">
                     <img 
                       src={editingItem.image_url || getItemImage(editingItem.name, editingItem.category ?? undefined)} 
@@ -283,13 +283,13 @@ export default function MenuManager({ initialItems, vendorId, aiEnabled, aiCredi
                 </div>
                 
                 {/* 🌟 Magic AI Section */}
-                <div className="flex-1 bg-gradient-to-br from-orange-50/50 to-amber-50 border border-orange-100 rounded-3xl p-4 relative overflow-hidden">
+                <div className="flex-1 bg-gradient-to-br from-orange-50/50 to-amber-50 dark:from-orange-950/20 dark:to-amber-950/20 border border-orange-100 dark:border-orange-900/50 rounded-3xl p-4 relative overflow-hidden">
                   <div className="flex items-center justify-between mb-3">
                     <span className="text-xs font-black text-orange-600 flex items-center gap-1">
                       ✨ Criatividade com IA
                     </span>
                     <div className="flex items-center gap-2">
-                      <span className="text-[9px] font-black text-slate-400 bg-white px-2 py-0.5 rounded shadow-sm border border-slate-100 uppercase tracking-widest">
+                      <span className="text-[9px] font-black text-slate-400 bg-white dark:bg-slate-800 px-2 py-0.5 rounded shadow-sm border border-slate-100 dark:border-slate-700 uppercase tracking-widest">
                         {localCredits} Créditos
                       </span>
                       <span className={`text-[9px] font-black px-2 py-0.5 rounded uppercase tracking-widest border ${aiEnabled ? 'bg-orange-500 text-white border-orange-400 shadow-sm' : 'bg-slate-100 text-slate-400 border-slate-200'}`}>
@@ -315,7 +315,7 @@ export default function MenuManager({ initialItems, vendorId, aiEnabled, aiCredi
                         <textarea
                           placeholder="Ex: Foto com luz de fim de tarde, mesa rústica. Descrição poética, foque no queijo derretido..."
                           value={aiPrompt} onChange={e => setAiPrompt(e.target.value)}
-                          className="w-full text-[11px] h-14 bg-white border border-orange-100 rounded-xl px-3 py-2 focus:outline-none focus:ring-1 focus:ring-orange-300 placeholder-slate-300 shadow-sm resize-none"
+                          className="w-full text-[11px] h-14 bg-white dark:bg-slate-900 border border-orange-100 dark:border-orange-900 rounded-xl px-3 py-2 focus:outline-none focus:ring-1 focus:ring-orange-300 placeholder-slate-300 dark:placeholder-slate-600 shadow-sm resize-none text-slate-900 dark:text-white"
                         />
                         <button
                           type="button"
@@ -359,7 +359,7 @@ export default function MenuManager({ initialItems, vendorId, aiEnabled, aiCredi
                       {/* Descrições geradas pela IA */}
                       {aiDescriptions.length > 0 && (
                         <div className="pt-2 border-t border-orange-100">
-                           <p className="text-[10px] text-slate-600 font-black mb-2 flex items-center gap-1">
+                           <p className="text-[10px] text-slate-600 dark:text-slate-400 font-black mb-2 flex items-center gap-1">
                              Descrição gerada pela IA:
                            </p>
                            <div className="space-y-2">
@@ -368,7 +368,7 @@ export default function MenuManager({ initialItems, vendorId, aiEnabled, aiCredi
                                   key={i}
                                   type="button"
                                   onClick={() => { setEditingItem(p => ({ ...p!, description: desc })); setAiDescriptions([]); }}
-                                  className="w-full text-left p-2.5 bg-white border border-orange-100 rounded-xl text-[11px] text-slate-700 leading-relaxed hover:border-orange-400 hover:bg-orange-50/50 transition shadow-sm"
+                                  className="w-full text-left p-2.5 bg-white dark:bg-slate-900 border border-orange-100 dark:border-orange-900 rounded-xl text-[11px] text-slate-700 dark:text-slate-300 leading-relaxed hover:border-orange-400 hover:bg-orange-50/50 dark:hover:bg-orange-950/30 transition shadow-sm"
                                 >
                                   {desc}
                                   <span className="block text-[9px] text-orange-500 font-bold mt-1 uppercase">Clique para usar</span>
@@ -425,7 +425,7 @@ export default function MenuManager({ initialItems, vendorId, aiEnabled, aiCredi
                            </div>
                            <button
                              type="button" onClick={() => { setAiSuggestions([]); setAiDescriptions([]); }}
-                             className="w-full mt-2 text-[10px] font-bold text-slate-400 hover:text-slate-600"
+                             className="w-full mt-2 text-[10px] font-bold text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300"
                            >
                               Descartar Sugestões
                            </button>
@@ -437,12 +437,13 @@ export default function MenuManager({ initialItems, vendorId, aiEnabled, aiCredi
               </div>
             </div>
 
+            {/* Renderização dinâmica dos outros campos */}
             {[
               { label: 'Descrição', key: 'description', type: 'text', placeholder: 'Ingredientes ou observações' },
               { label: 'Preço (R$)', key: 'price', type: 'number', required: true, placeholder: '0.00' },
             ].map(({ label, key, type, required, placeholder }) => (
               <div key={key}>
-                <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">{label}</label>
                 <input
                   type={type}
                   required={required}
@@ -456,21 +457,21 @@ export default function MenuManager({ initialItems, vendorId, aiEnabled, aiCredi
                       [key]: type === 'number' ? parseFloat(e.target.value) || 0 : e.target.value,
                     }))
                   }
-                  className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
+                  className="w-full border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-900 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 text-slate-900 dark:text-white"
                 />
               </div>
             ))}
 
             {/* Categorias / Submenus em datalist editável */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Categoria (Submenu)</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Categoria (Submenu)</label>
               <input
                 type="text"
                 list="category-suggestions"
                 placeholder="Selecione ou digite uma categoria"
                 value={editingItem.category ?? ''}
                 onChange={(e) => setEditingItem((p) => ({ ...p!, category: e.target.value || null }))}
-                className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 bg-white"
+                className="w-full border border-gray-300 dark:border-slate-700 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
               />
               <datalist id="category-suggestions">
                 <option value="Lanches" />
@@ -483,9 +484,9 @@ export default function MenuManager({ initialItems, vendorId, aiEnabled, aiCredi
             </div>
 
             {/* Opcionais / Adicionais */}
-            <div className="space-y-2 border-t border-gray-100 pt-3">
+            <div className="space-y-2 border-t border-gray-100 dark:border-slate-700 pt-3">
               <div className="flex items-center justify-between">
-                <label className="text-sm font-bold text-gray-800">Adicionais / Opcionais</label>
+                <label className="text-sm font-bold text-gray-800 dark:text-slate-200">Adicionais / Opcionais</label>
                 <button
                   type="button"
                   onClick={() => setEditingItem((p) => ({ ...p!, extras: [...(p!.extras || []), { name: '', price: 0 }] }))}
@@ -507,7 +508,7 @@ export default function MenuManager({ initialItems, vendorId, aiEnabled, aiCredi
                         next[idx].name = e.target.value;
                         setEditingItem(p => ({ ...p!, extras: next }));
                       }}
-                      className="flex-1 border border-gray-300 rounded-xl px-3 py-1.5 text-xs focus:outline-none"
+                      className="flex-1 border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-900 rounded-xl px-3 py-1.5 text-xs focus:outline-none text-slate-900 dark:text-white"
                     />
                     <div className="relative w-24">
                       <span className="absolute left-2.5 top-1.5 text-xs text-gray-400">R$</span>
@@ -522,7 +523,7 @@ export default function MenuManager({ initialItems, vendorId, aiEnabled, aiCredi
                           next[idx].price = parseFloat(e.target.value) || 0;
                           setEditingItem(p => ({ ...p!, extras: next }));
                         }}
-                        className="w-full border border-gray-300 rounded-xl pl-7 pr-3 py-1.5 text-xs focus:outline-none"
+                        className="w-full border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-900 rounded-xl pl-7 pr-3 py-1.5 text-xs focus:outline-none text-slate-900 dark:text-white"
                       />
                     </div>
                     <button
@@ -541,7 +542,7 @@ export default function MenuManager({ initialItems, vendorId, aiEnabled, aiCredi
             </div>
 
             <div className="flex items-center gap-3">
-              <label className="text-sm font-medium text-gray-700">Disponível</label>
+              <label className="text-sm font-medium text-gray-700 dark:text-slate-300">Disponível</label>
               <button
                 type="button"
                 onClick={() => setEditingItem((p) => ({ ...p!, available: !p!.available }))}
@@ -556,7 +557,7 @@ export default function MenuManager({ initialItems, vendorId, aiEnabled, aiCredi
             <div className="flex gap-3 pt-2">
               <button
                 onClick={() => { setIsFormOpen(false); setEditingItem(null); }}
-                className="flex-1 border border-gray-300 text-gray-700 py-2.5 rounded-xl text-sm hover:bg-gray-50"
+                className="flex-1 border border-gray-300 dark:border-slate-700 text-gray-700 dark:text-slate-300 py-2.5 rounded-xl text-sm hover:bg-gray-50 dark:hover:bg-slate-700"
               >
                 Cancelar
               </button>
@@ -584,7 +585,7 @@ export default function MenuManager({ initialItems, vendorId, aiEnabled, aiCredi
 function MenuItemCard({ item, toggleAvailable, openEdit, deleteItem }: { item: MenuItem; toggleAvailable: (i: MenuItem) => void; openEdit: (i: MenuItem) => void; deleteItem: (i: MenuItem) => void }) {
   const P = '#ec5b13';
   return (
-    <div key={item.id} className={`bg-white rounded-2xl shadow-sm p-4 flex gap-3 ${!item.available ? 'opacity-60' : ''}`}>
+    <div key={item.id} className={`bg-white dark:bg-slate-800 rounded-2xl shadow-sm p-4 flex gap-3 border border-transparent dark:border-slate-700 ${!item.available ? 'opacity-60' : ''}`}>
       <Image 
         src={item.image_url || getItemImage(item.name, item.category ?? undefined)} 
         alt={item.name} 
@@ -595,9 +596,9 @@ function MenuItemCard({ item, toggleAvailable, openEdit, deleteItem }: { item: M
       <div className="flex-1 min-w-0">
         <div className="flex items-start justify-between">
           <div>
-            <p className="font-semibold text-gray-900 text-sm">{item.name}</p>
+            <p className="font-semibold text-gray-900 dark:text-white text-sm">{item.name}</p>
             {item.description && (
-              <p className="text-xs text-slate-500 line-clamp-1">{item.description}</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-1">{item.description}</p>
             )}
             <p className="font-bold text-orange-500 text-sm mt-1">{formatCurrency(item.price)}</p>
           </div>

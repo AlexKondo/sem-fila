@@ -19,7 +19,7 @@ interface PlanProps {
 
 function PlanCard({ name, price, features, recommended, isCurrent, isDowngrade, proRataPrice, onSelect }: PlanProps) {
   return (
-    <div className={`relative p-6 rounded-3xl border-2 transition-all flex flex-col h-full ${isCurrent ? 'border-green-500 bg-green-50/30' : recommended ? 'border-orange-500 bg-orange-50/30 shadow-xl shadow-orange-200/50 scale-105 z-10' : 'border-slate-100 bg-white hover:border-slate-200'}`}>
+    <div className={`relative p-6 rounded-3xl border-2 transition-all flex flex-col h-full ${isCurrent ? 'border-green-500 bg-green-50/30' : recommended ? 'border-orange-500 bg-orange-50/30 dark:bg-orange-950/20 shadow-xl shadow-orange-200/50 dark:shadow-none scale-105 z-10' : 'border-slate-100 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-slate-200 dark:hover:border-slate-600'}`}>
       {isCurrent && (
         <span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-green-600 text-white text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-widest shadow-lg">
           Plano Atual
@@ -32,10 +32,10 @@ function PlanCard({ name, price, features, recommended, isCurrent, isDowngrade, 
       )}
 
       <div className="mb-6">
-        <h3 className="text-lg font-black text-slate-900 uppercase tracking-tight">{name}</h3>
+        <h3 className="text-lg font-black text-slate-900 dark:text-white uppercase tracking-tight">{name}</h3>
         <div className="flex items-baseline gap-1 mt-2">
-          <span className="text-3xl font-black text-slate-900">R$ {price}</span>
-          <span className="text-sm text-slate-400 font-medium">/mês</span>
+          <span className="text-3xl font-black text-slate-900 dark:text-white">R$ {price}</span>
+          <span className="text-sm text-slate-400 dark:text-slate-500 font-medium">/mês</span>
         </div>
         {proRataPrice && !isCurrent && !isDowngrade && (
           <p className="text-[11px] text-green-600 font-bold mt-1">
@@ -46,7 +46,7 @@ function PlanCard({ name, price, features, recommended, isCurrent, isDowngrade, 
 
       <ul className="space-y-3 mb-8 flex-1">
         {features.map((feature, i) => (
-          <li key={i} className="flex items-start gap-2 text-sm text-slate-600 font-medium">
+          <li key={i} className="flex items-start gap-2 text-sm text-slate-600 dark:text-slate-400 font-medium">
             <Check className="w-4 h-4 text-green-500 shrink-0 mt-0.5" />
             <span>{feature}</span>
           </li>
@@ -54,17 +54,17 @@ function PlanCard({ name, price, features, recommended, isCurrent, isDowngrade, 
       </ul>
 
       {isCurrent ? (
-        <div className="w-full py-3 rounded-2xl font-bold text-center bg-green-100 text-green-700 text-sm">
+        <div className="w-full py-3 rounded-2xl font-bold text-center bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-sm">
           Ativo
         </div>
       ) : isDowngrade ? (
-        <div className="w-full py-3 rounded-2xl font-bold text-center bg-slate-100 text-slate-400 text-sm cursor-not-allowed">
+        <div className="w-full py-3 rounded-2xl font-bold text-center bg-slate-100 dark:bg-slate-700 text-slate-400 dark:text-slate-500 text-sm cursor-not-allowed">
           Downgrade não disponível
         </div>
       ) : (
         <button
           onClick={onSelect}
-          className={`w-full py-3 rounded-2xl font-bold transition-all ${recommended && !isCurrent ? 'bg-orange-500 text-white shadow-lg shadow-orange-400/40 hover:bg-orange-600' : 'bg-slate-900 text-white hover:bg-slate-800'}`}
+          className={`w-full py-3 rounded-2xl font-bold transition-all ${recommended && !isCurrent ? 'bg-orange-500 text-white shadow-lg shadow-orange-400/40 hover:bg-orange-600' : 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 hover:bg-slate-800 dark:hover:bg-slate-200'}`}
         >
           {price === '0' ? 'Começar Grátis' : proRataPrice ? `Upgrade — R$ ${proRataPrice}` : 'Assinar Plano'}
         </button>
@@ -143,10 +143,10 @@ export default function VendorPlansModal({ isOpen, onClose, onlyShowAi, vendorId
   return (
     <>
       <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-in fade-in duration-300">
-        <div className="bg-white rounded-[40px] w-full max-w-4xl max-h-[90vh] overflow-y-auto relative shadow-2xl no-scrollbar">
+        <div className="bg-white dark:bg-slate-950 rounded-[40px] w-full max-w-4xl max-h-[90vh] overflow-y-auto relative shadow-2xl no-scrollbar border dark:border-slate-800">
           <button
             onClick={onClose}
-            className="absolute top-6 right-6 p-2 rounded-full bg-slate-50 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-all z-20"
+            className="absolute top-6 right-6 p-2 rounded-full bg-slate-50 dark:bg-slate-800 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-slate-600 dark:hover:text-slate-200 transition-all z-20"
           >
             <X className="w-5 h-5" />
           </button>
@@ -157,12 +157,12 @@ export default function VendorPlansModal({ isOpen, onClose, onlyShowAi, vendorId
               <>
                 {/* Header */}
                 <div className="text-center mb-12">
-                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-orange-100 text-orange-600 text-[10px] font-black uppercase tracking-widest mb-4">
-                    <Zap className="w-3 h-3 fill-orange-600" />
+                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-orange-100 dark:bg-orange-950/30 text-orange-600 dark:text-orange-400 text-[10px] font-black uppercase tracking-widest mb-4">
+                    <Zap className="w-3 h-3 fill-orange-600 dark:fill-orange-400" />
                     Upgrade de Potencial
                   </div>
-                  <h2 className="text-3xl md:text-4xl font-black text-slate-900 mb-4 tracking-tight">Escolha o Plano Ideal</h2>
-                  <p className="text-slate-500 max-w-md mx-auto font-medium">
+                  <h2 className="text-3xl md:text-4xl font-black text-slate-900 dark:text-white mb-4 tracking-tight">Escolha o Plano Ideal</h2>
+                  <p className="text-slate-500 dark:text-slate-400 max-w-md mx-auto font-medium">
                     Aumente seu limite de pedidos e desbloqueie ferramentas de inteligência artificial para vender mais.
                   </p>
                 </div>
@@ -213,12 +213,12 @@ export default function VendorPlansModal({ isOpen, onClose, onlyShowAi, vendorId
 
                     {/* Mensagem pro-rata */}
                     {currentPlan && currentPlan.price > 0 && (
-                      <div className="bg-green-50 border border-green-100 rounded-2xl p-4 mb-12 text-center">
-                        <p className="text-xs text-green-700 font-bold">
+                      <div className="bg-green-50 dark:bg-green-950/20 border border-green-100 dark:border-green-900/50 rounded-2xl p-4 mb-12 text-center">
+                        <p className="text-xs text-green-700 dark:text-green-400 font-bold">
                           Ao fazer upgrade, você paga apenas a diferença proporcional aos dias restantes do ciclo atual.
                         </p>
                         {currentPlan.expiresAt && (
-                          <p className="text-[10px] text-green-600 mt-1">
+                          <p className="text-[10px] text-green-600 dark:text-green-500 mt-1">
                             Seu plano atual ({currentPlan.name}) renova em {new Date(currentPlan.expiresAt).toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' })} &mdash; faltam {getDaysRemaining()} dias.
                           </p>
                         )}
@@ -230,25 +230,25 @@ export default function VendorPlansModal({ isOpen, onClose, onlyShowAi, vendorId
             )}
 
             {/* Seção IA */}
-            <div className="bg-slate-50 rounded-3xl p-6 md:p-10 border border-slate-100 flex flex-col md:flex-row items-center justify-between gap-6 shadow-inner">
+            <div className="bg-slate-50 dark:bg-slate-900 rounded-3xl p-6 md:p-10 border border-slate-100 dark:border-slate-800 flex flex-col md:flex-row items-center justify-between gap-6 shadow-inner">
               <div className="flex items-center gap-6 text-center md:text-left">
-                <div className="w-20 h-20 rounded-3xl bg-white border border-slate-100 flex items-center justify-center text-4xl shadow-md rotate-3">
+                <div className="w-20 h-20 rounded-3xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 flex items-center justify-center text-4xl shadow-md rotate-3">
                   ✨
                 </div>
                 <div>
-                  <h4 className="text-xl font-black text-slate-900 flex items-center gap-2 justify-center md:justify-start">
+                  <h4 className="text-xl font-black text-slate-900 dark:text-white flex items-center gap-2 justify-center md:justify-start">
                     Melhorias com IA
                     <span className="text-[10px] bg-orange-500 text-white px-2 py-0.5 rounded-full font-black uppercase">Plus</span>
                   </h4>
-                  <p className="text-sm text-slate-500 font-medium max-w-sm mt-1">
+                  <p className="text-sm text-slate-500 dark:text-slate-400 font-medium max-w-sm mt-1">
                     Deixe suas fotos de comida com aspecto profissional usando nosso motor de IA. Pacote exclusivo para {aiConfig.size} pratos.
                   </p>
                 </div>
               </div>
               <div className="flex flex-col items-center md:items-end gap-3 shrink-0">
                 <div className="flex items-baseline gap-1">
-                  <span className="text-3xl font-black text-slate-900">R$ {aiConfig.price}</span>
-                  <span className="text-xs text-slate-400 font-bold">/pacote</span>
+                  <span className="text-3xl font-black text-slate-900 dark:text-white">R$ {aiConfig.price}</span>
+                  <span className="text-xs text-slate-400 dark:text-slate-500 font-bold">/pacote</span>
                 </div>
                 <button
                   onClick={() => setCheckoutProduct({
@@ -256,7 +256,7 @@ export default function VendorPlansModal({ isOpen, onClose, onlyShowAi, vendorId
                     name: `Pacote IA — ${aiConfig.size} fotos`,
                     price: aiConfig.price,
                   })}
-                  className="bg-slate-900 text-white px-8 py-3 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-slate-800 transition-all shadow-lg shadow-black/20"
+                  className="bg-slate-900 dark:bg-white text-white dark:text-slate-900 px-8 py-3 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-slate-800 dark:hover:bg-slate-200 transition-all shadow-lg shadow-black/20"
                 >
                   Habilitar Agora
                 </button>
