@@ -30,10 +30,9 @@ export default function VendorEventClient({ vendorId, activeEvent, invitations: 
 
     const { error: updateInviteError } = await supabase
       .from('event_vendor_invitations')
-      .update({ 
-        status, 
-        accepted_at: status === 'accepted' ? new Date().toISOString() : null,
-        rejected_at: status === 'rejected' ? new Date().toISOString() : null
+      .update({
+        status,
+        responded_at: new Date().toISOString()
       })
       .eq('id', inviteId);
 
