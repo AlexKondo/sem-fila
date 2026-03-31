@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 import { formatCurrency } from '@/lib/utils';
 import LogoutButton from '@/components/ui/LogoutButton';
+import ThemeToggle from '@/components/ui/ThemeToggle';
 import type { Delivery } from '@/types/database';
 
 const P = '#ec5b13';
@@ -112,7 +113,7 @@ export default function DelivererPage() {
   }
 
   if (loading) return (
-    <div className="min-h-screen bg-[#f8f6f6] flex items-center justify-center">
+    <div className="min-h-screen bg-[#f8f6f6] dark:bg-slate-950 flex items-center justify-center">
       <div className="animate-spin rounded-full h-8 w-8 border-b-2" style={{ borderColor: P }} />
     </div>
   );
@@ -123,8 +124,8 @@ export default function DelivererPage() {
   const shown = tab === 'active' ? active : done;
 
   return (
-    <main className="min-h-screen bg-[#f8f6f6] pb-20">
-      <header className="bg-white border-b border-slate-100 sticky top-0 z-30">
+    <main className="min-h-screen bg-[#f8f6f6] dark:bg-slate-950 pb-20 transition-colors duration-300">
+      <header className="bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800 sticky top-0 z-30">
         <div className="max-w-md mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-xl flex items-center justify-center shadow-sm" style={{ backgroundColor: P }}>
@@ -133,23 +134,26 @@ export default function DelivererPage() {
               </svg>
             </div>
             <div>
-              <p className="font-bold text-slate-900 text-sm leading-tight">Painel do Entregador</p>
-              {userName && <p className="text-[11px] text-slate-400">{userName}</p>}
+              <p className="font-bold text-slate-900 dark:text-white text-sm leading-tight">Painel do Entregador</p>
+              {userName && <p className="text-[11px] text-slate-400 dark:text-slate-500">{userName}</p>}
             </div>
           </div>
-          <LogoutButton />
+          <div className="flex items-center gap-1">
+            <ThemeToggle />
+            <LogoutButton />
+          </div>
         </div>
       </header>
 
       <div className="max-w-md mx-auto px-4 py-6">
         {/* Tabs */}
-        <div className="flex gap-2 mb-6 bg-white rounded-2xl p-1 border border-slate-100 shadow-sm">
+        <div className="flex gap-2 mb-6 bg-white dark:bg-slate-900 rounded-2xl p-1 border border-slate-100 dark:border-slate-800 shadow-sm">
           {(['active', 'done'] as const).map(t => (
             <button
               key={t}
               onClick={() => setTab(t)}
               className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition ${
-                tab === t ? 'text-white shadow' : 'text-slate-400'
+                tab === t ? 'text-white shadow' : 'text-slate-400 dark:text-slate-500'
               }`}
               style={tab === t ? { backgroundColor: P } : {}}
             >
@@ -159,9 +163,9 @@ export default function DelivererPage() {
         </div>
 
         {shown.length === 0 ? (
-          <div className="bg-white rounded-3xl p-10 text-center border border-slate-100 shadow-sm">
+          <div className="bg-white dark:bg-slate-900 rounded-3xl p-10 text-center border border-slate-100 dark:border-slate-800 shadow-sm">
             <p className="text-4xl mb-3">{tab === 'active' ? '🛵' : '✅'}</p>
-            <p className="text-slate-400 text-sm">
+            <p className="text-slate-400 dark:text-slate-500 text-sm">
               {tab === 'active' ? 'Nenhuma entrega pendente agora.' : 'Nenhuma entrega concluída ainda.'}
             </p>
           </div>
@@ -171,28 +175,28 @@ export default function DelivererPage() {
               const statusColor = STATUS_COLOR[delivery.status] ?? P;
               const nextLabel = NEXT_LABEL[delivery.status];
               return (
-                <div key={delivery.id} className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
+                <div key={delivery.id} className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm overflow-hidden transition-colors">
                   <div className="p-4">
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 rounded-2xl bg-slate-50 flex items-center justify-center text-xl overflow-hidden border border-slate-100">
+                        <div className="w-12 h-12 rounded-2xl bg-slate-50 dark:bg-slate-800 flex items-center justify-center text-xl overflow-hidden border border-slate-100 dark:border-slate-700">
                           {delivery.orders?.vendors?.logo_url
                             ? <img src={delivery.orders.vendors.logo_url} className="w-full h-full object-cover" />
                             : '🍽️'
                           }
                         </div>
                         <div>
-                          <p className="font-bold text-slate-900 text-sm leading-none mb-1">
+                          <p className="font-bold text-slate-900 dark:text-white text-sm leading-none mb-1">
                             {delivery.orders?.vendors?.name ?? 'Quiosque'}
                           </p>
-                          <p className="text-[10px] font-black text-slate-300 uppercase tracking-wider">
+                          <p className="text-[10px] font-black text-slate-300 dark:text-slate-600 uppercase tracking-wider">
                             Pedido #{delivery.orders?.pickup_code}
                             {delivery.orders?.table_number && ` · Mesa ${delivery.orders.table_number}`}
                           </p>
                         </div>
                       </div>
                       <div className="text-right">
-                        <p className="font-black text-slate-900 text-sm leading-none mb-1">
+                        <p className="font-black text-slate-900 dark:text-white text-sm leading-none mb-1">
                           {formatCurrency(delivery.orders?.total_price ?? 0)}
                         </p>
                         <span
@@ -217,13 +221,13 @@ export default function DelivererPage() {
                   </div>
 
                   {delivery.status === 'delivered' && delivery.rating && (
-                    <div className="px-4 pb-4 pt-0 border-t border-slate-50">
-                      <p className="text-xs text-slate-400 mt-3">
+                    <div className="px-4 pb-4 pt-0 border-t border-slate-50 dark:border-slate-800">
+                      <p className="text-xs text-slate-400 dark:text-slate-500 mt-3">
                         Avaliação:{' '}
                         <span className="font-bold text-yellow-500">
                           {'★'.repeat(delivery.rating)}{'☆'.repeat(5 - delivery.rating)}
                         </span>
-                        {delivery.rating_note && <span className="text-slate-500 ml-1">"{delivery.rating_note}"</span>}
+                        {delivery.rating_note && <span className="text-slate-500 dark:text-slate-400 ml-1">"{delivery.rating_note}"</span>}
                       </p>
                     </div>
                   )}
@@ -235,26 +239,26 @@ export default function DelivererPage() {
 
         {/* Stats */}
         {done.length > 0 && (
-          <div className="mt-6 bg-white rounded-2xl border border-slate-100 shadow-sm p-4">
-            <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-3">Resumo</p>
+          <div className="mt-6 bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm p-4">
+            <p className="text-xs font-black text-slate-400 dark:text-slate-600 uppercase tracking-widest mb-3">Resumo</p>
             <div className="grid grid-cols-3 gap-4 text-center">
               <div>
-                <p className="text-2xl font-black text-slate-900">{done.length}</p>
-                <p className="text-xs text-slate-400">Entregas</p>
+                <p className="text-2xl font-black text-slate-900 dark:text-white">{done.length}</p>
+                <p className="text-xs text-slate-400 dark:text-slate-500">Entregas</p>
               </div>
               <div>
-                <p className="text-2xl font-black text-slate-900">
+                <p className="text-2xl font-black text-slate-900 dark:text-white">
                   {done.filter(d => d.rating).length > 0
                     ? (done.reduce((s, d) => s + (d.rating ?? 0), 0) / done.filter(d => d.rating).length).toFixed(1)
                     : '–'}
                 </p>
-                <p className="text-xs text-slate-400">Nota Média</p>
+                <p className="text-xs text-slate-400 dark:text-slate-500">Nota Média</p>
               </div>
               <div>
-                <p className="text-2xl font-black text-slate-900">
+                <p className="text-2xl font-black text-slate-900 dark:text-white">
                   {formatCurrency(done.reduce((s, d) => s + (d.orders?.total_price ?? 0), 0))}
                 </p>
-                <p className="text-xs text-slate-400">Em Pedidos</p>
+                <p className="text-xs text-slate-400 dark:text-slate-500">Em Pedidos</p>
               </div>
             </div>
           </div>

@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server';
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
 import EventHubClient from '@/components/org/EventHubClient';
+import ThemeToggle from '@/components/ui/ThemeToggle';
 
 export default async function OrgEventDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id: eventId } = await params;
@@ -77,10 +78,11 @@ export default async function OrgEventDetailPage({ params }: { params: Promise<{
           <Link href="/dashboard/org/events" className="text-gray-500 hover:text-gray-700 dark:text-slate-400 dark:hover:text-slate-200">
             <ArrowLeft className="w-5 h-5" />
           </Link>
-          <div>
+          <div className="flex-1">
             <h1 className="font-bold text-gray-900 dark:text-white text-sm">{event.name}</h1>
             <p className="text-xs text-gray-400 dark:text-slate-500">{event.location || 'Sem local definido'}</p>
           </div>
+          <ThemeToggle />
         </div>
       </header>
 

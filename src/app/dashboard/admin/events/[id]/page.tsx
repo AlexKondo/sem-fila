@@ -2,6 +2,7 @@ import { redirect, notFound } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import Link from 'next/link';
 import { formatCurrency } from '@/lib/utils';
+import ThemeToggle from '@/components/ui/ThemeToggle';
 
 const TZ = 'America/Sao_Paulo';
 /** Formata data como dd/mm/aaaa no fuso de Brasília */
@@ -111,8 +112,8 @@ export default async function EventReportPage({ params }: Props) {
   const orgName = (event as any).organizations?.name;
 
   return (
-    <main className="min-h-screen bg-gray-50">
-      <header className="bg-white border-b border-gray-100 sticky top-0 z-40">
+    <main className="min-h-screen bg-gray-50 dark:bg-slate-950 transition-colors duration-300">
+      <header className="bg-white dark:bg-slate-900 border-b border-gray-100 dark:border-slate-800 sticky top-0 z-40">
         <div className="max-w-4xl mx-auto px-4 py-3 flex items-center gap-3">
           <Link href="/dashboard/admin" className="p-2 text-gray-400 hover:text-gray-900 transition">
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -120,23 +121,24 @@ export default async function EventReportPage({ params }: Props) {
             </svg>
           </Link>
           <div className="flex-1">
-            <h1 className="font-bold text-gray-900 leading-none">{event.name}</h1>
-            <p className="text-[10px] text-gray-400 uppercase font-bold tracking-tighter">
+            <h1 className="font-bold text-gray-900 dark:text-white leading-none">{event.name}</h1>
+            <p className="text-[10px] text-gray-400 dark:text-slate-500 uppercase font-bold tracking-tighter">
               {orgName ? `${orgName} — ` : ''}Relatório do Evento
             </p>
           </div>
+          <ThemeToggle />
         </div>
       </header>
 
       <div className="max-w-4xl mx-auto px-4 py-6 space-y-6">
 
         {/* Info do evento */}
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
+        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-100 dark:border-slate-800 shadow-sm p-4">
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
             {event.start_date && (
               <div>
-                <p className="text-gray-400 font-bold uppercase text-[10px]">Data</p>
-                <p className="font-bold text-gray-900">
+                <p className="text-gray-400 dark:text-slate-500 font-bold uppercase text-[10px]">Data</p>
+                <p className="font-bold text-gray-900 dark:text-white">
                   {fmtDate(event.start_date)}
                   {event.end_date ? ` - ${fmtDate(event.end_date)}` : ''}
                 </p>
@@ -144,21 +146,21 @@ export default async function EventReportPage({ params }: Props) {
             )}
             {event.start_time && (
               <div>
-                <p className="text-gray-400 font-bold uppercase text-[10px]">Horario</p>
-                <p className="font-bold text-gray-900">
+                <p className="text-gray-400 dark:text-slate-500 font-bold uppercase text-[10px]">Horario</p>
+                <p className="font-bold text-gray-900 dark:text-white">
                   {event.start_time?.slice(0, 5)}{event.end_time ? ` - ${event.end_time.slice(0, 5)}` : ''}
                 </p>
               </div>
             )}
             {event.location && (
               <div>
-                <p className="text-gray-400 font-bold uppercase text-[10px]">Local</p>
-                <p className="font-bold text-gray-900">{event.location}</p>
+                <p className="text-gray-400 dark:text-slate-500 font-bold uppercase text-[10px]">Local</p>
+                <p className="font-bold text-gray-900 dark:text-white">{event.location}</p>
               </div>
             )}
             <div>
-              <p className="text-gray-400 font-bold uppercase text-[10px]">Status</p>
-              <span className={`text-[10px] font-black px-2 py-0.5 rounded-full uppercase ${event.active ? 'bg-green-50 text-green-600' : 'bg-gray-100 text-gray-400'}`}>
+              <p className="text-gray-400 dark:text-slate-500 font-bold uppercase text-[10px]">Status</p>
+              <span className={`text-[10px] font-black px-2 py-0.5 rounded-full uppercase ${event.active ? 'bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-400' : 'bg-gray-100 dark:bg-slate-700 text-gray-400 dark:text-slate-500'}`}>
                 {event.active ? 'Ativo' : 'Encerrado'}
               </span>
             </div>
@@ -167,62 +169,62 @@ export default async function EventReportPage({ params }: Props) {
 
         {/* Métricas gerais */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 text-center">
-            <p className="text-2xl font-black text-emerald-700">{formatCurrency(totalRevenue)}</p>
-            <p className="text-[10px] text-gray-500 font-bold uppercase">Faturamento total</p>
+          <div className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-100 dark:border-slate-800 shadow-sm p-4 text-center">
+            <p className="text-2xl font-black text-emerald-700 dark:text-emerald-500">{formatCurrency(totalRevenue)}</p>
+            <p className="text-[10px] text-gray-500 dark:text-slate-400 font-bold uppercase">Faturamento total</p>
           </div>
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 text-center">
-            <p className="text-2xl font-black text-gray-900">{totalOrders || 0}</p>
-            <p className="text-[10px] text-gray-500 font-bold uppercase">Pedidos</p>
+          <div className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-100 dark:border-slate-800 shadow-sm p-4 text-center">
+            <p className="text-2xl font-black text-gray-900 dark:text-white">{totalOrders || 0}</p>
+            <p className="text-[10px] text-gray-500 dark:text-slate-400 font-bold uppercase">Pedidos</p>
           </div>
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 text-center">
-            <p className="text-2xl font-black text-blue-700">{formatCurrency(avgTicket)}</p>
-            <p className="text-[10px] text-gray-500 font-bold uppercase">Ticket medio</p>
+          <div className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-100 dark:border-slate-800 shadow-sm p-4 text-center">
+            <p className="text-2xl font-black text-blue-700 dark:text-blue-500">{formatCurrency(avgTicket)}</p>
+            <p className="text-[10px] text-gray-500 dark:text-slate-400 font-bold uppercase">Ticket medio</p>
           </div>
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 text-center">
-            <p className="text-2xl font-black text-orange-600">{vendorIds.length}</p>
-            <p className="text-[10px] text-gray-500 font-bold uppercase">Barracas</p>
+          <div className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-100 dark:border-slate-800 shadow-sm p-4 text-center">
+            <p className="text-2xl font-black text-orange-600 dark:text-orange-500">{vendorIds.length}</p>
+            <p className="text-[10px] text-gray-500 dark:text-slate-400 font-bold uppercase">Barracas</p>
           </div>
         </div>
 
         {/* Métricas de operação */}
         <div className="grid grid-cols-3 gap-3">
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 text-center">
-            <p className="text-xl font-black text-green-700">{avgPrepTime > 0 ? `${avgPrepTime}min` : '--'}</p>
-            <p className="text-[10px] text-gray-500 font-bold uppercase">Tempo medio preparo</p>
+          <div className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-100 dark:border-slate-800 shadow-sm p-4 text-center">
+            <p className="text-xl font-black text-green-700 dark:text-green-500">{avgPrepTime > 0 ? `${avgPrepTime}min` : '--'}</p>
+            <p className="text-[10px] text-gray-500 dark:text-slate-400 font-bold uppercase">Tempo medio preparo</p>
           </div>
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 text-center">
-            <p className="text-xl font-black text-red-600">{cancelledOrders || 0}</p>
-            <p className="text-[10px] text-gray-500 font-bold uppercase">Cancelamentos</p>
+          <div className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-100 dark:border-slate-800 shadow-sm p-4 text-center">
+            <p className="text-xl font-black text-red-600 dark:text-red-500">{cancelledOrders || 0}</p>
+            <p className="text-[10px] text-gray-500 dark:text-slate-400 font-bold uppercase">Cancelamentos</p>
           </div>
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 text-center">
-            <p className="text-xl font-black text-red-600">{cancelRate}%</p>
-            <p className="text-[10px] text-gray-500 font-bold uppercase">Taxa cancelamento</p>
+          <div className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-100 dark:border-slate-800 shadow-sm p-4 text-center">
+            <p className="text-xl font-black text-red-600 dark:text-red-500">{cancelRate}%</p>
+            <p className="text-[10px] text-gray-500 dark:text-slate-400 font-bold uppercase">Taxa cancelamento</p>
           </div>
         </div>
 
         {/* Ranking de barracas */}
         <div>
-          <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">Ranking de Barracas</h2>
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+          <h2 className="text-sm font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide mb-3">Ranking de Barracas</h2>
+          <div className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-100 dark:border-slate-800 shadow-sm overflow-hidden">
             {vendorRanking.length === 0 ? (
-              <p className="p-6 text-sm text-gray-400 text-center">Nenhuma barraca vinculada a este evento.</p>
+              <p className="p-6 text-sm text-gray-400 dark:text-slate-500 text-center">Nenhuma barraca vinculada a este evento.</p>
             ) : (
-              <div className="divide-y divide-gray-50">
+              <div className="divide-y divide-gray-50 dark:divide-slate-800">
                 {vendorRanking.map((v, i) => (
                   <div key={v.id} className="p-4 flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <span className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-black ${
-                        i === 0 ? 'bg-amber-100 text-amber-700' :
-                        i === 1 ? 'bg-gray-100 text-gray-600' :
-                        i === 2 ? 'bg-orange-100 text-orange-700' :
-                        'bg-gray-50 text-gray-400'
+                        i === 0 ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-500' :
+                        i === 1 ? 'bg-gray-100 text-gray-600 dark:bg-slate-700 dark:text-slate-300' :
+                        i === 2 ? 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-500' :
+                        'bg-gray-50 text-gray-400 dark:bg-slate-800 dark:text-slate-500'
                       }`}>
                         {i + 1}
                       </span>
                       <div>
-                        <p className="text-sm font-bold text-gray-900">{v.name}</p>
-                        <p className="text-[10px] text-gray-400">
+                        <p className="text-sm font-bold text-gray-900 dark:text-white">{v.name}</p>
+                        <p className="text-[10px] text-gray-400 dark:text-slate-500">
                           {v.orders} pedidos
                           {v.rating_avg ? ` | ${Number(v.rating_avg).toFixed(1)} estrelas` : ''}
                           {v.avg_prep_time ? ` | ${v.avg_prep_time}min preparo` : ''}
@@ -230,8 +232,8 @@ export default async function EventReportPage({ params }: Props) {
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="text-sm font-black text-emerald-700">{formatCurrency(v.revenue)}</p>
-                      <p className="text-[10px] text-gray-400">
+                      <p className="text-sm font-black text-emerald-700 dark:text-emerald-500">{formatCurrency(v.revenue)}</p>
+                      <p className="text-[10px] text-gray-400 dark:text-slate-500">
                         {v.orders > 0 ? `${formatCurrency(v.revenue / v.orders)} / pedido` : ''}
                       </p>
                     </div>

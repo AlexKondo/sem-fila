@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import Link from 'next/link';
 import EventList from './EventList';
+import ThemeToggle from '@/components/ui/ThemeToggle';
 
 export default async function AdminEventsPage() {
   const supabase = await createClient();
@@ -60,18 +61,19 @@ export default async function AdminEventsPage() {
   });
 
   return (
-    <main className="min-h-screen bg-gray-50">
-      <header className="bg-white border-b border-gray-100 sticky top-0 z-40">
+    <main className="min-h-screen bg-gray-50 dark:bg-slate-950 transition-colors duration-300">
+      <header className="bg-white dark:bg-slate-900 border-b border-gray-100 dark:border-slate-800 sticky top-0 z-40">
         <div className="max-w-4xl mx-auto px-4 py-3 flex items-center gap-3">
           <Link href="/dashboard/admin" className="p-2 text-gray-400 hover:text-gray-900 transition">
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
             </svg>
           </Link>
-          <div>
-            <h1 className="font-bold text-gray-900 leading-none">Eventos</h1>
-            <p className="text-[10px] text-gray-400 uppercase font-bold tracking-tighter">Todos os eventos da plataforma</p>
+          <div className="flex-1">
+            <h1 className="font-bold text-gray-900 dark:text-white leading-none">Eventos</h1>
+            <p className="text-[10px] text-gray-400 dark:text-slate-500 uppercase font-bold tracking-tighter">Todos os eventos da plataforma</p>
           </div>
+          <ThemeToggle />
         </div>
       </header>
 
