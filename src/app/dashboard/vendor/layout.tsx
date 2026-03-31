@@ -57,7 +57,7 @@ export default async function VendorDashboardLayout({ children }: { children: Re
     : null;
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#f8f6f6' }}>
+    <div className="min-h-screen bg-[#f8f6f6] dark:bg-slate-900 transition-colors duration-300">
       <VendorHeader
         vendorName={isOverview ? 'Visão Geral' : (vendor?.name ?? 'Meu Negócio')}
         userName={profile?.name || ''}

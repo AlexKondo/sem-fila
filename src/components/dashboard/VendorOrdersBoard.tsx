@@ -263,7 +263,7 @@ export default function VendorOrdersBoard({ initialOrders, vendorId }: Props) {
           value={dateFrom}
           max={dateTo}
           onChange={e => setDateFrom(e.target.value)}
-          className="px-3 py-1.5 rounded-xl text-xs font-bold border border-slate-200 bg-slate-50 text-slate-700 focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-400 transition-all"
+          className="px-3 py-1.5 rounded-xl text-xs font-bold border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-400 transition-all"
         />
         <label className="text-xs font-bold text-slate-500">Até</label>
         <input
@@ -271,7 +271,7 @@ export default function VendorOrdersBoard({ initialOrders, vendorId }: Props) {
           value={dateTo}
           min={dateFrom}
           onChange={e => setDateTo(e.target.value)}
-          className="px-3 py-1.5 rounded-xl text-xs font-bold border border-slate-200 bg-slate-50 text-slate-700 focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-400 transition-all"
+          className="px-3 py-1.5 rounded-xl text-xs font-bold border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-400 transition-all"
         />
         {!isToday && (
           <button
@@ -385,18 +385,18 @@ export default function VendorOrdersBoard({ initialOrders, vendorId }: Props) {
           ))}
 
           {activeOrders.length === 0 && (
-            <div className="text-center py-16 bg-white border-2 border-dashed border-slate-100 rounded-[32px]">
+            <div className="text-center py-16 bg-white dark:bg-slate-800 border-2 border-dashed border-slate-100 dark:border-slate-700 rounded-[32px]">
               <p className="text-4xl mb-3">🍳</p>
-              <p className="font-bold text-slate-900">Nenhum pedido na fila</p>
-              <p className="text-xs text-slate-400">Aguardando novos clientes...</p>
+              <p className="font-bold text-slate-900 dark:text-white">Nenhum pedido na fila</p>
+              <p className="text-xs text-slate-400 dark:text-slate-500">Aguardando novos clientes...</p>
             </div>
           )}
         </div>
       </div>
 
       {/* Histórico de Entregues */}
-      <div className="bg-slate-50 border border-slate-100 rounded-2xl p-4">
-        <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-4">
+      <div className="bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-2xl p-4">
+        <h2 className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-4">
           Histórico • Concluídos ({historicalOrders.length})
         </h2>
         <div className="space-y-3">
@@ -466,26 +466,26 @@ function OrderCard({
 
   return (
     <div
-      className={`bg-white rounded-2xl shadow-sm p-4 cursor-pointer transition-all border border-slate-100 ${isDelivered ? 'opacity-75 bg-slate-50 shadow-none hover:shadow-none' : 'hover:shadow-md'}`}
+      className={`bg-white dark:bg-slate-800 rounded-2xl shadow-sm p-4 cursor-pointer transition-all border border-slate-100 dark:border-slate-700 ${isDelivered ? 'opacity-75 bg-slate-50 dark:bg-slate-900/50 shadow-none hover:shadow-none' : 'hover:shadow-md'}`}
       onClick={() => setIsExpanded(!isExpanded)}
     >
       <div className="flex items-start justify-between">
         <div>
           <div className="flex items-center gap-2">
-            <span className="font-black text-gray-900 text-lg">{clientName}</span>
-            <span className="text-xs text-orange-600 font-black bg-orange-50 px-2 py-0.5 rounded-full">#{orderNumber}</span>
+            <span className="font-black text-gray-900 dark:text-white text-lg">{clientName}</span>
+            <span className="text-xs text-orange-600 font-black bg-orange-50 dark:bg-orange-950/30 px-2 py-0.5 rounded-full">#{orderNumber}</span>
             {order.table_number && (
-              <span className="text-xs font-black bg-orange-50 text-orange-600 px-2 py-0.5 rounded-full">
+              <span className="text-xs font-black bg-orange-50 dark:bg-orange-950/30 text-orange-600 px-2 py-0.5 rounded-full">
                 {order.table_number === 'Para Viagem' ? '🛍️ Para Viagem' : `🛋️ Mesa ${order.table_number}`}
               </span>
             )}
           </div>
           <div className="flex items-center gap-2 mt-0.5">
-            <p className="text-xs text-gray-400">
+            <p className="text-xs text-gray-400 dark:text-slate-500">
               Criado às {new Date(order.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
             </p>
             {order.pickup_code && (
-              <span className="text-[10px] font-mono font-bold text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded">
+              <span className="text-[10px] font-mono font-bold text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-700 px-1.5 py-0.5 rounded">
                 {order.pickup_code}
               </span>
             )}
@@ -500,21 +500,21 @@ function OrderCard({
           <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${ORDER_STATUS_COLOR[order.status]}`}>
             {ORDER_STATUS_LABEL[order.status]}
           </span>
-          <p className="text-sm font-black text-slate-800 tracking-tight">{formatCurrency(order.total_price)}</p>
+          <p className="text-sm font-black text-slate-800 dark:text-white tracking-tight">{formatCurrency(order.total_price)}</p>
         </div>
       </div>
 
       {isExpanded && (
-        <div className="mt-4 pt-3 border-t border-slate-100 space-y-3" onClick={e => e.stopPropagation()}>
+        <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-700 space-y-3" onClick={e => e.stopPropagation()}>
           {/* Itens */}
           <div className="space-y-1">
             {order.order_items.map((item) => (
-              <div key={item.id} className="border-b border-slate-50 last:border-0 pb-1.5 mb-1.5 last:pb-0 last:mb-0">
+              <div key={item.id} className="border-b border-slate-50 dark:border-slate-700/50 last:border-0 pb-1.5 mb-1.5 last:pb-0 last:mb-0">
                 <div className="flex justify-between text-sm">
-                  <span className="text-gray-900 font-bold">
+                  <span className="text-gray-900 dark:text-slate-200 font-bold">
                     {item.quantity}x {item.menu_items?.name ?? 'Item'}
                   </span>
-                  <span className="text-gray-500 font-medium">
+                  <span className="text-gray-500 dark:text-slate-400 font-medium">
                     {formatCurrency(item.unit_price * item.quantity)}
                   </span>
                 </div>
@@ -532,13 +532,13 @@ function OrderCard({
           </div>
 
           {realNotes && (
-            <p className="text-xs text-gray-500 bg-gray-50 rounded-lg px-3 py-1.5 ">
+            <p className="text-xs text-gray-500 dark:text-slate-400 bg-gray-50 dark:bg-slate-900/50 rounded-lg px-3 py-1.5 ">
               💬 {realNotes}
             </p>
           )}
 
           <div className="flex items-center justify-between pt-1">
-            <span className="font-bold text-gray-900">{formatCurrency(order.total_price)}</span>
+            <span className="font-bold text-gray-900 dark:text-white">{formatCurrency(order.total_price)}</span>
             <div className="flex items-center gap-3">
               {timeDiffSec !== null && (
                 <span className="text-xs font-mono font-medium text-slate-500 flex items-center gap-1">
@@ -569,7 +569,7 @@ function OrderCard({
       )}
 
       {!isExpanded && (
-        <div className="mt-2 text-center text-slate-400 text-[10px] font-semibold border-t border-dashed border-slate-100 pt-1.5">
+        <div className="mt-2 text-center text-slate-400 dark:text-slate-500 text-[10px] font-semibold border-t border-dashed border-slate-100 dark:border-slate-700 pt-1.5">
           Clique para ver os itens 📂
         </div>
       )}
