@@ -16,7 +16,7 @@ type View = 'list' | 'invite-detail' | 'event-detail';
 
 const INVITE_STYLE: Record<string, { card: string; text: string; sub: string; badge: string; label: string }> = {
   pending:  { card: 'bg-gradient-to-br from-orange-500 to-amber-600 shadow-lg', text: 'text-white', sub: 'text-orange-100', badge: 'bg-white/20 text-white', label: 'Pendente' },
-  accepted: { card: 'bg-gradient-to-br from-emerald-500 to-green-600 shadow-lg', text: 'text-white', sub: 'text-green-100', badge: 'bg-white/20 text-white', label: 'Aceito' },
+  accepted: { card: 'bg-emerald-100 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-800', text: 'text-emerald-900 dark:text-emerald-100', sub: 'text-emerald-600 dark:text-emerald-400', badge: 'bg-emerald-200 dark:bg-emerald-800 text-emerald-700 dark:text-emerald-300', label: 'Aceito' },
   rejected: { card: 'bg-slate-100 dark:bg-slate-800/60 opacity-60', text: 'text-slate-500 dark:text-slate-400', sub: 'text-slate-400 dark:text-slate-500', badge: 'bg-slate-200 dark:bg-slate-700 text-slate-500', label: 'Recusado' },
   paid:     { card: 'bg-gradient-to-br from-blue-500 to-indigo-600 shadow-lg', text: 'text-white', sub: 'text-blue-100', badge: 'bg-white/20 text-white', label: 'Pago' },
   expired:  { card: 'bg-slate-100 dark:bg-slate-800/60 opacity-50', text: 'text-slate-400', sub: 'text-slate-400', badge: 'bg-slate-200 dark:bg-slate-700 text-slate-400', label: 'Expirado' },
@@ -101,15 +101,15 @@ export default function VendorEventClient({ vendorId, activeEvent, invitations: 
       <div className="max-w-2xl mx-auto px-4 pb-12 space-y-4">
         {backButton}
 
-        <div className={`${INVITE_STYLE[selectedInvite.status]?.card ?? INVITE_STYLE.pending.card} rounded-[2rem] p-6 text-white shadow-xl relative overflow-hidden`}>
+        <div className={`${INVITE_STYLE[selectedInvite.status]?.card ?? INVITE_STYLE.pending.card} rounded-[2rem] p-6 shadow-xl relative overflow-hidden`}>
           <div className="absolute top-0 right-0 p-6 opacity-10">
             <Mail className="w-24 h-24" />
           </div>
           <div className="relative z-10">
-            <span className="text-[10px] font-black uppercase tracking-[0.2em] bg-white/20 px-3 py-1 rounded-full">Convite para Evento</span>
-            <h1 className="text-2xl font-black mt-3 leading-tight">{ev?.name || 'Evento'}</h1>
+            <span className={`text-[10px] font-black uppercase tracking-[0.2em] bg-white/20 px-3 py-1 rounded-full ${INVITE_STYLE[selectedInvite.status]?.text ?? 'text-white'}`}>Convite para Evento</span>
+            <h1 className={`text-2xl font-black mt-3 leading-tight ${INVITE_STYLE[selectedInvite.status]?.text ?? 'text-white'}`}>{ev?.name || 'Evento'}</h1>
             {ev?.organizations?.name && (
-              <p className="text-orange-100 flex items-center gap-2 mt-1 font-medium text-sm">
+              <p className={`flex items-center gap-2 mt-1 font-medium text-sm ${INVITE_STYLE[selectedInvite.status]?.sub ?? 'text-orange-100'}`}>
                 <Building className="w-4 h-4" /> {ev.organizations.name}
               </p>
             )}
