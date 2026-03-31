@@ -31,10 +31,10 @@ export default async function LandingPage() {
           <span className="text-lg font-black tracking-tight text-slate-900">QuickPick</span>
         </div>
         {firstName ? (
-          <span className="flex items-center gap-1.5 text-sm font-semibold text-slate-700">
+          <Link href="/profile" className="flex items-center gap-1.5 text-sm font-semibold text-slate-700 hover:text-slate-900 transition-colors">
             <User className="w-4 h-4" />
             Bem-vindo, {firstName}
-          </span>
+          </Link>
         ) : (
           <Link href="/login" className="flex items-center gap-1.5 text-sm font-semibold text-slate-600 hover:text-slate-900 transition-colors">
             <LogIn className="w-4 h-4" />
