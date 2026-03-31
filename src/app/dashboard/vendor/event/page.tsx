@@ -37,7 +37,7 @@ export default async function VendorEventPage() {
       .select('*, events(name, location, start_date, start_time, organization_id, organizations(name), layout_url, rules, address)')
       .or(orConditions.join(','))
       .eq('status', 'pending')
-      .order('created_at', { ascending: false }),
+      .order('invited_at', { ascending: false }),
     supabase.from('event_booths').select('*').eq('vendor_id', vendor.id).maybeSingle()
   ]);
 
