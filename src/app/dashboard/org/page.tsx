@@ -52,7 +52,7 @@ export default async function OrgDashboardPage() {
   const eventIds = events?.map(e => e.id) ?? [];
   let totalInvites = 0;
   let paidInvites = 0;
-  const invitesByEvent: Record<string, { total: number; confirmed: number }> = {};
+  const invitesByEvent: Record<string, { total: number; confirmed: number; rejected: number }> = {};
 
   if (eventIds.length > 0) {
     const { data: allInvites } = await supabase
@@ -61,12 +61,14 @@ export default async function OrgDashboardPage() {
       .in('event_id', eventIds);
 
     for (const inv of allInvites ?? []) {
-      if (!invitesByEvent[inv.event_id]) invitesByEvent[inv.event_id] = { total: 0, confirmed: 0 };
+      if (!invitesByEvent[inv.event_id]) invitesByEvent[inv.event_id] = { total: 0, confirmed: 0, rejected: 0 };
       invitesByEvent[inv.event_id].total++;
       totalInvites++;
       if (inv.status === 'accepted' || inv.status === 'paid') {
         invitesByEvent[inv.event_id].confirmed++;
         paidInvites++;
+      } else if (inv.status === 'rejected') {
+        invitesByEvent[inv.event_id].rejected++;
       }
     }
   }
@@ -178,9 +180,14 @@ export default async function OrgDashboardPage() {
                   </div>
                   <div className="flex items-center gap-2 flex-shrink-0 ml-2">
                     {invitesByEvent[event.id] && (
-                      <span className="text-xs font-semibold">
-                        <span className="text-green-600 dark:text-green-500">{invitesByEvent[event.id].confirmed}</span>
-                        <span className="text-gray-400 dark:text-slate-500">/{invitesByEvent[event.id].total}</span>
+                      <span className="text-xs font-semibold flex items-center gap-1.5">
+                        <span>
+                          <span className="text-green-600 dark:text-green-500">{invitesByEvent[event.id].confirmed}</span>
+                          <span className="text-gray-400 dark:text-slate-500">/{invitesByEvent[event.id].total}</span>
+                        </span>
+                        {invitesByEvent[event.id].rejected > 0 && (
+                          <span className="text-red-500 dark:text-red-400">{invitesByEvent[event.id].rejected}✗</span>
+                        )}
                       </span>
                     )}
                     <ChevronRight className="w-5 h-5 text-gray-300" />
