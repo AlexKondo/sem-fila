@@ -1,3 +1,4 @@
+// Forçado: mudando arquivo para garantir visibilidade no git
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { resolveVendor } from '@/lib/vendor-resolver';
