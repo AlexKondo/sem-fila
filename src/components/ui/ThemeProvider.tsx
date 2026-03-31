@@ -17,29 +17,11 @@ export default function ThemeProvider({ children }: { children: React.ReactNode 
   const [theme, setTheme] = useState<Theme>('light');
 
   useEffect(() => {
-    // 1. Identifica o tema que o script inline aplicou na DOM
-    // Fazemos isso de forma síncrona dentro do useEffect para evitar resets
-    const html = document.documentElement;
-    const isDark = html.classList.contains('dark');
-    
+    // Servidor já aplicou a classe correta via cookie — só sincroniza o estado React
+    const isDark = document.documentElement.classList.contains('dark');
     setTheme(isDark ? 'dark' : 'light');
-    
-    // 2. Sincroniza o color-scheme do sistema
-    html.style.colorScheme = isDark ? 'dark' : 'light';
-
-    // 3. Garante que a transição de cor só ocorra após esta primeira leitura
-    // O USER já adicionou CSS para 'html.hydrated body' no globals.css
-    setTimeout(() => {
-      document.documentElement.classList.add('hydrated');
-    }, 100);
-
-    // 3. Monitor externo (caso algo mude a classe fora do React)
-    const observer = new MutationObserver(() => {
-      const dark = document.documentElement.classList.contains('dark');
-      setTheme(dark ? 'dark' : 'light');
-    });
-    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
-    return () => observer.disconnect();
+    document.documentElement.style.colorScheme = isDark ? 'dark' : 'light';
+    document.documentElement.classList.add('hydrated');
   }, []);
 
   const toggleTheme = useCallback(() => {
@@ -47,7 +29,7 @@ export default function ThemeProvider({ children }: { children: React.ReactNode 
     setTheme(next);
     document.documentElement.classList.toggle('dark', next === 'dark');
     document.documentElement.style.colorScheme = next;
-    localStorage.setItem('theme', next);
+    document.cookie = `theme=${next};path=/;max-age=31536000`;
   }, [theme]);
 
   return (

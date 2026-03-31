@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from 'next';
+import { cookies } from 'next/headers';
 import './globals.css';
 import UserNotifications from '@/components/notifications/UserNotifications';
 import ThemeProvider from '@/components/ui/ThemeProvider';
@@ -22,13 +23,17 @@ export const viewport: Viewport = {
   themeColor: '#ec5b13',
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const cookieStore = await cookies();
+  const theme = cookieStore.get('theme')?.value ?? 'light';
+  const isDark = theme === 'dark';
+
   return (
-    <html lang="pt-BR" suppressHydrationWarning>
+    <html lang="pt-BR" className={isDark ? 'dark' : ''} suppressHydrationWarning>
       <head>
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
@@ -37,14 +42,15 @@ export default function RootLayout({
         <script dangerouslySetInnerHTML={{ __html: `
           (function(){
             try {
-              var t = localStorage.getItem('theme');
-              var isDark = t === 'dark' || (!t && window.matchMedia('(prefers-color-scheme: dark)').matches);
-              if (isDark) {
-                document.documentElement.classList.add('dark');
-                document.documentElement.style.colorScheme = 'dark';
-                document.documentElement.style.backgroundColor = '#020617';
-              } else {
-                document.documentElement.style.backgroundColor = '#f8f6f6';
+              var hasCookie = document.cookie.indexOf('theme=') !== -1;
+              if (!hasCookie) {
+                var isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                var val = isDark ? 'dark' : 'light';
+                document.cookie = 'theme=' + val + ';path=/;max-age=31536000';
+                if (isDark) {
+                  document.documentElement.classList.add('dark');
+                  document.documentElement.style.colorScheme = 'dark';
+                }
               }
             } catch(e){}
           })();
