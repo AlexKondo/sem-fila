@@ -14,6 +14,7 @@ interface VendorHeaderProps {
   userName?: string;
   cnpjFormatted: string | null;
   vendorId?: string | null;
+  vendorEventId?: string | null;
   multiVendor?: boolean;
   isOverview?: boolean;
   userRole?: string;
@@ -37,7 +38,7 @@ function clearVendorCookie() {
 }
 
 
-export default function VendorHeader({ vendorName, userName, cnpjFormatted, vendorId, multiVendor, isOverview, userRole }: VendorHeaderProps) {
+export default function VendorHeader({ vendorName, userName, cnpjFormatted, vendorId, vendorEventId, multiVendor, isOverview, userRole }: VendorHeaderProps) {
   const pathname = usePathname();
   const isStaff = STAFF_ROLES.includes(userRole || '');
   const [pendingCalls, setPendingCalls] = React.useState(0);
@@ -67,16 +68,20 @@ export default function VendorHeader({ vendorName, userName, cnpjFormatted, vend
       const profileEmail = profile?.email;
       const authEmail = user.email;
 
-      const query = supabase
-        .from('event_vendor_invitations')
-        .select('id', { count: 'exact', head: true })
-        .eq('status', 'pending');
-
       const orConditions = [`vendor_id.eq.${vendorId}`];
       if (authEmail) orConditions.push(`and(vendor_email.eq.${authEmail},vendor_id.is.null)`);
       if (profileEmail && profileEmail !== authEmail) orConditions.push(`and(vendor_email.eq.${profileEmail},vendor_id.is.null)`);
 
-      query.or(orConditions.join(','));
+      let query = supabase
+        .from('event_vendor_invitations')
+        .select('id', { count: 'exact', head: true })
+        .eq('status', 'pending')
+        .or(orConditions.join(','));
+
+      // Não contar convites de eventos que o vendor já participa
+      if (vendorEventId) {
+        query = query.neq('event_id', vendorEventId);
+      }
 
       const { count } = await query;
       setPendingInvites(count || 0);

@@ -63,6 +63,7 @@ export default async function VendorDashboardLayout({ children }: { children: Re
         userName={profile?.name || ''}
         cnpjFormatted={cnpjFormatted}
         vendorId={vendor?.id ?? null}
+        vendorEventId={vendor?.event_id ?? null}
         multiVendor={vendors.length > 1 && !isStaff}
         isOverview={isOverview}
         userRole={userRole}

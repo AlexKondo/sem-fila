@@ -55,10 +55,13 @@ export default async function VendorEventPage() {
     }
   }
 
-  const enrichedInvitations = invitations.map(inv => ({
-    ...inv,
-    events: eventsMap[inv.event_id] || null,
-  }));
+  // Filtra convites de eventos que o vendor já participa
+  const enrichedInvitations = invitations
+    .filter(inv => inv.event_id !== vendor.event_id)
+    .map(inv => ({
+      ...inv,
+      events: eventsMap[inv.event_id] || null,
+    }));
 
   // 3. Busca evento ativo e barraca
   const [{ data: activeEvent }, { data: booth }] = await Promise.all([
