@@ -13,21 +13,11 @@ export default async function VendorEventPage() {
   const { vendor } = await resolveVendor(supabase, user.id, { select: 'id, name, event_id' });
   if (!vendor) redirect('/dashboard/vendor');
 
-  // 1. Busca convites pendentes DESTE vendor específico
-  //    - Por vendor_id (convite vinculado direto)
-  //    - Ou por email sem vendor_id (convite genérico por email)
-  const { data: profile } = await supabase.from('profiles').select('email').eq('id', user.id).single();
-  const emails = [...new Set([user.email, profile?.email].filter(Boolean))];
-
-  const conditions = [`vendor_id.eq.${vendor.id}`];
-  for (const email of emails) {
-    conditions.push(`and(vendor_email.eq.${email},vendor_id.is.null)`);
-  }
-
+  // 1. Busca convites pendentes DESTE vendor específico (por vendor_id)
   const { data: rawInvitations } = await supabase
     .from('event_vendor_invitations')
     .select('*')
-    .or(conditions.join(','))
+    .eq('vendor_id', vendor.id)
     .eq('status', 'pending')
     .order('invited_at', { ascending: false });
 

@@ -14,17 +14,45 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Campos obrigatórios ausentes' }, { status: 400 });
   }
 
-  // Inserir convite no banco
-  const insertData: Record<string, any> = {
-    event_id,
-    vendor_email: vendor_email.trim(),
-    fee_amount: parseFloat(fee_amount) || 0,
-  };
-  if (vendor_id) insertData.vendor_id = vendor_id;
+  // Resolve vendor_id: se não foi informado, busca pelo email
+  let resolvedVendorId = vendor_id || null;
 
+  if (!resolvedVendorId) {
+    // Busca o profile pelo email para encontrar o owner_id
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('email', vendor_email.trim())
+      .maybeSingle();
+
+    if (profile) {
+      // Busca o vendor desse owner
+      const { data: vendor } = await supabase
+        .from('vendors')
+        .select('id')
+        .eq('owner_id', profile.id)
+        .limit(1)
+        .maybeSingle();
+
+      if (vendor) resolvedVendorId = vendor.id;
+    }
+  }
+
+  if (!resolvedVendorId) {
+    return NextResponse.json({
+      error: 'Este email não está cadastrado na plataforma. O fornecedor precisa se registrar primeiro.'
+    }, { status: 400 });
+  }
+
+  // Inserir convite no banco (sempre com vendor_id)
   const { data: invitation, error: insertError } = await supabase
     .from('event_vendor_invitations')
-    .insert(insertData)
+    .insert({
+      event_id,
+      vendor_email: vendor_email.trim(),
+      vendor_id: resolvedVendorId,
+      fee_amount: parseFloat(fee_amount) || 0,
+    })
     .select('*, vendors(name)')
     .single();
 
@@ -56,7 +84,6 @@ export async function POST(req: NextRequest) {
     });
   } catch (emailError: any) {
     console.error('Erro ao enviar email de convite:', emailError);
-    // Convite já foi salvo, retorna com aviso
     return NextResponse.json({
       invitation,
       emailSent: false,

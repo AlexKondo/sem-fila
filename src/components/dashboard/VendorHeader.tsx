@@ -55,26 +55,17 @@ export default function VendorHeader({ vendorName, userName, cnpjFormatted, vend
     const supabase = createClient();
     let cancelled = false;
 
-    // ── Função para buscar contagem de convites pendentes ──
+    // ── Função para buscar contagem de convites pendentes (por vendor_id) ──
     async function fetchInvites() {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user || cancelled) return;
-
-      const { data: profile } = await supabase.from('profiles').select('email').eq('id', user.id).single();
-      const profileEmail = profile?.email;
-      const authEmail = user.email;
-
-      const orConditions = [`vendor_id.eq.${vendorId}`];
-      if (authEmail) orConditions.push(`and(vendor_email.eq.${authEmail},vendor_id.is.null)`);
-      if (profileEmail && profileEmail !== authEmail) orConditions.push(`and(vendor_email.eq.${profileEmail},vendor_id.is.null)`);
+      if (cancelled) return;
 
       let query = supabase
         .from('event_vendor_invitations')
         .select('id', { count: 'exact', head: true })
-        .eq('status', 'pending')
-        .or(orConditions.join(','));
+        .eq('vendor_id', vendorId)
+        .eq('status', 'pending');
 
-      // Usar ref para sempre ter o valor mais atual
+      // Não contar convites de eventos que o vendor já participa
       const currentEventId = vendorEventIdRef.current;
       if (currentEventId) {
         query = query.neq('event_id', currentEventId);
