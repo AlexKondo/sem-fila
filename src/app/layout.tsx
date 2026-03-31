@@ -34,12 +34,18 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
         <meta name="apple-mobile-web-app-title" content="QuickPick" />
         <link rel="apple-touch-icon" href="/icons/icon-192.png" />
+        <style>{`html.dark { color-scheme: dark; } html { color-scheme: light; }`}</style>
         <script dangerouslySetInnerHTML={{ __html: `
           (function(){
             try {
               var t = localStorage.getItem('theme');
-              if (t === 'dark' || (!t && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+              var isDark = t === 'dark' || (!t && window.matchMedia('(prefers-color-scheme: dark)').matches);
+              if (isDark) {
                 document.documentElement.classList.add('dark');
+                document.documentElement.style.colorScheme = 'dark';
+              } else {
+                document.documentElement.classList.remove('dark');
+                document.documentElement.style.colorScheme = 'light';
               }
             } catch(e){}
           })();

@@ -32,6 +32,11 @@ export default function VendorEventClient({ vendorId, activeEvent, invitations: 
     const invite = invites.find(i => i.id === inviteId);
     if (!invite) return;
 
+    // Remove localmente primeiro (para feedback imediato)
+    setInvites(prev => prev.filter(i => i.id !== inviteId));
+    setSelectedInvite(null);
+    setView('list');
+
     // Atualiza o convite: status + vendor_id (vincula ao vendor atual) + responded_at
     const { error: updateInviteError } = await supabase
       .from('event_vendor_invitations')
@@ -45,6 +50,8 @@ export default function VendorEventClient({ vendorId, activeEvent, invitations: 
     if (updateInviteError) {
       alert(`Erro: ${updateInviteError.message}`);
       setActingOn(null);
+      // Restaura localmente em caso de erro
+      setInvites(prev => [invite, ...prev]);
       return;
     }
 
@@ -60,9 +67,6 @@ export default function VendorEventClient({ vendorId, activeEvent, invitations: 
       }
     }
 
-    setSelectedInvite(null);
-    setView('list');
-    setInvites(prev => prev.filter(i => i.id !== inviteId));
     router.refresh();
     setActingOn(null);
   }, [invites, vendorId, router]);
