@@ -23,18 +23,23 @@ export default async function ProfilePage() {
     : '/dashboard/vendor';
 
   return (
-    <main className="min-h-screen bg-slate-50 flex flex-col">
-      <header className="bg-white border-b border-slate-100 sticky top-0 z-40 px-4 py-3 flex items-center gap-3">
+    <main className="h-screen flex flex-col overflow-hidden bg-slate-50">
+      <header className="bg-white border-b border-slate-100 shrink-0 px-4 py-3 flex items-center gap-3 z-40">
         <Link href={backHref} className="p-2 rounded-full hover:bg-slate-50 text-slate-500">
           <ArrowLeft className="w-5 h-5" />
         </Link>
         <h1 className="font-bold text-slate-900">Meu Perfil</h1>
       </header>
 
-      <div className="max-w-lg mx-auto w-full px-4 py-6 flex-1">
-        <ProfileForm profile={profile} email={user.email ?? ''} />
+      <div className="flex-1 overflow-y-auto">
+        <div className="max-w-lg mx-auto w-full px-4 py-6">
+          <ProfileForm profile={profile} email={user.email ?? ''} />
+        </div>
       </div>
-      <BottomNav />
+
+      <div className="shrink-0">
+        <BottomNav />
+      </div>
     </main>
   );
 }
