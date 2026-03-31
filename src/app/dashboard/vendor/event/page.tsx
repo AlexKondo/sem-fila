@@ -17,11 +17,14 @@ export default async function VendorEventPage() {
   const profileEmail = profile?.email;
   const authEmail = user.email;
 
-  const orConditions = [`vendor_id.eq.${vendor.id}`];
-  if (authEmail) orConditions.push(`vendor_email.eq.${authEmail}`);
-  if (profileEmail) orConditions.push(`vendor_email.eq.${profileEmail}`);
-
   // 1. Busca convites SEM join (evita falha por RLS na tabela events)
+  // Filtra apenas convites do vendor atual:
+  //   - vendor_id = este vendor  OU
+  //   - vendor_email = email do dono E vendor_id é nulo (convite por email, sem vendor vinculado ainda)
+  const orConditions = [`vendor_id.eq.${vendor.id}`];
+  if (authEmail) orConditions.push(`and(vendor_email.eq.${authEmail},vendor_id.is.null)`);
+  if (profileEmail && profileEmail !== authEmail) orConditions.push(`and(vendor_email.eq.${profileEmail},vendor_id.is.null)`);
+
   const { data: rawInvitations } = await supabase
     .from('event_vendor_invitations')
     .select('*')

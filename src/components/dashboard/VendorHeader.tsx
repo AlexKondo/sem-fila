@@ -73,9 +73,9 @@ export default function VendorHeader({ vendorName, userName, cnpjFormatted, vend
         .eq('status', 'pending');
 
       const orConditions = [`vendor_id.eq.${vendorId}`];
-      if (authEmail) orConditions.push(`vendor_email.eq.${authEmail}`);
-      if (profileEmail) orConditions.push(`vendor_email.eq.${profileEmail}`);
-      
+      if (authEmail) orConditions.push(`and(vendor_email.eq.${authEmail},vendor_id.is.null)`);
+      if (profileEmail && profileEmail !== authEmail) orConditions.push(`and(vendor_email.eq.${profileEmail},vendor_id.is.null)`);
+
       query.or(orConditions.join(','));
 
       const { count } = await query;
