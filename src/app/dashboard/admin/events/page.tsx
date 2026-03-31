@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import Link from 'next/link';
+import EventList from './EventList';
 
 export default async function AdminEventsPage() {
   const supabase = await createClient();
@@ -17,8 +18,46 @@ export default async function AdminEventsPage() {
 
   const { data: events } = await supabase
     .from('events')
-    .select('*, organizations(name)')
+    .select('*, organizations(name, created_by)')
     .order('created_at', { ascending: false });
+
+  // Busca perfis dos criadores das organizações
+  const creatorIds = [...new Set(
+    (events || [])
+      .map((e: any) => e.organizations?.created_by)
+      .filter(Boolean)
+  )];
+
+  let creatorsMap: Record<string, any> = {};
+  if (creatorIds.length > 0) {
+    const { data: creators } = await supabase
+      .from('profiles')
+      .select('id, name, full_name, phone, role')
+      .in('id', creatorIds);
+    if (creators) {
+      for (const c of creators) {
+        creatorsMap[c.id] = c;
+      }
+    }
+  }
+
+  // Busca emails dos criadores via auth (usando o email do user se disponível)
+  // Como não temos acesso direto ao auth.users, vamos buscar o email da tabela profiles
+  // Se não tiver, usamos o que tiver disponível
+
+  // Enriquecer eventos com dados do criador
+  const enrichedEvents = (events || []).map((event: any) => {
+    const creatorId = event.organizations?.created_by;
+    const creator = creatorId ? creatorsMap[creatorId] : null;
+    return {
+      ...event,
+      creator: creator ? {
+        name: creator.full_name || creator.name || 'Sem nome',
+        phone: creator.phone || null,
+        role: creator.role || null,
+      } : null,
+    };
+  });
 
   return (
     <main className="min-h-screen bg-gray-50">
@@ -37,41 +76,7 @@ export default async function AdminEventsPage() {
       </header>
 
       <div className="max-w-4xl mx-auto px-4 py-6 space-y-4">
-        {!events || events.length === 0 ? (
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 text-center">
-            <p className="text-gray-400 text-sm">Nenhum evento cadastrado.</p>
-          </div>
-        ) : (
-          events.map((event: any) => (
-            <div key={event.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="font-bold text-sm text-gray-900">{event.name}</h3>
-                  <p className="text-xs text-gray-400">
-                    {(event as any).organizations?.name || 'Sem organização'}
-                    {event.location ? ` — ${event.location}` : ''}
-                  </p>
-                  {event.start_date && (
-                    <p className="text-xs text-gray-400 mt-1">
-                      {new Date(event.start_date.includes('T') ? event.start_date : `${event.start_date}T12:00:00`).toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' })}
-                      {event.end_date ? ` a ${new Date(event.end_date.includes('T') ? event.end_date : `${event.end_date}T12:00:00`).toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' })}` : ''}
-                      {event.start_time ? ` • ${event.start_time.slice(0, 5)}` : ''}
-                      {event.end_time ? ` - ${event.end_time.slice(0, 5)}` : ''}
-                    </p>
-                  )}
-                  {event.description && (
-                    <p className="text-xs text-gray-500 mt-1 line-clamp-2">{event.description}</p>
-                  )}
-                </div>
-                <div className="flex items-center gap-2 flex-shrink-0 ml-4">
-                  <span className={`text-[10px] font-black px-2 py-0.5 rounded-full uppercase ${event.active ? 'bg-green-50 text-green-600' : 'bg-gray-100 text-gray-400'}`}>
-                    {event.active ? 'Ativo' : 'Inativo'}
-                  </span>
-                </div>
-              </div>
-            </div>
-          ))
-        )}
+        <EventList events={enrichedEvents} />
       </div>
     </main>
   );
