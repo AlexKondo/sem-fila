@@ -125,7 +125,7 @@ export default function VendorHeader({ vendorName, userName, cnpjFormatted, vend
   }
 
   return (
-    <header className="bg-white border-b border-slate-100 sticky top-0 z-40">
+    <header className="bg-white dark:bg-slate-800 border-b border-slate-100 dark:border-slate-700 sticky top-0 z-40 transition-colors duration-300">
       <div className="max-w-2xl mx-auto px-4 py-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -135,15 +135,15 @@ export default function VendorHeader({ vendorName, userName, cnpjFormatted, vend
               </svg>
             </div>
             <div>
-              <p className="font-bold text-slate-900 text-sm leading-tight">{displayName}</p>
-              {cnpjFormatted && <p className="text-[11px] text-slate-400">CNPJ {cnpjFormatted}</p>}
+              <p className="font-bold text-slate-900 dark:text-white text-sm leading-tight">{displayName}</p>
+              {cnpjFormatted && <p className="text-[11px] text-slate-400 dark:text-slate-500">CNPJ {cnpjFormatted}</p>}
             </div>
           </div>
           <div className="flex items-center gap-2">
             {multiVendor && (
               <button
                 onClick={clearVendorCookie}
-                className="text-[11px] font-bold px-2.5 py-1.5 rounded-lg border border-slate-200 text-slate-500 hover:border-orange-300 hover:text-orange-600 transition"
+                className="text-[11px] font-bold px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-600 text-slate-500 dark:text-slate-400 hover:border-orange-300 dark:hover:border-orange-900 hover:text-orange-600 transition"
               >
                 Trocar Marca
               </button>

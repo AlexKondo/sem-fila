@@ -68,13 +68,13 @@ export default async function OrgDashboardPage() {
   }
 
   return (
-    <main className="min-h-screen bg-gray-50">
+    <main className="min-h-screen bg-gray-50 dark:bg-slate-900 transition-colors duration-300">
       {/* Header */}
-      <header className="bg-white border-b border-gray-100 sticky top-0 z-40">
+      <header className="bg-white dark:bg-slate-800 border-b border-gray-100 dark:border-slate-700 sticky top-0 z-40">
         <div className="max-w-3xl mx-auto px-4 py-3 flex items-center justify-between">
           <div>
             <EditOrgName orgId={orgId} currentName={orgName ?? 'Minha Organização'} />
-            <p className="text-xs text-gray-400">Painel do Organizador</p>
+            <p className="text-xs text-gray-400 dark:text-slate-500">Painel do Organizador</p>
           </div>
           <div className="flex items-center gap-1">
             <ThemeToggle />
@@ -86,22 +86,22 @@ export default async function OrgDashboardPage() {
       <div className="max-w-3xl mx-auto px-4 py-6 space-y-6">
         {/* Cards de resumo */}
         <div className="grid grid-cols-2 gap-3">
-          <div className="bg-white rounded-2xl p-4 shadow-sm">
+          <div className="bg-white dark:bg-slate-800 rounded-2xl p-4 shadow-sm border border-gray-100 dark:border-slate-700">
             <div className="flex items-center gap-2 mb-1">
               <Calendar className="w-4 h-4 text-purple-500" />
-              <p className="text-xs text-gray-500">Eventos</p>
+              <p className="text-xs text-gray-500 dark:text-slate-400">Eventos</p>
             </div>
-            <p className="text-2xl font-bold text-gray-900">{totalEvents}</p>
-            <p className="text-xs text-green-600">{activeEvents.length} ativo{activeEvents.length !== 1 ? 's' : ''}</p>
+            <p className="text-2xl font-bold text-gray-900 dark:text-white">{totalEvents}</p>
+            <p className="text-xs text-green-600 dark:text-green-500">{activeEvents.length} ativo{activeEvents.length !== 1 ? 's' : ''}</p>
           </div>
 
-          <div className="bg-white rounded-2xl p-4 shadow-sm">
+          <div className="bg-white dark:bg-slate-800 rounded-2xl p-4 shadow-sm border border-gray-100 dark:border-slate-700">
             <div className="flex items-center gap-2 mb-1">
               <Users className="w-4 h-4 text-blue-500" />
-              <p className="text-xs text-gray-500">Convites</p>
+              <p className="text-xs text-gray-500 dark:text-slate-400">Convites</p>
             </div>
-            <p className="text-2xl font-bold text-gray-900">{totalInvites}</p>
-            <p className="text-xs text-green-600">{paidInvites} confirmado{paidInvites !== 1 ? 's' : ''}</p>
+            <p className="text-2xl font-bold text-gray-900 dark:text-white">{totalInvites}</p>
+            <p className="text-xs text-green-600 dark:text-green-500">{paidInvites} confirmado{paidInvites !== 1 ? 's' : ''}</p>
           </div>
         </div>
 
@@ -109,15 +109,15 @@ export default async function OrgDashboardPage() {
         <div className="space-y-2">
           <Link
             href="/dashboard/org/events"
-            className="flex items-center justify-between bg-white rounded-2xl p-4 shadow-sm hover:shadow-md transition group"
+            className="flex items-center justify-between bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 rounded-2xl p-4 shadow-sm hover:shadow-md transition group"
           >
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center">
                 <Calendar className="w-5 h-5 text-purple-600" />
               </div>
               <div>
-                <p className="font-semibold text-gray-900 text-sm">Meus Eventos</p>
-                <p className="text-xs text-gray-400">Criar, editar e gerenciar eventos</p>
+                <p className="font-semibold text-gray-900 dark:text-white text-sm">Meus Eventos</p>
+                <p className="text-xs text-gray-400 dark:text-slate-500">Criar, editar e gerenciar eventos</p>
               </div>
             </div>
             <ChevronRight className="w-5 h-5 text-gray-300 group-hover:text-purple-500 transition" />
@@ -127,8 +127,8 @@ export default async function OrgDashboardPage() {
         {/* Lista de eventos recentes */}
         <div>
           <div className="flex items-center justify-between mb-3">
-            <h2 className="font-semibold text-gray-900">Eventos recentes</h2>
-            <Link href="/dashboard/org/events" className="text-xs text-purple-600 font-semibold">Ver todos →</Link>
+            <h2 className="font-semibold text-gray-900 dark:text-white">Eventos recentes</h2>
+            <Link href="/dashboard/org/events" className="text-xs text-purple-600 dark:text-purple-400 font-semibold">Ver todos →</Link>
           </div>
 
           {(!events || events.length === 0) ? (
@@ -148,11 +148,11 @@ export default async function OrgDashboardPage() {
                 <Link
                   key={event.id}
                   href={`/dashboard/org/events/${event.id}`}
-                  className="flex items-center justify-between bg-white rounded-2xl p-4 shadow-sm hover:shadow-md transition"
+                  className="flex items-center justify-between bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 rounded-2xl p-4 shadow-sm hover:shadow-md transition"
                 >
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                      <p className="font-semibold text-gray-900 text-sm truncate">{event.name}</p>
+                      <p className="font-semibold text-gray-900 dark:text-white text-sm truncate">{event.name}</p>
                       <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${
                         event.active ? 'bg-green-100 text-green-700' : 'bg-gray-200 text-gray-500'
                       }`}>
@@ -160,12 +160,12 @@ export default async function OrgDashboardPage() {
                       </span>
                     </div>
                     {event.location && (
-                      <p className="text-xs text-gray-400 flex items-center gap-1 mt-0.5">
+                      <p className="text-xs text-gray-400 dark:text-slate-500 flex items-center gap-1 mt-0.5">
                         <MapPin className="w-3 h-3" /> {event.location}
                       </p>
                     )}
                     {event.start_date && (
-                      <p className="text-xs text-gray-400 mt-0.5">
+                      <p className="text-xs text-gray-400 dark:text-slate-500 mt-0.5">
                         {new Date(event.start_date).toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' })}
                       </p>
                     )}
