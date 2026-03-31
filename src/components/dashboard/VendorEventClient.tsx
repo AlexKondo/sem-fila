@@ -25,37 +25,39 @@ export default function VendorEventClient({ vendorId, activeEvent, invitations: 
     setInvites(initialInvites || []);
   }, [initialInvites]);
 
-  const handleInvite = useCallback(async (inviteId: string, status: 'accepted' | 'rejected') => {
+  const handleInvite = useCallback(async (inviteId: string, action: 'accepted' | 'rejected') => {
     setActingOn(inviteId);
     const supabase = createClient();
 
     const invite = invites.find(i => i.id === inviteId);
     if (!invite) return;
 
-    // Remove localmente primeiro (para feedback imediato)
-    setInvites(prev => prev.filter(i => i.id !== inviteId));
-    setSelectedInvite(null);
-    setView('list');
-
     // Atualiza o convite: status + vendor_id (vincula ao vendor atual) + responded_at
-    const { error: updateInviteError } = await supabase
+    // Usa .select() para verificar se a atualização realmente aconteceu (RLS pode bloquear silenciosamente)
+    const { data: updated, error: updateInviteError } = await supabase
       .from('event_vendor_invitations')
       .update({
-        status,
+        status: action,
         vendor_id: vendorId,
         responded_at: new Date().toISOString()
       })
-      .eq('id', inviteId);
+      .eq('id', inviteId)
+      .select('id')
+      .maybeSingle();
 
     if (updateInviteError) {
       alert(`Erro: ${updateInviteError.message}`);
       setActingOn(null);
-      // Restaura localmente em caso de erro
-      setInvites(prev => [invite, ...prev]);
       return;
     }
 
-    if (status === 'accepted') {
+    if (!updated) {
+      alert('Não foi possível atualizar o convite. Verifique suas permissões.');
+      setActingOn(null);
+      return;
+    }
+
+    if (action === 'accepted') {
       // Vincula o vendor ao evento
       const { error: updateVendorError } = await supabase
         .from('vendors')
@@ -67,8 +69,12 @@ export default function VendorEventClient({ vendorId, activeEvent, invitations: 
       }
     }
 
-    router.refresh();
+    // Sucesso confirmado — atualiza UI
+    setInvites(prev => prev.filter(i => i.id !== inviteId));
+    setSelectedInvite(null);
+    setView('list');
     setActingOn(null);
+    router.refresh();
   }, [invites, vendorId, router]);
 
   const backButton = (
