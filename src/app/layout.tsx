@@ -34,7 +34,6 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
         <meta name="apple-mobile-web-app-title" content="QuickPick" />
         <link rel="apple-touch-icon" href="/icons/icon-192.png" />
-        <style>{`html.dark { color-scheme: dark; } html { color-scheme: light; }`}</style>
         <script dangerouslySetInnerHTML={{ __html: `
           (function(){
             try {
@@ -43,9 +42,9 @@ export default function RootLayout({
               if (isDark) {
                 document.documentElement.classList.add('dark');
                 document.documentElement.style.colorScheme = 'dark';
+                document.documentElement.style.backgroundColor = '#020617';
               } else {
-                document.documentElement.classList.remove('dark');
-                document.documentElement.style.colorScheme = 'light';
+                document.documentElement.style.backgroundColor = '#f8f6f6';
               }
             } catch(e){}
           })();

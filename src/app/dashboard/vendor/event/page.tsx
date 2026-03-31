@@ -10,36 +10,17 @@ export default async function VendorEventPage() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect('/login');
 
-  const { vendor, vendors } = await resolveVendor(supabase, user.id, { select: 'id, name, event_id' });
+  const { vendor } = await resolveVendor(supabase, user.id, { select: 'id, name, event_id' });
   if (!vendor) redirect('/dashboard/vendor');
 
-  // 1. Busca convites pendentes (por vendor_id OU e-mail do perfil)
-  const { data: profile } = await supabase.from('profiles').select('email').eq('id', user.id).single();
-  const userEmail = profile?.email;
-
-  // Busca convites APENAS para os vendors que este usuário é dono ou para o seu e-mail
-  const allVendorIds = vendors.map(v => v.id);
-  
-  const query = supabase
+  // 1. Busca TODOS os convites deste vendor (pending, accepted, rejected)
+  const { data: rawInvitations } = await supabase
     .from('event_vendor_invitations')
     .select('*')
-    .eq('status', 'pending');
+    .eq('vendor_id', vendor.id)
+    .order('invited_at', { ascending: false });
 
-  const orConditions = [`vendor_id.in.(${allVendorIds.join(',')})`];
-  if (userEmail) orConditions.push(`vendor_email.eq.${userEmail}`);
-  query.or(orConditions.join(','));
-
-  const { data: rawInvitations } = await query.order('invited_at', { ascending: false });
-
-  // Filtra convites que pertencem especificamente ao vendor ATUAL selecionado
-  const currentVendorInvites = rawInvitations?.filter(inv => 
-    inv.vendor_id === vendor.id || (inv.vendor_id === null && inv.vendor_email === userEmail)
-  ) || [];
-
-  // Verifica se existem convites para OUTRAS marcas do mesmo dono
-  const hasInvitesForOtherBrands = (rawInvitations?.length || 0) > currentVendorInvites.length;
-
-  // 2. Enriquece convites com dados do evento (queries separadas por causa de RLS)
+  // 2. Enriquece com dados do evento
   const invitations = rawInvitations ?? [];
   const eventIds = [...new Set(invitations.map(i => i.event_id).filter(Boolean))];
 
@@ -63,13 +44,10 @@ export default async function VendorEventPage() {
     }
   }
 
-  // Filtra convites de eventos que o vendor já participa
-  const enrichedInvitations = invitations
-    .filter(inv => inv.event_id !== vendor.event_id)
-    .map(inv => ({
-      ...inv,
-      events: eventsMap[inv.event_id] || null,
-    }));
+  const enrichedInvitations = invitations.map(inv => ({
+    ...inv,
+    events: eventsMap[inv.event_id] || null,
+  }));
 
   // 3. Busca evento ativo e barraca
   const [{ data: activeEvent }, { data: booth }] = await Promise.all([
@@ -84,12 +62,8 @@ export default async function VendorEventPage() {
       <VendorEventClient
         vendorId={vendor.id}
         activeEvent={activeEvent}
-        invitations={currentVendorInvites.map(inv => ({
-          ...inv,
-          events: eventsMap[inv.event_id] || null,
-        }))}
+        invitations={enrichedInvitations}
         booth={booth}
-        hasInvitesForOtherBrands={hasInvitesForOtherBrands}
       />
     </div>
   );

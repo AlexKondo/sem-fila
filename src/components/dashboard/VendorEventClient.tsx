@@ -10,18 +10,19 @@ interface VendorEventClientProps {
   activeEvent: any | null;
   invitations: any[];
   booth: any | null;
-  hasInvitesForOtherBrands?: boolean;
 }
 
 type View = 'list' | 'invite-detail' | 'event-detail';
 
-export default function VendorEventClient({ 
-  vendorId, 
-  activeEvent, 
-  invitations: initialInvites, 
-  booth, 
-  hasInvitesForOtherBrands 
-}: VendorEventClientProps) {
+const INVITE_STYLE: Record<string, { card: string; text: string; sub: string; badge: string; label: string }> = {
+  pending:  { card: 'bg-gradient-to-br from-orange-500 to-amber-600 shadow-lg', text: 'text-white', sub: 'text-orange-100', badge: 'bg-white/20 text-white', label: 'Pendente' },
+  accepted: { card: 'bg-gradient-to-br from-emerald-500 to-green-600 shadow-lg', text: 'text-white', sub: 'text-green-100', badge: 'bg-white/20 text-white', label: 'Aceito' },
+  rejected: { card: 'bg-slate-100 dark:bg-slate-800/60 opacity-60', text: 'text-slate-500 dark:text-slate-400', sub: 'text-slate-400 dark:text-slate-500', badge: 'bg-slate-200 dark:bg-slate-700 text-slate-500', label: 'Recusado' },
+  paid:     { card: 'bg-gradient-to-br from-blue-500 to-indigo-600 shadow-lg', text: 'text-white', sub: 'text-blue-100', badge: 'bg-white/20 text-white', label: 'Pago' },
+  expired:  { card: 'bg-slate-100 dark:bg-slate-800/60 opacity-50', text: 'text-slate-400', sub: 'text-slate-400', badge: 'bg-slate-200 dark:bg-slate-700 text-slate-400', label: 'Expirado' },
+};
+
+export default function VendorEventClient({ vendorId, activeEvent, invitations: initialInvites, booth }: VendorEventClientProps) {
   const router = useRouter();
   const [invites, setInvites] = useState(initialInvites || []);
   const [actingOn, setActingOn] = useState<string | null>(null);
@@ -292,20 +293,7 @@ export default function VendorEventClient({
   // ── Tela principal (lista limpa) ──
   return (
     <div className="max-w-2xl mx-auto px-4 pb-12 space-y-6">
-      {/* Banner de aviso para convites em outras marcas do mesmo dono */}
-      {hasInvitesForOtherBrands && (
-        <div className="bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-900/20 rounded-2xl p-4 flex items-center gap-4 transition-colors">
-          <div className="w-10 h-10 rounded-xl bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center shrink-0">
-            <Building className="w-5 h-5 text-amber-600 dark:text-amber-400" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-bold text-amber-800 dark:text-amber-200">Atenção!</p>
-            <p className="text-[11px] text-amber-700 dark:text-amber-400">Você possui convites pendentes em outras marcas. Use o botão <b>"Trocar Marca"</b> no topo para vê-los.</p>
-          </div>
-        </div>
-      )}
-
-      {/* Convites Pendentes */}
+      {/* Todos os Convites */}
       {invites.length > 0 && (
         <section className="space-y-3">
           <div className="flex items-center gap-2">
@@ -315,40 +303,42 @@ export default function VendorEventClient({
             <h2 className="font-black text-slate-900 dark:text-white uppercase tracking-widest text-sm">Convites</h2>
           </div>
           <div className="grid gap-3">
-            {invites.map(invite => (
-              <button
-                key={invite.id}
-                onClick={() => { setSelectedInvite(invite); setView('invite-detail'); }}
-                className="w-full text-left bg-gradient-to-br from-orange-500 to-amber-600 rounded-2xl p-5 text-white shadow-lg transition-all hover:shadow-xl active:scale-[0.98]"
-              >
-                <div className="flex items-center justify-between">
-                  <div className="min-w-0 flex-1">
-                    <h3 className="font-bold text-lg">{invite.events?.name || 'Evento'}</h3>
-                    <div className="flex items-center gap-3 mt-1 text-xs text-orange-100">
-                      {invite.events?.organizations?.name && (
-                        <span className="flex items-center gap-1">
-                          <Building className="w-3 h-3" /> {invite.events.organizations.name}
-                        </span>
-                      )}
-                      {invite.events?.start_date && (
-                        <span className="flex items-center gap-1">
-                          <Calendar className="w-3 h-3" /> {new Date(invite.events.start_date).toLocaleDateString('pt-BR')}
-                        </span>
-                      )}
-                      {invite.events?.location && (
-                        <span className="flex items-center gap-1">
-                          <MapPin className="w-3 h-3" /> {invite.events.location}
-                        </span>
-                      )}
+            {invites.map(invite => {
+              const style = INVITE_STYLE[invite.status] ?? INVITE_STYLE.pending;
+              const isPending = invite.status === 'pending';
+              return (
+                <button
+                  key={invite.id}
+                  onClick={() => { if (isPending) { setSelectedInvite(invite); setView('invite-detail'); } }}
+                  className={`w-full text-left rounded-2xl p-5 transition-all ${style.card} ${isPending ? 'hover:shadow-xl active:scale-[0.98] cursor-pointer' : 'cursor-default'}`}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <h3 className={`font-bold text-lg ${style.text}`}>{invite.events?.name || 'Evento'}</h3>
+                        <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-full ${style.badge}`}>{style.label}</span>
+                      </div>
+                      <div className={`flex items-center gap-3 text-xs ${style.sub}`}>
+                        {invite.events?.start_date && (
+                          <span className="flex items-center gap-1">
+                            <Calendar className="w-3 h-3" /> {new Date(invite.events.start_date).toLocaleDateString('pt-BR')}
+                          </span>
+                        )}
+                        {invite.events?.location && (
+                          <span className="flex items-center gap-1">
+                            <MapPin className="w-3 h-3" /> {invite.events.location}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 ml-3 shrink-0">
+                      <p className={`text-xs font-black ${style.text}`}>R$ {Number(invite.fee_amount).toFixed(2)}</p>
+                      {isPending && <ChevronRight className={`w-5 h-5 ${style.sub}`} />}
                     </div>
                   </div>
-                  <div className="flex items-center gap-3 ml-3">
-                    <p className="text-xs font-black text-orange-50">R$ {Number(invite.fee_amount).toFixed(2)}</p>
-                    <ChevronRight className="w-5 h-5 text-orange-200" />
-                  </div>
-                </div>
-              </button>
-            ))}
+                </button>
+              );
+            })}
           </div>
         </section>
       )}
