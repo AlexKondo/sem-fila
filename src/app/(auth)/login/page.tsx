@@ -4,6 +4,7 @@ import { useState, useRef, memo, Suspense } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
+import ThemeToggle from '@/components/ui/ThemeToggle';
 
 const P = '#ec5b13';
 
@@ -21,7 +22,7 @@ const LoginHero = memo(function LoginHero() {
         Voltar
       </Link>
       <div className="relative h-[40vh] w-full overflow-hidden bg-slate-800">
-        <div className="absolute inset-0 bg-gradient-to-t from-[#f8f6f6] via-transparent to-transparent z-10" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#f8f6f6] dark:from-slate-950 via-transparent to-transparent z-10" />
         <div className="h-full w-full" style={{ background: 'linear-gradient(135deg, #1e1008 0%, #3d1f0a 50%, #ec5b1320 100%)' }} />
         <div className="absolute top-12 left-0 right-0 z-20 flex flex-col items-center">
           <div className="p-3 rounded-xl shadow-lg mb-4" style={{ backgroundColor: P }}>
@@ -31,6 +32,9 @@ const LoginHero = memo(function LoginHero() {
           </div>
           <h1 className="text-3xl font-bold tracking-tight text-white drop-shadow-md">QuickPick</h1>
           <p className="text-white/80 text-sm font-medium drop-shadow-sm mt-1">Sem fila, só sabor</p>
+        </div>
+        <div className="absolute top-8 right-6 z-30">
+          <ThemeToggle />
         </div>
       </div>
     </>
@@ -91,51 +95,51 @@ function LoginPageContent() {
   const ringStyle = { '--tw-ring-color': P + '80' } as React.CSSProperties;
 
   return (
-    <div className="relative flex min-h-screen w-full flex-col overflow-x-hidden" style={{ backgroundColor: '#f8f6f6' }}>
+    <div className="relative flex min-h-screen w-full flex-col overflow-x-hidden bg-[#f8f6f6] dark:bg-slate-950 transition-colors duration-300">
       <LoginHero />
 
-      <div className="flex-1 px-6 -mt-12 relative z-20 rounded-t-[32px] pt-8 shadow-2xl bg-white">
+      <div className="flex-1 px-6 -mt-12 relative z-20 rounded-t-[32px] pt-8 shadow-2xl bg-white dark:bg-slate-900 transition-colors duration-300">
         <div className="max-w-md mx-auto">
           <div className="mb-8">
-            <h2 className="text-2xl font-bold text-slate-900">Bem-vindo de volta</h2>
-            <p className="text-slate-500 mt-1">Acesse o painel do seu negócio.</p>
+            <h2 className="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tight">Bem-vindo de volta</h2>
+            <p className="text-slate-500 dark:text-slate-400 mt-1 font-medium text-sm">Acesse o painel do seu negócio.</p>
           </div>
 
           {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 text-sm px-4 py-3 rounded-xl mb-4">{error}</div>
+            <div className="bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900/30 text-red-700 dark:text-red-400 text-sm px-4 py-3 rounded-xl mb-4 animate-in fade-in slide-in-from-top-1">{error}</div>
           )}
 
           <form onSubmit={handleLogin} className="space-y-4">
             <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-semibold text-slate-700 ml-1">Email</label>
+              <label className="text-sm font-bold text-slate-700 dark:text-slate-300 ml-1">Email</label>
               <div className="relative">
-                <svg className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 dark:text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                 </svg>
                 <input
                   ref={emailRef}
                   type="email" required autoComplete="email"
                   placeholder="seu@email.com"
-                  className="w-full pl-12 pr-4 h-14 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 transition-all"
+                  className="w-full pl-12 pr-4 h-14 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl focus:outline-none focus:ring-2 transition-all text-slate-900 dark:text-white placeholder-slate-300 dark:placeholder-slate-700 font-medium"
                   style={ringStyle}
                 />
               </div>
             </div>
 
             <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-semibold text-slate-700 ml-1">Senha</label>
+              <label className="text-sm font-bold text-slate-700 dark:text-slate-300 ml-1">Senha</label>
               <div className="relative">
-                <svg className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 dark:text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                 </svg>
                 <input
                   ref={passwordRef}
                   type={showPw ? 'text' : 'password'} required autoComplete="current-password"
                   placeholder="••••••••"
-                  className="w-full pl-12 pr-12 h-14 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 transition-all"
+                  className="w-full pl-12 pr-12 h-14 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl focus:outline-none focus:ring-2 transition-all text-slate-900 dark:text-white placeholder-slate-300 dark:placeholder-slate-700 font-medium"
                   style={ringStyle}
                 />
-                <button type="button" onClick={() => setShowPw(!showPw)} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400">
+                <button type="button" onClick={() => setShowPw(!showPw)} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-600 hover:text-slate-600 transition-colors">
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     {showPw
                       ? <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
@@ -165,9 +169,9 @@ function LoginPageContent() {
           </form>
 
           <div className="text-center mt-8 pb-12">
-            <p className="text-slate-500 text-sm">
+            <p className="text-slate-500 dark:text-slate-400 text-sm">
               Não tem conta?{' '}
-              <Link href="/register" className="font-bold ml-1" style={{ color: P }}>Criar conta</Link>
+              <Link href="/register" className="font-bold ml-1 hover:underline transition-all" style={{ color: P }}>Criar conta</Link>
             </p>
           </div>
         </div>

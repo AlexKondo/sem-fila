@@ -120,17 +120,24 @@ export default function RankingClient() {
                     <p className="font-bold text-gray-900 dark:text-white text-sm">{info.label}</p>
                     <p className="text-xs text-gray-400 dark:text-slate-500 mt-0.5">{info.desc}</p>
                   </div>
-                  <button
-                    onClick={() => toggleFeature(setting.id, setting.active)}
-                    disabled={toggling === setting.id}
-                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                      setting.active ? 'bg-orange-500' : 'bg-gray-200 dark:bg-slate-700'
-                    } disabled:opacity-50`}
-                  >
-                    <span className={`inline-block h-4 w-4 transform rounded-full bg-white dark:bg-slate-300 shadow transition-transform ${
-                      setting.active ? 'translate-x-6' : 'translate-x-1'
-                    }`} />
-                  </button>
+                  <div className="flex items-center gap-3">
+                    <div className="text-right">
+                      <p className={`text-[10px] font-black uppercase tracking-widest ${setting.active ? 'text-orange-500' : 'text-slate-400 dark:text-slate-600'}`}>
+                        {setting.active ? 'Ativo' : 'Inativo'}
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => toggleFeature(setting.id, setting.active)}
+                      disabled={toggling === setting.id}
+                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                        setting.active ? 'bg-orange-500 shadow-lg shadow-orange-500/20' : 'bg-gray-200 dark:bg-slate-700'
+                      } disabled:opacity-50`}
+                    >
+                      <span className={`inline-block h-4 w-4 transform rounded-full bg-white dark:bg-slate-300 shadow transition-transform ${
+                        setting.active ? 'translate-x-6' : 'translate-x-1'
+                      }`} />
+                    </button>
+                  </div>
                 </div>
               );
             })}
@@ -230,16 +237,23 @@ export default function RankingClient() {
                         {expired && <span className="text-red-500 font-bold ml-1">(EXPIRADO)</span>}
                       </p>
                     </div>
-                    <button
-                      onClick={() => toggleSub(sub.id, sub.active)}
-                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                        sub.active && !expired ? 'bg-orange-500' : 'bg-gray-200 dark:bg-slate-700'
-                      }`}
-                    >
-                      <span className={`inline-block h-4 w-4 transform rounded-full bg-white dark:bg-slate-300 shadow transition-transform ${
-                        sub.active && !expired ? 'translate-x-6' : 'translate-x-1'
-                      }`} />
-                    </button>
+                    <div className="flex items-center gap-3">
+                      <div className="text-right">
+                        <p className={`text-[10px] font-black uppercase tracking-widest ${sub.active && !expired ? 'text-orange-500' : 'text-slate-400 dark:text-slate-600'}`}>
+                          {sub.active && !expired ? 'Ativo' : 'Inativo'}
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => toggleSub(sub.id, sub.active)}
+                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                          sub.active && !expired ? 'bg-orange-500 shadow-lg shadow-orange-500/20' : 'bg-gray-200 dark:bg-slate-700'
+                        }`}
+                      >
+                        <span className={`inline-block h-4 w-4 transform rounded-full bg-white dark:bg-slate-300 shadow transition-transform ${
+                          sub.active && !expired ? 'translate-x-6' : 'translate-x-1'
+                        }`} />
+                      </button>
+                    </div>
                   </div>
                 );
               })

@@ -4,6 +4,7 @@ import { useState, Suspense } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
+import ThemeToggle from '@/components/ui/ThemeToggle';
 
 const P = '#ec5b13';
 
@@ -53,7 +54,7 @@ function LoginUserContent() {
   }
 
   return (
-    <div className="relative flex min-h-screen w-full flex-col overflow-x-hidden" style={{ backgroundColor: '#f8f6f6' }}>
+    <div className="relative flex min-h-screen w-full flex-col overflow-x-hidden bg-[#f8f6f6] dark:bg-slate-950 transition-colors duration-300">
       {/* Back */}
       <Link
         href="/"
@@ -65,9 +66,13 @@ function LoginUserContent() {
         Voltar
       </Link>
 
+      <div className="absolute top-8 right-6 z-30">
+        <ThemeToggle />
+      </div>
+
       {/* Hero */}
       <div className="relative h-[40vh] w-full overflow-hidden bg-slate-800">
-        <div className="absolute inset-0 bg-gradient-to-t from-[#f8f6f6] via-transparent to-transparent z-10" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#f8f6f6] dark:from-slate-950 via-transparent to-transparent z-10" />
         <div className="h-full w-full" style={{ background: 'linear-gradient(135deg, #1e1008 0%, #3d1f0a 50%, #ec5b1320 100%)' }} />
         <div className="absolute top-12 left-0 right-0 z-20 flex flex-col items-center">
           <div className="p-3 rounded-xl shadow-lg mb-4" style={{ backgroundColor: P }}>
@@ -80,52 +85,52 @@ function LoginUserContent() {
         </div>
       </div>
 
-      <div className="flex-1 px-6 -mt-12 relative z-20 rounded-t-[32px] pt-8 shadow-2xl bg-white">
+      <div className="flex-1 px-6 -mt-12 relative z-20 rounded-t-[32px] pt-8 shadow-2xl bg-white dark:bg-slate-900 transition-colors duration-300">
         <div className="max-w-md mx-auto">
           <div className="mb-8">
-            <h2 className="text-2xl font-bold text-slate-900">Entrar na sua conta</h2>
-            <p className="text-slate-500 mt-1 text-sm">Acompanhe seus pedidos em tempo real</p>
+            <h2 className="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tight">Entrar na sua conta</h2>
+            <p className="text-slate-500 dark:text-slate-400 mt-1 font-medium text-sm">Acompanhe seus pedidos em tempo real</p>
           </div>
 
           {error === '__vendor__' ? (
-            <div className="bg-blue-50 border border-blue-200 rounded-2xl px-4 py-4 mb-4 space-y-2">
-              <p className="text-sm font-bold text-blue-800">Essa conta é de fornecedor</p>
-              <p className="text-sm text-blue-700 leading-relaxed">
+            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-2xl px-4 py-4 mb-4 space-y-2">
+              <p className="text-sm font-bold text-blue-800 dark:text-blue-300">Essa conta é de fornecedor</p>
+              <p className="text-sm text-blue-700 dark:text-blue-400 leading-relaxed">
                 Para acessar o painel do seu negócio, use a{' '}
                 <Link href="/login" className="font-bold underline" style={{ color: P }}>tela de login de fornecedor</Link>.
               </p>
             </div>
           ) : error ? (
-            <div className="bg-red-50 border border-red-200 text-red-700 text-sm px-4 py-3 rounded-xl mb-4">{error}</div>
+            <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 text-sm px-4 py-3 rounded-xl mb-4">{error}</div>
           ) : null}
 
           <form onSubmit={handleLogin} className="space-y-4">
             <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-semibold text-slate-700 ml-1">Email</label>
+              <label className="text-sm font-bold text-slate-700 dark:text-slate-300 ml-1">Email</label>
               <div className="relative">
-                <svg className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 dark:text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                 </svg>
                 <input
                   type="email" required autoComplete="email" value={email} onChange={e => setEmail(e.target.value)}
                   placeholder="seu@email.com"
-                  className="w-full pl-12 pr-4 h-14 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 transition-all"
+                  className="w-full pl-12 pr-4 h-14 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl focus:outline-none focus:ring-2 transition-all text-slate-900 dark:text-white placeholder-slate-300 dark:placeholder-slate-700 font-medium"
                 />
               </div>
             </div>
 
             <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-semibold text-slate-700 ml-1">Senha</label>
+              <label className="text-sm font-bold text-slate-700 dark:text-slate-300 ml-1">Senha</label>
               <div className="relative">
-                <svg className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 dark:text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                 </svg>
                 <input
                   type={showPw ? 'text' : 'password'} required value={password} onChange={e => setPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="w-full pl-12 pr-12 h-14 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 transition-all"
+                  className="w-full pl-12 pr-12 h-14 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl focus:outline-none focus:ring-2 transition-all text-slate-900 dark:text-white placeholder-slate-300 dark:placeholder-slate-700 font-medium"
                 />
-                <button type="button" onClick={() => setShowPw(!showPw)} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400">
+                <button type="button" onClick={() => setShowPw(!showPw)} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-600">
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     {showPw
                       ? <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
@@ -155,13 +160,13 @@ function LoginUserContent() {
           </form>
 
           <div className="text-center mt-6 pb-12 space-y-3">
-            <p className="text-slate-500 text-sm">
+            <p className="text-slate-500 dark:text-slate-400 text-sm font-medium">
               Não tem conta?{' '}
-              <Link href="/register-user" className="font-bold ml-1" style={{ color: P }}>Criar conta</Link>
+              <Link href="/register-user" className="font-bold ml-1 hover:underline transition-all" style={{ color: P }}>Criar conta</Link>
             </p>
-            <p className="text-slate-400 text-xs">
+            <p className="text-slate-400 dark:text-slate-600 text-[11px] font-bold uppercase tracking-widest mt-4">
               É fornecedor?{' '}
-              <Link href="/login" className="font-semibold hover:underline text-slate-500">Acessar painel do seu negócio</Link>
+              <Link href="/login" className="font-black hover:underline text-slate-500 dark:text-slate-500 ml-1">Acessar painel do seu negócio</Link>
             </p>
           </div>
         </div>

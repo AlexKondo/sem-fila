@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import ThemeToggle from '@/components/ui/ThemeToggle';
 
 type AccountType = 'vendor' | 'org_admin';
 
@@ -83,21 +84,21 @@ export default function RegisterPage() {
   if (success) {
     const isVendor = accountType === 'vendor';
     return (
-      <div className="min-h-screen flex items-center justify-center px-4" style={{ backgroundColor: '#f8f6f6' }}>
-        <div className="bg-white rounded-3xl p-10 text-center max-w-sm w-full shadow-sm border border-slate-100">
-          <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-5" style={{ backgroundColor: accentColor + '20' }}>
+      <div className="min-h-screen flex items-center justify-center px-4 bg-[#f8f6f6] dark:bg-slate-950 transition-colors duration-300">
+        <div className="bg-white dark:bg-slate-900 rounded-3xl p-10 text-center max-w-sm w-full shadow-2xl border border-slate-100 dark:border-slate-800 transition-colors">
+          <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-5 animate-bounce" style={{ backgroundColor: accentColor + '20' }}>
             <svg className="w-8 h-8" style={{ color: accentColor }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
             </svg>
           </div>
-          <h2 className="text-xl font-bold text-slate-900 mb-2">Conta criada com sucesso!</h2>
-          <p className="text-slate-500 text-sm leading-relaxed">
+          <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-2">Conta criada!</h2>
+          <p className="text-slate-500 dark:text-slate-400 text-sm leading-relaxed">
             {isVendor
-              ? <>Seja bem-vindo ao <strong className="text-slate-700">QuickPick</strong>. Sua marca já está pronta para receber pedidos.</>
-              : <>Sua organização <strong className="text-slate-700">{orgName}</strong> está pronta. Agora você pode criar eventos e convidar fornecedores.</>
+              ? <>Seja bem-vindo ao <strong className="text-slate-700 dark:text-slate-300">QuickPick</strong>. Sua marca já está pronta para receber pedidos.</>
+              : <>Sua organização <strong className="text-slate-700 dark:text-slate-300">{orgName}</strong> está pronta. Agora você pode criar eventos e convidar fornecedores.</>
             }
           </p>
-          <Link href="/login" className="block mt-6 font-semibold text-sm" style={{ color: accentColor }}>Ir para o login →</Link>
+          <Link href="/login" className="block mt-8 font-black text-sm uppercase tracking-widest hover:underline transition-all" style={{ color: accentColor }}>Ir para o login →</Link>
         </div>
       </div>
     );
@@ -108,16 +109,19 @@ export default function RegisterPage() {
     : 'linear-gradient(135deg, #1a0533 0%, #3b1d6e 50%, #7c3aed20 100%)';
 
   return (
-    <div className="relative flex min-h-screen w-full flex-col overflow-x-hidden" style={{ backgroundColor: '#f8f6f6' }}>
+    <div className="relative flex min-h-screen w-full flex-col overflow-x-hidden bg-[#f8f6f6] dark:bg-slate-950 transition-colors duration-300">
       {/* Hero */}
       <div className="relative h-[28vh] w-full overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-t from-[#f8f6f6] via-transparent to-transparent z-10" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#f8f6f6] dark:from-slate-950 via-transparent to-transparent z-10" />
         <div className="h-full w-full transition-all duration-500" style={{ background: heroGradient }} />
-        <Link href="/" className="absolute top-4 left-4 z-30 w-10 h-10 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center text-white hover:bg-white/30 transition-colors">
+        <Link href="/" className="absolute top-4 left-4 z-30 w-10 h-10 rounded-xl bg-white/20 backdrop-blur-md flex items-center justify-center text-white hover:bg-white/30 transition-colors border border-white/10">
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
           </svg>
         </Link>
+        <div className="absolute top-4 right-4 z-30">
+          <ThemeToggle />
+        </div>
         <div className="absolute top-8 left-0 right-0 z-20 flex flex-col items-center">
           <div className="p-3 rounded-xl shadow-lg mb-3 transition-colors duration-500" style={{ backgroundColor: accentColor }}>
             {accountType === 'vendor' ? (
@@ -135,11 +139,11 @@ export default function RegisterPage() {
       </div>
 
       {/* Form */}
-      <div className="flex-1 px-6 -mt-8 relative z-20 rounded-t-[32px] pt-8 shadow-2xl bg-white">
+      <div className="flex-1 px-6 -mt-8 relative z-20 rounded-t-[32px] pt-8 shadow-2xl bg-white dark:bg-slate-900 transition-colors duration-300">
         <div className="max-w-md mx-auto pb-12">
           <div className="mb-6">
-            <h2 className="text-2xl font-bold text-slate-900">Criar conta grátis</h2>
-            <p className="text-slate-500 mt-1 text-sm">Escolha o tipo de conta e comece agora</p>
+            <h2 className="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tight">Criar conta grátis</h2>
+            <p className="text-slate-500 dark:text-slate-400 mt-1 text-sm font-medium">Escolha o tipo de conta e comece agora</p>
           </div>
 
           {/* Seletor de tipo de conta */}
@@ -147,10 +151,10 @@ export default function RegisterPage() {
             <button
               type="button"
               onClick={() => setAccountType('vendor')}
-              className={`flex-1 py-3 px-3 rounded-xl text-sm font-semibold transition-all flex items-center justify-center gap-2 border-2 ${
+              className={`flex-1 py-3 px-3 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2 border-2 ${
                 accountType === 'vendor'
                   ? 'text-white border-transparent'
-                  : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300'
+                  : 'bg-white dark:bg-slate-900 text-slate-500 dark:text-slate-500 border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700'
               }`}
               style={accountType === 'vendor' ? { backgroundColor: ORANGE, borderColor: ORANGE } : undefined}
             >
@@ -162,10 +166,10 @@ export default function RegisterPage() {
             <button
               type="button"
               onClick={() => setAccountType('org_admin')}
-              className={`flex-1 py-3 px-3 rounded-xl text-sm font-semibold transition-all flex items-center justify-center gap-2 border-2 ${
+              className={`flex-1 py-3 px-3 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2 border-2 ${
                 accountType === 'org_admin'
                   ? 'text-white border-transparent'
-                  : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300'
+                  : 'bg-white dark:bg-slate-900 text-slate-500 dark:text-slate-500 border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700'
               }`}
               style={accountType === 'org_admin' ? { backgroundColor: PURPLE, borderColor: PURPLE } : undefined}
             >
@@ -177,7 +181,7 @@ export default function RegisterPage() {
           </div>
 
           {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 text-sm px-4 py-3 rounded-xl mb-4">{error}</div>
+            <div className="bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900/30 text-red-700 dark:text-red-400 text-sm px-4 py-3 rounded-xl mb-4 animate-in fade-in slide-in-from-top-1 font-medium">{error}</div>
           )}
 
           <form onSubmit={handleRegister} className="space-y-4">
@@ -187,7 +191,7 @@ export default function RegisterPage() {
                 <input
                   type="text" required value={name} onChange={e => setName(e.target.value)}
                   placeholder="Seu nome" autoComplete="name"
-                  className="w-full pl-12 pr-4 h-14 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 text-sm"
+                  className="w-full pl-12 pr-4 h-14 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl focus:outline-none focus:ring-2 text-sm text-slate-900 dark:text-white placeholder-slate-300 dark:placeholder-slate-700 font-medium transition-all"
                   style={ringStyle}
                 />
               </InputIcon>
@@ -199,7 +203,7 @@ export default function RegisterPage() {
                 <input
                   type="email" required value={email} onChange={e => setEmail(e.target.value)}
                   placeholder="seu@email.com" autoComplete="email"
-                  className="w-full pl-12 pr-4 h-14 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 text-sm"
+                  className="w-full pl-12 pr-4 h-14 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl focus:outline-none focus:ring-2 text-sm text-slate-900 dark:text-white placeholder-slate-300 dark:placeholder-slate-700 font-medium transition-all"
                   style={ringStyle}
                 />
               </InputIcon>
@@ -212,7 +216,7 @@ export default function RegisterPage() {
                   type="tel" required value={phone}
                   onChange={e => setPhone(maskPhone(e.target.value))}
                   placeholder="(11) 99999-9999" autoComplete="tel" inputMode="numeric"
-                  className="w-full pl-12 pr-4 h-14 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 text-sm"
+                  className="w-full pl-12 pr-4 h-14 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl focus:outline-none focus:ring-2 text-sm text-slate-900 dark:text-white placeholder-slate-300 dark:placeholder-slate-700 font-medium transition-all"
                   style={ringStyle}
                 />
               </InputIcon>
@@ -225,7 +229,7 @@ export default function RegisterPage() {
                   <input
                     type="text" required value={brandName} onChange={e => setBrandName(e.target.value)}
                     placeholder="Nome do seu negócio"
-                    className="w-full pl-12 pr-4 h-14 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 text-sm font-bold"
+                    className="w-full pl-12 pr-4 h-14 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl focus:outline-none focus:ring-2 text-sm font-black text-slate-900 dark:text-white placeholder-slate-300 dark:placeholder-slate-700 transition-all uppercase tracking-tight"
                     style={ringStyle}
                   />
                 </InputIcon>
@@ -235,8 +239,8 @@ export default function RegisterPage() {
                 <InputIcon icon={<CalendarIcon />}>
                   <input
                     type="text" required value={orgName} onChange={e => setOrgName(e.target.value)}
-                    placeholder="Digite o nome da sua empresa e não o nome do evento."
-                    className="w-full pl-12 pr-4 h-14 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 text-sm font-bold"
+                    placeholder="Nome da empresa organizadora"
+                    className="w-full pl-12 pr-4 h-14 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl focus:outline-none focus:ring-2 text-sm font-black text-slate-900 dark:text-white placeholder-slate-300 dark:placeholder-slate-700 transition-all uppercase tracking-tight"
                     style={ringStyle}
                   />
                 </InputIcon>
@@ -250,7 +254,7 @@ export default function RegisterPage() {
                   type="text" required value={cnpj}
                   onChange={e => setCnpj(maskCPF_CNPJ(e.target.value))}
                   inputMode="numeric"
-                  className="w-full pl-12 pr-4 h-14 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 text-sm"
+                  className="w-full pl-12 pr-4 h-14 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl focus:outline-none focus:ring-2 text-sm text-slate-900 dark:text-white placeholder-slate-300 dark:placeholder-slate-700 font-medium transition-all"
                   style={ringStyle}
                 />
               </InputIcon>
@@ -263,7 +267,7 @@ export default function RegisterPage() {
                   <input
                     type="text" value={address} onChange={e => setAddress(e.target.value)}
                     placeholder="Rua, número, cidade" autoComplete="street-address"
-                    className="w-full pl-12 pr-4 h-14 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 text-sm"
+                    className="w-full pl-12 pr-4 h-14 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl focus:outline-none focus:ring-2 text-sm text-slate-900 dark:text-white placeholder-slate-300 dark:placeholder-slate-700 font-medium transition-all"
                     style={ringStyle}
                   />
                 </InputIcon>
@@ -273,17 +277,17 @@ export default function RegisterPage() {
             {/* Senha */}
             <Field label="Senha" required>
               <div className="relative">
-                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">
+                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-600">
                   <LockIcon />
                 </span>
                 <input
                   type={showPw ? 'text' : 'password'} required minLength={8} value={password}
                   onChange={e => setPassword(e.target.value)}
                   placeholder="Mínimo 8 caracteres" autoComplete="new-password"
-                  className="w-full pl-12 pr-12 h-14 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 text-sm"
+                  className="w-full pl-12 pr-12 h-14 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl focus:outline-none focus:ring-2 text-sm text-slate-900 dark:text-white placeholder-slate-300 dark:placeholder-slate-700 font-medium transition-all"
                   style={ringStyle}
                 />
-                <button type="button" onClick={() => setShowPw(!showPw)} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400">
+                <button type="button" onClick={() => setShowPw(!showPw)} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-600 hover:text-slate-600 transition-colors">
                   <EyeIcon open={showPw} />
                 </button>
               </div>
@@ -304,9 +308,9 @@ export default function RegisterPage() {
           </form>
 
           <div className="text-center mt-6">
-            <p className="text-slate-500 text-sm">
+            <p className="text-slate-500 dark:text-slate-400 text-sm">
               Já tem conta?{' '}
-              <Link href="/login" className="font-bold ml-1" style={{ color: accentColor }}>Entrar</Link>
+              <Link href="/login" className="font-bold ml-1 hover:underline transition-all" style={{ color: accentColor }}>Entrar</Link>
             </p>
           </div>
         </div>
@@ -319,9 +323,9 @@ export default function RegisterPage() {
 function Field({ label, required, hint, children }: { label: string; required?: boolean; hint?: string; children: React.ReactNode }) {
   return (
     <div className="flex flex-col gap-1.5">
-      <label className="text-sm font-semibold text-slate-700 ml-1">
+      <label className="text-sm font-bold text-slate-700 dark:text-slate-300 ml-1">
         {label} {required && <span className="text-red-400">*</span>}
-        {hint && <span className="text-slate-400 font-normal ml-1">{hint}</span>}
+        {hint && <span className="text-slate-400 dark:text-slate-600 font-medium ml-1">{hint}</span>}
       </label>
       {children}
     </div>

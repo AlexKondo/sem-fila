@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import ThemeToggle from '@/components/ui/ThemeToggle';
 
 const P = '#7c3aed'; // Roxo para diferenciar do vendor (laranja)
 
@@ -72,18 +73,18 @@ export default function RegisterOrgPage() {
 
   if (success) {
     return (
-      <div className="min-h-screen flex items-center justify-center px-4" style={{ backgroundColor: '#f8f6f6' }}>
-        <div className="bg-white rounded-3xl p-10 text-center max-w-sm w-full shadow-sm border border-slate-100">
-          <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-5" style={{ backgroundColor: P + '20' }}>
+      <div className="min-h-screen flex items-center justify-center px-4 bg-[#f8f6f6] dark:bg-slate-950 transition-colors duration-300">
+        <div className="bg-white dark:bg-slate-900 rounded-3xl p-10 text-center max-w-sm w-full shadow-2xl border border-slate-100 dark:border-slate-800 transition-colors">
+          <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-5 animate-bounce" style={{ backgroundColor: P + '20' }}>
             <svg className="w-8 h-8" style={{ color: P }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
             </svg>
           </div>
-          <h2 className="text-xl font-bold text-slate-900 mb-2">Conta criada com sucesso!</h2>
-          <p className="text-slate-500 text-sm leading-relaxed">
-            Sua organização <strong className="text-slate-700">{orgName}</strong> está pronta. Agora você pode criar eventos e convidar fornecedores.
+          <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-2">Conta criada!</h2>
+          <p className="text-slate-500 dark:text-slate-400 text-sm leading-relaxed">
+            Sua organização <strong className="text-slate-700 dark:text-slate-300">{orgName}</strong> está pronta. Agora você pode criar eventos e convidar fornecedores.
           </p>
-          <Link href="/login" className="block mt-6 font-semibold text-sm" style={{ color: P }}>Ir para o login →</Link>
+          <Link href="/login" className="block mt-8 font-black text-sm uppercase tracking-widest hover:underline transition-all" style={{ color: P }}>Ir para o login →</Link>
         </div>
       </div>
     );
@@ -92,16 +93,19 @@ export default function RegisterOrgPage() {
   const ringStyle = { '--tw-ring-color': P + '80' } as React.CSSProperties;
 
   return (
-    <div className="relative flex min-h-screen w-full flex-col overflow-x-hidden" style={{ backgroundColor: '#f8f6f6' }}>
+    <div className="relative flex min-h-screen w-full flex-col overflow-x-hidden bg-[#f8f6f6] dark:bg-slate-950 transition-colors duration-300">
       {/* Hero */}
       <div className="relative h-[30vh] w-full overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-t from-[#f8f6f6] via-transparent to-transparent z-10" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#f8f6f6] dark:from-slate-950 via-transparent to-transparent z-10" />
         <div className="h-full w-full" style={{ background: 'linear-gradient(135deg, #1a0533 0%, #3b1d6e 50%, #7c3aed20 100%)' }} />
-        <Link href="/" className="absolute top-4 left-4 z-30 w-10 h-10 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center text-white hover:bg-white/30 transition-colors">
+        <Link href="/" className="absolute top-4 left-4 z-30 w-10 h-10 rounded-xl bg-white/20 backdrop-blur-md flex items-center justify-center text-white hover:bg-white/30 transition-colors border border-white/10">
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
           </svg>
         </Link>
+        <div className="absolute top-4 right-4 z-30">
+          <ThemeToggle />
+        </div>
         <div className="absolute top-10 left-0 right-0 z-20 flex flex-col items-center">
           <div className="p-3 rounded-xl shadow-lg mb-3" style={{ backgroundColor: P }}>
             <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -114,11 +118,11 @@ export default function RegisterOrgPage() {
       </div>
 
       {/* Form */}
-      <div className="flex-1 px-6 -mt-8 relative z-20 rounded-t-[32px] pt-8 shadow-2xl bg-white">
+      <div className="flex-1 px-6 -mt-8 relative z-20 rounded-t-[32px] pt-8 shadow-2xl bg-white dark:bg-slate-900 transition-colors duration-300">
         <div className="max-w-md mx-auto pb-12">
           <div className="mb-6">
-            <h2 className="text-2xl font-bold text-slate-900">Criar conta de organizador</h2>
-            <p className="text-slate-500 mt-1 text-sm">Organize eventos, convide barracas e gerencie tudo em um só lugar</p>
+            <h2 className="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tight">Criar conta grátis</h2>
+            <p className="text-slate-500 dark:text-slate-400 mt-1 text-sm font-medium">Organize eventos, convide barracas e gerencie tudo em um só lugar</p>
           </div>
 
           {error && (
@@ -128,73 +132,73 @@ export default function RegisterOrgPage() {
           <form onSubmit={handleRegister} className="space-y-4">
             {/* Nome */}
             <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-semibold text-slate-700 ml-1">Nome completo <span className="text-red-400">*</span></label>
+              <label className="text-sm font-bold text-slate-700 dark:text-slate-300 ml-1">Nome completo <span className="text-red-400">*</span></label>
               <input
                 type="text" required value={name} onChange={e => setName(e.target.value)}
                 placeholder="Seu nome" autoComplete="name"
-                className="w-full px-4 h-14 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 text-sm"
+                className="w-full px-4 h-14 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl focus:outline-none focus:ring-2 text-sm text-slate-900 dark:text-white placeholder-slate-300 dark:placeholder-slate-700 font-medium transition-all"
                 style={ringStyle}
               />
             </div>
 
             {/* Email */}
             <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-semibold text-slate-700 ml-1">Email <span className="text-red-400">*</span></label>
+              <label className="text-sm font-bold text-slate-700 dark:text-slate-300 ml-1">Email <span className="text-red-400">*</span></label>
               <input
                 type="email" required value={email} onChange={e => setEmail(e.target.value)}
                 placeholder="seu@email.com" autoComplete="email"
-                className="w-full px-4 h-14 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 text-sm"
+                className="w-full px-4 h-14 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl focus:outline-none focus:ring-2 text-sm text-slate-900 dark:text-white placeholder-slate-300 dark:placeholder-slate-700 font-medium transition-all"
                 style={ringStyle}
               />
             </div>
 
             {/* Celular */}
             <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-semibold text-slate-700 ml-1">Celular <span className="text-red-400">*</span></label>
+              <label className="text-sm font-bold text-slate-700 dark:text-slate-300 ml-1">Celular <span className="text-red-400">*</span></label>
               <input
                 type="tel" required value={phone}
                 onChange={e => setPhone(maskPhone(e.target.value))}
                 placeholder="(11) 99999-9999" autoComplete="tel" inputMode="numeric"
-                className="w-full px-4 h-14 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 text-sm"
+                className="w-full px-4 h-14 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl focus:outline-none focus:ring-2 text-sm text-slate-900 dark:text-white placeholder-slate-300 dark:placeholder-slate-700 font-medium transition-all"
                 style={ringStyle}
               />
             </div>
 
             {/* Nome da Organização */}
             <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-semibold text-slate-700 ml-1">
+              <label className="text-sm font-bold text-slate-700 dark:text-slate-300 ml-1">
                 Nome da organização <span className="text-red-400">*</span>
                 <span className="text-slate-400 font-normal ml-1">Ex: Festa Beneficente do Morango</span>
               </label>
               <input
                 type="text" required value={orgName} onChange={e => setOrgName(e.target.value)}
                 placeholder="Digite o nome da sua empresa e não o nome do evento."
-                className="w-full px-4 h-14 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 text-sm font-bold"
+                className="w-full px-4 h-14 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl focus:outline-none focus:ring-2 text-sm text-slate-900 dark:text-white placeholder-slate-300 dark:placeholder-slate-700 font-medium transition-all"
                 style={ringStyle}
               />
             </div>
 
             {/* CPF/CNPJ */}
             <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-semibold text-slate-700 ml-1">CPF ou CNPJ <span className="text-red-400">*</span></label>
+              <label className="text-sm font-bold text-slate-700 dark:text-slate-300 ml-1">CPF ou CNPJ <span className="text-red-400">*</span></label>
               <input
                 type="text" required value={cnpj}
                 onChange={e => setCnpj(maskCPF_CNPJ(e.target.value))}
                 inputMode="numeric"
-                className="w-full px-4 h-14 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 text-sm"
+                className="w-full px-4 h-14 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl focus:outline-none focus:ring-2 text-sm text-slate-900 dark:text-white placeholder-slate-300 dark:placeholder-slate-700 font-medium transition-all"
                 style={ringStyle}
               />
             </div>
 
             {/* Senha */}
             <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-semibold text-slate-700 ml-1">Senha <span className="text-red-400">*</span></label>
+              <label className="text-sm font-bold text-slate-700 dark:text-slate-300 ml-1">Senha <span className="text-red-400">*</span></label>
               <div className="relative">
                 <input
                   type={showPw ? 'text' : 'password'} required minLength={8} value={password}
                   onChange={e => setPassword(e.target.value)}
                   placeholder="Mínimo 8 caracteres" autoComplete="new-password"
-                  className="w-full px-4 pr-12 h-14 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 text-sm"
+                  className="w-full px-4 pr-12 h-14 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl focus:outline-none focus:ring-2 text-sm text-slate-900 dark:text-white placeholder-slate-300 dark:placeholder-slate-700 font-medium transition-all"
                   style={ringStyle}
                 />
                 <button type="button" onClick={() => setShowPw(!showPw)} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400">
@@ -221,13 +225,13 @@ export default function RegisterOrgPage() {
           </form>
 
           <div className="text-center mt-6">
-            <p className="text-slate-500 text-sm">
+            <p className="text-slate-500 dark:text-slate-400 text-sm">
               Já tem conta?{' '}
-              <Link href="/login" className="font-bold ml-1" style={{ color: P }}>Entrar</Link>
+              <Link href="/login" className="font-bold ml-1 hover:underline transition-all" style={{ color: P }}>Entrar</Link>
             </p>
-            <p className="text-slate-400 text-xs mt-2">
+            <p className="text-slate-400 dark:text-slate-600 text-[11px] font-bold uppercase tracking-widest mt-4">
               É fornecedor?{' '}
-              <Link href="/register" className="font-semibold hover:underline text-slate-500">Criar conta de fornecedor</Link>
+              <Link href="/register" className="font-black hover:underline text-slate-500 dark:text-slate-500 ml-1">Criar conta de fornecedor</Link>
             </p>
           </div>
         </div>
