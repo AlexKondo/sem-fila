@@ -101,7 +101,7 @@ export default function VendorEventClient({ vendorId, activeEvent, invitations: 
       <div className="max-w-2xl mx-auto px-4 pb-12 space-y-4">
         {backButton}
 
-        <div className="bg-gradient-to-br from-orange-500 to-amber-600 rounded-[2rem] p-6 text-white shadow-xl relative overflow-hidden">
+        <div className={`${INVITE_STYLE[selectedInvite.status]?.card ?? INVITE_STYLE.pending.card} rounded-[2rem] p-6 text-white shadow-xl relative overflow-hidden`}>
           <div className="absolute top-0 right-0 p-6 opacity-10">
             <Mail className="w-24 h-24" />
           </div>
@@ -181,22 +181,24 @@ export default function VendorEventClient({ vendorId, activeEvent, invitations: 
           )}
         </div>
 
-        <div className="flex gap-3 pt-2">
-          <button
-            onClick={() => handleInvite(selectedInvite.id, 'accepted')}
-            disabled={actingOn === selectedInvite.id}
-            className="flex-1 bg-orange-500 text-white font-bold py-4 rounded-2xl shadow-lg shadow-orange-500/20 hover:bg-orange-600 transition flex items-center justify-center gap-2 disabled:opacity-50 text-base"
-          >
-            <Check className="w-5 h-5" /> ACEITAR CONVITE
-          </button>
-          <button
-            onClick={() => handleInvite(selectedInvite.id, 'rejected')}
-            disabled={actingOn === selectedInvite.id}
-            className="flex-1 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 font-bold py-4 rounded-2xl hover:bg-slate-200 dark:hover:bg-slate-700 transition flex items-center justify-center gap-2 disabled:opacity-50 text-base"
-          >
-            <X className="w-5 h-5" /> RECUSAR
-          </button>
-        </div>
+        {selectedInvite.status === 'pending' && (
+          <div className="flex gap-3 pt-2">
+            <button
+              onClick={() => handleInvite(selectedInvite.id, 'accepted')}
+              disabled={actingOn === selectedInvite.id}
+              className="flex-1 bg-orange-500 text-white font-bold py-4 rounded-2xl shadow-lg shadow-orange-500/20 hover:bg-orange-600 transition flex items-center justify-center gap-2 disabled:opacity-50 text-base"
+            >
+              <Check className="w-5 h-5" /> ACEITAR CONVITE
+            </button>
+            <button
+              onClick={() => handleInvite(selectedInvite.id, 'rejected')}
+              disabled={actingOn === selectedInvite.id}
+              className="flex-1 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 font-bold py-4 rounded-2xl hover:bg-slate-200 dark:hover:bg-slate-700 transition flex items-center justify-center gap-2 disabled:opacity-50 text-base"
+            >
+              <X className="w-5 h-5" /> RECUSAR
+            </button>
+          </div>
+        )}
       </div>
     );
   }
@@ -305,12 +307,12 @@ export default function VendorEventClient({ vendorId, activeEvent, invitations: 
           <div className="grid gap-3">
             {invites.map(invite => {
               const style = INVITE_STYLE[invite.status] ?? INVITE_STYLE.pending;
-              const isPending = invite.status === 'pending';
+              const isClickable = invite.status === 'pending' || invite.status === 'accepted' || invite.status === 'paid';
               return (
                 <button
                   key={invite.id}
-                  onClick={() => { if (isPending) { setSelectedInvite(invite); setView('invite-detail'); } }}
-                  className={`w-full text-left rounded-2xl p-5 transition-all ${style.card} ${isPending ? 'hover:shadow-xl active:scale-[0.98] cursor-pointer' : 'cursor-default'}`}
+                  onClick={() => { if (isClickable) { setSelectedInvite(invite); setView('invite-detail'); } }}
+                  className={`w-full text-left rounded-2xl p-5 transition-all ${style.card} ${isClickable ? 'hover:shadow-xl active:scale-[0.98] cursor-pointer' : 'cursor-default'}`}
                 >
                   <div className="flex items-center justify-between">
                     <div className="min-w-0 flex-1">
@@ -333,7 +335,7 @@ export default function VendorEventClient({ vendorId, activeEvent, invitations: 
                     </div>
                     <div className="flex items-center gap-2 ml-3 shrink-0">
                       <p className={`text-xs font-black ${style.text}`}>R$ {Number(invite.fee_amount).toFixed(2)}</p>
-                      {isPending && <ChevronRight className={`w-5 h-5 ${style.sub}`} />}
+                      {isClickable && <ChevronRight className={`w-5 h-5 ${style.sub}`} />}
                     </div>
                   </div>
                 </button>
@@ -343,8 +345,8 @@ export default function VendorEventClient({ vendorId, activeEvent, invitations: 
         </section>
       )}
 
-      {/* Evento Ativo - apenas card clicável */}
-      {activeEvent && (
+      {/* Evento Ativo - apenas se não há convite aceito já listado para esse evento */}
+      {activeEvent && !invites.some(i => i.event_id === activeEvent.id && (i.status === 'accepted' || i.status === 'paid')) && (
         <section className="space-y-3">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
