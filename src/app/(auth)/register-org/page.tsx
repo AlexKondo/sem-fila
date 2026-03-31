@@ -168,7 +168,7 @@ export default function RegisterOrgPage() {
               </label>
               <input
                 type="text" required value={orgName} onChange={e => setOrgName(e.target.value)}
-                placeholder="Nome da sua empresa/organização"
+                placeholder="Digite o nome da sua empresa e não o nome do evento."
                 className="w-full px-4 h-14 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 text-sm font-bold"
                 style={ringStyle}
               />
