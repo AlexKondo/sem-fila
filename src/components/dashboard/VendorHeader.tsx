@@ -61,17 +61,25 @@ export default function VendorHeader({ vendorName, userName, cnpjFormatted, vend
 
     const fetchInvites = async () => {
       const { data: { user } } = await supabase.auth.getUser();
-      const { data: profile } = await supabase.from('profiles').select('email').eq('id', user?.id || '').single();
-      const email = profile?.email;
+      if (!user) return;
+      
+      const { data: profile } = await supabase.from('profiles').select('email').eq('id', user.id).single();
+      const profileEmail = profile?.email;
+      const authEmail = user.email;
 
-      supabase
+      const query = supabase
         .from('event_vendor_invitations')
         .select('id', { count: 'exact', head: true })
-        .or(`vendor_id.eq.${vendorId}${email ? `,vendor_email.eq.${email}` : ''}`)
-        .eq('status', 'pending')
-        .then(({ count }) => {
-          setPendingInvites(count || 0);
-        });
+        .eq('status', 'pending');
+
+      const orConditions = [`vendor_id.eq.${vendorId}`];
+      if (authEmail) orConditions.push(`vendor_email.eq.${authEmail}`);
+      if (profileEmail) orConditions.push(`vendor_email.eq.${profileEmail}`);
+      
+      query.or(orConditions.join(','));
+
+      const { count } = await query;
+      setPendingInvites(count || 0);
     };
 
     fetchInvites();
