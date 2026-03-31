@@ -128,7 +128,6 @@ export default async function OrgDashboardPage() {
         <div>
           <div className="flex items-center justify-between mb-3">
             <h2 className="font-semibold text-gray-900 dark:text-white">Eventos recentes</h2>
-            <Link href="/dashboard/org/events" className="text-xs text-purple-600 dark:text-purple-400 font-semibold">Ver todos →</Link>
           </div>
 
           {(!events || events.length === 0) ? (
