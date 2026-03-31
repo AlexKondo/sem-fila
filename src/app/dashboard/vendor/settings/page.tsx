@@ -92,7 +92,7 @@ export default async function VendorSettingsPage() {
   const dashboardData = await fetchDashboardData(supabase, vendor, vendors, user.id);
 
   return (
-    <main className="min-h-screen pb-20 overflow-x-hidden" style={{ backgroundColor: '#f8f6f6' }}>
+    <main className="min-h-screen pb-20 overflow-x-hidden bg-gray-50 dark:bg-slate-950/20 transition-colors duration-300">
       <div className="max-w-2xl mx-auto px-4 py-8">
 
         {/* Bloco 1: Meus Negócios */}

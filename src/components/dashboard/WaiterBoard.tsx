@@ -39,13 +39,13 @@ interface Props {
 }
 
 const STATUS_COLORS: Record<TableStatus, { bg: string; border: string; text: string; dot: string; label: string }> = {
-  free:     { bg: 'bg-emerald-50',  border: 'border-emerald-200', text: 'text-emerald-700', dot: 'bg-emerald-400', label: 'Livre' },
-  occupied: { bg: 'bg-gray-100',    border: 'border-gray-300',    text: 'text-gray-600',    dot: 'bg-gray-400',    label: 'Ocupada' },
-  dirty:    { bg: 'bg-amber-50',    border: 'border-amber-300',   text: 'text-amber-700',   dot: 'bg-amber-400',   label: 'Limpeza' },
-  reserved: { bg: 'bg-blue-50',     border: 'border-blue-200',    text: 'text-blue-600',    dot: 'bg-blue-400',    label: 'Reservada' },
+  free:     { bg: 'bg-emerald-50 dark:bg-emerald-950/20',  border: 'border-emerald-200 dark:border-emerald-800', text: 'text-emerald-700 dark:text-emerald-400', dot: 'bg-emerald-400', label: 'Livre' },
+  occupied: { bg: 'bg-gray-100 dark:bg-slate-800',    border: 'border-gray-300 dark:border-slate-700',    text: 'text-gray-600 dark:text-slate-400',    dot: 'bg-gray-400',    label: 'Ocupada' },
+  dirty:    { bg: 'bg-amber-50 dark:bg-amber-950/20',     border: 'border-amber-300 dark:border-amber-800',    text: 'text-amber-700 dark:text-amber-400',   dot: 'bg-amber-400',   label: 'Limpeza' },
+  reserved: { bg: 'bg-blue-50 dark:bg-blue-950/20',      border: 'border-blue-200 dark:border-blue-800',     text: 'text-blue-600 dark:text-blue-400',    dot: 'bg-blue-400',    label: 'Reservada' },
 };
 
-const MERGE_STYLE = { bg: 'bg-indigo-50', border: 'border-indigo-300 border-dashed', text: 'text-indigo-600', dot: 'bg-indigo-400', label: 'Junta' };
+const MERGE_STYLE = { bg: 'bg-indigo-50 dark:bg-indigo-950/20', border: 'border-indigo-300 dark:border-indigo-800 border-dashed', text: 'text-indigo-600 dark:text-indigo-400', dot: 'bg-indigo-400', label: 'Junta' };
 
 // === MEMOIZED TABLE CARD ===
 interface TableCardProps {
@@ -147,13 +147,13 @@ const TableCard = memo(function TableCard({
       </div>
 
       {isSelected && (
-        <div className="bg-white border border-gray-200 rounded-xl p-2 mt-1 space-y-1.5 animate-in fade-in slide-in-from-top-1 duration-150 shadow-lg"
+        <div className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-xl p-2 mt-1 space-y-1.5 animate-in fade-in slide-in-from-top-1 duration-150 shadow-lg"
           onClick={e => e.stopPropagation()}
         >
           {isMergedChild && mergeParentNumber && (
             <div className="text-center py-1">
-              <p className="text-[10px] font-bold text-indigo-600">Junta com Mesa {mergeParentNumber}</p>
-              <p className="text-[9px] text-gray-400">Separe pela mesa principal</p>
+              <p className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400">Junta com Mesa {mergeParentNumber}</p>
+              <p className="text-[9px] text-gray-400 dark:text-slate-500">Separe pela mesa principal</p>
             </div>
           )}
 
@@ -168,11 +168,11 @@ const TableCard = memo(function TableCard({
 
           {!isMergedChild && (
             <div className="flex items-center justify-between">
-              <span className="text-[10px] font-bold text-gray-500">Capacidade</span>
+              <span className="text-[10px] font-bold text-gray-500 dark:text-slate-400">Capacidade</span>
               <div className="flex items-center gap-1">
-                <button onClick={() => onUpdateCapacity(table.id, Math.max(1, table.capacity - 1))} className="w-6 h-6 bg-gray-100 rounded-lg text-xs font-bold flex items-center justify-center">-</button>
-                <span className="text-xs font-black w-6 text-center">{table.capacity}</span>
-                <button onClick={() => onUpdateCapacity(table.id, table.capacity + 1)} className="w-6 h-6 bg-gray-100 rounded-lg text-xs font-bold flex items-center justify-center">+</button>
+                <button onClick={() => onUpdateCapacity(table.id, Math.max(1, table.capacity - 1))} className="w-6 h-6 bg-gray-100 dark:bg-slate-800 rounded-lg text-xs font-bold flex items-center justify-center text-slate-900 dark:text-white">-</button>
+                <span className="text-xs font-black w-6 text-center text-slate-900 dark:text-white">{table.capacity}</span>
+                <button onClick={() => onUpdateCapacity(table.id, table.capacity + 1)} className="w-6 h-6 bg-gray-100 dark:bg-slate-800 rounded-lg text-xs font-bold flex items-center justify-center text-slate-900 dark:text-white">+</button>
               </div>
             </div>
           )}
@@ -183,7 +183,7 @@ const TableCard = memo(function TableCard({
                 <button onClick={() => onUpdateStatus(table.id, 'free')} className="text-[9px] font-bold bg-emerald-50 text-emerald-700 py-1.5 rounded-lg">Liberar</button>
               )}
               {table.status === 'free' && (
-                <button onClick={() => onUpdateStatus(table.id, 'occupied')} className="text-[9px] font-bold bg-gray-100 text-gray-700 py-1.5 rounded-lg">Ocupar</button>
+                <button onClick={() => onUpdateStatus(table.id, 'occupied')} className="text-[9px] font-bold bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-slate-300 py-1.5 rounded-lg">Ocupar</button>
               )}
               {table.status === 'occupied' && (
                 <button onClick={() => onUpdateStatus(table.id, 'dirty')} className="text-[9px] font-bold bg-amber-50 text-amber-700 py-1.5 rounded-lg">Limpeza</button>
@@ -196,7 +196,7 @@ const TableCard = memo(function TableCard({
 
           <div className="flex gap-1">
             {!isMergedChild && !isMergeParent && table.status !== 'free' && (
-              <button onClick={() => onSetMergeSource(table.id)} className="flex-1 text-[9px] font-bold bg-blue-50 text-blue-700 py-1.5 rounded-lg flex items-center justify-center gap-0.5">
+              <button onClick={() => onSetMergeSource(table.id)} className="flex-1 text-[9px] font-bold bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 py-1.5 rounded-lg flex items-center justify-center gap-0.5">
                 <Merge className="w-3 h-3" /> Juntar
               </button>
             )}
@@ -206,7 +206,7 @@ const TableCard = memo(function TableCard({
                   Confirmar?
                 </button>
               ) : (
-                <button onClick={() => onConfirmDelete(table.id)} className="text-[9px] font-bold bg-red-50 text-red-500 py-1.5 px-2 rounded-lg">
+                <button onClick={() => onConfirmDelete(table.id)} className="text-[9px] font-bold bg-red-50 dark:bg-red-900/20 text-red-500 dark:text-red-400 py-1.5 px-2 rounded-lg">
                   <Trash2 className="w-3 h-3" />
                 </button>
               )
@@ -606,7 +606,7 @@ export default function WaiterBoard({ initialReadyOrders, initialWaiterCalls, in
     <div className="max-w-2xl mx-auto px-4 py-2 space-y-4">
 
       {/* Abas */}
-      <div className="flex bg-gray-100 p-1 rounded-2xl overflow-x-auto">
+      <div className="flex bg-gray-100 dark:bg-slate-800 p-1 rounded-2xl overflow-x-auto">
         {([
           ...(hasTableManagement ? [
             { key: 'tables' as const, icon: LayoutGrid, label: 'Mesas', badge: callingTables.size > 0 ? callingTables.size : null, badgeColor: 'bg-red-500' },
@@ -619,7 +619,7 @@ export default function WaiterBoard({ initialReadyOrders, initialWaiterCalls, in
           <button
             key={key}
             onClick={() => switchTab(key)}
-            className={`flex-1 py-2 px-2 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1 whitespace-nowrap ${activeTab === key ? 'bg-white shadow-sm text-orange-600' : 'text-gray-500'}`}
+            className={`flex-1 py-2 px-2 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1 whitespace-nowrap ${activeTab === key ? 'bg-white dark:bg-slate-900 shadow-sm text-orange-600 dark:text-orange-500' : 'text-gray-500 dark:text-slate-400'}`}
           >
             <Icon className="w-3.5 h-3.5" />
             {label}
@@ -638,20 +638,20 @@ export default function WaiterBoard({ initialReadyOrders, initialWaiterCalls, in
           {/* Legenda + Adicionar */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3 text-[9px] font-bold uppercase tracking-wide">
-              <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full bg-emerald-400" /> Livre</span>
-              <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full bg-gray-400" /> Ocupada</span>
-              <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full bg-indigo-400" /> Junta</span>
-              <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full bg-amber-400" /> Limpeza</span>
-              <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse" /> Chamando</span>
+              <span className="flex items-center gap-1 text-slate-500 dark:text-slate-400"><span className="w-2.5 h-2.5 rounded-full bg-emerald-400" /> Livre</span>
+              <span className="flex items-center gap-1 text-slate-500 dark:text-slate-400"><span className="w-2.5 h-2.5 rounded-full bg-gray-400" /> Ocupada</span>
+              <span className="flex items-center gap-1 text-slate-500 dark:text-slate-400"><span className="w-2.5 h-2.5 rounded-full bg-indigo-400" /> Junta</span>
+              <span className="flex items-center gap-1 text-slate-500 dark:text-slate-400"><span className="w-2.5 h-2.5 rounded-full bg-amber-400" /> Limpeza</span>
+              <span className="flex items-center gap-1 text-slate-500 dark:text-slate-400"><span className="w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse" /> Chamando</span>
             </div>
-            <button onClick={() => setShowAddTable(!showAddTable)} className="text-[10px] font-black text-orange-600 bg-orange-50 px-2.5 py-1 rounded-full flex items-center gap-1">
+            <button onClick={() => setShowAddTable(!showAddTable)} className="text-[10px] font-black text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-950/20 px-2.5 py-1 rounded-full flex items-center gap-1">
               <Plus className="w-3 h-3" /> Mesa
             </button>
           </div>
 
           {/* Form adicionar mesa */}
           {showAddTable && (
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 space-y-3 animate-in fade-in slide-in-from-top-2 duration-200">
+            <div className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-100 dark:border-slate-800 shadow-sm p-4 space-y-3 animate-in fade-in slide-in-from-top-2 duration-200">
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="text-[10px] font-bold text-gray-500 block mb-1">Nº da Mesa</label>
@@ -679,7 +679,7 @@ export default function WaiterBoard({ initialReadyOrders, initialWaiterCalls, in
 
           {/* Grid de mesas */}
           {tables.length === 0 ? (
-            <div className="text-center py-12 bg-white rounded-3xl border border-dashed border-gray-200 text-gray-400">
+            <div className="text-center py-12 bg-white dark:bg-slate-900 rounded-3xl border border-dashed border-gray-200 dark:border-slate-800 text-gray-400">
               <p className="text-3xl mb-2">🪑</p>
               <p className="text-xs font-medium">Nenhuma mesa cadastrada</p>
               <p className="text-[10px] mt-1">Clique em &quot;+ Mesa&quot; para começar</p>
@@ -727,11 +727,11 @@ export default function WaiterBoard({ initialReadyOrders, initialWaiterCalls, in
               </h2>
               <div className="space-y-2">
                 {orders.map(order => (
-                  <div key={order.id} className="bg-white rounded-2xl shadow-sm border border-slate-100 p-3 flex items-center justify-between">
+                  <div key={order.id} className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 p-3 flex items-center justify-between">
                     <div>
-                      <p className="font-black text-gray-900 text-sm">COD: {order.pickup_code}</p>
-                      {order.table_number && <p className="text-orange-600 font-black text-xs italic">MESA {order.table_number}</p>}
-                      <p className="text-[10px] text-gray-400 mt-0.5">{order.order_items.map(i => `${i.quantity}x ${i.menu_items?.name}`).join(', ')}</p>
+                      <p className="font-black text-gray-900 dark:text-white text-sm">COD: {order.pickup_code}</p>
+                      {order.table_number && <p className="text-orange-600 dark:text-orange-400 font-black text-xs italic">MESA {order.table_number}</p>}
+                      <p className="text-[10px] text-gray-400 dark:text-slate-500 mt-0.5">{order.order_items.map(i => `${i.quantity}x ${i.menu_items?.name}`).join(', ')}</p>
                     </div>
                     <button onClick={() => markDelivered(order.id)} className="bg-green-500 text-white text-[10px] font-black px-3 py-2 rounded-xl hover:bg-green-600 transition">ENTREGUE</button>
                   </div>
@@ -747,16 +747,16 @@ export default function WaiterBoard({ initialReadyOrders, initialWaiterCalls, in
         <div className="space-y-4">
           {/* Stats */}
           <div className="grid grid-cols-3 gap-2">
-            <div className="bg-emerald-50 rounded-xl p-3 text-center">
-              <p className="text-xl font-black text-emerald-700">{freeTables.length}</p>
+            <div className="bg-emerald-50 dark:bg-emerald-950/20 rounded-xl p-3 text-center">
+              <p className="text-xl font-black text-emerald-700 dark:text-emerald-400">{freeTables.length}</p>
               <p className="text-[9px] font-bold text-emerald-600 uppercase">Livres</p>
             </div>
-            <div className="bg-purple-50 rounded-xl p-3 text-center">
-              <p className="text-xl font-black text-purple-700">{waitingQueue.length}</p>
+            <div className="bg-purple-50 dark:bg-purple-950/20 rounded-xl p-3 text-center">
+              <p className="text-xl font-black text-purple-700 dark:text-purple-400">{waitingQueue.length}</p>
               <p className="text-[9px] font-bold text-purple-600 uppercase">Na fila</p>
             </div>
-            <div className="bg-amber-50 rounded-xl p-3 text-center">
-              <p className="text-xl font-black text-amber-700">{calledQueue.length}</p>
+            <div className="bg-amber-50 dark:bg-amber-950/20 rounded-xl p-3 text-center">
+              <p className="text-xl font-black text-amber-700 dark:text-amber-400">{calledQueue.length}</p>
               <p className="text-[9px] font-bold text-amber-600 uppercase">Chamados</p>
             </div>
           </div>
