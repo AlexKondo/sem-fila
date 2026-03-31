@@ -77,9 +77,9 @@ export default async function VendorOverview({ vendors, userId }: Props) {
             { label: 'Pedidos hoje', value: String(todayCount) },
             { label: 'Pedidos total', value: String(totalOrders) },
           ].map(({ label, value }) => (
-            <div key={label} className="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm">
-              <p className="text-xs text-slate-400 font-medium mb-1">{label}</p>
-              <p className="text-xl font-black text-slate-900 leading-tight">{value}</p>
+            <div key={label} className="bg-white dark:bg-slate-900 rounded-2xl p-4 border border-slate-100 dark:border-slate-800 shadow-sm">
+              <p className="text-xs text-slate-400 dark:text-slate-500 font-medium mb-1">{label}</p>
+              <p className="text-xl font-black text-slate-900 dark:text-white leading-tight">{value}</p>
             </div>
           ))}
         </div>
@@ -90,11 +90,11 @@ export default async function VendorOverview({ vendors, userId }: Props) {
         <h2 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Por Marca</h2>
         <div className="space-y-3">
           {brandStats.map(b => (
-            <div key={b.id} className="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm">
+            <div key={b.id} className="bg-white dark:bg-slate-900 rounded-2xl p-4 border border-slate-100 dark:border-slate-800 shadow-sm">
               <div className="flex items-start justify-between mb-3">
                 <div>
-                  <p className="font-bold text-slate-900">{b.name}</p>
-                  {b.description && <p className="text-xs text-slate-400 mt-0.5">{b.description}</p>}
+                  <p className="font-bold text-slate-900 dark:text-white">{b.name}</p>
+                  {b.description && <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">{b.description}</p>}
                 </div>
                 {b.activeOrders > 0 && (
                   <span className="text-[11px] font-bold px-2 py-0.5 rounded-full text-white" style={{ backgroundColor: P }}>
@@ -116,17 +116,17 @@ export default async function VendorOverview({ vendors, userId }: Props) {
       {/* Top produtos */}
       {topProducts.length > 0 && (
         <section>
-          <h2 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Produtos Mais Vendidos</h2>
-          <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+          <h2 className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-3">Produtos Mais Vendidos</h2>
+          <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm overflow-hidden">
             {topProducts.map((p, i) => (
-              <div key={p.name} className={`flex items-center justify-between px-4 py-3 ${i < topProducts.length - 1 ? 'border-b border-slate-50' : ''}`}>
+              <div key={p.name} className={`flex items-center justify-between px-4 py-3 ${i < topProducts.length - 1 ? 'border-b border-slate-50 dark:border-slate-800' : ''}`}>
                 <div className="flex items-center gap-3">
-                  <span className="text-xs font-black text-slate-300 w-4">{i + 1}</span>
-                  <p className="text-sm font-semibold text-slate-800">{p.name}</p>
+                  <span className="text-xs font-black text-slate-300 dark:text-slate-700 w-4">{i + 1}</span>
+                  <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">{p.name}</p>
                 </div>
                 <div className="text-right">
-                  <p className="text-sm font-bold text-slate-900">{p.qty}x</p>
-                  <p className="text-[10px] text-slate-400">{fmt(p.revenue)}</p>
+                  <p className="text-sm font-bold text-slate-900 dark:text-white">{p.qty}x</p>
+                  <p className="text-[10px] text-slate-400 dark:text-slate-500">{fmt(p.revenue)}</p>
                 </div>
               </div>
             ))}
@@ -139,9 +139,9 @@ export default async function VendorOverview({ vendors, userId }: Props) {
 
 function Micro({ label, value }: { label: string; value: string }) {
   return (
-    <div className="bg-slate-50 rounded-xl px-3 py-2">
-      <p className="text-[10px] text-slate-400 font-medium">{label}</p>
-      <p className="text-sm font-black text-slate-800">{value}</p>
+    <div className="bg-slate-50 dark:bg-slate-950 rounded-xl px-3 py-2">
+      <p className="text-[10px] text-slate-400 dark:text-slate-500 font-medium">{label}</p>
+      <p className="text-sm font-black text-slate-800 dark:text-slate-200">{value}</p>
     </div>
   );
 }

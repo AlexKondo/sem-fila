@@ -306,7 +306,7 @@ export default function VendorOrdersBoard({ initialOrders, vendorId }: Props) {
             </div>
             <h2 className="text-4xl font-black uppercase tracking-widest mb-2">Novo Pedido Recebido!</h2>
             <p className="text-xl font-bold opacity-80 mb-8">O pagamento foi confirmado e o pedido já está na fila.</p>
-            <div className="bg-white dark:bg-slate-900 text-green-700 dark:text-green-400 px-12 py-8 rounded-[40px] shadow-2xl space-y-2 border border-white/10">
+            <div className="bg-white dark:bg-slate-900 text-green-700 dark:text-green-400 px-12 py-8 rounded-[40px] shadow-2xl space-y-2 border border-white/10 dark:border-slate-800">
                 <p className="text-sm font-black uppercase tracking-widest opacity-60">Código do Pedido</p>
                 <p className="text-7xl font-black italic">{alertOrder.pickup_code}</p>
             </div>
@@ -316,7 +316,7 @@ export default function VendorOrdersBoard({ initialOrders, vendorId }: Props) {
           </div>
         )}
         {filterBar}
-        <div className="flex flex-col items-center justify-center py-24 text-gray-400">
+        <div className="flex flex-col items-center justify-center py-24 text-gray-400 dark:text-slate-600">
           <p className="text-5xl mb-4">🍳</p>
           <p className="text-lg font-medium">Nenhum pedido na fila</p>
           <p className="text-sm mt-1">Aguardando novos clientes...</p>
@@ -351,7 +351,7 @@ export default function VendorOrdersBoard({ initialOrders, vendorId }: Props) {
           </div>
           <h2 className="text-4xl font-black uppercase tracking-widest mb-2">Novo Pedido Recebido!</h2>
           <p className="text-xl font-bold opacity-80 mb-8">O pagamento foi confirmado e o pedido já está na fila.</p>
-          <div className="bg-white dark:bg-slate-900 text-green-700 dark:text-green-400 px-12 py-8 rounded-[40px] shadow-2xl space-y-2 border border-white/10">
+          <div className="bg-white dark:bg-slate-900 text-green-700 dark:text-green-400 px-12 py-8 rounded-[40px] shadow-2xl space-y-2 border border-white/10 dark:border-slate-800">
               <p className="text-sm font-black uppercase tracking-widest opacity-60">Código do Pedido</p>
               <p className="text-7xl font-black italic">{alertOrder.pickup_code}</p>
           </div>
@@ -399,7 +399,7 @@ export default function VendorOrdersBoard({ initialOrders, vendorId }: Props) {
           </h2>
           <div className="space-y-3">
             {historicalOrders.length === 0 ? (
-              <p className="text-xs text-slate-400 text-center py-4">Nenhum pedido processado ainda.</p>
+              <p className="text-xs text-slate-400 dark:text-slate-500 text-center py-4">Nenhum pedido processado ainda.</p>
             ) : (
               historicalOrders.map((order) => (
                 <OrderCard

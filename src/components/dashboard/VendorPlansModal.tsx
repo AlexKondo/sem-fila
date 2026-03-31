@@ -19,7 +19,7 @@ interface PlanProps {
 
 function PlanCard({ name, price, features, recommended, isCurrent, isDowngrade, proRataPrice, onSelect }: PlanProps) {
   return (
-    <div className={`relative p-6 rounded-3xl border-2 transition-all flex flex-col h-full ${isCurrent ? 'border-green-500 bg-green-50/30' : recommended ? 'border-orange-500 bg-orange-50/30 dark:bg-orange-950/20 shadow-xl shadow-orange-200/50 dark:shadow-none scale-105 z-10' : 'border-slate-100 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-slate-200 dark:hover:border-slate-600'}`}>
+    <div className={`relative p-6 rounded-3xl border-2 transition-all flex flex-col h-full ${isCurrent ? 'border-green-500 bg-green-50/30 dark:bg-green-950/20' : recommended ? 'border-orange-500 bg-orange-50/30 dark:bg-orange-950/20 shadow-xl shadow-orange-200/50 dark:shadow-none scale-105 z-10' : 'border-slate-100 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-slate-200 dark:hover:border-slate-600'}`}>
       {isCurrent && (
         <span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-green-600 text-white text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-widest shadow-lg">
           Plano Atual
@@ -169,8 +169,8 @@ export default function VendorPlansModal({ isOpen, onClose, onlyShowAi, vendorId
 
                 {loading ? (
                   <div className="flex flex-col items-center justify-center py-20 gap-4">
-                    <div className="w-10 h-10 border-4 border-orange-200 border-t-orange-500 animate-spin rounded-full" />
-                    <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Carregando Melhores Preços...</p>
+                    <div className="w-10 h-10 border-4 border-orange-200 dark:border-orange-900/30 border-t-orange-500 animate-spin rounded-full" />
+                    <p className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Carregando Melhores Preços...</p>
                   </div>
                 ) : (
                   <>

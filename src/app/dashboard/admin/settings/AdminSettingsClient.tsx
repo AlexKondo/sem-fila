@@ -430,10 +430,10 @@ export default function AdminSettingsClient() {
                     <span className="text-[10px] font-black uppercase tracking-widest bg-gray-100 dark:bg-slate-800 text-gray-500 dark:text-slate-400 px-2 py-0.5 rounded-full">Gratuito</span>
                   )}
                   {!plan.active && (
-                    <span className="text-[10px] font-black uppercase tracking-widest bg-red-50 text-red-500 px-2 py-0.5 rounded-full">Inativo</span>
+                    <span className="text-[10px] font-black uppercase tracking-widest bg-red-50 dark:bg-red-950/20 text-red-500 dark:text-red-400 px-2 py-0.5 rounded-full">Inativo</span>
                   )}
                   {plan.ia_included && (
-                    <span className="text-[10px] font-black uppercase tracking-widest bg-purple-50 text-purple-600 px-2 py-0.5 rounded-full">Fotos com IA</span>
+                    <span className="text-[10px] font-black uppercase tracking-widest bg-purple-50 dark:bg-purple-950/20 text-purple-600 dark:text-purple-400 px-2 py-0.5 rounded-full">Fotos com IA</span>
                   )}
                 </div>
               </div>
@@ -467,9 +467,9 @@ export default function AdminSettingsClient() {
                   type="number"
                   value={platformFee}
                   onChange={(e) => setPlatformFee(Number(e.target.value))}
-                  className="w-24 h-12 bg-gray-50 border border-gray-100 rounded-xl px-4 text-center font-bold text-gray-900 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  className="w-24 h-12 bg-gray-50 dark:bg-slate-950 border border-gray-100 dark:border-slate-800 rounded-xl px-4 text-center font-bold text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
                 />
-                <span className="font-bold text-gray-400">%</span>
+                <span className="font-bold text-gray-400 dark:text-slate-500">%</span>
               </div>
             </div>
           </div>

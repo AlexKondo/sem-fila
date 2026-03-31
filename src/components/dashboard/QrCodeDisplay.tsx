@@ -70,7 +70,7 @@ export default function QrCodeDisplay({ vendorName, menuUrl, cnpj }: QrCodeDispl
           </div>
           <h2 className="font-bold text-slate-900 dark:text-white text-lg">{displayTitle}</h2>
           {cnpj && (
-            <p className="text-xs text-slate-400 dark:text-slate-600 mt-1">CNPJ {cnpj}</p>
+            <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">CNPJ {cnpj}</p>
           )}
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-2">
             Imprima e cole na barraca — o cliente escaneia e já vê o cardápio
@@ -78,8 +78,8 @@ export default function QrCodeDisplay({ vendorName, menuUrl, cnpj }: QrCodeDispl
         </div>
 
         {/* QR Code */}
-        <div className="flex justify-center py-6 bg-white dark:bg-white rounded-xl mx-6 my-2">
-          <div className="p-4 border-2 rounded-2xl bg-white" style={{ borderColor: P + '30' }}>
+        <div className="flex justify-center py-6 bg-white dark:bg-slate-950 rounded-xl mx-6 my-2">
+          <div className="p-4 border-2 rounded-2xl bg-white shadow-sm" style={{ borderColor: P + '30' }}>
             <canvas ref={canvasRef} className="block" />
           </div>
         </div>
@@ -87,7 +87,7 @@ export default function QrCodeDisplay({ vendorName, menuUrl, cnpj }: QrCodeDispl
         {/* URL */}
         <div className="px-6 pb-6 space-y-3">
           <div className="flex flex-col items-center justify-center border-2 border-slate-100 dark:border-slate-800 rounded-2xl py-3 bg-slate-50 dark:bg-slate-950">
-            <span className="text-[10px] text-slate-400 dark:text-slate-600 font-bold uppercase tracking-widest">Código do Quiosque</span>
+            <span className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-widest">Código do Quiosque</span>
             <p className="text-2xl font-black text-slate-800 dark:text-white tracking-wider mt-0.5" style={{ letterSpacing: '2px' }}>
               {getNumericCode(vendorId)}
             </p>

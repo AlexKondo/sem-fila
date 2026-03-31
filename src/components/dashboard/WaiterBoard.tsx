@@ -84,7 +84,7 @@ const TableCard = memo(function TableCard({
   mergeSourceId,
 }: TableCardProps) {
   const style = isCalling
-    ? { bg: 'bg-red-50', border: 'border-red-300 shadow-md shadow-red-100', text: 'text-red-700', dot: 'bg-red-500 animate-pulse', label: 'Chamando!' }
+    ? { bg: 'bg-red-50 dark:bg-red-950/20', border: 'border-red-300 dark:border-red-800 shadow-md shadow-red-100 dark:shadow-none', text: 'text-red-700 dark:text-red-400', dot: 'bg-red-500 animate-pulse', label: 'Chamando!' }
     : (isMergedChild || isMergeParent) ? MERGE_STYLE
     : STATUS_COLORS[table.status];
 
@@ -180,16 +180,16 @@ const TableCard = memo(function TableCard({
           {!isMergedChild && !isMergeParent && (
             <div className="grid grid-cols-2 gap-1">
               {table.status !== 'free' && (
-                <button onClick={() => onUpdateStatus(table.id, 'free')} className="text-[9px] font-bold bg-emerald-50 text-emerald-700 py-1.5 rounded-lg">Liberar</button>
+                <button onClick={() => onUpdateStatus(table.id, 'free')} className="text-[9px] font-bold bg-emerald-50 dark:bg-emerald-950/20 text-emerald-700 dark:text-emerald-400 py-1.5 rounded-lg">Liberar</button>
               )}
               {table.status === 'free' && (
                 <button onClick={() => onUpdateStatus(table.id, 'occupied')} className="text-[9px] font-bold bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-slate-300 py-1.5 rounded-lg">Ocupar</button>
               )}
               {table.status === 'occupied' && (
-                <button onClick={() => onUpdateStatus(table.id, 'dirty')} className="text-[9px] font-bold bg-amber-50 text-amber-700 py-1.5 rounded-lg">Limpeza</button>
+                <button onClick={() => onUpdateStatus(table.id, 'dirty')} className="text-[9px] font-bold bg-amber-50 dark:bg-amber-950/20 text-amber-700 dark:text-amber-400 py-1.5 rounded-lg">Limpeza</button>
               )}
               {table.status === 'dirty' && (
-                <button onClick={() => onUpdateStatus(table.id, 'free')} className="text-[9px] font-bold bg-emerald-50 text-emerald-700 py-1.5 rounded-lg">Limpa!</button>
+                <button onClick={() => onUpdateStatus(table.id, 'free')} className="text-[9px] font-bold bg-emerald-50 dark:bg-emerald-950/20 text-emerald-700 dark:text-emerald-400 py-1.5 rounded-lg">Limpa!</button>
               )}
             </div>
           )}
@@ -654,12 +654,12 @@ export default function WaiterBoard({ initialReadyOrders, initialWaiterCalls, in
             <div className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-100 dark:border-slate-800 shadow-sm p-4 space-y-3 animate-in fade-in slide-in-from-top-2 duration-200">
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-[10px] font-bold text-gray-500 block mb-1">Nº da Mesa</label>
-                  <input type="text" value={newTableNumber} onChange={e => setNewTableNumber(e.target.value)} placeholder="Ex: 1" className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/30" />
+                  <label className="text-[10px] font-bold text-gray-500 dark:text-slate-400 block mb-1">Nº da Mesa</label>
+                  <input type="text" value={newTableNumber} onChange={e => setNewTableNumber(e.target.value)} placeholder="Ex: 1" className="w-full bg-white dark:bg-slate-950 border border-gray-200 dark:border-slate-800 rounded-xl px-3 py-2 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500/30" />
                 </div>
                 <div>
-                  <label className="text-[10px] font-bold text-gray-500 block mb-1">Capacidade (pessoas)</label>
-                  <input type="number" min={1} max={50} value={newTableCapacity} onChange={e => setNewTableCapacity(parseInt(e.target.value) || 1)} className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/30" />
+                  <label className="text-[10px] font-bold text-gray-500 dark:text-slate-400 block mb-1">Capacidade (pessoas)</label>
+                  <input type="number" min={1} max={50} value={newTableCapacity} onChange={e => setNewTableCapacity(parseInt(e.target.value) || 1)} className="w-full bg-white dark:bg-slate-950 border border-gray-200 dark:border-slate-800 rounded-xl px-3 py-2 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500/30" />
                 </div>
               </div>
               <button onClick={addTable} className="w-full bg-orange-500 text-white text-xs font-bold py-2.5 rounded-xl hover:bg-orange-600 transition">Adicionar Mesa</button>
@@ -668,12 +668,12 @@ export default function WaiterBoard({ initialReadyOrders, initialWaiterCalls, in
 
           {/* Merge mode banner */}
           {mergeSource && (
-            <div className="bg-blue-50 border border-blue-200 rounded-2xl p-3 flex items-center justify-between animate-in fade-in duration-200">
-              <p className="text-xs font-bold text-blue-700">
+            <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-900/50 rounded-2xl p-3 flex items-center justify-between animate-in fade-in duration-200">
+              <p className="text-xs font-bold text-blue-700 dark:text-blue-400">
                 <Merge className="w-4 h-4 inline mr-1" />
                 Selecione a mesa para juntar com a Mesa {tables.find(t => t.id === mergeSource)?.table_number}
               </p>
-              <button onClick={() => setMergeSource(null)} className="text-xs text-blue-500 font-bold">Cancelar</button>
+              <button onClick={() => setMergeSource(null)} className="text-xs text-blue-500 dark:text-blue-500 font-bold">Cancelar</button>
             </div>
           )}
 
@@ -801,21 +801,21 @@ export default function WaiterBoard({ initialReadyOrders, initialWaiterCalls, in
               <Users className="w-4 h-4" /> Fila de espera ({waitingQueue.length})
             </h2>
             {waitingQueue.length === 0 ? (
-              <div className="text-center py-8 bg-white rounded-3xl border border-dashed border-gray-200 text-gray-400">
+              <div className="text-center py-8 bg-white dark:bg-slate-900 rounded-3xl border border-dashed border-gray-200 dark:border-slate-800 text-gray-400 dark:text-slate-600">
                 <p className="text-3xl mb-1">🎉</p>
                 <p className="text-xs font-medium">Nenhum cliente na fila</p>
               </div>
             ) : (
               <div className="space-y-2">
                 {waitingQueue.map((entry, i) => (
-                  <div key={entry.id} className="bg-white border border-gray-100 rounded-2xl p-3 flex items-center justify-between shadow-sm">
+                  <div key={entry.id} className="bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-2xl p-3 flex items-center justify-between shadow-sm">
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 bg-purple-100 text-purple-700 rounded-full flex items-center justify-center font-black text-sm">
+                      <div className="w-8 h-8 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400 rounded-full flex items-center justify-center font-black text-sm">
                         {i + 1}
                       </div>
                       <div>
-                        <p className="font-bold text-gray-900 text-sm">{entry.customer_name}</p>
-                        <p className="text-[10px] text-gray-400 font-bold">
+                        <p className="font-bold text-gray-900 dark:text-white text-sm">{entry.customer_name}</p>
+                        <p className="text-[10px] text-gray-400 dark:text-slate-500 font-bold">
                           {entry.party_size} pessoa{entry.party_size > 1 ? 's' : ''}
                           {entry.customer_phone && ` • ${entry.customer_phone}`}
                         </p>
@@ -845,11 +845,11 @@ export default function WaiterBoard({ initialReadyOrders, initialWaiterCalls, in
           {!scannedCustomer ? (
             <>
               <div className="text-center">
-                <h3 className="text-sm font-bold text-gray-900 mb-1">Escanear QR do cliente</h3>
-                <p className="text-xs text-gray-400">Aponte a câmera para o QR Code do cliente para registrar itens na conta dele</p>
+                <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-1">Escanear QR do cliente</h3>
+                <p className="text-xs text-gray-400 dark:text-slate-500">Aponte a câmera para o QR Code do cliente para registrar itens na conta dele</p>
               </div>
               {scanError && (
-                <div className="bg-red-50 border border-red-200 text-red-700 text-xs px-4 py-3 rounded-xl text-center font-medium">{scanError}</div>
+                <div className="bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900/50 text-red-700 dark:text-red-400 text-xs px-4 py-3 rounded-xl text-center font-medium">{scanError}</div>
               )}
               <WaiterQrScanner onDetected={handleCustomerQrDetected} />
             </>
@@ -868,18 +868,18 @@ export default function WaiterBoard({ initialReadyOrders, initialWaiterCalls, in
       {activeTab === 'pending' && (
         <div className="space-y-6">
           <section>
-            <h2 className="flex items-center gap-2 text-xs font-black text-slate-400 uppercase tracking-widest mb-3">Chamadas de mesa ({pendingCalls.length})</h2>
+            <h2 className="flex items-center gap-2 text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-3">Chamadas de mesa ({pendingCalls.length})</h2>
             {pendingCalls.length === 0 ? (
-              <div className="text-center py-8 bg-white rounded-3xl border border-dashed border-gray-200 text-gray-400">
+              <div className="text-center py-8 bg-white dark:bg-slate-900 rounded-3xl border border-dashed border-gray-200 dark:border-slate-800 text-gray-400 dark:text-slate-600">
                 <p className="text-3xl mb-1">🛎️</p><p className="text-xs">Nenhuma mesa chamando.</p>
               </div>
             ) : (
               <div className="space-y-2">
                 {pendingCalls.map(call => (
-                  <div key={call.id} className="bg-red-50 border border-red-200 rounded-2xl p-4 flex items-center justify-between shadow-sm">
+                  <div key={call.id} className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-900/50 rounded-2xl p-4 flex items-center justify-between shadow-sm">
                     <div>
-                      <p className="font-black text-red-700 text-xl italic">MESA {call.table_number}</p>
-                      <p className="text-[10px] text-red-400 font-bold uppercase">{formatDate(call.created_at)}</p>
+                      <p className="font-black text-red-700 dark:text-red-400 text-xl italic">MESA {call.table_number}</p>
+                      <p className="text-[10px] text-red-400 dark:text-red-500/70 font-bold uppercase">{formatDate(call.created_at)}</p>
                     </div>
                     <div className="flex items-center gap-2">
                       <button
@@ -897,25 +897,25 @@ export default function WaiterBoard({ initialReadyOrders, initialWaiterCalls, in
             )}
           </section>
           <section>
-            <h2 className="flex items-center gap-2 text-xs font-black text-slate-400 uppercase tracking-widest mb-3">
+            <h2 className="flex items-center gap-2 text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-3">
               <CheckCircle className="w-4 h-4 text-green-500" /> Pronto para entregar ({orders.length})
             </h2>
             {orders.length === 0 ? (
-              <div className="text-center py-8 bg-white rounded-3xl border border-dashed border-gray-200 text-gray-400">
+              <div className="text-center py-8 bg-white dark:bg-slate-900 rounded-3xl border border-dashed border-gray-200 dark:border-slate-800 text-gray-400 dark:text-slate-600">
                 <p className="text-3xl mb-1">🏃‍♂️</p><p className="text-xs">Tudo entregue!</p>
               </div>
             ) : (
               <div className="space-y-3">
                 {orders.map(order => (
-                  <div key={order.id} className="bg-white rounded-2xl shadow-sm border border-slate-100 p-4">
+                  <div key={order.id} className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 p-4">
                     <div className="flex items-center justify-between mb-2">
                       <div>
-                        <p className="font-black text-gray-900">COD: {order.pickup_code}</p>
-                        {order.table_number && <p className="text-orange-600 font-black text-sm italic">MESA {order.table_number}</p>}
+                        <p className="font-black text-gray-900 dark:text-white">COD: {order.pickup_code}</p>
+                        {order.table_number && <p className="text-orange-600 dark:text-orange-500 font-black text-sm italic">MESA {order.table_number}</p>}
                       </div>
                       <button onClick={() => markDelivered(order.id)} className="bg-green-500 text-white text-[11px] font-black px-4 py-2 rounded-xl hover:bg-green-600 transition">ENTREGUE</button>
                     </div>
-                    <div className="text-[11px] text-gray-500 space-y-0.5 border-t border-gray-50 pt-2">
+                    <div className="text-[11px] text-gray-500 dark:text-slate-400 space-y-0.5 border-t border-gray-50 dark:border-slate-800 pt-2">
                       {order.order_items.map(item => (<p key={item.id} className="font-medium">• {item.quantity}x {item.menu_items?.name ?? 'Item'}</p>))}
                     </div>
                   </div>
@@ -929,20 +929,20 @@ export default function WaiterBoard({ initialReadyOrders, initialWaiterCalls, in
       {/* === ABA: HISTÓRICO === */}
       {activeTab === 'history' && (
         <section className="space-y-2">
-          <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-3 px-1">Últimos atendimentos</h3>
+          <h3 className="text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-3 px-1">Últimos atendimentos</h3>
           {historyCalls.length === 0 ? (
             <div className="text-center py-12 text-gray-400">Sem histórico.</div>
           ) : (
             <div className="space-y-2">
               {historyCalls.map(call => (
-                <div key={call.id} className="bg-white border border-slate-100 rounded-2xl p-4 flex items-center justify-between opacity-80">
+                <div key={call.id} className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl p-4 flex items-center justify-between opacity-80">
                   <div>
-                    <p className="font-bold text-gray-800">Mesa {call.table_number}</p>
-                    <p className="text-[10px] text-gray-400 flex items-center gap-1"><Clock className="w-3 h-3" />{formatDate(call.created_at)}</p>
+                    <p className="font-bold text-gray-800 dark:text-slate-200">Mesa {call.table_number}</p>
+                    <p className="text-[10px] text-gray-400 dark:text-slate-500 flex items-center gap-1"><Clock className="w-3 h-3" />{formatDate(call.created_at)}</p>
                   </div>
                   <div className="text-right">
-                    <p className="text-[10px] font-black text-slate-400 uppercase mb-0.5">Resposta</p>
-                    <span className="bg-slate-100 text-slate-600 text-[10px] px-2 py-0.5 rounded-full font-bold">{getDuration(call.created_at, call.attended_at)}</span>
+                    <p className="text-[10px] font-black text-slate-400 dark:text-slate-600 uppercase mb-0.5">Resposta</p>
+                    <span className="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 text-[10px] px-2 py-0.5 rounded-full font-bold">{getDuration(call.created_at, call.attended_at)}</span>
                   </div>
                 </div>
               ))}
@@ -954,44 +954,44 @@ export default function WaiterBoard({ initialReadyOrders, initialWaiterCalls, in
       {/* === MODAL: ENVIAR MENSAGEM PARA MESA === */}
       {msgModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="w-full max-w-sm bg-white rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+          <div className="w-full max-w-sm bg-white dark:bg-slate-900 rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 border dark:border-slate-800">
             <div className="p-5">
               {msgSent ? (
                 <div className="text-center py-6 animate-in zoom-in duration-200">
-                  <div className="w-14 h-14 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-3">
+                  <div className="w-14 h-14 bg-green-100 dark:bg-green-950/20 text-green-600 dark:text-green-400 rounded-full flex items-center justify-center mx-auto mb-3">
                     <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
                   </div>
-                  <p className="font-bold text-gray-900">Mensagem enviada!</p>
-                  <p className="text-xs text-gray-400 mt-1">Mesa {msgModal.table} foi notificada com som</p>
+                  <p className="font-bold text-gray-900 dark:text-white">Mensagem enviada!</p>
+                  <p className="text-xs text-gray-400 dark:text-slate-500 mt-1">Mesa {msgModal.table} foi notificada com som</p>
                 </div>
               ) : (
                 <>
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-2">
-                      <div className="w-10 h-10 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center">
+                      <div className="w-10 h-10 bg-blue-100 dark:bg-blue-950/30 text-blue-600 dark:text-blue-400 rounded-full flex items-center justify-center">
                         <MessageCircle className="w-5 h-5" />
                       </div>
                       <div>
-                        <h3 className="font-bold text-gray-900 leading-none">Mensagem</h3>
-                        <p className="text-[10px] text-gray-400 font-bold uppercase">Mesa {msgModal.table}</p>
+                        <h3 className="font-bold text-gray-900 dark:text-white leading-none">Mensagem</h3>
+                        <p className="text-[10px] text-gray-400 dark:text-slate-500 font-bold uppercase">Mesa {msgModal.table}</p>
                       </div>
                     </div>
-                    <button onClick={() => setMsgModal(null)} className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-400">
+                    <button onClick={() => setMsgModal(null)} className="w-8 h-8 rounded-full bg-gray-100 dark:bg-slate-800 flex items-center justify-center text-gray-400 dark:text-slate-500">
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
                     </button>
                   </div>
 
-                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wide mb-2">Mensagens rápidas</p>
+                  <p className="text-[10px] font-bold text-gray-400 dark:text-slate-600 uppercase tracking-wide mb-2">Mensagens rápidas</p>
                   <div className="space-y-1.5 mb-4 max-h-52 overflow-y-auto">
                     {QUICK_MESSAGES.map((msg) => (
                       <button
                         key={msg}
                         onClick={() => sendTableMessage(msg)}
                         disabled={msgSending}
-                        className="w-full text-left px-3 py-2.5 rounded-xl border border-gray-100 hover:border-blue-300 hover:bg-blue-50 transition text-sm text-gray-700 font-medium flex items-center justify-between gap-2 disabled:opacity-50"
+                        className="w-full text-left px-3 py-2.5 rounded-xl border border-gray-100 dark:border-slate-800 hover:border-blue-300 dark:hover:border-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition text-sm text-gray-700 dark:text-slate-300 font-medium flex items-center justify-between gap-2 disabled:opacity-50"
                       >
                         <span>{msg}</span>
-                        <Send className="w-3.5 h-3.5 text-gray-300 flex-shrink-0" />
+                        <Send className="w-3.5 h-3.5 text-gray-300 dark:text-slate-700 flex-shrink-0" />
                       </button>
                     ))}
                   </div>
@@ -1090,7 +1090,7 @@ function WaiterQrScanner({ onDetected }: { onDetected: (data: string) => void })
 
   if (cameraError) {
     return (
-      <div className="text-center py-10 bg-white rounded-2xl border border-dashed border-gray-200">
+      <div className="text-center py-10 bg-white dark:bg-slate-900 rounded-2xl border border-dashed border-gray-200 dark:border-slate-800">
         <p className="text-3xl mb-2">📷</p>
         <p className="text-xs text-red-500 font-medium">{cameraError}</p>
       </div>
@@ -1231,14 +1231,14 @@ function CustomerItemPanel({
   if (success) {
     return (
       <div className="text-center py-10 space-y-3">
-        <div className="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto">
+        <div className="w-16 h-16 bg-green-100 dark:bg-green-950/20 text-green-600 dark:text-green-400 rounded-full flex items-center justify-center mx-auto">
           <CheckCircle className="w-8 h-8" />
         </div>
-        <h3 className="text-lg font-bold text-gray-900">Pedido registrado!</h3>
-        <p className="text-sm text-gray-500">
+        <h3 className="text-lg font-bold text-gray-900 dark:text-white">Pedido registrado!</h3>
+        <p className="text-sm text-gray-500 dark:text-slate-400">
           {cart.length} {cart.length === 1 ? 'item' : 'itens'} na conta de <strong>{customer.name}</strong>
         </p>
-        <p className="text-lg font-black text-green-600">R$ {total.toFixed(2)}</p>
+        <p className="text-lg font-black text-green-600 dark:text-green-400">R$ {total.toFixed(2)}</p>
         <button
           onClick={onClose}
           className="mt-4 bg-orange-500 text-white font-bold text-sm px-6 py-3 rounded-xl hover:bg-orange-600 transition"
@@ -1264,53 +1264,53 @@ function CustomerItemPanel({
   return (
     <div className="space-y-4">
       {/* Header do cliente */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex items-center justify-between">
+      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-100 dark:border-slate-800 shadow-sm p-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-orange-100 text-orange-600 rounded-full flex items-center justify-center font-black text-sm">
+          <div className="w-10 h-10 bg-orange-100 dark:bg-orange-950/30 text-orange-600 dark:text-orange-400 rounded-full flex items-center justify-center font-black text-sm">
             {customer.name?.charAt(0)?.toUpperCase() || '?'}
           </div>
           <div>
-            <p className="font-bold text-gray-900 text-sm">{customer.name}</p>
-            <p className="text-[10px] text-gray-400">{customer.email}</p>
+            <p className="font-bold text-gray-900 dark:text-white text-sm">{customer.name}</p>
+            <p className="text-[10px] text-gray-400 dark:text-slate-500">{customer.email}</p>
           </div>
         </div>
-        <button onClick={onClose} className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center text-gray-400 hover:bg-gray-200">
+        <button onClick={onClose} className="w-8 h-8 bg-gray-100 dark:bg-slate-800 rounded-full flex items-center justify-center text-gray-400 dark:text-slate-500 hover:bg-gray-200 dark:hover:bg-slate-700">
           <X className="w-4 h-4" />
         </button>
       </div>
 
       {/* Seção: Prato por quilo */}
-      <div className="bg-amber-50 rounded-2xl border border-amber-200 p-4 space-y-3">
-        <h4 className="text-xs font-black text-amber-700 uppercase tracking-wide flex items-center gap-1.5">
+      <div className="bg-amber-50 dark:bg-amber-950/20 rounded-2xl border border-amber-200 dark:border-amber-900/50 p-4 space-y-3">
+        <h4 className="text-xs font-black text-amber-700 dark:text-amber-400 uppercase tracking-wide flex items-center gap-1.5">
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l3 9a5.002 5.002 0 01-6.001 0M18 7l-3 9m-3-9l-3-9m3 9V4" /></svg>
           Prato por quilo
         </h4>
         <div className="grid grid-cols-2 gap-2">
           <div>
-            <label className="text-[10px] font-bold text-amber-600 block mb-1">Peso (kg)</label>
+            <label className="text-[10px] font-bold text-amber-600 dark:text-amber-500 block mb-1">Peso (kg)</label>
             <input
               type="text"
               inputMode="decimal"
               value={weightInput}
               onChange={e => setWeightInput(e.target.value)}
               placeholder="Ex: 0.350"
-              className="w-full border border-amber-200 rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-amber-400/40"
+              className="w-full border border-amber-200 dark:border-amber-900/50 rounded-xl px-3 py-2 text-sm bg-white dark:bg-slate-950 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-400/40"
             />
           </div>
           <div>
-            <label className="text-[10px] font-bold text-amber-600 block mb-1">R$/kg</label>
+            <label className="text-[10px] font-bold text-amber-600 dark:text-amber-500 block mb-1">R$/kg</label>
             <input
               type="text"
               inputMode="decimal"
               value={pricePerKg}
               onChange={e => setPricePerKg(e.target.value)}
               placeholder="Ex: 69.90"
-              className="w-full border border-amber-200 rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-amber-400/40"
+              className="w-full border border-amber-200 dark:border-amber-900/50 rounded-xl px-3 py-2 text-sm bg-white dark:bg-slate-950 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-400/40"
             />
           </div>
         </div>
         {weightInput && pricePerKg && (
-          <p className="text-xs font-bold text-amber-800 text-center">
+          <p className="text-xs font-bold text-amber-800 dark:text-amber-500 text-center">
             Total: R$ {(parseFloat(weightInput.replace(',', '.') || '0') * parseFloat(pricePerKg.replace(',', '.') || '0')).toFixed(2)}
           </p>
         )}
@@ -1324,8 +1324,8 @@ function CustomerItemPanel({
       </div>
 
       {/* Seção: Itens do cardápio */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 space-y-3 max-h-60 overflow-y-auto">
-        <h4 className="text-xs font-black text-gray-500 uppercase tracking-wide flex items-center gap-1.5">
+      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-100 dark:border-slate-800 shadow-sm p-4 space-y-3 max-h-60 overflow-y-auto">
+        <h4 className="text-xs font-black text-gray-500 dark:text-slate-500 uppercase tracking-wide flex items-center gap-1.5">
           <ShoppingBag className="w-4 h-4" /> Cardápio
         </h4>
         {menuItems.length === 0 ? (
@@ -1340,18 +1340,18 @@ function CustomerItemPanel({
                   return (
                     <div key={item.id} className="flex items-center justify-between py-1.5">
                       <div>
-                        <p className="text-xs font-medium text-gray-800">{item.name}</p>
-                        <p className="text-[10px] text-gray-400">R$ {item.price.toFixed(2)}</p>
+                        <p className="text-xs font-medium text-gray-800 dark:text-slate-200">{item.name}</p>
+                        <p className="text-[10px] text-gray-400 dark:text-slate-500">R$ {item.price.toFixed(2)}</p>
                       </div>
                       <div className="flex items-center gap-1.5">
                         {inCart ? (
                           <>
-                            <button onClick={() => removeFromCart(item.id)} className="w-6 h-6 bg-gray-100 rounded-lg text-xs font-bold flex items-center justify-center text-gray-600">-</button>
-                            <span className="text-xs font-black w-5 text-center">{inCart.quantity}</span>
+                            <button onClick={() => removeFromCart(item.id)} className="w-6 h-6 bg-gray-100 dark:bg-slate-800 rounded-lg text-xs font-bold flex items-center justify-center text-gray-600 dark:text-slate-400">-</button>
+                            <span className="text-xs font-black w-5 text-center text-gray-900 dark:text-white">{inCart.quantity}</span>
                             <button onClick={() => addToCart(item)} className="w-6 h-6 bg-orange-500 text-white rounded-lg text-xs font-bold flex items-center justify-center">+</button>
                           </>
                         ) : (
-                          <button onClick={() => addToCart(item)} className="text-[10px] font-bold bg-orange-50 text-orange-600 px-3 py-1.5 rounded-lg hover:bg-orange-100 transition">
+                          <button onClick={() => addToCart(item)} className="text-[10px] font-bold bg-orange-50 dark:bg-orange-950/20 text-orange-600 dark:text-orange-400 px-3 py-1.5 rounded-lg hover:bg-orange-100 dark:hover:bg-orange-900/30 transition">
                             + Adicionar
                           </button>
                         )}
@@ -1367,21 +1367,21 @@ function CustomerItemPanel({
 
       {/* Carrinho / Resumo */}
       {cart.length > 0 && (
-        <div className="bg-white rounded-2xl border-2 border-orange-200 shadow-sm p-4 space-y-3">
-          <h4 className="text-xs font-black text-orange-600 uppercase tracking-wide">
+        <div className="bg-white dark:bg-slate-900 rounded-2xl border-2 border-orange-200 dark:border-orange-900/50 shadow-sm p-4 space-y-3">
+          <h4 className="text-xs font-black text-orange-600 dark:text-orange-400 uppercase tracking-wide">
             Resumo ({cart.length} {cart.length === 1 ? 'item' : 'itens'})
           </h4>
           <div className="space-y-1.5">
             {cart.map(c => (
               <div key={c.item_id} className="flex items-center justify-between text-xs">
-                <span className="text-gray-700">{c.quantity}x {c.name}</span>
-                <span className="font-bold text-gray-900">R$ {(c.unit_price * c.quantity).toFixed(2)}</span>
+                <span className="text-gray-700 dark:text-slate-300">{c.quantity}x {c.name}</span>
+                <span className="font-bold text-gray-900 dark:text-white">R$ {(c.unit_price * c.quantity).toFixed(2)}</span>
               </div>
             ))}
           </div>
-          <div className="border-t border-orange-100 pt-2 flex items-center justify-between">
-            <span className="text-sm font-black text-gray-900">Total</span>
-            <span className="text-lg font-black text-orange-600">R$ {total.toFixed(2)}</span>
+          <div className="border-t border-orange-100 dark:border-orange-900/30 pt-2 flex items-center justify-between">
+            <span className="text-sm font-black text-gray-900 dark:text-white">Total</span>
+            <span className="text-lg font-black text-orange-600 dark:text-orange-400">R$ {total.toFixed(2)}</span>
           </div>
 
           {error && <p className="text-xs text-red-500 font-medium">{error}</p>}
@@ -1415,7 +1415,7 @@ function MessageCustomInput({ onSend, sending }: { onSend: (msg: string) => void
         onChange={e => setText(e.target.value)}
         onKeyDown={e => { if (e.key === 'Enter' && text.trim()) { onSend(text.trim()); setText(''); } }}
         placeholder="Ou escreva sua mensagem..."
-        className="flex-1 h-10 bg-gray-50 border border-gray-100 rounded-xl px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30 placeholder:text-gray-300"
+        className="flex-1 h-10 bg-gray-50 dark:bg-slate-950 border border-gray-100 dark:border-slate-800 rounded-xl px-3 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/30 placeholder:text-gray-300 dark:placeholder:text-slate-700"
         disabled={sending}
       />
       <button
