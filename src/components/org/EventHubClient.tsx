@@ -420,7 +420,7 @@ export default function EventHubClient({
                 {booths.map(b => (
                   <div key={b.id} className="flex items-center justify-between text-sm py-1.5 border-b border-gray-50 last:border-0">
                     <div className="flex items-center gap-2">
-                      <span className={`w-6 h-6 rounded-lg flex items-center justify-center text-[10px] font-bold ${
+                      <span className={`min-w-[4.5rem] h-6 px-2 rounded-lg flex items-center justify-center text-[10px] font-bold whitespace-nowrap ${
                         b.status === 'confirmed' ? 'bg-green-200 text-green-800'
                         : b.status === 'reserved' ? 'bg-yellow-200 text-yellow-800'
                         : 'bg-purple-200 text-purple-800'
