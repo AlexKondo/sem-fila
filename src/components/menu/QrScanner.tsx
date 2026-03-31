@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 import BottomNav from '@/components/ui/BottomNav';
+import ThemeToggle from '@/components/ui/ThemeToggle';
 
 const P = '#ec5b13'; // primary
 const SCAN_INTERVAL = 200; // ms entre scans
@@ -130,7 +131,7 @@ export default function QrScanner() {
   }, [isManualOpen, isMyQrOpen, detected, stopCamera, startCamera]);
 
   return (
-    <div className="relative flex min-h-screen flex-col" style={{ backgroundColor: '#f8f6f6' }}>
+    <div className="relative flex min-h-screen flex-col bg-[#f8f6f6] dark:bg-slate-900 transition-colors duration-300">
       {/* Header */}
       <header className="flex items-center justify-between px-6 py-4">
         <div className="flex items-center gap-2">
@@ -139,13 +140,16 @@ export default function QrScanner() {
               <path d="M3 3h7v7H3V3zm2 2v3h3V5H5zm7-2h7v7h-7V3zm2 2v3h3V5h-3zM3 13h7v7H3v-7zm2 2v3h3v-3H5zm10 0h2v2h-2v-2zm-2 2h2v2h-2v-2zm4 0h2v2h-2v-2zm0-4h2v2h-2v-2zm-4 0h2v2h-2v-2zm2 2h2v2h-2v-2z"/>
             </svg>
           </div>
-          <h1 className="text-xl font-bold tracking-tight text-slate-900">QuickPick</h1>
+          <h1 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">QuickPick</h1>
         </div>
-        <Link href="/" className="w-10 h-10 flex items-center justify-center rounded-full bg-slate-200 text-slate-700 hover:bg-slate-300 transition">
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-          </svg>
-        </Link>
+        <div className="flex items-center gap-1">
+          <ThemeToggle />
+          <Link href="/" className="w-10 h-10 flex items-center justify-center rounded-full bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-300 dark:hover:bg-slate-600 transition">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </Link>
+        </div>
       </header>
 
       {/* Main */}
@@ -153,8 +157,8 @@ export default function QrScanner() {
         {error ? (
           <>
             <div className="text-center mb-8">
-              <h2 className="text-3xl font-bold text-slate-900 mb-2">Câmera bloqueada</h2>
-              <p className="text-slate-600 font-medium">{error}</p>
+              <h2 className="text-3xl font-bold text-slate-900 dark:text-white mb-2">Câmera bloqueada</h2>
+              <p className="text-slate-600 dark:text-slate-400 font-medium">{error}</p>
             </div>
             <button
               onClick={startCamera}
@@ -167,8 +171,8 @@ export default function QrScanner() {
         ) : detected ? (
           <>
             <div className="text-center mb-8">
-              <h2 className="text-3xl font-bold text-slate-900 mb-2">QR Code detectado!</h2>
-              <p className="text-slate-600 font-medium">Redirecionando para o cardápio…</p>
+              <h2 className="text-3xl font-bold text-slate-900 dark:text-white mb-2">QR Code detectado!</h2>
+              <p className="text-slate-600 dark:text-slate-400 font-medium">Redirecionando para o cardápio…</p>
             </div>
             <a
               href={detected}
@@ -181,8 +185,8 @@ export default function QrScanner() {
         ) : (
           <>
             <div className="text-center mb-8">
-              <h2 className="text-3xl font-bold text-slate-900 mb-2">Bem-vindo!</h2>
-              <p className="text-slate-600 font-medium">Aponte a câmera para o código QR para fazer seu pedido</p>
+              <h2 className="text-3xl font-bold text-slate-900 dark:text-white mb-2">Bem-vindo!</h2>
+              <p className="text-slate-600 dark:text-slate-400 font-medium">Aponte a câmera para o código QR para fazer seu pedido</p>
             </div>
 
             {/* Botão Meu QR Code */}
@@ -206,7 +210,7 @@ export default function QrScanner() {
               <div className="absolute bottom-0 right-0 w-12 h-12 border-b-4 border-r-4 rounded-br-xl" style={{ borderColor: P }} />
 
               {/* Camera area */}
-              <div className="w-[85%] h-[85%] bg-slate-200 rounded-lg overflow-hidden flex flex-col items-center justify-center relative">
+              <div className="w-[85%] h-[85%] bg-slate-200 dark:bg-slate-800 rounded-lg overflow-hidden flex flex-col items-center justify-center relative">
                 <video ref={videoRef} className="absolute inset-0 w-full h-full object-cover" playsInline muted />
                 <canvas ref={canvasRef} className="hidden" />
                 {/* Scan line */}
@@ -240,7 +244,7 @@ export default function QrScanner() {
             <div className="mt-16 w-full max-w-sm">
               <button 
                 onClick={() => setIsManualOpen(true)}
-                className="w-full py-4 px-6 border-2 border-dashed border-slate-300 rounded-xl flex items-center justify-center gap-3 text-slate-600 font-semibold hover:bg-slate-50 transition-colors"
+                className="w-full py-4 px-6 border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-xl flex items-center justify-center gap-3 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h7" />
@@ -321,10 +325,10 @@ function MyQrCodeModal({ onClose, P }: { onClose: () => void; P: string }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-6">
-      <div className="bg-white rounded-2xl w-full max-w-sm p-6 shadow-xl text-center">
+      <div className="bg-white dark:bg-slate-800 rounded-2xl w-full max-w-sm p-6 shadow-xl text-center">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-bold text-slate-900">Meu QR Code</h3>
-          <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200">
+          <h3 className="text-lg font-bold text-slate-900 dark:text-white">Meu QR Code</h3>
+          <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-full bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600">
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
@@ -339,8 +343,8 @@ function MyQrCodeModal({ onClose, P }: { onClose: () => void; P: string }) {
         ) : (
           <>
             {userName && (
-              <p className="text-sm text-slate-600 mb-3">
-                <span className="font-bold text-slate-900">{userName}</span>
+              <p className="text-sm text-slate-600 dark:text-slate-400 mb-3">
+                <span className="font-bold text-slate-900 dark:text-white">{userName}</span>
               </p>
             )}
             {qrDataUrl && (
@@ -364,9 +368,9 @@ function ManualEntryModal({ onClose, onConfirm, P }: { onClose: () => void; onCo
   const [manualCode, setManualCode] = useState('');
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-6">
-      <div className="bg-white rounded-2xl w-full max-w-sm p-5 space-y-4 shadow-xl">
-        <h3 className="text-lg font-bold text-slate-900">Digitar Código</h3>
-        <p className="text-xs text-slate-500">Insira o código numérico fixado na sua mesa ou quiosque:</p>
+      <div className="bg-white dark:bg-slate-800 rounded-2xl w-full max-w-sm p-5 space-y-4 shadow-xl">
+        <h3 className="text-lg font-bold text-slate-900 dark:text-white">Digitar Código</h3>
+        <p className="text-xs text-slate-500 dark:text-slate-400">Insira o código numérico fixado na sua mesa ou quiosque:</p>
         <input
           autoFocus
           type="text"
@@ -375,12 +379,12 @@ function ManualEntryModal({ onClose, onConfirm, P }: { onClose: () => void; onCo
           placeholder="Ex: 502"
           value={manualCode}
           onChange={(e) => setManualCode(e.target.value)}
-          className="w-full border border-slate-200 rounded-xl px-4 py-3 text-center text-lg font-bold tracking-wider focus:outline-none focus:ring-2 focus:ring-orange-400"
+          className="w-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 rounded-xl px-4 py-3 text-center text-lg font-bold tracking-wider focus:outline-none focus:ring-2 focus:ring-orange-400 text-slate-900 dark:text-white"
         />
         <div className="flex gap-2">
           <button 
             onClick={onClose} 
-            className="flex-1 bg-slate-100 py-3 rounded-xl text-slate-700 font-semibold text-sm hover:bg-slate-200 transition"
+            className="flex-1 bg-slate-100 dark:bg-slate-700 py-3 rounded-xl text-slate-700 dark:text-slate-200 font-semibold text-sm hover:bg-slate-200 dark:hover:bg-slate-600 transition"
           >
             Cancelar
           </button>
