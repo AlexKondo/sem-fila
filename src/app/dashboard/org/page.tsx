@@ -63,7 +63,7 @@ export default async function OrgDashboardPage() {
       .from('event_vendor_invitations')
       .select('*', { count: 'exact', head: true })
       .in('event_id', eventIds)
-      .eq('status', 'paid');
+      .in('status', ['accepted', 'paid']);
     paidInvites = paidCount ?? 0;
   }
 
