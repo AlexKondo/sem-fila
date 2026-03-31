@@ -132,12 +132,12 @@ export default async function OrgDashboardPage() {
           </div>
 
           {(!events || events.length === 0) ? (
-            <div className="bg-white rounded-2xl p-8 text-center shadow-sm">
-              <Calendar className="w-10 h-10 text-gray-300 mx-auto mb-3" />
-              <p className="text-gray-500 text-sm font-medium">Nenhum evento criado ainda</p>
+            <div className="bg-white dark:bg-slate-800 rounded-2xl p-8 text-center shadow-sm border border-gray-100 dark:border-slate-700">
+              <Calendar className="w-10 h-10 text-gray-300 dark:text-slate-600 mx-auto mb-3" />
+              <p className="text-gray-500 dark:text-slate-400 text-sm font-medium">Nenhum evento criado ainda</p>
               <Link
                 href="/dashboard/org/events"
-                className="inline-flex items-center gap-1 mt-3 text-sm font-semibold text-purple-600"
+                className="inline-flex items-center gap-1 mt-3 text-sm font-semibold text-purple-600 dark:text-purple-400"
               >
                 <Plus className="w-4 h-4" /> Criar primeiro evento
               </Link>
@@ -153,8 +153,8 @@ export default async function OrgDashboardPage() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
                       <p className="font-semibold text-gray-900 dark:text-white text-sm truncate">{event.name}</p>
-                      <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${
-                        event.active ? 'bg-green-100 text-green-700' : 'bg-gray-200 text-gray-500'
+                      <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold transition-colors ${
+                        event.active ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400' : 'bg-gray-200 dark:bg-slate-700 text-gray-500 dark:text-slate-400'
                       }`}>
                         {event.active ? 'Ativo' : 'Inativo'}
                       </span>

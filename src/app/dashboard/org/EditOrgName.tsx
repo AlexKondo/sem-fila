@@ -53,13 +53,13 @@ export default function EditOrgName({ orgId, currentName }: Props) {
             if (e.key === 'Enter') handleSave();
             if (e.key === 'Escape') { setName(currentName); setEditing(false); }
           }}
-          className="font-bold text-gray-900 text-lg border-b-2 border-purple-500 bg-transparent outline-none py-0.5 px-1 -ml-1"
+          className="font-bold text-gray-900 dark:text-white text-lg border-b-2 border-purple-500 bg-transparent outline-none py-0.5 px-1 -ml-1"
           disabled={saving}
         />
-        <button onClick={handleSave} disabled={saving} className="p-1 rounded-full hover:bg-green-50 text-green-600 transition">
+        <button onClick={handleSave} disabled={saving} className="p-1 rounded-full hover:bg-green-50 dark:hover:bg-green-950/30 text-green-600 dark:text-green-400 transition">
           <Check className="w-4 h-4" />
         </button>
-        <button onClick={() => { setName(currentName); setEditing(false); }} className="p-1 rounded-full hover:bg-red-50 text-red-400 transition">
+        <button onClick={() => { setName(currentName); setEditing(false); }} className="p-1 rounded-full hover:bg-red-50 dark:hover:bg-red-950/30 text-red-500 dark:text-red-400 transition">
           <X className="w-4 h-4" />
         </button>
       </div>
@@ -68,8 +68,8 @@ export default function EditOrgName({ orgId, currentName }: Props) {
 
   return (
     <div className="flex items-center gap-2">
-      <h1 className="font-bold text-gray-900 text-lg">{currentName}</h1>
-      <button onClick={() => setEditing(true)} className="p-1 rounded-full hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition">
+      <h1 className="font-bold text-gray-900 dark:text-white text-lg">{currentName}</h1>
+      <button onClick={() => setEditing(true)} className="p-1 rounded-full hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-400 dark:text-slate-500 hover:text-gray-600 dark:hover:text-slate-300 transition">
         <Pencil className="w-3.5 h-3.5" />
       </button>
     </div>

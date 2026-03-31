@@ -45,12 +45,12 @@ export default async function AdminDashboardPage() {
   const totalRevenue = revenueData?.reduce((sum, o) => sum + (o.total_price ?? 0), 0) ?? 0;
 
   const stats = [
-    { label: 'Usuários', value: totalUsers ?? 0, icon: Users, color: 'bg-blue-50 text-blue-600', href: '/dashboard/admin/users' },
-    { label: 'Afiliados', value: totalAffiliates ?? 0, icon: Award, color: 'bg-pink-50 text-pink-600', href: '/dashboard/admin/users' },
-    { label: 'Eventos', value: totalEvents ?? 0, icon: CalendarDays, color: 'bg-green-50 text-green-600', href: '/dashboard/admin/events' },
-    { label: 'Barracas', value: totalVendors ?? 0, icon: Store, color: 'bg-orange-50 text-orange-600', href: '/dashboard/admin/vendors' },
-    { label: 'Pedidos', value: totalOrders ?? 0, icon: ShoppingBag, color: 'bg-yellow-50 text-yellow-600', href: null },
-    { label: 'Receita Total', value: formatCurrency(totalRevenue), icon: TrendingUp, color: 'bg-emerald-50 text-emerald-600', isText: true, href: null },
+    { label: 'Usuários', value: totalUsers ?? 0, icon: Users, color: 'bg-blue-50 dark:bg-blue-950/30 text-blue-600 dark:text-blue-400', href: '/dashboard/admin/users' },
+    { label: 'Afiliados', value: totalAffiliates ?? 0, icon: Award, color: 'bg-pink-50 dark:bg-pink-950/30 text-pink-600 dark:text-pink-400', href: '/dashboard/admin/users' },
+    { label: 'Eventos', value: totalEvents ?? 0, icon: CalendarDays, color: 'bg-green-50 dark:bg-green-950/30 text-green-600 dark:text-green-400', href: '/dashboard/admin/events' },
+    { label: 'Barracas', value: totalVendors ?? 0, icon: Store, color: 'bg-orange-50 dark:bg-orange-950/30 text-orange-600 dark:text-orange-400', href: '/dashboard/admin/vendors' },
+    { label: 'Pedidos', value: totalOrders ?? 0, icon: ShoppingBag, color: 'bg-yellow-50 dark:bg-yellow-950/30 text-yellow-600 dark:text-yellow-400', href: null },
+    { label: 'Receita Total', value: formatCurrency(totalRevenue), icon: TrendingUp, color: 'bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400', isText: true, href: null },
   ];
 
   return (
@@ -109,21 +109,21 @@ export default async function AdminDashboardPage() {
           <div>
             <h2 className="text-sm font-semibold text-gray-500 dark:text-slate-400 uppercase tracking-wide mb-3">Performance de Eventos</h2>
             <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-700 overflow-hidden">
-               {eventPerformance?.length === 0 ? (
-                 <p className="p-6 text-sm text-gray-400 text-center">Nenhum evento ativo.</p>
-               ) : (
-                 <div className="divide-y divide-gray-50">
+                {eventPerformance?.length === 0 ? (
+                  <p className="p-6 text-sm text-gray-400 dark:text-slate-500 text-center">Nenhum evento ativo.</p>
+                ) : (
+                  <div className="divide-y divide-gray-50 dark:divide-slate-700">
                     {eventPerformance?.map(event => (
                       <div key={event.id} className="p-4 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-slate-700/50 transition">
                         <div>
                           <p className="text-sm font-bold text-gray-800 dark:text-slate-200">{event.name}</p>
                           <p className="text-[10px] text-gray-400 dark:text-slate-500">{new Date(event.created_at).toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' })}</p>
                         </div>
-                        <Link href={`/dashboard/admin/events/${event.id}`} className="text-[10px] font-black text-orange-600 bg-orange-50 px-2.5 py-1 rounded-full uppercase">Relatórios</Link>
+                        <Link href={`/dashboard/admin/events/${event.id}`} className="text-[10px] font-black text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-950/30 px-2.5 py-1 rounded-full uppercase transition-colors">Relatórios</Link>
                       </div>
                     ))}
-                 </div>
-               )}
+                  </div>
+                )}
             </div>
           </div>
 
@@ -141,9 +141,9 @@ export default async function AdminDashboardPage() {
                 <Link
                   key={href}
                   href={href}
-                  className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm p-4 flex items-center gap-4 hover:shadow-md transition border border-gray-100 dark:border-slate-700"
+                  className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm p-4 flex items-center gap-4 hover:shadow-md transition border border-gray-100 dark:border-slate-700 hover:border-orange-200 dark:hover:border-orange-900 group"
                 >
-                  <div className="w-10 h-10 bg-orange-50 text-orange-500 rounded-xl flex items-center justify-center flex-shrink-0">
+                  <div className="w-10 h-10 bg-orange-50 dark:bg-orange-950/30 text-orange-500 dark:text-orange-400 rounded-xl flex items-center justify-center flex-shrink-0 transition-colors group-hover:scale-110">
                     <Icon className="w-5 h-5" />
                   </div>
                   <div>

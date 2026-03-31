@@ -22,7 +22,7 @@ export default function LogoutButton({ className, style }: { className?: string;
     <button
       onClick={handleLogout}
       disabled={loading}
-      className={className ?? 'flex items-center gap-1.5 text-sm text-gray-500 hover:text-red-500 transition px-2 py-1.5 rounded-lg hover:bg-red-50'}
+      className={className ?? 'flex items-center gap-1.5 text-sm text-gray-500 dark:text-slate-400 hover:text-red-500 dark:hover:text-red-400 transition px-2 py-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-950/20'}
       style={style}
     >
       <LogOut className="w-4 h-4" />

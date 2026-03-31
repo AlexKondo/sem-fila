@@ -114,18 +114,18 @@ export default function VendorAdminManager({ initialVendors, events }: Props) {
 
       {/* Formulário nova barraca */}
       {showForm && (
-        <div className="bg-white rounded-2xl shadow-sm p-5 space-y-3">
-          <h3 className="font-semibold text-gray-900">Nova barraca</h3>
-          {error && <p className="text-red-600 text-sm">{error}</p>}
+        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm p-5 space-y-3 border border-slate-100 dark:border-slate-800">
+          <h3 className="font-semibold text-gray-900 dark:text-white">Nova barraca</h3>
+          {error && <p className="text-red-600 dark:text-red-400 text-sm">{error}</p>}
 
           <select
             value={form.event_id}
             onChange={(e) => setForm((p) => ({ ...p, event_id: e.target.value }))}
-            className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
+            className="w-full border border-gray-300 dark:border-slate-700 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 bg-white dark:bg-slate-950 text-slate-900 dark:text-white"
           >
-            <option value="">Selecione o evento</option>
+            <option value="" className="dark:bg-slate-900">Selecione o evento</option>
             {events.map((ev) => (
-              <option key={ev.id} value={ev.id}>
+              <option key={ev.id} value={ev.id} className="dark:bg-slate-900">
                 {ev.organizations?.name} — {ev.name}
               </option>
             ))}
@@ -135,56 +135,56 @@ export default function VendorAdminManager({ initialVendors, events }: Props) {
             placeholder="Nome da barraca"
             value={form.name}
             onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))}
-            className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
+            className="w-full border border-gray-300 dark:border-slate-700 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 bg-white dark:bg-slate-950 text-slate-900 dark:text-white"
           />
           <input
             placeholder="Descrição (opcional)"
             value={form.description}
             onChange={(e) => setForm((p) => ({ ...p, description: e.target.value }))}
-            className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
+            className="w-full border border-gray-300 dark:border-slate-700 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 bg-white dark:bg-slate-950 text-slate-900 dark:text-white"
           />
 
           <div className="flex gap-3">
             <div className="flex-1">
-              <label className="text-xs text-gray-500 mb-1 block">Tempo médio (min)</label>
+              <label className="text-xs text-gray-500 dark:text-slate-400 mb-1 block">Tempo médio (min)</label>
               <input
                 type="number" min={1} max={120}
                 value={form.avg_prep_time}
                 onChange={(e) => setForm((p) => ({ ...p, avg_prep_time: parseInt(e.target.value) || 10 }))}
-                className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
+                className="w-full border border-gray-300 dark:border-slate-700 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 bg-white dark:bg-slate-950 text-slate-900 dark:text-white"
               />
             </div>
             <div className="flex-1">
-              <label className="text-xs text-gray-500 mb-1 block">Modo de pagamento</label>
+              <label className="text-xs text-gray-500 dark:text-slate-400 mb-1 block">Modo de pagamento</label>
               <select
                 value={form.payment_mode}
                 onChange={(e) => setForm((p) => ({ ...p, payment_mode: e.target.value as typeof form.payment_mode }))}
-                className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
+                className="w-full border border-gray-300 dark:border-slate-700 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 bg-white dark:bg-slate-950 text-slate-900 dark:text-white"
               >
-                <option value="prepaid">Pré-pago (online)</option>
-                <option value="pay_on_pickup">Pagar na retirada</option>
-                <option value="optional">Opcional</option>
+                <option value="prepaid" className="dark:bg-slate-900">Pr-pago (online)</option>
+                <option value="pay_on_pickup" className="dark:bg-slate-900">Pagar na retirada</option>
+                <option value="optional" className="dark:bg-slate-900">Opcional</option>
               </select>
             </div>
           </div>
 
           <div className="flex gap-4">
             {(['accept_pix', 'accept_cash', 'accept_card'] as const).map((key) => (
-              <label key={key} className="flex items-center gap-1.5 text-sm text-gray-700 cursor-pointer">
+              <label key={key} className="flex items-center gap-1.5 text-sm text-gray-700 dark:text-slate-300 cursor-pointer">
                 <input
                   type="checkbox"
                   checked={form[key]}
                   onChange={(e) => setForm((p) => ({ ...p, [key]: e.target.checked }))}
-                  className="accent-orange-500"
+                  className="accent-orange-500 w-4 h-4"
                 />
-                {key === 'accept_pix' ? 'PIX' : key === 'accept_cash' ? 'Dinheiro' : 'Cartão'}
+                {key === 'accept_pix' ? 'PIX' : key === 'accept_cash' ? 'Dinheiro' : 'Cartǜo'}
               </label>
             ))}
           </div>
 
           <div className="flex gap-2">
-            <button onClick={() => setShowForm(false)} className="flex-1 border border-gray-300 text-gray-700 py-2 rounded-xl text-sm">Cancelar</button>
-            <button onClick={createVendor} disabled={saving} className="flex-1 bg-orange-500 text-white py-2 rounded-xl text-sm font-semibold disabled:opacity-50">
+            <button onClick={() => setShowForm(false)} className="flex-1 border border-gray-300 dark:border-slate-700 text-gray-700 dark:text-slate-400 py-2 rounded-xl text-sm hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors">Cancelar</button>
+            <button onClick={createVendor} disabled={saving} className="flex-1 bg-orange-500 text-white py-2 rounded-xl text-sm font-semibold disabled:opacity-50 shadow-lg shadow-orange-500/20">
               {saving ? 'Salvando...' : 'Criar barraca'}
             </button>
           </div>
@@ -193,45 +193,45 @@ export default function VendorAdminManager({ initialVendors, events }: Props) {
 
       {/* Lista de vendors */}
       {vendors.length === 0 ? (
-        <div className="text-center py-16 text-gray-400">
+        <div className="text-center py-16 text-gray-400 dark:text-slate-600">
           <p className="text-4xl mb-3">🏪</p>
           <p>Nenhuma barraca criada ainda.</p>
         </div>
       ) : (
         vendors.map((vendor) => (
-          <div key={vendor.id} className={`bg-white rounded-2xl shadow-sm p-4 ${!vendor.active ? 'opacity-60' : ''}`}>
+          <div key={vendor.id} className={`bg-white dark:bg-slate-900 rounded-2xl shadow-sm p-4 border border-slate-100 dark:border-slate-800 ${!vendor.active ? 'opacity-60' : ''}`}>
             <div className="flex items-start justify-between mb-2">
               <div>
                 <div className="flex items-center gap-2">
                   <Store className="w-4 h-4 text-orange-400" />
-                  <p className="font-semibold text-gray-900">{vendor.name}</p>
+                  <p className="font-semibold text-gray-900 dark:text-white">{vendor.name}</p>
                 </div>
                 {vendor.events && (
-                  <p className="text-xs text-gray-500 mt-0.5">Evento: {vendor.events.name}</p>
+                  <p className="text-xs text-gray-500 dark:text-slate-400 mt-0.5">Evento: {vendor.events.name}</p>
                 )}
                 {vendor.description && (
-                  <p className="text-xs text-gray-400 mt-0.5">{vendor.description}</p>
+                  <p className="text-xs text-gray-400 dark:text-slate-500 mt-0.5">{vendor.description}</p>
                 )}
               </div>
-              <button onClick={() => toggleActive(vendor)}>
+              <button onClick={() => toggleActive(vendor)} className="transition-transform active:scale-90">
                 {vendor.active
                   ? <ToggleRight className="w-6 h-6 text-green-500" />
-                  : <ToggleLeft className="w-6 h-6 text-gray-400" />
+                  : <ToggleLeft className="w-6 h-6 text-gray-400 dark:text-slate-600" />
                 }
               </button>
             </div>
 
             {/* Dono vinculado */}
-            <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-100">
+            <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-100 dark:border-slate-800">
               <div>
-                <p className="text-xs text-gray-500">Dono vinculado</p>
-                <p className="text-sm font-medium text-gray-800">
-                  {vendor.profiles?.name ?? <span className="text-red-500 text-xs">Nenhum dono vinculado</span>}
+                <p className="text-xs text-gray-500 dark:text-slate-400">Dono vinculado</p>
+                <p className="text-sm font-medium text-gray-800 dark:text-slate-200">
+                  {vendor.profiles?.name ?? <span className="text-red-500 dark:text-red-400 text-xs">Nenhum dono vinculado</span>}
                 </p>
               </div>
               <button
                 onClick={() => { setLinkEmail({ vendorId: vendor.id, email: '' }); setLinkError(''); }}
-                className="flex items-center gap-1.5 text-xs text-orange-500 border border-orange-200 px-2.5 py-1.5 rounded-xl hover:bg-orange-50 transition"
+                className="flex items-center gap-1.5 text-xs text-orange-500 dark:text-orange-400 border border-orange-200 dark:border-orange-900 px-2.5 py-1.5 rounded-xl hover:bg-orange-50 dark:hover:bg-orange-950/20 transition-colors"
               >
                 <LinkIcon className="w-3 h-3" />
                 {vendor.profiles ? 'Alterar dono' : 'Vincular dono'}
@@ -241,20 +241,20 @@ export default function VendorAdminManager({ initialVendors, events }: Props) {
             {/* Form de vínculo */}
             {linkEmail?.vendorId === vendor.id && (
               <div className="mt-3 space-y-2">
-                {linkError && <p className="text-red-600 text-xs">{linkError}</p>}
+                {linkError && <p className="text-red-600 dark:text-red-400 text-xs">{linkError}</p>}
                 <input
                   placeholder="Cole o UUID do usuário"
                   value={linkEmail.email}
                   onChange={(e) => setLinkEmail((p) => p ? { ...p, email: e.target.value } : null)}
-                  className="w-full border border-gray-300 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
+                  className="w-full border border-gray-300 dark:border-slate-700 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 bg-white dark:bg-slate-950 text-slate-900 dark:text-white"
                 />
-                <p className="text-xs text-gray-400">Encontre o UUID na página de Usuários.</p>
+                <p className="text-xs text-gray-400 dark:text-slate-500">Encontre o UUID na pagina de Usurrios.</p>
                 <div className="flex gap-2">
-                  <button onClick={() => setLinkEmail(null)} className="flex-1 border border-gray-200 text-gray-600 py-1.5 rounded-xl text-xs">Cancelar</button>
+                  <button onClick={() => setLinkEmail(null)} className="flex-1 border border-gray-200 dark:border-slate-700 text-gray-600 dark:text-slate-400 py-1.5 rounded-xl text-xs hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors">Cancelar</button>
                   <button
                     onClick={() => linkOwnerByEmail(vendor.id, linkEmail.email)}
                     disabled={linking}
-                    className="flex-1 bg-orange-500 text-white py-1.5 rounded-xl text-xs font-semibold disabled:opacity-50"
+                    className="flex-1 bg-orange-500 text-white py-1.5 rounded-xl text-xs font-semibold disabled:opacity-50 shadow-lg shadow-orange-500/20"
                   >
                     {linking ? '...' : 'Vincular'}
                   </button>

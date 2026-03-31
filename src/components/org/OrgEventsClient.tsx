@@ -151,69 +151,69 @@ export default function OrgEventsClient({ initialEvents, orgId }: { initialEvent
 
   const formFields = (
     <div className="space-y-3">
-      {error && <p className="text-red-600 text-sm">{error}</p>}
+      {error && <p className="text-red-600 dark:text-red-400 text-sm">{error}</p>}
 
       <input placeholder="Nome do evento *" value={form.name}
         onChange={e => updateField('name', e.target.value)}
-        className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400" />
+        className="w-full border border-gray-200 dark:border-slate-700 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400 bg-white dark:bg-slate-950 text-slate-900 dark:text-white" />
 
       <input placeholder="Local (ex: Ginásio Municipal)" value={form.location}
         onChange={e => updateField('location', e.target.value)}
-        className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400" />
+        className="w-full border border-gray-200 dark:border-slate-700 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400 bg-white dark:bg-slate-950 text-slate-900 dark:text-white" />
 
       <input placeholder="Endereço completo" value={form.address}
         onChange={e => updateField('address', e.target.value)}
-        className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400" />
+        className="w-full border border-gray-200 dark:border-slate-700 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400 bg-white dark:bg-slate-950 text-slate-900 dark:text-white" />
 
       <textarea placeholder="Descrição (opcional)" value={form.description}
         onChange={e => updateField('description', e.target.value)} rows={2}
-        className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400 resize-none" />
+        className="w-full border border-gray-200 dark:border-slate-700 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400 resize-none bg-white dark:bg-slate-950 text-slate-900 dark:text-white" />
 
       <div className="grid grid-cols-2 gap-2">
         <div>
-          <label className="text-xs text-gray-500 ml-1">Data início</label>
+          <label className="text-xs text-gray-500 dark:text-slate-400 ml-1">Data início</label>
           <input type="date" value={form.start_date}
             onChange={e => updateField('start_date', e.target.value)}
-            className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400" />
+            className="w-full border border-gray-200 dark:border-slate-700 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400 bg-white dark:bg-slate-950 text-slate-900 dark:text-white" />
         </div>
         <div>
-          <label className="text-xs text-gray-500 ml-1">Data fim</label>
+          <label className="text-xs text-gray-500 dark:text-slate-400 ml-1">Data fim</label>
           <input type="date" value={form.end_date}
             onChange={e => updateField('end_date', e.target.value)}
-            className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400" />
+            className="w-full border border-gray-200 dark:border-slate-700 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400 bg-white dark:bg-slate-950 text-slate-900 dark:text-white" />
         </div>
       </div>
 
       <div className="grid grid-cols-2 gap-2">
         <div>
-          <label className="text-xs text-gray-500 ml-1">Horário abertura</label>
+          <label className="text-xs text-gray-500 dark:text-slate-400 ml-1">Horário abertura</label>
           <input type="time" value={form.start_time}
             onChange={e => updateField('start_time', e.target.value)}
-            className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400" />
+            className="w-full border border-gray-200 dark:border-slate-700 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400 bg-white dark:bg-slate-950 text-slate-900 dark:text-white" />
         </div>
         <div>
-          <label className="text-xs text-gray-500 ml-1">Horário encerramento</label>
+          <label className="text-xs text-gray-500 dark:text-slate-400 ml-1">Horário encerramento</label>
           <input type="time" value={form.end_time}
             onChange={e => updateField('end_time', e.target.value)}
-            className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400" />
+            className="w-full border border-gray-200 dark:border-slate-700 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400 bg-white dark:bg-slate-950 text-slate-900 dark:text-white" />
         </div>
       </div>
 
       <div className="grid grid-cols-2 gap-2">
         <div>
-          <label className="text-xs text-gray-500 ml-1">Seleção de barraca</label>
+          <label className="text-xs text-gray-500 dark:text-slate-400 ml-1">Seleção de barraca</label>
           <select value={form.booth_selection_mode}
             onChange={e => updateField('booth_selection_mode', e.target.value)}
-            className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400">
-            <option value="choice">Vendor escolhe</option>
-            <option value="lottery">Sorteio</option>
+            className="w-full border border-gray-200 dark:border-slate-700 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400 bg-white dark:bg-slate-950 text-slate-900 dark:text-white">
+            <option value="choice" className="dark:bg-slate-900">Vendor escolhe</option>
+            <option value="lottery" className="dark:bg-slate-900">Sorteio</option>
           </select>
         </div>
         <div>
-          <label className="text-xs text-gray-500 ml-1">Taxa padrão (R$)</label>
+          <label className="text-xs text-gray-500 dark:text-slate-400 ml-1">Taxa padrão (R$)</label>
           <input type="number" min="0" step="0.01" value={form.default_booth_fee}
             onChange={e => updateField('default_booth_fee', e.target.value)}
-            className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400" />
+            className="w-full border border-gray-200 dark:border-slate-700 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400 bg-white dark:bg-slate-950 text-slate-900 dark:text-white" />
         </div>
       </div>
     </div>
@@ -233,36 +233,35 @@ export default function OrgEventsClient({ initialEvents, orgId }: { initialEvent
 
       {/* Form de criação */}
       {showForm && (
-        <div className="bg-white rounded-2xl shadow-sm p-5">
-          <h3 className="font-semibold text-gray-900 mb-3">Novo evento</h3>
+        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm p-5 border border-slate-100 dark:border-slate-800">
+          <h3 className="font-semibold text-gray-900 dark:text-white mb-3">Novo evento</h3>
           {formFields}
           <div className="flex gap-2 mt-4">
-            <button onClick={() => setShowForm(false)} className="flex-1 border border-gray-200 text-gray-600 py-2.5 rounded-xl text-sm">Cancelar</button>
-            <button onClick={createEvent} disabled={saving} className="flex-1 bg-purple-600 text-white py-2.5 rounded-xl text-sm font-semibold disabled:opacity-50">
+            <button onClick={() => setShowForm(false)} className="flex-1 border border-gray-200 dark:border-slate-700 text-gray-600 dark:text-slate-400 py-2.5 rounded-xl text-sm hover:bg-gray-50 dark:hover:bg-slate-800 transition">Cancelar</button>
+            <button onClick={createEvent} disabled={saving} className="flex-1 bg-purple-600 text-white py-2.5 rounded-xl text-sm font-semibold disabled:opacity-50 shadow-lg shadow-purple-500/20">
               {saving ? 'Criando...' : 'Criar evento'}
             </button>
           </div>
         </div>
       )}
 
-      {/* Lista de eventos */}
       {events.length === 0 && !showForm ? (
-        <div className="text-center py-16 text-gray-400">
+        <div className="text-center py-16 text-gray-400 dark:text-slate-600">
           <Calendar className="w-10 h-10 mx-auto mb-3" />
           <p>Nenhum evento criado ainda.</p>
         </div>
       ) : (
         events.map(event => (
-          <div key={event.id} className="bg-white rounded-2xl shadow-sm overflow-hidden">
+          <div key={event.id} className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm overflow-hidden border border-slate-100 dark:border-slate-800">
             {editingId === event.id ? (
               <div className="p-5">
-                <h3 className="font-semibold text-gray-900 mb-3">Editando evento</h3>
+                <h3 className="font-semibold text-gray-900 dark:text-white mb-3">Editando evento</h3>
                 {formFields}
                 <div className="flex gap-2 mt-4">
-                  <button onClick={() => setEditingId(null)} className="flex-1 border border-gray-200 text-gray-600 py-2.5 rounded-xl text-sm flex items-center justify-center gap-1">
+                  <button onClick={() => setEditingId(null)} className="flex-1 border border-gray-200 dark:border-slate-700 text-gray-600 dark:text-slate-400 py-2.5 rounded-xl text-sm flex items-center justify-center gap-1 hover:bg-gray-50 dark:hover:bg-slate-800 transition">
                     <X className="w-4 h-4" /> Cancelar
                   </button>
-                  <button onClick={saveEdit} disabled={saving} className="flex-1 bg-purple-600 text-white py-2.5 rounded-xl text-sm font-semibold disabled:opacity-50 flex items-center justify-center gap-1">
+                  <button onClick={saveEdit} disabled={saving} className="flex-1 bg-purple-600 text-white py-2.5 rounded-xl text-sm font-semibold disabled:opacity-50 flex items-center justify-center gap-1 shadow-lg shadow-purple-500/20">
                     <Save className="w-4 h-4" /> {saving ? 'Salvando...' : 'Salvar'}
                   </button>
                 </div>
@@ -272,42 +271,42 @@ export default function OrgEventsClient({ initialEvents, orgId }: { initialEvent
                 <div className="flex items-start justify-between">
                   <Link href={`/dashboard/org/events/${event.id}`} className="flex-1 min-w-0 group">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <p className="font-semibold text-gray-900 text-sm group-hover:text-purple-600 transition">{event.name}</p>
+                      <p className="font-semibold text-gray-900 dark:text-white text-sm group-hover:text-purple-600 dark:group-hover:text-purple-400 transition">{event.name}</p>
                       <button
                         onClick={(e) => { e.preventDefault(); toggleActive(event.id, event.active); }}
-                        className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${
-                          event.active ? 'bg-green-100 text-green-700' : 'bg-gray-200 text-gray-500'
+                        className={`text-[10px] px-2 py-0.5 rounded-full font-bold transition-colors ${
+                          event.active ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400' : 'bg-gray-200 dark:bg-slate-800 text-gray-500 dark:text-slate-400'
                         }`}
                       >
                         {event.active ? 'Ativo' : 'Inativo'}
                       </button>
                     </div>
                     {event.location && (
-                      <p className="text-xs text-gray-400 flex items-center gap-1 mt-1">
+                      <p className="text-xs text-gray-400 dark:text-slate-500 flex items-center gap-1 mt-1">
                         <MapPin className="w-3 h-3" /> {event.location}
                       </p>
                     )}
                     <div className="flex items-center gap-3 mt-1">
                       {event.start_date && (
-                        <p className="text-xs text-gray-400 flex items-center gap-1">
+                        <p className="text-xs text-gray-400 dark:text-slate-500 flex items-center gap-1">
                           <Calendar className="w-3 h-3" />
                           {new Date(event.start_date).toLocaleDateString('pt-BR')}
                           {event.end_date && ` - ${new Date(event.end_date).toLocaleDateString('pt-BR')}`}
                         </p>
                       )}
                       {event.start_time && (
-                        <p className="text-xs text-gray-400 flex items-center gap-1">
+                        <p className="text-xs text-gray-400 dark:text-slate-500 flex items-center gap-1">
                           <Clock className="w-3 h-3" /> {event.start_time.slice(0, 5)}
                           {event.end_time && ` - ${event.end_time.slice(0, 5)}`}
                         </p>
                       )}
                     </div>
                     <div className="flex items-center gap-3 mt-1">
-                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-purple-50 text-purple-600 font-medium">
+                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-purple-50 dark:bg-purple-950/30 text-purple-600 dark:text-purple-400 font-medium">
                         {event.booth_selection_mode === 'lottery' ? 'Sorteio' : 'Escolha'}
                       </span>
                       {event.default_booth_fee > 0 && (
-                        <span className="text-[10px] text-gray-400">
+                        <span className="text-[10px] text-gray-400 dark:text-slate-500">
                           Taxa: R$ {Number(event.default_booth_fee).toFixed(2)}
                         </span>
                       )}
@@ -317,7 +316,7 @@ export default function OrgEventsClient({ initialEvents, orgId }: { initialEvent
                   <div className="flex items-center gap-1 ml-2 flex-shrink-0">
                     <button
                       onClick={() => startEdit(event)}
-                      className="p-1.5 text-gray-400 hover:text-purple-500 hover:bg-purple-50 rounded-lg transition"
+                      className="p-1.5 text-gray-400 hover:text-purple-500 hover:bg-purple-50 dark:hover:bg-purple-900/20 rounded-lg transition"
                       title="Editar"
                     >
                       <Pencil className="w-4 h-4" />
@@ -325,12 +324,12 @@ export default function OrgEventsClient({ initialEvents, orgId }: { initialEvent
                     {deleteConfirm === event.id ? (
                       <div className="flex items-center gap-1">
                         <button onClick={() => deleteEvent(event.id)} className="text-white bg-red-500 hover:bg-red-600 rounded-lg text-[10px] font-bold px-2 py-1">Sim</button>
-                        <button onClick={() => setDeleteConfirm(null)} className="text-gray-500 bg-gray-100 hover:bg-gray-200 rounded-lg text-[10px] font-bold px-2 py-1">Não</button>
+                        <button onClick={() => setDeleteConfirm(null)} className="text-gray-500 dark:text-slate-400 bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 rounded-lg text-[10px] font-bold px-2 py-1">Não</button>
                       </div>
                     ) : (
                       <button
                         onClick={() => setDeleteConfirm(event.id)}
-                        className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition"
+                        className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-lg transition"
                         title="Excluir"
                       >
                         <Trash2 className="w-4 h-4" />

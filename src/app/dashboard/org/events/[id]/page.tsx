@@ -71,15 +71,15 @@ export default async function OrgEventDetailPage({ params }: { params: Promise<{
   }));
 
   return (
-    <main className="min-h-screen bg-gray-50">
-      <header className="bg-white border-b border-gray-100 sticky top-0 z-40">
+    <main className="min-h-screen bg-gray-50 dark:bg-slate-950">
+      <header className="bg-white dark:bg-slate-900 border-b border-gray-100 dark:border-slate-800 sticky top-0 z-40">
         <div className="max-w-3xl mx-auto px-4 py-3 flex items-center gap-3">
-          <Link href="/dashboard/org/events" className="text-gray-500 hover:text-gray-700">
+          <Link href="/dashboard/org/events" className="text-gray-500 hover:text-gray-700 dark:text-slate-400 dark:hover:text-slate-200">
             <ArrowLeft className="w-5 h-5" />
           </Link>
           <div>
-            <h1 className="font-bold text-gray-900 text-sm">{event.name}</h1>
-            <p className="text-xs text-gray-400">{event.location || 'Sem local definido'}</p>
+            <h1 className="font-bold text-gray-900 dark:text-white text-sm">{event.name}</h1>
+            <p className="text-xs text-gray-400 dark:text-slate-500">{event.location || 'Sem local definido'}</p>
           </div>
         </div>
       </header>
