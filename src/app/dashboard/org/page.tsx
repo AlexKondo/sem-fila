@@ -180,14 +180,15 @@ export default async function OrgDashboardPage() {
                   </div>
                   <div className="flex items-center gap-2 flex-shrink-0 ml-2">
                     {invitesByEvent[event.id] && (
-                      <span className="text-xs font-semibold flex items-center gap-1.5">
-                        <span>
-                          <span className="text-green-600 dark:text-green-500">{invitesByEvent[event.id].confirmed}</span>
-                          <span className="text-gray-400 dark:text-slate-500">/{invitesByEvent[event.id].total}</span>
-                        </span>
+                      <span className="text-xs font-semibold flex items-center gap-0.5">
                         {invitesByEvent[event.id].rejected > 0 && (
-                          <span className="text-red-500 dark:text-red-400">{invitesByEvent[event.id].rejected}</span>
+                          <>
+                            <span className="text-red-500 dark:text-red-400">{invitesByEvent[event.id].rejected}</span>
+                            <span className="text-gray-400 dark:text-slate-500">/</span>
+                          </>
                         )}
+                        <span className="text-green-600 dark:text-green-500">{invitesByEvent[event.id].confirmed}</span>
+                        <span className="text-gray-400 dark:text-slate-500">/{invitesByEvent[event.id].total}</span>
                       </span>
                     )}
                     <ChevronRight className="w-5 h-5 text-gray-300" />
