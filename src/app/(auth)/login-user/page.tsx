@@ -46,8 +46,10 @@ function LoginUserContent() {
       return;
     }
 
-    router.push(redirectTo);
+    // Garante que a sessão foi escrita nos cookies antes de redirecionar
     router.refresh();
+    await new Promise((r) => setTimeout(r, 150));
+    router.replace(redirectTo);
   }
 
   return (

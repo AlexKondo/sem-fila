@@ -48,7 +48,8 @@ export async function middleware(request: NextRequest) {
   }
 
   // Redireciona /login e /register → dashboard correto conforme role
-  const isAuthRoute = AUTH_ROUTES.some((r) => pathname.startsWith(r));
+  // Não redireciona /login-user (é rota de cliente, não de vendor)
+  const isAuthRoute = AUTH_ROUTES.some((r) => pathname.startsWith(r)) && !pathname.startsWith('/login-user');
   if (isAuthRoute && user) {
     const { data: profile } = await supabase
       .from('profiles')

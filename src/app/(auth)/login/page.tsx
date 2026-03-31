@@ -71,22 +71,21 @@ function LoginPageContent() {
     const role = (profile as any)?.role;
 
     const ADMIN_EMAIL = 'alexandre.kondo@gmail.com';
+    let dest = '/login-user';
     if (role === 'platform_admin' || authData.user.email === ADMIN_EMAIL) {
-      router.push('/dashboard/admin');
-      router.refresh();
+      dest = '/dashboard/admin';
     } else if (role === 'org_admin') {
-      router.push('/dashboard/org');
-      router.refresh();
+      dest = '/dashboard/org';
     } else if (role === 'vendor' || role === 'waitstaff') {
-      router.push('/dashboard/vendor');
-      router.refresh();
+      dest = '/dashboard/vendor';
     } else if (role === 'deliverer') {
-      router.push('/dashboard/deliverer');
-      router.refresh();
-    } else {
-      router.push('/login-user');
-      router.refresh();
+      dest = '/dashboard/deliverer';
     }
+
+    // Garante que a sessão foi escrita nos cookies antes de redirecionar
+    router.refresh();
+    await new Promise((r) => setTimeout(r, 150));
+    router.replace(dest);
   }
 
   const ringStyle = { '--tw-ring-color': P + '80' } as React.CSSProperties;
