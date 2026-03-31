@@ -12,22 +12,25 @@ interface ThemeContextType {
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export default function ThemeProvider({ children }: { children: React.ReactNode }) {
-  // Inicia com 'light' no server e no client (evita hydration mismatch)
-  // O visual correto é garantido pelo inline script no <head> que aplica a classe 'dark'
+  // O tema real é capturado do localStorage ou sistema pelo inline script no layout.tsx
+  // Aqui apenas mantemos o estado sincronizado para a UI do React (Componentes)
   const [theme, setTheme] = useState<Theme>('light');
 
   useEffect(() => {
-    // Lê o tema real da DOM (já aplicado pelo inline script)
+    // 1. Identifica o tema que o script inline aplicou
     const isDark = document.documentElement.classList.contains('dark');
     setTheme(isDark ? 'dark' : 'light');
 
-    // Habilita transições CSS após a hidratação
-    document.documentElement.classList.add('hydrated');
+    // 2. Garante que a transição de cor só ocorra após esta primeira leitura
+    // O USER já adicionou CSS para 'html.hydrated body' no globals.css
+    setTimeout(() => {
+      document.documentElement.classList.add('hydrated');
+    }, 100);
 
-    // Observa mudanças externas na classe
+    // 3. Monitor externo (caso algo mude a classe fora do React)
     const observer = new MutationObserver(() => {
-      const isDark = document.documentElement.classList.contains('dark');
-      setTheme(isDark ? 'dark' : 'light');
+      const dark = document.documentElement.classList.contains('dark');
+      setTheme(dark ? 'dark' : 'light');
     });
     observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
     return () => observer.disconnect();

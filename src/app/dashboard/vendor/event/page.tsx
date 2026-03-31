@@ -13,13 +13,20 @@ export default async function VendorEventPage() {
   const { vendor } = await resolveVendor(supabase, user.id, { select: 'id, name, event_id' });
   if (!vendor) redirect('/dashboard/vendor');
 
-  // 1. Busca convites pendentes DESTE vendor específico (por vendor_id)
-  const { data: rawInvitations } = await supabase
+  // 1. Busca convites pendentes (por vendor_id OU e-mail do perfil)
+  const { data: profile } = await supabase.from('profiles').select('email').eq('id', user.id).single();
+  const userEmail = profile?.email;
+
+  const query = supabase
     .from('event_vendor_invitations')
     .select('*')
-    .eq('vendor_id', vendor.id)
-    .eq('status', 'pending')
-    .order('invited_at', { ascending: false });
+    .eq('status', 'pending');
+
+  const orConditions = [`vendor_id.eq.${vendor.id}`];
+  if (userEmail) orConditions.push(`vendor_email.eq.${userEmail}`);
+  query.or(orConditions.join(','));
+
+  const { data: rawInvitations } = await query.order('invited_at', { ascending: false });
 
   // 2. Enriquece convites com dados do evento (queries separadas por causa de RLS)
   const invitations = rawInvitations ?? [];
