@@ -85,7 +85,7 @@ export default function EventHubClient({
   const [booths, setBooths] = useState<Booth[]>(initialBooths);
 
   const [inviteEmail, setInviteEmail] = useState('');
-  const [inviteFee, setInviteFee] = useState('');
+  const [inviteFee, setInviteFee] = useState(event.default_booth_fee > 0 ? String(event.default_booth_fee) : '');
   const [inviteSending, setInviteSending] = useState(false);
   const [inviteError, setInviteError] = useState('');
   const [selectedVendorId, setSelectedVendorId] = useState('');
