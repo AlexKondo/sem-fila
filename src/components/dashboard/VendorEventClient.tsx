@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { Mail, Calendar, MapPin, FileText, Layout as LayoutIcon, Check, X, Building } from 'lucide-react';
 
@@ -12,8 +12,13 @@ interface VendorEventClientProps {
 }
 
 export default function VendorEventClient({ vendorId, activeEvent, invitations: initialInvites, booth }: VendorEventClientProps) {
-  const [invites, setInvites] = useState(initialInvites);
+  const [invites, setInvites] = useState(initialInvites || []);
   const [actingOn, setActingOn] = useState<string | null>(null);
+
+  // Sincroniza estado quando recebe novas props do servidor
+  useEffect(() => {
+    setInvites(initialInvites || []);
+  }, [initialInvites]);
 
   const handleInvite = useCallback(async (inviteId: string, status: 'accepted' | 'rejected') => {
     setActingOn(inviteId);

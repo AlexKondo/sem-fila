@@ -59,14 +59,22 @@ export default function VendorHeader({ vendorName, userName, cnpjFormatted, vend
         setPendingCalls(count || 0);
       });
 
-    supabase
-      .from('event_vendor_invitations')
-      .select('id', { count: 'exact', head: true })
-      .eq('vendor_id', vendorId)
-      .eq('status', 'pending')
-      .then(({ count }) => {
-        setPendingInvites(count || 0);
-      });
+    const fetchInvites = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      const { data: profile } = await supabase.from('profiles').select('email').eq('id', user?.id || '').single();
+      const email = profile?.email;
+
+      supabase
+        .from('event_vendor_invitations')
+        .select('id', { count: 'exact', head: true })
+        .or(`vendor_id.eq.${vendorId}${email ? `,vendor_email.eq.${email}` : ''}`)
+        .eq('status', 'pending')
+        .then(({ count }) => {
+          setPendingInvites(count || 0);
+        });
+    };
+
+    fetchInvites();
 
     // Inscrição Realtime para atualizar o badge e disparar alertas globais
     const channelCalls = supabase
@@ -102,17 +110,9 @@ export default function VendorHeader({ vendorName, userName, cnpjFormatted, vend
       .on('postgres_changes', {
         event: '*',
         schema: 'public',
-        table: 'event_vendor_invitations',
-        filter: `vendor_id=eq.${vendorId}`
+        table: 'event_vendor_invitations'
       }, () => {
-        supabase
-          .from('event_vendor_invitations')
-          .select('id', { count: 'exact', head: true })
-          .eq('vendor_id', vendorId)
-          .eq('status', 'pending')
-          .then(({ count }) => {
-            setPendingInvites(count || 0);
-          });
+        fetchInvites();
       })
       .subscribe();
 

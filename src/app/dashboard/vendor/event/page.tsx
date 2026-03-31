@@ -11,6 +11,10 @@ export default async function VendorEventPage() {
   const { vendor } = await resolveVendor(supabase, user.id, { select: 'id, name, event_id' });
   if (!vendor) redirect('/dashboard/vendor');
 
+  // Busca o email do perfil para capturar convites enviados apenas por email
+  const { data: profile } = await supabase.from('profiles').select('email').eq('id', user.id).single();
+  const userEmail = profile?.email;
+
   // Busca o evento atual do vendor, convites pendentes e atribuição de barraca
   const [
     { data: activeEvent },
@@ -23,7 +27,7 @@ export default async function VendorEventPage() {
     supabase
       .from('event_vendor_invitations')
       .select('*, events(name, location, start_date, start_time, organization_id, organizations(name))')
-      .eq('vendor_id', vendor.id)
+      .or(`vendor_id.eq.${vendor.id}${userEmail ? `,vendor_email.eq.${userEmail}` : ''}`)
       .eq('status', 'pending')
       .order('created_at', { ascending: false }),
     supabase.from('event_booths').select('*').eq('vendor_id', vendor.id).maybeSingle()
