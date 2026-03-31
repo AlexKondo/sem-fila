@@ -6,7 +6,8 @@ import { formatDate } from '@/lib/utils';
 import {
   Bell, CheckCircle, Clock, History, LayoutGrid, Users,
   Merge, Split, Trash2, Plus, UserCheck, PhoneCall,
-  ChevronDown, ChevronUp, ArrowRight, MessageCircle, Send
+  ChevronDown, ChevronUp, ArrowRight, MessageCircle, Send,
+  ScanLine, X, ShoppingBag
 } from 'lucide-react';
 import type { VendorTable, QueueEntry, TableStatus } from '@/types/database';
 
@@ -222,7 +223,7 @@ export default function WaiterBoard({ initialReadyOrders, initialWaiterCalls, in
   const [calls, setCalls] = useState<WaiterCall[]>(initialWaiterCalls);
   const [tables, setTables] = useState<VendorTable[]>(initialTables);
   const [queue, setQueue] = useState<QueueEntry[]>(initialQueue);
-  const [activeTab, setActiveTab] = useState<'tables' | 'queue' | 'pending' | 'history'>(hasTableManagement ? 'tables' : 'pending');
+  const [activeTab, setActiveTab] = useState<'tables' | 'queue' | 'pending' | 'history' | 'scan'>(hasTableManagement ? 'tables' : 'pending');
   const [isPending, startTransition] = useTransition();
 
   // Modal states
@@ -441,6 +442,34 @@ export default function WaiterBoard({ initialReadyOrders, initialWaiterCalls, in
     }
   }, [supabase]);
 
+  // === SCAN CUSTOMER QR ===
+  const [scannedCustomer, setScannedCustomer] = useState<{ id: string; name: string; email: string } | null>(null);
+  const [scanError, setScanError] = useState('');
+
+  const handleCustomerQrDetected = useCallback(async (rawData: string) => {
+    setScanError('');
+    try {
+      const payload = JSON.parse(rawData);
+      if (payload.type !== 'customer' || !payload.id) {
+        setScanError('QR Code inválido. Peça ao cliente para mostrar o QR Code do QuickPick.');
+        return;
+      }
+      // Buscar dados do cliente
+      const { data: profile, error } = await supabase
+        .from('profiles')
+        .select('id, name, email')
+        .eq('id', payload.id)
+        .single();
+      if (error || !profile) {
+        setScanError('Cliente não encontrado.');
+        return;
+      }
+      setScannedCustomer(profile);
+    } catch {
+      setScanError('QR Code não reconhecido.');
+    }
+  }, [supabase]);
+
   // === MESSAGE TO TABLE ===
   const [msgModal, setMsgModal] = useState<{ table: string; callId: string } | null>(null);
   const [msgSending, setMsgSending] = useState(false);
@@ -583,6 +612,7 @@ export default function WaiterBoard({ initialReadyOrders, initialWaiterCalls, in
             { key: 'tables' as const, icon: LayoutGrid, label: 'Mesas', badge: callingTables.size > 0 ? callingTables.size : null, badgeColor: 'bg-red-500' },
             { key: 'queue' as const, icon: Users, label: 'Fila', badge: waitingQueue.length > 0 ? waitingQueue.length : null, badgeColor: 'bg-purple-500' },
           ] : []),
+          { key: 'scan' as const, icon: ScanLine, label: 'Ler QR', badge: null, badgeColor: '' },
           { key: 'pending' as const, icon: Bell, label: 'Pendentes', badge: pendingCalls.length + orders.length > 0 ? pendingCalls.length + orders.length : null, badgeColor: 'bg-orange-500' },
           { key: 'history' as const, icon: History, label: 'Histórico', badge: null, badgeColor: '' },
         ]).map(({ key, icon: Icon, label, badge, badgeColor }) => (
@@ -809,6 +839,31 @@ export default function WaiterBoard({ initialReadyOrders, initialWaiterCalls, in
         </div>
       )}
 
+      {/* === ABA: LER QR DO CLIENTE === */}
+      {activeTab === 'scan' && (
+        <div className="space-y-4">
+          {!scannedCustomer ? (
+            <>
+              <div className="text-center">
+                <h3 className="text-sm font-bold text-gray-900 mb-1">Escanear QR do cliente</h3>
+                <p className="text-xs text-gray-400">Aponte a câmera para o QR Code do cliente para registrar itens na conta dele</p>
+              </div>
+              {scanError && (
+                <div className="bg-red-50 border border-red-200 text-red-700 text-xs px-4 py-3 rounded-xl text-center font-medium">{scanError}</div>
+              )}
+              <WaiterQrScanner onDetected={handleCustomerQrDetected} />
+            </>
+          ) : (
+            <CustomerItemPanel
+              customer={scannedCustomer}
+              vendorId={vendorId}
+              supabase={supabase}
+              onClose={() => { setScannedCustomer(null); setScanError(''); }}
+            />
+          )}
+        </div>
+      )}
+
       {/* === ABA: PENDENTES === */}
       {activeTab === 'pending' && (
         <div className="space-y-6">
@@ -946,6 +1001,403 @@ export default function WaiterBoard({ initialReadyOrders, initialWaiterCalls, in
               )}
             </div>
           </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ─── Scanner de QR para garçom ─── */
+function WaiterQrScanner({ onDetected }: { onDetected: (data: string) => void }) {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+  const workerRef = useRef<Worker | null>(null);
+  const activeRef = useRef(true);
+  const scanningRef = useRef(false);
+  const [cameraError, setCameraError] = useState('');
+
+  useEffect(() => {
+    workerRef.current = new Worker('/qr-worker.js');
+    return () => { workerRef.current?.terminate(); };
+  }, []);
+
+  const scanLoop = useCallback(() => {
+    if (!activeRef.current) return;
+    setTimeout(() => {
+      if (!activeRef.current) return;
+      const video = videoRef.current;
+      const canvas = canvasRef.current;
+      if (!video || !canvas || video.readyState !== video.HAVE_ENOUGH_DATA) {
+        scanLoop();
+        return;
+      }
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) { scanLoop(); return; }
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+
+      if (workerRef.current && !scanningRef.current) {
+        scanningRef.current = true;
+        workerRef.current.onmessage = (e) => {
+          scanningRef.current = false;
+          if (e.data) {
+            activeRef.current = false;
+            streamRef.current?.getTracks().forEach(t => t.stop());
+            onDetected(e.data);
+          } else {
+            scanLoop();
+          }
+        };
+        workerRef.current.postMessage({
+          data: imageData.data,
+          width: imageData.width,
+          height: imageData.height,
+        });
+      } else {
+        scanLoop();
+      }
+    }, 250);
+  }, [onDetected]);
+
+  useEffect(() => {
+    let mounted = true;
+    activeRef.current = true;
+    (async () => {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: 'environment', width: { ideal: 640 }, height: { ideal: 480 } },
+        });
+        if (!mounted) { stream.getTracks().forEach(t => t.stop()); return; }
+        streamRef.current = stream;
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+          videoRef.current.play();
+          videoRef.current.addEventListener('loadedmetadata', scanLoop);
+        }
+      } catch {
+        if (mounted) setCameraError('Não foi possível acessar a câmera.');
+      }
+    })();
+    return () => {
+      mounted = false;
+      activeRef.current = false;
+      streamRef.current?.getTracks().forEach(t => t.stop());
+    };
+  }, [scanLoop]);
+
+  if (cameraError) {
+    return (
+      <div className="text-center py-10 bg-white rounded-2xl border border-dashed border-gray-200">
+        <p className="text-3xl mb-2">📷</p>
+        <p className="text-xs text-red-500 font-medium">{cameraError}</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="relative w-full max-w-xs mx-auto aspect-square rounded-2xl overflow-hidden bg-black">
+      <video ref={videoRef} className="absolute inset-0 w-full h-full object-cover" playsInline muted />
+      <canvas ref={canvasRef} className="hidden" />
+      {/* Scan frame overlay */}
+      <div className="absolute inset-4">
+        <div className="absolute top-0 left-0 w-8 h-8 border-t-3 border-l-3 border-orange-500 rounded-tl-lg" />
+        <div className="absolute top-0 right-0 w-8 h-8 border-t-3 border-r-3 border-orange-500 rounded-tr-lg" />
+        <div className="absolute bottom-0 left-0 w-8 h-8 border-b-3 border-l-3 border-orange-500 rounded-bl-lg" />
+        <div className="absolute bottom-0 right-0 w-8 h-8 border-b-3 border-r-3 border-orange-500 rounded-br-lg" />
+      </div>
+      <div className="absolute left-4 right-4 h-0.5 bg-orange-500/60 animate-scan" />
+    </div>
+  );
+}
+
+/* ─── Painel de registro de itens do cliente ─── */
+function CustomerItemPanel({
+  customer,
+  vendorId,
+  supabase,
+  onClose,
+}: {
+  customer: { id: string; name: string; email: string };
+  vendorId: string;
+  supabase: ReturnType<typeof createClient>;
+  onClose: () => void;
+}) {
+  const [menuItems, setMenuItems] = useState<{ id: string; name: string; price: number; category: string }[]>([]);
+  const [cart, setCart] = useState<{ item_id: string; name: string; quantity: number; unit_price: number; weight_kg?: number }[]>([]);
+  const [weightInput, setWeightInput] = useState('');
+  const [pricePerKg, setPricePerKg] = useState('');
+  const [sending, setSending] = useState(false);
+  const [success, setSuccess] = useState(false);
+  const [error, setError] = useState('');
+
+  // Carregar cardápio do vendor
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase
+        .from('menu_items')
+        .select('id, name, price, category')
+        .eq('vendor_id', vendorId)
+        .eq('available', true)
+        .order('category')
+        .order('name');
+      if (data) setMenuItems(data);
+    })();
+  }, [supabase, vendorId]);
+
+  const addToCart = useCallback((item: { id: string; name: string; price: number }) => {
+    setCart(prev => {
+      const existing = prev.find(c => c.item_id === item.id);
+      if (existing) {
+        return prev.map(c => c.item_id === item.id ? { ...c, quantity: c.quantity + 1 } : c);
+      }
+      return [...prev, { item_id: item.id, name: item.name, quantity: 1, unit_price: item.price }];
+    });
+  }, []);
+
+  const removeFromCart = useCallback((itemId: string) => {
+    setCart(prev => {
+      const existing = prev.find(c => c.item_id === itemId);
+      if (existing && existing.quantity > 1) {
+        return prev.map(c => c.item_id === itemId ? { ...c, quantity: c.quantity - 1 } : c);
+      }
+      return prev.filter(c => c.item_id !== itemId);
+    });
+  }, []);
+
+  const addWeightItem = useCallback(() => {
+    const weight = parseFloat(weightInput.replace(',', '.'));
+    const price = parseFloat(pricePerKg.replace(',', '.'));
+    if (!weight || weight <= 0 || !price || price <= 0) return;
+    const total = weight * price;
+    setCart(prev => [...prev, {
+      item_id: `weight-${Date.now()}`,
+      name: `Prato por quilo (${weight.toFixed(3)}kg × R$${price.toFixed(2)})`,
+      quantity: 1,
+      unit_price: Math.round(total * 100) / 100,
+      weight_kg: weight,
+    }]);
+    setWeightInput('');
+    setPricePerKg('');
+  }, [weightInput, pricePerKg]);
+
+  const total = useMemo(() => cart.reduce((sum, c) => sum + c.unit_price * c.quantity, 0), [cart]);
+
+  const submitOrder = useCallback(async () => {
+    if (cart.length === 0) return;
+    setSending(true);
+    setError('');
+
+    // Gerar pickup code
+    const pickupCode = String(Math.floor(100 + Math.random() * 900));
+
+    const { data: order, error: orderErr } = await supabase.from('orders').insert({
+      vendor_id: vendorId,
+      customer_id: customer.id,
+      status: 'confirmed',
+      total_price: total,
+      pickup_code: pickupCode,
+      payment_method: 'pending',
+    }).select().single();
+
+    if (orderErr || !order) {
+      setError(orderErr?.message || 'Erro ao criar pedido.');
+      setSending(false);
+      return;
+    }
+
+    // Inserir itens (apenas os do cardápio, itens por peso vão como observação)
+    const orderItems = cart.map(c => ({
+      order_id: order.id,
+      menu_item_id: c.item_id.startsWith('weight-') ? null : c.item_id,
+      quantity: c.quantity,
+      unit_price: c.unit_price,
+      notes: c.weight_kg ? c.name : null,
+    }));
+
+    const { error: itemsErr } = await supabase.from('order_items').insert(orderItems);
+    if (itemsErr) {
+      setError('Pedido criado, mas erro ao salvar itens: ' + itemsErr.message);
+      setSending(false);
+      return;
+    }
+
+    setSending(false);
+    setSuccess(true);
+  }, [cart, total, supabase, vendorId, customer.id]);
+
+  if (success) {
+    return (
+      <div className="text-center py-10 space-y-3">
+        <div className="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto">
+          <CheckCircle className="w-8 h-8" />
+        </div>
+        <h3 className="text-lg font-bold text-gray-900">Pedido registrado!</h3>
+        <p className="text-sm text-gray-500">
+          {cart.length} {cart.length === 1 ? 'item' : 'itens'} na conta de <strong>{customer.name}</strong>
+        </p>
+        <p className="text-lg font-black text-green-600">R$ {total.toFixed(2)}</p>
+        <button
+          onClick={onClose}
+          className="mt-4 bg-orange-500 text-white font-bold text-sm px-6 py-3 rounded-xl hover:bg-orange-600 transition"
+        >
+          Escanear outro cliente
+        </button>
+      </div>
+    );
+  }
+
+  // Agrupar itens do cardápio por categoria
+  const grouped = useMemo(() => {
+    const map = new Map<string, typeof menuItems>();
+    for (const item of menuItems) {
+      const cat = item.category || 'Outros';
+      const group = map.get(cat) || [];
+      group.push(item);
+      map.set(cat, group);
+    }
+    return map;
+  }, [menuItems]);
+
+  return (
+    <div className="space-y-4">
+      {/* Header do cliente */}
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-orange-100 text-orange-600 rounded-full flex items-center justify-center font-black text-sm">
+            {customer.name?.charAt(0)?.toUpperCase() || '?'}
+          </div>
+          <div>
+            <p className="font-bold text-gray-900 text-sm">{customer.name}</p>
+            <p className="text-[10px] text-gray-400">{customer.email}</p>
+          </div>
+        </div>
+        <button onClick={onClose} className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center text-gray-400 hover:bg-gray-200">
+          <X className="w-4 h-4" />
+        </button>
+      </div>
+
+      {/* Seção: Prato por quilo */}
+      <div className="bg-amber-50 rounded-2xl border border-amber-200 p-4 space-y-3">
+        <h4 className="text-xs font-black text-amber-700 uppercase tracking-wide flex items-center gap-1.5">
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l3 9a5.002 5.002 0 01-6.001 0M18 7l-3 9m-3-9l-3-9m3 9V4" /></svg>
+          Prato por quilo
+        </h4>
+        <div className="grid grid-cols-2 gap-2">
+          <div>
+            <label className="text-[10px] font-bold text-amber-600 block mb-1">Peso (kg)</label>
+            <input
+              type="text"
+              inputMode="decimal"
+              value={weightInput}
+              onChange={e => setWeightInput(e.target.value)}
+              placeholder="Ex: 0.350"
+              className="w-full border border-amber-200 rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-amber-400/40"
+            />
+          </div>
+          <div>
+            <label className="text-[10px] font-bold text-amber-600 block mb-1">R$/kg</label>
+            <input
+              type="text"
+              inputMode="decimal"
+              value={pricePerKg}
+              onChange={e => setPricePerKg(e.target.value)}
+              placeholder="Ex: 69.90"
+              className="w-full border border-amber-200 rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-amber-400/40"
+            />
+          </div>
+        </div>
+        {weightInput && pricePerKg && (
+          <p className="text-xs font-bold text-amber-800 text-center">
+            Total: R$ {(parseFloat(weightInput.replace(',', '.') || '0') * parseFloat(pricePerKg.replace(',', '.') || '0')).toFixed(2)}
+          </p>
+        )}
+        <button
+          onClick={addWeightItem}
+          disabled={!weightInput || !pricePerKg}
+          className="w-full bg-amber-500 text-white text-xs font-bold py-2.5 rounded-xl hover:bg-amber-600 transition disabled:opacity-40"
+        >
+          Adicionar prato pesado
+        </button>
+      </div>
+
+      {/* Seção: Itens do cardápio */}
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 space-y-3 max-h-60 overflow-y-auto">
+        <h4 className="text-xs font-black text-gray-500 uppercase tracking-wide flex items-center gap-1.5">
+          <ShoppingBag className="w-4 h-4" /> Cardápio
+        </h4>
+        {menuItems.length === 0 ? (
+          <p className="text-xs text-gray-400 text-center py-4">Nenhum item disponível</p>
+        ) : (
+          Array.from(grouped.entries()).map(([cat, items]) => (
+            <div key={cat}>
+              <p className="text-[10px] font-bold text-gray-400 uppercase mb-1">{cat}</p>
+              <div className="space-y-1">
+                {items.map(item => {
+                  const inCart = cart.find(c => c.item_id === item.id);
+                  return (
+                    <div key={item.id} className="flex items-center justify-between py-1.5">
+                      <div>
+                        <p className="text-xs font-medium text-gray-800">{item.name}</p>
+                        <p className="text-[10px] text-gray-400">R$ {item.price.toFixed(2)}</p>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        {inCart ? (
+                          <>
+                            <button onClick={() => removeFromCart(item.id)} className="w-6 h-6 bg-gray-100 rounded-lg text-xs font-bold flex items-center justify-center text-gray-600">-</button>
+                            <span className="text-xs font-black w-5 text-center">{inCart.quantity}</span>
+                            <button onClick={() => addToCart(item)} className="w-6 h-6 bg-orange-500 text-white rounded-lg text-xs font-bold flex items-center justify-center">+</button>
+                          </>
+                        ) : (
+                          <button onClick={() => addToCart(item)} className="text-[10px] font-bold bg-orange-50 text-orange-600 px-3 py-1.5 rounded-lg hover:bg-orange-100 transition">
+                            + Adicionar
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+
+      {/* Carrinho / Resumo */}
+      {cart.length > 0 && (
+        <div className="bg-white rounded-2xl border-2 border-orange-200 shadow-sm p-4 space-y-3">
+          <h4 className="text-xs font-black text-orange-600 uppercase tracking-wide">
+            Resumo ({cart.length} {cart.length === 1 ? 'item' : 'itens'})
+          </h4>
+          <div className="space-y-1.5">
+            {cart.map(c => (
+              <div key={c.item_id} className="flex items-center justify-between text-xs">
+                <span className="text-gray-700">{c.quantity}x {c.name}</span>
+                <span className="font-bold text-gray-900">R$ {(c.unit_price * c.quantity).toFixed(2)}</span>
+              </div>
+            ))}
+          </div>
+          <div className="border-t border-orange-100 pt-2 flex items-center justify-between">
+            <span className="text-sm font-black text-gray-900">Total</span>
+            <span className="text-lg font-black text-orange-600">R$ {total.toFixed(2)}</span>
+          </div>
+
+          {error && <p className="text-xs text-red-500 font-medium">{error}</p>}
+
+          <button
+            onClick={submitOrder}
+            disabled={sending}
+            className="w-full bg-orange-500 text-white font-bold text-sm py-3 rounded-xl hover:bg-orange-600 transition disabled:opacity-50 flex items-center justify-center gap-2"
+          >
+            {sending ? 'Registrando...' : (
+              <>
+                <CheckCircle className="w-4 h-4" />
+                Registrar na conta do cliente
+              </>
+            )}
+          </button>
         </div>
       )}
     </div>
