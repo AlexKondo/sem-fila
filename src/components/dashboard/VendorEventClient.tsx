@@ -1,8 +1,9 @@
 'use client';
 
 import { useState, useCallback, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
-import { Mail, Calendar, MapPin, FileText, Layout as LayoutIcon, Check, X, Building } from 'lucide-react';
+import { Mail, Calendar, MapPin, FileText, Layout as LayoutIcon, Check, X, Building, ChevronRight, ArrowLeft, DollarSign } from 'lucide-react';
 
 interface VendorEventClientProps {
   vendorId: string;
@@ -12,10 +13,11 @@ interface VendorEventClientProps {
 }
 
 export default function VendorEventClient({ vendorId, activeEvent, invitations: initialInvites, booth }: VendorEventClientProps) {
+  const router = useRouter();
   const [invites, setInvites] = useState(initialInvites || []);
   const [actingOn, setActingOn] = useState<string | null>(null);
+  const [selectedInvite, setSelectedInvite] = useState<any | null>(null);
 
-  // Sincroniza estado quando recebe novas props do servidor
   useEffect(() => {
     setInvites(initialInvites || []);
   }, [initialInvites]);
@@ -23,8 +25,7 @@ export default function VendorEventClient({ vendorId, activeEvent, invitations: 
   const handleInvite = useCallback(async (inviteId: string, status: 'accepted' | 'rejected') => {
     setActingOn(inviteId);
     const supabase = createClient();
-    
-    // Se aceitar, precisamos atualizar o vendor_id (se ainda não tiver) e vincular o vendor ao evento
+
     const invite = invites.find(i => i.id === inviteId);
     if (!invite) return;
 
@@ -43,7 +44,6 @@ export default function VendorEventClient({ vendorId, activeEvent, invitations: 
     }
 
     if (status === 'accepted') {
-      // Vincula o vendor ao evento
       const { error: updateVendorError } = await supabase
         .from('vendors')
         .update({ event_id: invite.event_id })
@@ -52,15 +52,133 @@ export default function VendorEventClient({ vendorId, activeEvent, invitations: 
       if (updateVendorError) {
         alert(`Erro ao vincular evento: ${updateVendorError.message}`);
       } else {
-        alert('Convite aceito! Recarregando...');
-        window.location.reload();
+        setSelectedInvite(null);
+        setInvites(prev => prev.filter(i => i.id !== inviteId));
+        router.refresh();
       }
     } else {
+      setSelectedInvite(null);
       setInvites(prev => prev.filter(i => i.id !== inviteId));
     }
     setActingOn(null);
-  }, [invites, vendorId]);
+  }, [invites, vendorId, router]);
 
+  // ── Tela de detalhe do convite ──
+  if (selectedInvite) {
+    const ev = selectedInvite.events;
+    return (
+      <div className="max-w-2xl mx-auto px-4 pb-12 space-y-4">
+        <button
+          onClick={() => setSelectedInvite(null)}
+          className="flex items-center gap-1.5 text-sm text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors py-2"
+        >
+          <ArrowLeft className="w-4 h-4" /> Voltar aos convites
+        </button>
+
+        {/* Header do evento */}
+        <div className="bg-gradient-to-br from-orange-500 to-amber-600 rounded-[2rem] p-6 text-white shadow-xl relative overflow-hidden">
+          <div className="absolute top-0 right-0 p-6 opacity-10">
+            <Mail className="w-24 h-24" />
+          </div>
+          <div className="relative z-10">
+            <span className="text-[10px] font-black uppercase tracking-[0.2em] bg-white/20 px-3 py-1 rounded-full">Convite para Evento</span>
+            <h1 className="text-2xl font-black mt-3 leading-tight">{ev?.name || 'Evento'}</h1>
+            {ev?.organizations?.name && (
+              <p className="text-orange-100 flex items-center gap-2 mt-1 font-medium text-sm">
+                <Building className="w-4 h-4" /> {ev.organizations.name}
+              </p>
+            )}
+          </div>
+        </div>
+
+        {/* Detalhes */}
+        <div className="grid gap-3">
+          {(ev?.start_date || ev?.location) && (
+            <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 p-4 grid grid-cols-2 gap-3 shadow-sm transition-colors">
+              {ev?.start_date && (
+                <div>
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Data</p>
+                  <p className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+                    <Calendar className="w-3.5 h-3.5 text-orange-500" />
+                    {new Date(ev.start_date).toLocaleDateString('pt-BR')}
+                  </p>
+                </div>
+              )}
+              {ev?.location && (
+                <div>
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Local</p>
+                  <p className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+                    <MapPin className="w-3.5 h-3.5 text-orange-500" />
+                    {ev.location}
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+
+          {ev?.address && (
+            <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 p-4 shadow-sm transition-colors">
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Endereço</p>
+              <p className="text-sm text-slate-600 dark:text-slate-300 font-medium">{ev.address}</p>
+            </div>
+          )}
+
+          <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 p-4 shadow-sm transition-colors">
+            <p className="text-[10px] font-black text-orange-600 uppercase tracking-widest mb-1">Taxa de Participação</p>
+            <p className="text-2xl font-black text-slate-900 dark:text-white flex items-center gap-1.5">
+              <DollarSign className="w-5 h-5 text-orange-500" />
+              R$ {Number(selectedInvite.fee_amount).toFixed(2)}
+            </p>
+          </div>
+
+          {ev?.rules && (
+            <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 p-5 shadow-sm transition-colors space-y-2">
+              <div className="flex items-center gap-2">
+                <FileText className="w-4 h-4 text-orange-500" />
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Regras e Orientações</p>
+              </div>
+              <p className="text-sm text-slate-600 dark:text-slate-400 whitespace-pre-wrap leading-relaxed">{ev.rules}</p>
+            </div>
+          )}
+
+          {ev?.layout_url && (
+            <a
+              href={ev.layout_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 p-4 shadow-sm transition-colors flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-800"
+            >
+              <div className="flex items-center gap-3">
+                <LayoutIcon className="w-5 h-5 text-orange-500" />
+                <span className="text-sm font-bold text-slate-900 dark:text-white">Ver Mapa / Layout do Evento</span>
+              </div>
+              <ChevronRight className="w-4 h-4 text-slate-400" />
+            </a>
+          )}
+        </div>
+
+        {/* Botões de ação */}
+        <div className="flex gap-3 pt-2">
+          <button
+            onClick={() => handleInvite(selectedInvite.id, 'accepted')}
+            disabled={actingOn === selectedInvite.id}
+            className="flex-1 bg-orange-500 text-white font-bold py-4 rounded-2xl shadow-lg shadow-orange-500/20 hover:bg-orange-600 transition flex items-center justify-center gap-2 disabled:opacity-50 text-base"
+          >
+            <Check className="w-5 h-5" /> ACEITAR CONVITE
+          </button>
+          <button
+            onClick={() => handleInvite(selectedInvite.id, 'rejected')}
+            disabled={actingOn === selectedInvite.id}
+            className="flex-1 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 font-bold py-4 rounded-2xl hover:bg-slate-200 dark:hover:bg-slate-700 transition flex items-center justify-center gap-2 disabled:opacity-50 text-base"
+          >
+            <X className="w-5 h-5" /> RECUSAR
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // ── Tela principal (lista) ──
   return (
     <div className="max-w-2xl mx-auto px-4 pb-12 space-y-6">
       {/* Convites Pendentes */}
@@ -74,56 +192,35 @@ export default function VendorEventClient({ vendorId, activeEvent, invitations: 
           </div>
           <div className="grid gap-3">
             {invites.map(invite => (
-              <div key={invite.id} className="bg-white dark:bg-slate-900 rounded-3xl border border-orange-100 dark:border-orange-950/30 shadow-sm p-5 space-y-4 transition-all hover:shadow-md">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <h3 className="font-bold text-lg text-slate-900 dark:text-white">{invite.events?.name || 'Evento'}</h3>
-                    {invite.events?.organizations?.name && (
-                      <p className="text-xs text-slate-400 dark:text-slate-500 flex items-center gap-1">
-                        <Building className="w-3 h-3" /> Organizado por {invite.events.organizations.name}
-                      </p>
-                    )}
+              <button
+                key={invite.id}
+                onClick={() => setSelectedInvite(invite)}
+                className="w-full text-left bg-white dark:bg-slate-900 rounded-2xl border border-orange-100 dark:border-orange-950/30 shadow-sm p-4 transition-all hover:shadow-md hover:border-orange-300 dark:hover:border-orange-800 active:scale-[0.98]"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="min-w-0 flex-1">
+                    <h3 className="font-bold text-slate-900 dark:text-white truncate">{invite.events?.name || 'Evento'}</h3>
+                    <div className="flex items-center gap-3 mt-1 text-xs text-slate-400 dark:text-slate-500">
+                      {invite.events?.organizations?.name && (
+                        <span className="flex items-center gap-1">
+                          <Building className="w-3 h-3" /> {invite.events.organizations.name}
+                        </span>
+                      )}
+                      {invite.events?.start_date && (
+                        <span className="flex items-center gap-1">
+                          <Calendar className="w-3 h-3" /> {new Date(invite.events.start_date).toLocaleDateString('pt-BR')}
+                        </span>
+                      )}
+                    </div>
                   </div>
-                  <div className="text-right">
-                    <p className="text-[10px] font-black text-orange-600 uppercase tracking-widest">Taxa de Participação</p>
-                    <p className="text-lg font-black text-slate-900 dark:text-white">R$ {Number(invite.fee_amount).toFixed(2)}</p>
+                  <div className="flex items-center gap-3 ml-3">
+                    <div className="text-right">
+                      <p className="text-xs font-black text-orange-600">R$ {Number(invite.fee_amount).toFixed(2)}</p>
+                    </div>
+                    <ChevronRight className="w-5 h-5 text-slate-300 dark:text-slate-600" />
                   </div>
                 </div>
-                
-                {(invite.events?.start_date || invite.events?.location) && (
-                  <div className="flex items-center gap-4 text-xs text-slate-500 dark:text-slate-400 py-2 border-y border-slate-100 dark:border-slate-800">
-                    {invite.events?.start_date && (
-                      <div className="flex items-center gap-1.5">
-                        <Calendar className="w-3.5 h-3.5" />
-                        {new Date(invite.events.start_date).toLocaleDateString('pt-BR')}
-                      </div>
-                    )}
-                    {invite.events?.location && (
-                      <div className="flex items-center gap-1.5">
-                        <MapPin className="w-3.5 h-3.5" />
-                        {invite.events.location}
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => handleInvite(invite.id, 'accepted')}
-                    disabled={actingOn === invite.id}
-                    className="flex-1 bg-orange-500 text-white font-bold py-3 rounded-2xl shadow-lg shadow-orange-500/20 hover:bg-orange-600 transition flex items-center justify-center gap-2 disabled:opacity-50"
-                  >
-                    <Check className="w-4 h-4" /> ACEITAR
-                  </button>
-                  <button
-                    onClick={() => handleInvite(invite.id, 'rejected')}
-                    disabled={actingOn === invite.id}
-                    className="flex-1 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 font-bold py-3 rounded-2xl hover:bg-slate-200 dark:hover:bg-slate-700 transition flex items-center justify-center gap-2 disabled:opacity-50"
-                  >
-                    <X className="w-4 h-4" /> RECUSAR
-                  </button>
-                </div>
-              </div>
+              </button>
             ))}
           </div>
         </section>
@@ -139,10 +236,12 @@ export default function VendorEventClient({ vendorId, activeEvent, invitations: 
             <div className="relative z-10">
               <span className="text-[10px] font-black uppercase tracking-[0.2em] bg-white/20 px-3 py-1 rounded-full backdrop-blur-sm">Seu Evento Atual</span>
               <h1 className="text-3xl font-black mt-3 leading-tight">{activeEvent.name}</h1>
-              <p className="text-purple-100 flex items-center gap-2 mt-1 font-medium">
-                <Building className="w-4 h-4" /> {activeEvent.organizations?.name}
-              </p>
-              
+              {activeEvent.organizations?.name && (
+                <p className="text-purple-100 flex items-center gap-2 mt-1 font-medium">
+                  <Building className="w-4 h-4" /> {activeEvent.organizations.name}
+                </p>
+              )}
+
               <div className="grid grid-cols-2 gap-4 mt-8">
                 <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 border border-white/10">
                   <p className="text-[10px] font-black uppercase tracking-widest text-purple-200 opacity-60 mb-1">Localização</p>
@@ -153,7 +252,7 @@ export default function VendorEventClient({ vendorId, activeEvent, invitations: 
                 <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 border border-white/10">
                   <p className="text-[10px] font-black uppercase tracking-widest text-purple-200 opacity-60 mb-1">Início</p>
                   <p className="text-sm font-bold flex items-center gap-2">
-                    <Calendar className="w-3.5 h-3.5" /> 
+                    <Calendar className="w-3.5 h-3.5" />
                     {activeEvent.start_date ? new Date(activeEvent.start_date).toLocaleDateString('pt-BR') : 'A definir'}
                   </p>
                 </div>
@@ -175,9 +274,9 @@ export default function VendorEventClient({ vendorId, activeEvent, invitations: 
                 </div>
               </div>
               {activeEvent.layout_url && (
-                <a 
-                  href={activeEvent.layout_url} 
-                  target="_blank" 
+                <a
+                  href={activeEvent.layout_url}
+                  target="_blank"
                   rel="noopener noreferrer"
                   className="bg-slate-100 dark:bg-slate-800 p-3 rounded-2xl text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-colors"
                 >
@@ -193,7 +292,7 @@ export default function VendorEventClient({ vendorId, activeEvent, invitations: 
                 </div>
                 <h2 className="font-black text-slate-900 dark:text-white uppercase tracking-widest text-sm">Regras e Orientações</h2>
               </div>
-              
+
               <div className="prose dark:prose-invert max-w-none">
                 {activeEvent.rules ? (
                   <div className="text-slate-600 dark:text-slate-400 text-sm whitespace-pre-wrap leading-relaxed">
@@ -206,7 +305,7 @@ export default function VendorEventClient({ vendorId, activeEvent, invitations: 
                 )}
               </div>
             </div>
-            
+
             {activeEvent.address && (
               <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800 p-6 transition-colors shadow-sm">
                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Endereço do Evento</p>
@@ -224,16 +323,6 @@ export default function VendorEventClient({ vendorId, activeEvent, invitations: 
           <h2 className="text-xl font-bold text-slate-900 dark:text-white">Nenhum evento ativo</h2>
           <p className="text-slate-400 dark:text-slate-500 max-w-xs mx-auto mt-2 text-sm px-4">
             Você não está participando de nenhum evento no momento e não possui convites pendentes.
-          </p>
-        </div>
-      )}
-
-      {/* Caso tenha convites mas nenhum evento ativo */}
-      {!activeEvent && invites.length > 0 && (
-        <div className="text-center py-10 bg-slate-50/30 dark:bg-slate-900/10 rounded-[2.5rem] border border-orange-100 dark:border-orange-900/20">
-          <p className="text-sm text-slate-500 dark:text-slate-400 px-4">
-            Você possui <b>{invites.length} convite{invites.length !== 1 ? 's' : ''}</b> pendente{invites.length !== 1 ? 's' : ''}. <br/> 
-            Responda acima para ter acesso aos detalhes e ao mapa do evento.
           </p>
         </div>
       )}
