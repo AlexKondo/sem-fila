@@ -85,7 +85,7 @@ export default function EventHubClient({
 
   // ── Invite form ──
   const [inviteEmail, setInviteEmail] = useState('');
-  const [inviteFee, setInviteFee] = useState(String(event.default_booth_fee));
+  const [inviteFee, setInviteFee] = useState('');
   const [inviteSending, setInviteSending] = useState(false);
   const [inviteError, setInviteError] = useState('');
   const [selectedVendorId, setSelectedVendorId] = useState('');
@@ -128,7 +128,7 @@ export default function EventHubClient({
       setInvitations(prev => [result.invitation as Invitation, ...prev]);
       setInviteEmail('');
       setSelectedVendorId('');
-      setInviteFee(String(event.default_booth_fee));
+      setInviteFee('');
 
       if (result.emailSent === false) {
         setInviteError('Convite salvo, mas não foi possível enviar o email.');
@@ -273,7 +273,7 @@ export default function EventHubClient({
                 />
               </div>
               <button onClick={sendInvite} disabled={inviteSending}
-                className="bg-purple-600 text-white px-4 rounded-xl hover:bg-purple-700 disabled:opacity-50 flex items-center gap-1 text-sm font-medium">
+                className="bg-purple-600 text-white px-4 py-2 rounded-xl hover:bg-purple-700 disabled:opacity-50 flex items-center gap-1 text-sm font-medium h-[38px]">
                 <Send className="w-4 h-4" />
               </button>
             </div>
