@@ -47,6 +47,7 @@ export default function OrgEventsClient({ initialEvents, orgId }: { initialEvent
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
+  const [deleteError, setDeleteError] = useState<string>('');
 
   function updateField(key: keyof EventForm, value: string) {
     setForm(prev => ({ ...prev, [key]: value }));
@@ -126,10 +127,24 @@ export default function OrgEventsClient({ initialEvents, orgId }: { initialEvent
 
   async function deleteEvent(eventId: string) {
     const supabase = createClient();
+
+    // Verifica se há convites aceitos/pagos antes de deletar
+    const { count } = await supabase
+      .from('event_vendor_invitations')
+      .select('*', { count: 'exact', head: true })
+      .eq('event_id', eventId)
+      .in('status', ['accepted', 'paid']);
+
+    if (count && count > 0) {
+      setDeleteError(`Não é possível excluir: há ${count} vendedor${count !== 1 ? 'es' : ''} confirmado${count !== 1 ? 's' : ''} neste evento.`);
+      return;
+    }
+
     const { error: err } = await supabase.from('events').delete().eq('id', eventId);
-    if (err) { setError(err.message); return; }
+    if (err) { setDeleteError(err.message); return; }
     setEvents(prev => prev.filter(e => e.id !== eventId));
     setDeleteConfirm(null);
+    setDeleteError('');
   }
 
   function startEdit(event: EventRow) {
@@ -322,13 +337,23 @@ export default function OrgEventsClient({ initialEvents, orgId }: { initialEvent
                       <Pencil className="w-4 h-4" />
                     </button>
                     {deleteConfirm === event.id ? (
-                      <div className="flex items-center gap-1">
-                        <button onClick={() => deleteEvent(event.id)} className="text-white bg-red-500 hover:bg-red-600 rounded-lg text-[10px] font-bold px-2 py-1">Sim</button>
-                        <button onClick={() => setDeleteConfirm(null)} className="text-gray-500 dark:text-slate-400 bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 rounded-lg text-[10px] font-bold px-2 py-1">Não</button>
+                      <div className="flex flex-col items-end gap-1">
+                        {deleteError && (
+                          <p className="text-[10px] text-red-500 dark:text-red-400 max-w-[180px] text-right leading-tight">{deleteError}</p>
+                        )}
+                        {!deleteError && (
+                          <div className="flex items-center gap-1">
+                            <button onClick={() => deleteEvent(event.id)} className="text-white bg-red-500 hover:bg-red-600 rounded-lg text-[10px] font-bold px-2 py-1">Sim</button>
+                            <button onClick={() => { setDeleteConfirm(null); setDeleteError(''); }} className="text-gray-500 dark:text-slate-400 bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 rounded-lg text-[10px] font-bold px-2 py-1">Não</button>
+                          </div>
+                        )}
+                        {deleteError && (
+                          <button onClick={() => { setDeleteConfirm(null); setDeleteError(''); }} className="text-gray-500 dark:text-slate-400 text-[10px] underline">Fechar</button>
+                        )}
                       </div>
                     ) : (
                       <button
-                        onClick={() => setDeleteConfirm(event.id)}
+                        onClick={() => { setDeleteConfirm(event.id); setDeleteError(''); }}
                         className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-lg transition"
                         title="Excluir"
                       >
