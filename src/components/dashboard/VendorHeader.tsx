@@ -4,6 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import LogoutButton from '@/components/ui/LogoutButton';
+import ThemeToggle from '@/components/ui/ThemeToggle';
 import { createClient } from '@/lib/supabase/client';
 
 const P = '#ec5b13';
@@ -147,6 +148,7 @@ export default function VendorHeader({ vendorName, userName, cnpjFormatted, vend
                 Trocar Marca
               </button>
             )}
+            <ThemeToggle />
             <LogoutButton />
           </div>
         </div>

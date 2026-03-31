@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { Users, Building2, CalendarDays, Store, ShoppingBag, TrendingUp, DollarSign, Settings, Award, Trophy, BarChart2, Sparkles } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
 import LogoutButton from '@/components/ui/LogoutButton';
+import ThemeToggle from '@/components/ui/ThemeToggle';
 
 export default async function AdminDashboardPage() {
   const supabase = await createClient();
@@ -64,6 +65,7 @@ export default async function AdminDashboardPage() {
              </div>
           </div>
           <nav className="flex items-center gap-1">
+            <ThemeToggle />
             <Link href="/dashboard/admin/settings" className="p-2 text-gray-400 hover:text-gray-900 transition">
               <Settings className="w-5 h-5" />
             </Link>

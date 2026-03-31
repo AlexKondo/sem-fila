@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server';
 import Link from 'next/link';
 import { Calendar, Users, MapPin, DollarSign, Plus, ChevronRight } from 'lucide-react';
 import LogoutButton from '@/components/ui/LogoutButton';
+import ThemeToggle from '@/components/ui/ThemeToggle';
 import EditOrgName from './EditOrgName';
 
 export default async function OrgDashboardPage() {
@@ -75,7 +76,10 @@ export default async function OrgDashboardPage() {
             <EditOrgName orgId={orgId} currentName={orgName ?? 'Minha Organização'} />
             <p className="text-xs text-gray-400">Painel do Organizador</p>
           </div>
-          <LogoutButton />
+          <div className="flex items-center gap-1">
+            <ThemeToggle />
+            <LogoutButton />
+          </div>
         </div>
       </header>
 
