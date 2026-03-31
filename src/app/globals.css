@@ -24,9 +24,8 @@ body {
   min-height: 100dvh;
 }
 
-.dark body,
-body:where(.dark *) {
-  background-color: var(--color-bg);
+html.dark body {
+  background-color: #0f172a;
   color: #e2e8f0;
 }
 
