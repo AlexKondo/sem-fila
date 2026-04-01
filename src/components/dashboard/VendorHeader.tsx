@@ -158,12 +158,26 @@ export default function VendorHeader({ vendorName, userName, cnpjFormatted, vend
 
     function playWaiterSound() {
       try {
-        if (typeof window !== 'undefined') {
-          const enabled = localStorage.getItem('vendor_alerts_enabled') !== 'false';
-          if (!enabled) return;
+        if (typeof window === 'undefined') return;
+        const enabled = localStorage.getItem('vendor_alerts_enabled') !== 'false';
+        if (!enabled) return;
+        const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+        if (!AudioCtx) return;
+        const ctx = new AudioCtx();
+        for (let i = 0; i < 3; i++) {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.type = 'sine';
+          osc.frequency.value = 880;
+          const t = ctx.currentTime + i * 0.35;
+          gain.gain.setValueAtTime(0, t);
+          gain.gain.linearRampToValueAtTime(0.4, t + 0.05);
+          gain.gain.linearRampToValueAtTime(0, t + 0.25);
+          osc.start(t);
+          osc.stop(t + 0.25);
         }
-        const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3');
-        audio.play().catch(() => {});
       } catch {}
     }
 

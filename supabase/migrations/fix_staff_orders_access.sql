@@ -69,7 +69,18 @@ $$;
 
 GRANT EXECUTE ON FUNCTION public.get_vendor_orders(uuid, timestamptz) TO authenticated;
 
--- 2. Permite que staff leia sua própria entrada em staff_schedules
+-- 2. Garante que a policy do dono do vendor ainda existe (restaura caso tenha sido removida)
+DROP POLICY IF EXISTS "Vendors can view their own orders" ON public.orders;
+CREATE POLICY "Vendors can view their own orders"
+  ON public.orders
+  FOR SELECT
+  TO authenticated
+  USING (
+    vendor_id IN (SELECT id FROM public.vendors WHERE owner_id = auth.uid())
+    OR EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'platform_admin')
+  );
+
+-- 3. Permite que staff leia sua própria entrada em staff_schedules
 --    (necessário para que a policy de orders abaixo funcione corretamente)
 DROP POLICY IF EXISTS "Staff can read own schedule" ON public.staff_schedules;
 CREATE POLICY "Staff can read own schedule"
@@ -78,7 +89,7 @@ CREATE POLICY "Staff can read own schedule"
   TO authenticated
   USING (user_id = auth.uid());
 
--- 3. Permite que staff leia pedidos do vendor via RLS (Realtime funciona)
+-- 4. Permite que staff leia pedidos do vendor via RLS (Realtime funciona)
 DROP POLICY IF EXISTS "Staff can view vendor orders" ON public.orders;
 CREATE POLICY "Staff can view vendor orders"
   ON public.orders
@@ -93,7 +104,7 @@ CREATE POLICY "Staff can view vendor orders"
     )
   );
 
--- 4. Permite que staff atualize status dos pedidos do vendor
+-- 5. Permite que staff atualize status dos pedidos do vendor
 DROP POLICY IF EXISTS "Staff can update vendor orders status" ON public.orders;
 CREATE POLICY "Staff can update vendor orders status"
   ON public.orders

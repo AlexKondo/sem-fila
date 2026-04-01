@@ -36,8 +36,30 @@ function todayStr() {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
-// Pré-carrega o áudio para tocar instantaneamente
-const ALARM_URL = 'https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3';
+function playAlarmBeep() {
+  try {
+    if (typeof window === 'undefined') return;
+    const enabled = localStorage.getItem('vendor_alerts_enabled') !== 'false';
+    if (!enabled) return;
+    const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+    if (!AudioCtx) return;
+    const ctx = new AudioCtx();
+    for (let i = 0; i < 3; i++) {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.type = 'sine';
+      osc.frequency.value = 880;
+      const t = ctx.currentTime + i * 0.35;
+      gain.gain.setValueAtTime(0, t);
+      gain.gain.linearRampToValueAtTime(0.4, t + 0.05);
+      gain.gain.linearRampToValueAtTime(0, t + 0.25);
+      osc.start(t);
+      osc.stop(t + 0.25);
+    }
+  } catch {}
+}
 
 interface Props {
   initialOrders: OrderWithItems[];
@@ -53,53 +75,7 @@ export default function VendorOrdersBoard({ initialOrders, vendorId }: Props) {
 
   // Ref para rastrear IDs de pedidos já conhecidos (evita alertas falsos)
   const knownIdsRef = useRef<Set<string>>(new Set(initialOrders.map(o => o.id)));
-  // Ref do áudio pré-carregado
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-  // Flag para saber se o user já interagiu com a página (autoplay policy)
-  const hasInteractedRef = useRef(false);
-
-  // Pré-carrega o áudio e detecta interação do usuário
-  useEffect(() => {
-    const audio = new Audio(ALARM_URL);
-    audio.preload = 'auto';
-    audio.load();
-    audioRef.current = audio;
-
-    function onInteraction() {
-      hasInteractedRef.current = true;
-      // Toca e pausa silenciosamente para "desbloquear" o áudio no browser
-      audio.volume = 0;
-      audio.play().then(() => { audio.pause(); audio.currentTime = 0; audio.volume = 1; }).catch(() => {});
-    }
-    window.addEventListener('click', onInteraction, { once: true });
-    window.addEventListener('touchstart', onInteraction, { once: true });
-
-    return () => {
-      window.removeEventListener('click', onInteraction);
-      window.removeEventListener('touchstart', onInteraction);
-    };
-  }, []);
-
-  const playNewOrderSound = useCallback(() => {
-    try {
-      if (typeof window !== 'undefined') {
-        const enabled = localStorage.getItem('vendor_alerts_enabled') !== 'false';
-        if (!enabled) return;
-      }
-      const audio = audioRef.current;
-      if (audio) {
-        audio.currentTime = 0;
-        audio.volume = 1;
-        audio.play().catch(() => {
-          // Fallback: cria nova instância
-          const fallback = new Audio(ALARM_URL);
-          fallback.play().catch(() => {});
-        });
-      } else {
-        new Audio(ALARM_URL).play().catch(() => {});
-      }
-    } catch {}
-  }, []);
+  const playNewOrderSound = useCallback(() => { playAlarmBeep(); }, []);
 
   // Recarrega pedidos imediatamente quando o filtro de data muda
   const isToday = dateFrom === todayStr() && dateTo === todayStr();
