@@ -83,23 +83,23 @@ export default function VendorOrdersBoard({ initialOrders, vendorId }: Props) {
   const knownIdsRef = useRef<Set<string>>(new Set(initialOrders.map(o => o.id)));
   const playNewOrderSound = useCallback(() => { playAlarmBeep(); }, []);
 
-  // Cria o AudioContext singleton na primeira interação do usuário com a página.
-  // Isso garante que o contexto fique em estado "running" (desbloqueado) para
-  // poder tocar o alarme quando um novo pedido chegar, mesmo minutos depois.
+  // Cria o AudioContext singleton assim que o componente monta.
+  // Tenta criar imediatamente (funciona se a página foi aberta via interação do usuário —
+  // ex: clicar em um link). Se o contexto nascer suspenso, escuta o primeiro clique/toque
+  // para garantir que ele seja desbloqueado antes do próximo alarme.
   useEffect(() => {
-    function unlock() {
-      if (_audioCtx) return;
-      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
-      if (!AudioCtx) return;
+    if (_audioCtx) return; // já criado (hot-reload ou remount)
+    const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+    if (!AudioCtx) return;
+    try {
       _audioCtx = new AudioCtx();
-      _audioCtx.resume().catch(() => {});
-    }
-    document.addEventListener('click', unlock, { once: true });
-    document.addEventListener('touchstart', unlock, { once: true });
-    return () => {
-      document.removeEventListener('click', unlock);
-      document.removeEventListener('touchstart', unlock);
-    };
+      // Se já nasceu em 'running', ótimo. Se suspenso, desbloqueia no próximo toque.
+      if (_audioCtx.state === 'suspended') {
+        function unlock() { _audioCtx?.resume().catch(() => {}); }
+        document.addEventListener('click', unlock, { once: true });
+        document.addEventListener('touchstart', unlock, { once: true });
+      }
+    } catch {}
   }, []);
 
   // Recarrega pedidos imediatamente quando o filtro de data muda
