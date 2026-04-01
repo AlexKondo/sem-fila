@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { createClient } from '@/lib/supabase/client';
-import { formatCurrency, formatDate, ORDER_STATUS_LABEL, ORDER_STATUS_COLOR } from '@/lib/utils';
+import { formatCurrency, ORDER_STATUS_LABEL, ORDER_STATUS_COLOR } from '@/lib/utils';
 import type { OrderStatus } from '@/types/database';
 
 type OrderWithItems = {
@@ -14,16 +14,17 @@ type OrderWithItems = {
   notes: string | null;
   created_at: string;
   updated_at?: string;
-    order_items: {
-      id: string;
-      quantity: number;
-      unit_price: number;
-      extras?: { name: string; price: number }[];
-      menu_items: { id: string; name: string } | null;
-    }[];
+  payment_method?: string;
+  payment_status?: string;
+  order_items: {
+    id: string;
+    quantity: number;
+    unit_price: number;
+    extras?: { name: string; price: number }[];
+    menu_items: { id: string; name: string } | null;
+  }[];
 };
 
-const STATUS_ORDER: OrderStatus[] = ['received', 'preparing', 'almost_ready', 'ready'];
 const NEXT_STATUS: Partial<Record<OrderStatus, OrderStatus>> = {
   received: 'preparing',
   preparing: 'almost_ready',
@@ -37,8 +38,6 @@ function todayStr() {
 }
 
 // Singleton de AudioContext — criado na 1ª interação do usuário e reutilizado.
-// Navegadores bloqueiam new AudioContext() sem gesto do usuário; criar o contexto
-// durante um clique garante que ele fique em estado "running" para uso posterior.
 let _audioCtx: AudioContext | null = null;
 
 function playAlarmBeep() {
@@ -47,7 +46,7 @@ function playAlarmBeep() {
     const enabled = localStorage.getItem('vendor_alerts_enabled') !== 'false';
     if (!enabled) return;
     const ctx = _audioCtx;
-    if (!ctx) return; // ainda não desbloqueado pelo usuário
+    if (!ctx) return;
     ctx.resume().then(() => {
       for (let i = 0; i < 3; i++) {
         const osc = ctx.createOscillator();
@@ -77,23 +76,18 @@ export default function VendorOrdersBoard({ initialOrders, vendorId }: Props) {
   const [dateFrom, setDateFrom] = useState(todayStr());
   const [dateTo, setDateTo] = useState(todayStr());
   const [loadingFilter, setLoadingFilter] = useState(false);
+  // alertOrder = novo pedido já pago (PIX/cartão confirmado ou dinheiro após confirmação)
   const [alertOrder, setAlertOrder] = useState<OrderWithItems | null>(null);
 
-  // Ref para rastrear IDs de pedidos já conhecidos (evita alertas falsos)
   const knownIdsRef = useRef<Set<string>>(new Set(initialOrders.map(o => o.id)));
   const playNewOrderSound = useCallback(() => { playAlarmBeep(); }, []);
 
-  // Cria o AudioContext singleton assim que o componente monta.
-  // Tenta criar imediatamente (funciona se a página foi aberta via interação do usuário —
-  // ex: clicar em um link). Se o contexto nascer suspenso, escuta o primeiro clique/toque
-  // para garantir que ele seja desbloqueado antes do próximo alarme.
   useEffect(() => {
-    if (_audioCtx) return; // já criado (hot-reload ou remount)
+    if (_audioCtx) return;
     const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
     if (!AudioCtx) return;
     try {
       _audioCtx = new AudioCtx();
-      // Se já nasceu em 'running', ótimo. Se suspenso, desbloqueia no próximo toque.
       if (_audioCtx.state === 'suspended') {
         function unlock() { _audioCtx?.resume().catch(() => {}); }
         document.addEventListener('click', unlock, { once: true });
@@ -102,10 +96,9 @@ export default function VendorOrdersBoard({ initialOrders, vendorId }: Props) {
     } catch {}
   }, []);
 
-  // Recarrega pedidos imediatamente quando o filtro de data muda
   const isToday = dateFrom === todayStr() && dateTo === todayStr();
   useEffect(() => {
-    if (isToday) return; // initialOrders já cobre "Hoje"
+    if (isToday) return;
     let cancelled = false;
     async function fetchOrders() {
       setLoadingFilter(true);
@@ -116,7 +109,6 @@ export default function VendorOrdersBoard({ initialOrders, vendorId }: Props) {
         p_since: since.toISOString(),
       });
       if (!cancelled) {
-        // Filtra client-side pelo dateTo
         const untilEnd = new Date(dateTo + 'T23:59:59').getTime();
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const filtered = ((data || []) as any[]).filter((o: any) => new Date(o.created_at).getTime() <= untilEnd);
@@ -128,12 +120,10 @@ export default function VendorOrdersBoard({ initialOrders, vendorId }: Props) {
     return () => { cancelled = true; };
   }, [dateFrom, dateTo, vendorId, isToday]);
 
-  // Realtime + Polling de segurança
   useEffect(() => {
     const supabase = createClient();
     let pollTimer: ReturnType<typeof setInterval> | null = null;
 
-    // Busca pedidos via RPC e sincroniza com o estado local
     async function syncOrders(alertOnNew = false) {
       const since = new Date(dateFrom + 'T00:00:00');
       const { data } = await supabase.rpc('get_vendor_orders', {
@@ -141,28 +131,29 @@ export default function VendorOrdersBoard({ initialOrders, vendorId }: Props) {
         p_since: since.toISOString(),
       });
       if (!data) return;
-      // Filtra client-side pelo dateTo
       const untilEnd = new Date(dateTo + 'T23:59:59').getTime();
       const fresh = (data as OrderWithItems[]).filter(o => new Date(o.created_at).getTime() <= untilEnd);
 
-      // Detecta pedidos novos comparando com ref
       if (alertOnNew) {
-        const newOrders = fresh.filter(o =>
+        // Alarme apenas para pedidos já pagos (PIX/cartão confirmado ou dinheiro após confirmação manual)
+        const newPaidOrders = fresh.filter(o =>
           !knownIdsRef.current.has(o.id) &&
-          !['delivered', 'cancelled'].includes(o.status)
+          !['delivered', 'cancelled'].includes(o.status) &&
+          o.payment_status === 'paid'
         );
-        if (newOrders.length > 0) {
-          setAlertOrder(newOrders[0]);
+        if (newPaidOrders.length > 0) {
+          setAlertOrder(newPaidOrders[0]);
           playNewOrderSound();
         }
+
+        // Pedidos em dinheiro recém-chegados aparecem silenciosamente no board (em vermelho)
+        // O alarme toca apenas quando o vendor confirmar o pagamento (veja confirmCashPayment)
       }
 
-      // Atualiza ref com todos os IDs atuais
       knownIdsRef.current = new Set(fresh.map(o => o.id));
       setOrders(fresh);
     }
 
-    // Realtime: escuta mudanças com filtro no vendor_id
     const channel = supabase
       .channel(`vendor-orders-${vendorId}`)
       .on(
@@ -190,12 +181,10 @@ export default function VendorOrdersBoard({ initialOrders, vendorId }: Props) {
               setOrders(prev => prev.filter(o => o.id !== updated.id));
               return;
             }
-            // Sempre faz sync completo no UPDATE para garantir dados frescos
             await syncOrders(true);
             return;
           }
 
-          // INSERT — faz sync para pegar dados completos com items
           if (eventType === 'INSERT') {
             await syncOrders(true);
           }
@@ -203,8 +192,6 @@ export default function VendorOrdersBoard({ initialOrders, vendorId }: Props) {
       )
       .subscribe();
 
-    // Polling de segurança a cada 5s — garante que pedidos apareçam
-    // mesmo se Realtime falhar (RLS, reconexão, WAL delay)
     pollTimer = setInterval(() => syncOrders(true), 5000);
 
     return () => {
@@ -214,7 +201,6 @@ export default function VendorOrdersBoard({ initialOrders, vendorId }: Props) {
   }, [vendorId, dateFrom, dateTo, playNewOrderSound]);
 
   async function advanceStatus(orderId: string, nextStatus: OrderStatus) {
-    // Atualiza a UI imediatamente (otimista) para resposta instantânea
     setOrders((prev) =>
       prev.map((o) => o.id === orderId ? { ...o, status: nextStatus } : o)
     );
@@ -228,13 +214,35 @@ export default function VendorOrdersBoard({ initialOrders, vendorId }: Props) {
       if (!res.ok) {
         const data = await res.json();
         console.error('Erro ao atualizar status:', data.error);
-        // Reverte o estado em caso de falha
         const supabase = createClient();
         const { data: order } = await supabase.from('orders').select('status').eq('id', orderId).single();
         if (order) setOrders((prev) => prev.map((o) => o.id === orderId ? { ...o, status: order.status } : o));
       }
     } catch (e) {
       console.error('Erro de rede ao atualizar status:', e);
+    }
+  }
+
+  async function confirmCashPayment(orderId: string) {
+    // Atualiza otimisticamente
+    setOrders(prev => prev.map(o => o.id === orderId ? { ...o, payment_status: 'paid' } : o));
+
+    try {
+      const res = await fetch(`/api/orders/${orderId}/confirm-payment`, { method: 'POST' });
+      if (!res.ok) {
+        // Reverte em caso de falha
+        setOrders(prev => prev.map(o => o.id === orderId ? { ...o, payment_status: 'pending' } : o));
+        console.error('Erro ao confirmar pagamento em dinheiro');
+        return;
+      }
+      // Dispara alarme de novo pedido confirmado
+      const confirmedOrder = orders.find(o => o.id === orderId);
+      if (confirmedOrder) {
+        setAlertOrder({ ...confirmedOrder, payment_status: 'paid' });
+        playNewOrderSound();
+      }
+    } catch {
+      setOrders(prev => prev.map(o => o.id === orderId ? { ...o, payment_status: 'pending' } : o));
     }
   }
 
@@ -292,30 +300,50 @@ export default function VendorOrdersBoard({ initialOrders, vendorId }: Props) {
     </div>
   );
 
+  // Pedidos confirmados (pagos) primeiro, dinheiro+pendente por último
+  const activeOrders = orders
+    .filter(o => !['delivered', 'cancelled'].includes(o.status))
+    .sort((a, b) => {
+      const aWaiting = a.payment_method === 'dinheiro' && a.payment_status === 'pending';
+      const bWaiting = b.payment_method === 'dinheiro' && b.payment_status === 'pending';
+      if (aWaiting !== bWaiting) return aWaiting ? 1 : -1;
+      return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+    });
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const historicalOrders = orders
+    .filter((o) => o.status === 'delivered' || (o.status === 'cancelled' && (o as any).payment_status === 'paid'));
+
+  const orderNumbers: Record<string, number> = {};
+  [...orders].sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
+    .forEach((o, i) => { orderNumbers[o.id] = i + 1; });
+
+  const alertOverlay = alertOrder && (
+    <div
+      onClick={() => setAlertOrder(null)}
+      className="fixed inset-0 z-[10000] bg-green-600 dark:bg-green-700 flex flex-col items-center justify-center p-8 text-white text-center cursor-pointer animate-in fade-in zoom-in duration-300"
+    >
+      <div className="w-32 h-32 bg-white/20 rounded-full flex items-center justify-center mb-8 animate-bounce">
+        <svg className="w-20 h-20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+        </svg>
+      </div>
+      <h2 className="text-4xl font-black uppercase tracking-widest mb-2">Novo Pedido Recebido!</h2>
+      <p className="text-xl font-bold opacity-80 mb-8">O pagamento foi confirmado e o pedido já está na fila.</p>
+      <div className="bg-white dark:bg-slate-900 text-green-700 dark:text-green-400 px-12 py-8 rounded-[40px] shadow-2xl space-y-2 border border-white/10 dark:border-slate-800">
+        <p className="text-sm font-black uppercase tracking-widest opacity-60">Código do Pedido</p>
+        <p className="text-7xl font-black italic">{alertOrder.pickup_code}</p>
+      </div>
+      <button className="mt-12 bg-white/10 hover:bg-white/20 px-8 py-3 rounded-full font-bold uppercase tracking-widest transition-all">
+        Toque para fechar e ver detalhes
+      </button>
+    </div>
+  );
+
   if (orders.length === 0) {
     return (
       <>
-        {alertOrder && (
-          <div
-            onClick={() => setAlertOrder(null)}
-            className="fixed inset-0 z-[10000] bg-green-600 dark:bg-green-700 flex flex-col items-center justify-center p-8 text-white text-center cursor-pointer animate-in fade-in zoom-in duration-300"
-          >
-            <div className="w-32 h-32 bg-white/20 rounded-full flex items-center justify-center mb-8 animate-bounce">
-              <svg className="w-20 h-20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-              </svg>
-            </div>
-            <h2 className="text-4xl font-black uppercase tracking-widest mb-2">Novo Pedido Recebido!</h2>
-            <p className="text-xl font-bold opacity-80 mb-8">O pagamento foi confirmado e o pedido já está na fila.</p>
-            <div className="bg-white dark:bg-slate-900 text-green-700 dark:text-green-400 px-12 py-8 rounded-[40px] shadow-2xl space-y-2 border border-white/10 dark:border-slate-800">
-                <p className="text-sm font-black uppercase tracking-widest opacity-60">Código do Pedido</p>
-                <p className="text-7xl font-black italic">{alertOrder.pickup_code}</p>
-            </div>
-            <button className="mt-12 bg-white/10 hover:bg-white/20 px-8 py-3 rounded-full font-bold uppercase tracking-widest transition-all">
-              Toque para fechar e ver detalhes
-            </button>
-          </div>
-        )}
+        {alertOverlay}
         {filterBar}
         <div className="flex flex-col items-center justify-center py-24 text-gray-400 dark:text-slate-600">
           <p className="text-5xl mb-4">🍳</p>
@@ -326,41 +354,9 @@ export default function VendorOrdersBoard({ initialOrders, vendorId }: Props) {
     );
   }
 
-  // Cria um mapeamento de id -> número sequencial (Mais antigo = #1)
-  const orderNumbers: Record<string, number> = {};
-  [...orders].sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
-    .forEach((o, i) => { orderNumbers[o.id] = i + 1; });
-
-  const activeOrders = orders
-    .filter((o) => !['delivered', 'cancelled'].includes(o.status))
-    .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const historicalOrders = orders
-    .filter((o) => o.status === 'delivered' || (o.status === 'cancelled' && (o as any).payment_status === 'paid'))
   return (
     <>
-      {alertOrder && (
-        <div
-          onClick={() => setAlertOrder(null)}
-          className="fixed inset-0 z-[10000] bg-green-600 dark:bg-green-700 flex flex-col items-center justify-center p-8 text-white text-center cursor-pointer animate-in fade-in zoom-in duration-300"
-        >
-          <div className="w-32 h-32 bg-white/20 rounded-full flex items-center justify-center mb-8 animate-bounce">
-            <svg className="w-20 h-20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-            </svg>
-          </div>
-          <h2 className="text-4xl font-black uppercase tracking-widest mb-2">Novo Pedido Recebido!</h2>
-          <p className="text-xl font-bold opacity-80 mb-8">O pagamento foi confirmado e o pedido já está na fila.</p>
-          <div className="bg-white dark:bg-slate-900 text-green-700 dark:text-green-400 px-12 py-8 rounded-[40px] shadow-2xl space-y-2 border border-white/10 dark:border-slate-800">
-              <p className="text-sm font-black uppercase tracking-widest opacity-60">Código do Pedido</p>
-              <p className="text-7xl font-black italic">{alertOrder.pickup_code}</p>
-          </div>
-          <button className="mt-12 bg-white/10 hover:bg-white/20 px-8 py-3 rounded-full font-bold uppercase tracking-widest transition-all">
-            Toque para fechar e ver detalhes
-          </button>
-        </div>
-      )}
+      {alertOverlay}
       {filterBar}
       <div className="max-w-2xl mx-auto px-4 py-4 space-y-8">
         {/* Fila de Produção */}
@@ -380,6 +376,7 @@ export default function VendorOrdersBoard({ initialOrders, vendorId }: Props) {
                 orderNumber={orderNumbers[order.id]}
                 onAdvance={advanceStatus}
                 onCancel={cancelOrder}
+                onConfirmCashPayment={confirmCashPayment}
               />
             ))}
 
@@ -409,6 +406,7 @@ export default function VendorOrdersBoard({ initialOrders, vendorId }: Props) {
                   orderNumber={orderNumbers[order.id]}
                   onAdvance={advanceStatus}
                   onCancel={cancelOrder}
+                  onConfirmCashPayment={confirmCashPayment}
                 />
               ))
             )}
@@ -424,21 +422,33 @@ function OrderCard({
   orderNumber,
   onAdvance,
   onCancel,
+  onConfirmCashPayment,
 }: {
   order: OrderWithItems;
   orderNumber: number;
-  onAdvance: (id: string, next: OrderStatus) => void;
+  onAdvance: (id: string, next: OrderStatus) => Promise<void>;
   onCancel: (id: string) => void;
+  onConfirmCashPayment: (id: string) => void;
 }) {
   const nextStatus = NEXT_STATUS[order.status];
   const [loading, setLoading] = useState(false);
+  const [confirmingPayment, setConfirmingPayment] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
+
+  const isCashPending = order.payment_method === 'dinheiro' && order.payment_status === 'pending';
 
   async function handleAdvance() {
     if (!nextStatus) return;
     setLoading(true);
     await onAdvance(order.id, nextStatus);
     setLoading(false);
+  }
+
+  async function handleConfirmCash(e: React.MouseEvent) {
+    e.stopPropagation();
+    setConfirmingPayment(true);
+    await onConfirmCashPayment(order.id);
+    setConfirmingPayment(false);
   }
 
   function getCustomerName(notes: string | null) {
@@ -456,26 +466,34 @@ function OrderCard({
   const realNotes = getRealNotes(order.notes);
   const isDelivered = order.status === 'delivered';
 
-  // Calculo de tempo percorrido
   const startMs = new Date(order.created_at).getTime();
   const endMs = isDelivered ? (order.updated_at ? new Date(order.updated_at).getTime() : Date.now()) : null;
   const timeDiffSec = endMs ? Math.floor((endMs - startMs) / 1000) : null;
   const mins = timeDiffSec ? Math.floor(timeDiffSec / 60) : 0;
   const secs = timeDiffSec ? timeDiffSec % 60 : 0;
 
+  // Estilo do card: vermelho para dinheiro+pendente, verde para dinheiro+pago, normal para o resto
+  const cardClass = isCashPending
+    ? 'bg-red-50 dark:bg-red-950/30 rounded-2xl shadow-sm p-4 cursor-pointer transition-all border-2 border-red-300 dark:border-red-800 hover:shadow-md'
+    : isDelivered
+      ? 'bg-white dark:bg-slate-800 rounded-2xl shadow-sm p-4 cursor-pointer transition-all border border-slate-100 dark:border-slate-700 opacity-75 bg-slate-50 dark:bg-slate-900/50 shadow-none hover:shadow-none'
+      : 'bg-white dark:bg-slate-800 rounded-2xl shadow-sm p-4 cursor-pointer transition-all border border-slate-100 dark:border-slate-700 hover:shadow-md';
+
   return (
-    <div
-      className={`bg-white dark:bg-slate-800 rounded-2xl shadow-sm p-4 cursor-pointer transition-all border border-slate-100 dark:border-slate-700 ${isDelivered ? 'opacity-75 bg-slate-50 dark:bg-slate-900/50 shadow-none hover:shadow-none' : 'hover:shadow-md'}`}
-      onClick={() => setIsExpanded(!isExpanded)}
-    >
+    <div className={cardClass} onClick={() => setIsExpanded(!isExpanded)}>
       <div className="flex items-start justify-between">
         <div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <span className="font-black text-gray-900 dark:text-white text-lg">{clientName}</span>
             <span className="text-xs text-orange-600 font-black bg-orange-50 dark:bg-orange-950/30 px-2 py-0.5 rounded-full">#{orderNumber}</span>
             {order.table_number && (
               <span className="text-xs font-black bg-orange-50 dark:bg-orange-950/30 text-orange-600 px-2 py-0.5 rounded-full">
                 {order.table_number === 'Para Viagem' ? '🛍️ Para Viagem' : `🛋️ Mesa ${order.table_number}`}
+              </span>
+            )}
+            {isCashPending && (
+              <span className="text-xs font-black bg-red-100 dark:bg-red-900/40 text-red-600 dark:text-red-400 px-2 py-0.5 rounded-full animate-pulse">
+                💵 Aguardando pagamento
               </span>
             )}
           </div>
@@ -502,6 +520,27 @@ function OrderCard({
           <p className="text-sm font-black text-slate-800 dark:text-white tracking-tight">{formatCurrency(order.total_price)}</p>
         </div>
       </div>
+
+      {/* Botão de confirmar pagamento em dinheiro — visível mesmo sem expandir */}
+      {isCashPending && (
+        <button
+          onClick={handleConfirmCash}
+          disabled={confirmingPayment}
+          className="mt-3 w-full py-2.5 rounded-xl bg-red-500 hover:bg-red-600 text-white text-sm font-black transition disabled:opacity-50 flex items-center justify-center gap-2"
+        >
+          {confirmingPayment ? (
+            <>
+              <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
+              </svg>
+              Confirmando...
+            </>
+          ) : (
+            <>💵 Não pago — clique para confirmar recebimento</>
+          )}
+        </button>
+      )}
 
       {isExpanded && (
         <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-700 space-y-3" onClick={e => e.stopPropagation()}>
@@ -531,7 +570,7 @@ function OrderCard({
           </div>
 
           {realNotes && (
-            <p className="text-xs text-gray-500 dark:text-slate-400 bg-gray-50 dark:bg-slate-900/50 rounded-lg px-3 py-1.5 ">
+            <p className="text-xs text-gray-500 dark:text-slate-400 bg-gray-50 dark:bg-slate-900/50 rounded-lg px-3 py-1.5">
               💬 {realNotes}
             </p>
           )}
@@ -553,7 +592,8 @@ function OrderCard({
                   Cancelar
                 </button>
               )}
-              {nextStatus && (
+              {/* Avanço de status só disponível após pagamento confirmado */}
+              {nextStatus && !isCashPending && (
                 <button
                   onClick={(e) => { e.stopPropagation(); handleAdvance(); }}
                   disabled={loading}

@@ -182,7 +182,7 @@ export async function POST(request: Request) {
       notes: notes ?? null,
       total_price,
       status: 'received',
-      payment_status: (isPix || isCard) ? 'pending' : 'paid',
+      payment_status: 'pending',
       pickup_code: generatePickupCode(),
       payment_method,
     })

@@ -15,7 +15,7 @@ interface Extra { name: string; price: number; }
 interface CartItem { id: string; menuItemId: string; name: string; price: number; quantity: number; extras?: Extra[]; image_url?: string; category?: string; }
 
 interface CartSheetProps { vendor: Vendor; tableNumber?: string; }
-type Step = 'cart' | 'payment' | 'identify' | 'pix';
+type Step = 'cart' | 'payment' | 'identify' | 'pix' | 'cash_pending';
 
 /* ─── Cart Item Row (memoizado) ─── */
 const CartItemRow = memo(function CartItemRow({ item, onUpdateQty, onRemove, onUpdateExtra }: {
@@ -232,6 +232,7 @@ export default function CartSheet({ vendor, tableNumber }: CartSheetProps) {
   const [customerPhone, setCustomerPhone] = useState('');
   const [paymentMethod, setPaymentMethod] = useState<'pix' | 'cartão' | 'dinheiro' | ''>('');
   const [pixData, setPixData] = useState<{ payment_id: string; qr_code: string; copy_paste: string; order_id: string } | null>(null);
+  const [cashOrderId, setCashOrderId] = useState<string | null>(null);
   const [pixCopied, setPixCopied] = useState(false);
   const [pixSimulating, setPixSimulating] = useState(false);
   const [cardData, setCardData] = useState({ cardNumber: '', cardHolder: '', cardExpiry: '', cardCvv: '', useNewCard: false, saveCard: true });
@@ -490,6 +491,13 @@ export default function CartSheet({ vendor, tableNumber }: CartSheetProps) {
         return;
       }
 
+      if (paymentMethod === 'dinheiro') {
+        setCashOrderId(data.order_id);
+        setStep('cash_pending');
+        setLoading(false);
+        return;
+      }
+
       router.push(`/profile/orders?payment=success&new_order=${data.order_id}`);
     } catch (err: any) {
       setError('Problema na conexão. Tente novamente.');
@@ -696,11 +704,24 @@ export default function CartSheet({ vendor, tableNumber }: CartSheetProps) {
                 <button
                   onClick={async () => {
                     setPixSimulating(true);
-                    await fetch('/api/payments/simulate', {
-                      method: 'POST',
-                      headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify({ payment_id: pixData.payment_id }),
-                    });
+                    try {
+                      const simRes = await fetch('/api/payments/simulate', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ payment_id: pixData.payment_id }),
+                      });
+                      if (!simRes.ok) {
+                        const simErr = await simRes.json().catch(() => ({}));
+                        console.error('[simulate] falhou:', simErr);
+                        setError(simErr?.error ?? 'Erro ao simular pagamento.');
+                        setPixSimulating(false);
+                        return;
+                      }
+                    } catch {
+                      setError('Erro ao simular pagamento.');
+                      setPixSimulating(false);
+                      return;
+                    }
                     setTimeout(() => {
                       router.push(`/profile/orders?payment=success&new_order=${pixData.order_id}`);
                     }, 1500);
@@ -709,6 +730,36 @@ export default function CartSheet({ vendor, tableNumber }: CartSheetProps) {
                   className="w-full py-3 rounded-xl bg-slate-100 text-slate-600 text-xs font-bold disabled:opacity-50"
                 >
                   {pixSimulating ? 'Simulando pagamento…' : '🧪 Simular pagamento (sandbox)'}
+                </button>
+              </div>
+            )}
+
+            {step === 'cash_pending' && cashOrderId && (
+              <div className="flex flex-col flex-1 overflow-y-auto px-5 py-8 items-center text-center space-y-5">
+                <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-3xl bg-orange-50 border-2 border-orange-200">
+                  💵
+                </div>
+                <div>
+                  <p className="font-black text-slate-900 text-xl">Pedido recebido!</p>
+                  <p className="text-sm text-slate-500 mt-1">Seu pedido foi registrado e está aguardando o pagamento.</p>
+                </div>
+
+                <div className="w-full bg-orange-50 border-2 border-orange-200 rounded-2xl px-6 py-5 space-y-1">
+                  <p className="text-xs font-black text-orange-500 uppercase tracking-widest">Próximo passo</p>
+                  <p className="font-bold text-slate-800 text-base leading-snug">
+                    Dirija-se ao caixa e informe seu código para efetuar o pagamento em dinheiro.
+                  </p>
+                  <p className="text-xs text-slate-400 mt-1">
+                    A produção começará somente após a confirmação do pagamento pelo atendente.
+                  </p>
+                </div>
+
+                <button
+                  onClick={() => router.push(`/profile/orders?new_order=${cashOrderId}`)}
+                  className="w-full py-3 rounded-xl text-white text-sm font-bold"
+                  style={{ backgroundColor: P }}
+                >
+                  Ver meu pedido
                 </button>
               </div>
             )}
