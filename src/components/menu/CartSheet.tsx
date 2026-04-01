@@ -126,27 +126,29 @@ const CpfInput = memo(function CpfInput({ value, onChange, style }: { value: str
 
 /* ─── Card Payment Form (isolado — digitar não re-renderiza o cart) ─── */
 const CardPaymentForm = memo(function CardPaymentForm({
-  savedCardToken, savedCardLast4, cpf, onCpfChange, ringStyle, onCardChange,
+  savedCardToken, savedCardLast4, cpf, onCpfChange, ringStyle, onCardChange, isLoggedIn,
 }: {
   savedCardToken: string; savedCardLast4: string; cpf: string;
   onCpfChange: (v: string) => void; ringStyle: React.CSSProperties;
-  onCardChange: (data: { cardNumber: string; cardHolder: string; cardExpiry: string; cardCvv: string; useNewCard: boolean }) => void;
+  isLoggedIn: boolean;
+  onCardChange: (data: { cardNumber: string; cardHolder: string; cardExpiry: string; cardCvv: string; useNewCard: boolean; saveCard: boolean }) => void;
 }) {
   const [cardNumber, setCardNumber] = useState('');
   const [cardHolder, setCardHolder] = useState('');
   const [cardExpiry, setCardExpiry] = useState('');
   const [cardCvv, setCardCvv] = useState('');
   const [useNewCard, setUseNewCard] = useState(false);
+  const [saveCard, setSaveCard] = useState(true);
 
   // Sync card data up to parent on blur (not on every keystroke)
   const syncUp = useCallback(() => {
-    onCardChange({ cardNumber, cardHolder, cardExpiry, cardCvv, useNewCard });
-  }, [cardNumber, cardHolder, cardExpiry, cardCvv, useNewCard, onCardChange]);
+    onCardChange({ cardNumber, cardHolder, cardExpiry, cardCvv, useNewCard, saveCard });
+  }, [cardNumber, cardHolder, cardExpiry, cardCvv, useNewCard, saveCard, onCardChange]);
 
-  // Also sync when useNewCard toggles
+  // Also sync when useNewCard or saveCard toggles
   useEffect(() => {
-    onCardChange({ cardNumber, cardHolder, cardExpiry, cardCvv, useNewCard });
-  }, [useNewCard]); // eslint-disable-line react-hooks/exhaustive-deps
+    onCardChange({ cardNumber, cardHolder, cardExpiry, cardCvv, useNewCard, saveCard });
+  }, [useNewCard, saveCard]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div className="mt-3 space-y-2">
@@ -200,6 +202,17 @@ const CardPaymentForm = memo(function CardPaymentForm({
             />
           </div>
           <CpfInput value={cpf} onChange={onCpfChange} style={ringStyle} />
+          {isLoggedIn && (
+            <label className="flex items-center gap-2 cursor-pointer select-none py-1">
+              <input
+                type="checkbox"
+                checked={saveCard}
+                onChange={e => setSaveCard(e.target.checked)}
+                className="w-4 h-4 rounded accent-orange-500"
+              />
+              <span className="text-xs text-slate-600">Salvar cartão para próximas compras</span>
+            </label>
+          )}
           <p className="text-[10px] text-slate-400">🔒 Seus dados são criptografados e não armazenamos o número do cartão.</p>
         </>
       )}
@@ -221,11 +234,11 @@ export default function CartSheet({ vendor, tableNumber }: CartSheetProps) {
   const [pixData, setPixData] = useState<{ payment_id: string; qr_code: string; copy_paste: string; order_id: string } | null>(null);
   const [pixCopied, setPixCopied] = useState(false);
   const [pixSimulating, setPixSimulating] = useState(false);
-  const [cardData, setCardData] = useState({ cardNumber: '', cardHolder: '', cardExpiry: '', cardCvv: '', useNewCard: false });
+  const [cardData, setCardData] = useState({ cardNumber: '', cardHolder: '', cardExpiry: '', cardCvv: '', useNewCard: false, saveCard: true });
   const [savedCardToken, setSavedCardToken] = useState('');
   const [savedCardLast4, setSavedCardLast4] = useState('');
 
-  const handleCardChange = useCallback((data: { cardNumber: string; cardHolder: string; cardExpiry: string; cardCvv: string; useNewCard: boolean }) => {
+  const handleCardChange = useCallback((data: { cardNumber: string; cardHolder: string; cardExpiry: string; cardCvv: string; useNewCard: boolean; saveCard: boolean }) => {
     setCardData(data);
   }, []);
 
@@ -450,6 +463,7 @@ export default function CartSheet({ vendor, tableNumber }: CartSheetProps) {
           customer_cpf: cpf.replace(/\D/g, '') || undefined,
           customer_email: email || undefined,
           use_saved_card: paymentMethod === 'cartão' && !!savedCardToken && !cardData.useNewCard,
+          save_card: paymentMethod === 'cartão' && !!user && cardData.saveCard,
           card_number: paymentMethod === 'cartão' && (!savedCardToken || cardData.useNewCard) ? cardData.cardNumber.replace(/\s/g, '') : undefined,
           card_holder: paymentMethod === 'cartão' && (!savedCardToken || cardData.useNewCard) ? cardData.cardHolder : undefined,
           card_expiry_month: paymentMethod === 'cartão' && (!savedCardToken || cardData.useNewCard) ? cardData.cardExpiry.split('/')[0] : undefined,
@@ -620,6 +634,7 @@ export default function CartSheet({ vendor, tableNumber }: CartSheetProps) {
                       onCpfChange={setCpf}
                       ringStyle={ringStyle}
                       onCardChange={handleCardChange}
+                      isLoggedIn={!!user}
                     />
                   )}
                   {paymentMethod === 'pix' && (

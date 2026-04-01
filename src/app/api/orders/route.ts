@@ -47,7 +47,7 @@ export async function POST(request: Request) {
   const {
     vendor_id, table_number, notes, items,
     payment_method, customer_name, customer_cpf, customer_email,
-    use_saved_card, card_number, card_holder, card_expiry_month, card_expiry_year, card_cvv,
+    use_saved_card, save_card, card_number, card_holder, card_expiry_month, card_expiry_year, card_cvv,
   } = parsed.data;
 
   const userClient = await createClient();
@@ -292,8 +292,8 @@ export async function POST(request: Request) {
           remoteIp: request.headers.get('x-forwarded-for') || '127.0.0.1',
         });
 
-        // Salva token para próximas compras (apenas usuários logados)
-        if (user && result.cardToken) {
+        // Salva token apenas se o cliente optou por isso
+        if (user && result.cardToken && save_card !== false) {
           await supabase.from('profiles').update({
             asaas_customer_id: asaasCustomerId,
             asaas_card_token: result.cardToken,
