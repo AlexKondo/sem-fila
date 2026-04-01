@@ -100,6 +100,8 @@ export default function VendorHeader({ vendorName, userName, cnpjFormatted, vend
     fetchInvites();
 
     // ── Realtime: novos pedidos (alarme global — soa em qualquer aba) ──
+    // INSERT: cartão/dinheiro já chegam com payment_status='paid'
+    // UPDATE: PIX vira 'paid' quando o webhook do Asaas confirma
     const channelOrders = supabase
       .channel(`header-orders-${vendorId}`)
       .on('postgres_changes', {
@@ -111,9 +113,24 @@ export default function VendorHeader({ vendorName, userName, cnpjFormatted, vend
         const newOrder = payload.new as any;
         if (newOrder?.payment_status !== 'paid') return;
         playWaiterSound();
-        // Só mostra overlay se não estiver já na página de Pedidos (que tem seu próprio alerta)
         if (pathnameRef.current !== '/dashboard/vendor') {
           setAlertOrder({ pickup_code: newOrder.pickup_code });
+        }
+      })
+      .on('postgres_changes', {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'orders',
+        filter: `vendor_id=eq.${vendorId}`,
+      }, (payload) => {
+        const oldOrder = payload.old as any;
+        const newOrder = payload.new as any;
+        // Só aciona alarme quando o pagamento é confirmado (pending → paid)
+        if (oldOrder?.payment_status !== 'paid' && newOrder?.payment_status === 'paid') {
+          playWaiterSound();
+          if (pathnameRef.current !== '/dashboard/vendor') {
+            setAlertOrder({ pickup_code: newOrder.pickup_code });
+          }
         }
       })
       .subscribe();
