@@ -118,7 +118,7 @@ const CpfInput = memo(function CpfInput({ value, onChange, style }: { value: str
         onChange(f);
       }}
       placeholder="000.000.000-00"
-      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 h-11 text-sm focus:outline-none focus:ring-2"
+      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 h-11 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2"
       style={style}
     />
   );
@@ -170,14 +170,14 @@ const CardPaymentForm = memo(function CardPaymentForm({
               setCardNumber(d.replace(/(.{4})/g, '$1 ').trim());
             }}
             onBlur={syncUp}
-            className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 h-11 text-sm focus:outline-none focus:ring-2"
+            className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 h-11 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2"
             style={ringStyle}
           />
           <input
             type="text" value={cardHolder} placeholder="Nome impresso no cartão"
             onChange={e => setCardHolder(e.target.value.toUpperCase())}
             onBlur={syncUp}
-            className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 h-11 text-sm focus:outline-none focus:ring-2"
+            className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 h-11 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2"
             style={ringStyle}
           />
           <div className="grid grid-cols-2 gap-2">
@@ -188,14 +188,14 @@ const CardPaymentForm = memo(function CardPaymentForm({
                 setCardExpiry(d.length > 2 ? `${d.substring(0, 2)}/${d.substring(2)}` : d);
               }}
               onBlur={syncUp}
-              className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 h-11 text-sm focus:outline-none focus:ring-2"
+              className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 h-11 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2"
               style={ringStyle}
             />
             <input
               type="text" inputMode="numeric" value={cardCvv} placeholder="CVV" maxLength={4}
               onChange={e => setCardCvv(e.target.value.replace(/\D/g, '').substring(0, 4))}
               onBlur={syncUp}
-              className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 h-11 text-sm focus:outline-none focus:ring-2"
+              className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 h-11 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2"
               style={ringStyle}
             />
           </div>
@@ -713,7 +713,7 @@ export default function CartSheet({ vendor, tableNumber }: CartSheetProps) {
                       <div>
                         <label className="block text-sm font-semibold text-slate-700 mb-1.5">Seu nome <span className="text-red-400">*</span></label>
                         <input type="text" value={customerName} onChange={e => setCustomerName(e.target.value)} placeholder="Como você se chama?" autoFocus
-                          className="w-full bg-white border border-slate-200 rounded-xl px-4 h-12 text-sm focus:outline-none focus:ring-2" style={ringStyle} />
+                          className="w-full bg-white border border-slate-200 rounded-xl px-4 h-12 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2" style={ringStyle} />
                       </div>
                       <div>
                         <label className="block text-sm font-semibold text-slate-700 mb-1.5">CPF <span className="text-red-400">*</span></label>
@@ -729,7 +729,7 @@ export default function CartSheet({ vendor, tableNumber }: CartSheetProps) {
                           else if (f.length > 2) f = `(${f.substring(0, 2)}) ${f.substring(2)}`;
                           setCustomerPhone(f);
                         }} placeholder="(11) 99999-9999"
-                          className="w-full bg-white border border-slate-200 rounded-xl px-4 h-12 text-sm focus:outline-none focus:ring-2" style={ringStyle} />
+                          className="w-full bg-white border border-slate-200 rounded-xl px-4 h-12 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2" style={ringStyle} />
                       </div>
 
                       {!user && (
@@ -762,13 +762,13 @@ export default function CartSheet({ vendor, tableNumber }: CartSheetProps) {
                       <div>
                         <label className="block text-sm font-semibold text-slate-700 mb-1.5">E-mail <span className="text-red-400">*</span></label>
                         <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="seu@email.com"
-                          className="w-full bg-white border border-slate-200 rounded-xl px-4 h-12 text-sm focus:outline-none focus:ring-2" style={ringStyle} />
+                          className="w-full bg-white border border-slate-200 rounded-xl px-4 h-12 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2" style={ringStyle} />
                       </div>
 
                       <div>
                         <label className="block text-sm font-semibold text-slate-700 mb-1.5">Senha <span className="text-red-400">*</span></label>
                         <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="••••••••"
-                          className="w-full bg-white border border-slate-200 rounded-xl px-4 h-12 text-sm focus:outline-none focus:ring-2" style={ringStyle} />
+                          className="w-full bg-white border border-slate-200 rounded-xl px-4 h-12 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2" style={ringStyle} />
                       </div>
                     </>
                   )}
