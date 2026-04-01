@@ -15,6 +15,8 @@ type OrderWithVendor = {
   total_price: number;
   pickup_code: string;
   created_at: string;
+  payment_method: string | null;
+  payment_status: string | null;
   vendors: {
     id: string;
     name: string;
@@ -48,7 +50,7 @@ export default function UserOrdersDashboard() {
       const { data } = await supabase
         .from('orders')
         .select(`
-          id, status, total_price, pickup_code, created_at,
+          id, status, total_price, pickup_code, created_at, payment_method, payment_status,
           vendors (id, name, logo_url)
         `)
         .eq('user_id', user.id)
@@ -223,9 +225,22 @@ function getShortCode(id: string): string {
   return num.toString().padStart(6, '0').replace(/(\d{3})(\d{3})/, '$1.$2');
 }
 
+const PAYMENT_METHOD_LABEL: Record<string, string> = {
+  dinheiro: '💵 Dinheiro',
+  pix: 'PIX',
+  'cartão': '💳 Cartão',
+};
+
+function formatTimestamp(isoString: string): string {
+  const d = new Date(isoString);
+  return d.toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' });
+}
+
 function OrderCard({ order, isPast }: { order: OrderWithVendor; isPast?: boolean }) {
   const statusColor = (order.status === 'ready' || order.status === 'delivered') ? '#22c55e' : order.status === 'cancelled' ? '#ef4444' : P;
   const vendorCode = order.vendors?.id ? getShortCode(order.vendors.id) : null;
+  const paymentLabel = order.payment_method ? (PAYMENT_METHOD_LABEL[order.payment_method] ?? order.payment_method) : null;
+  const isCashPending = order.payment_method === 'dinheiro' && order.payment_status === 'pending';
 
   return (
     <Link
@@ -244,6 +259,7 @@ function OrderCard({ order, isPast }: { order: OrderWithVendor; isPast?: boolean
             <p className="text-[10px] font-black text-slate-400 tracking-tighter uppercase tabular-nums">
               PEDIDO {order.pickup_code}{vendorCode ? ` · ${vendorCode}` : ''}
             </p>
+            <p className="text-[10px] text-slate-400 mt-0.5 tabular-nums">{formatTimestamp(order.created_at)}</p>
           </div>
         </div>
         <div className="text-right shrink-0">
@@ -254,6 +270,11 @@ function OrderCard({ order, isPast }: { order: OrderWithVendor; isPast?: boolean
           >
             {ORDER_STATUS_LABEL[order.status]}
           </span>
+          {paymentLabel && (
+            <p className={`text-[10px] font-semibold mt-1 ${isCashPending ? 'text-red-500' : 'text-slate-400'}`}>
+              {paymentLabel}{isCashPending ? ' · Ag. pagamento' : ''}
+            </p>
+          )}
         </div>
       </div>
     </Link>
