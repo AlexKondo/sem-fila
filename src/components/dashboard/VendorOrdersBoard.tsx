@@ -514,8 +514,8 @@ function OrderCard({
           </div>
         </div>
         <div className="flex flex-col items-end gap-1.5">
-          <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${ORDER_STATUS_COLOR[order.status]}`}>
-            {ORDER_STATUS_LABEL[order.status]}
+          <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${isCashPending ? 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400' : ORDER_STATUS_COLOR[order.status]}`}>
+            {isCashPending ? 'Ag. pagamento' : ORDER_STATUS_LABEL[order.status]}
           </span>
           <p className="text-sm font-black text-slate-800 dark:text-white tracking-tight">{formatCurrency(order.total_price)}</p>
         </div>
