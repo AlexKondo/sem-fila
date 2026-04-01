@@ -120,6 +120,34 @@ export default function QrScanner() {
 
   const [isManualOpen, setIsManualOpen] = useState(false);
   const [isMyQrOpen, setIsMyQrOpen] = useState(false);
+  const [recentVendors, setRecentVendors] = useState<{ id: string; name: string }[]>([]);
+
+  useEffect(() => {
+    (async () => {
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const { data } = await supabase
+        .from('orders')
+        .select('vendor_id, vendors(id, name)')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(30);
+      if (!data) return;
+      const seen = new Set<string>();
+      const unique: { id: string; name: string }[] = [];
+      for (const row of data) {
+        const v = row.vendors as any;
+        const vid = row.vendor_id as string;
+        if (v?.name && !seen.has(vid)) {
+          seen.add(vid);
+          unique.push({ id: vid, name: v.name });
+          if (unique.length === 5) break;
+        }
+      }
+      setRecentVendors(unique);
+    })();
+  }, []);
 
   // Para liberar CPU durante a digitação no modal manual ou meu QR
   useEffect(() => {
@@ -240,9 +268,9 @@ export default function QrScanner() {
               </div>
             </div>
 
-            {/* Manual entry */}
-            <div className="mt-16 w-full max-w-sm">
-              <button 
+            {/* Manual entry + histórico */}
+            <div className="mt-16 w-full max-w-sm space-y-2">
+              <button
                 onClick={() => setIsManualOpen(true)}
                 className="w-full py-4 px-6 border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-xl flex items-center justify-center gap-3 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
               >
@@ -251,6 +279,33 @@ export default function QrScanner() {
                 </svg>
                 Digitar código manualmente
               </button>
+
+              {recentVendors.length > 0 && (
+                <div className="border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-xl overflow-hidden">
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-4 pt-3 pb-1">
+                    Visitados recentemente
+                  </p>
+                  {recentVendors.map((v, i) => (
+                    <button
+                      key={v.id}
+                      onClick={() => router.push(`/menu/${v.id}`)}
+                      className={`w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors ${
+                        i < recentVendors.length - 1 ? 'border-b border-slate-100 dark:border-slate-700/50' : ''
+                      }`}
+                    >
+                      <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: `${P}20` }}>
+                        <svg className="w-4 h-4" style={{ color: P }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                        </svg>
+                      </div>
+                      <span className="flex-1 text-sm font-semibold text-slate-700 dark:text-slate-300 truncate">{v.name}</span>
+                      <svg className="w-4 h-4 text-slate-300 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      </svg>
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* Custom Manual Code Modal */}
