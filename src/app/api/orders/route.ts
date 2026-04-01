@@ -151,7 +151,9 @@ export async function POST(request: Request) {
   const safeMenuItems = menuItems as unknown as { id: string; price: number }[];
   const priceMap = Object.fromEntries(safeMenuItems.map((m) => [m.id, m.price]));
   const subtotal = items.reduce((sum, item) => {
-    return sum + (priceMap[item.menu_item_id] ?? 0) * item.quantity;
+    const itemPrice = priceMap[item.menu_item_id] ?? 0;
+    const extrasPrice = (item.extras || []).reduce((s, e) => s + (e.price ?? 0), 0);
+    return sum + (itemPrice + extrasPrice) * item.quantity;
   }, 0);
 
   const serviceFee = (subtotal * (vendor.service_fee_percentage || 0)) / 100;
