@@ -19,7 +19,7 @@ export default async function OrderPage({ params }: Props) {
       *,
       vendors (id, name, logo_url, avg_prep_time, service_fee_percentage, couvert_fee),
       order_items (
-        id, quantity, unit_price,
+        id, quantity, unit_price, extras,
         menu_items (id, name, image_url)
       )
     `)

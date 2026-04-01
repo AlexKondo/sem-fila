@@ -108,7 +108,10 @@ export default function OrderTracker({ initialOrder }: { initialOrder: any }) {
   const needsPayment = order.payment_status === 'pending' && 
                        !['cancelled', 'ready', 'delivered'].includes(order.status);
                        
-  const subtotal = order.order_items?.reduce((acc: number, item: any) => acc + (item.unit_price * item.quantity), 0) || 0;
+  const subtotal = order.order_items?.reduce((acc: number, item: any) => {
+    const extrasTotal = (item.extras || []).reduce((s: number, e: any) => s + (e.price ?? 0), 0);
+    return acc + (item.unit_price + extrasTotal) * item.quantity;
+  }, 0) || 0;
   const hasFees = order.total_price > subtotal + 0.01;
 
   return (
@@ -276,7 +279,7 @@ export default function OrderTracker({ initialOrder }: { initialOrder: any }) {
               <div key={item.id} className="pt-2 border-b border-slate-50 pb-2 last:border-0">
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-slate-900 dark:text-white font-semibold">{item.quantity}× {item.menu_items?.name ?? 'Item'}</span>
-                  <span className="font-bold text-slate-900 dark:text-white">{formatCurrency(item.unit_price * item.quantity)}</span>
+                  <span className="font-bold text-slate-900 dark:text-white">{formatCurrency(((item.unit_price + (item.extras || []).reduce((s: number, e: any) => s + (e.price ?? 0), 0)) * item.quantity))}</span>
                 </div>
                 {item.extras && item.extras.length > 0 && (() => {
                   const grouped: Record<string, { price: number; qty: number }> = {};
