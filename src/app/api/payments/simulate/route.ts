@@ -14,6 +14,11 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'payment_id obrigatório.' }, { status: 400 });
   }
 
-  await simulatePayment(payment_id);
+  try {
+    await simulatePayment(payment_id);
+  } catch (err: any) {
+    console.error('[simulate] erro no Asaas:', err?.message);
+    return NextResponse.json({ error: err?.message ?? 'Erro ao simular' }, { status: 502 });
+  }
   return NextResponse.json({ simulated: true });
 }

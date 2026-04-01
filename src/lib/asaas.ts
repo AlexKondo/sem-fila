@@ -158,10 +158,14 @@ export async function createCreditCardChargeWithToken(params: {
 
 // Apenas sandbox — simula confirmação de pagamento pelo Asaas
 export async function simulatePayment(paymentId: string): Promise<void> {
-  await fetch(`${BASE_URL}/payments/${paymentId}/simulatePayment`, {
+  const res = await fetch(`${BASE_URL}/payments/${paymentId}/simulatePayment`, {
     method: 'POST',
     headers: h,
   });
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(`Asaas simulate error (${res.status}): ${JSON.stringify(data)}`);
+  }
 }
 
 // Estorna uma cobrança Asaas (total ou parcial)

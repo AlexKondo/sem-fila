@@ -55,30 +55,38 @@ export async function POST(request: Request) {
 
   // Pagamentos de pedidos (fluxo original)
   const orderId = ref;
+  console.log(`[webhook] event=${event} orderId=${orderId} paymentId=${payment?.id}`);
 
   switch (event) {
     case 'PAYMENT_CONFIRMED':
-    case 'PAYMENT_RECEIVED':
-      await supabase
+    case 'PAYMENT_RECEIVED': {
+      const { error } = await supabase
         .from('orders')
         .update({ payment_status: 'paid' })
         .eq('id', orderId);
+      if (error) console.error(`[webhook] falha ao marcar paid orderId=${orderId}:`, error.message);
+      else console.log(`[webhook] payment_status=paid OK orderId=${orderId}`);
       break;
+    }
 
-    case 'PAYMENT_REFUNDED':
-      await supabase
+    case 'PAYMENT_REFUNDED': {
+      const { error } = await supabase
         .from('orders')
         .update({ payment_status: 'refunded' })
         .eq('id', orderId);
+      if (error) console.error(`[webhook] falha ao marcar refunded orderId=${orderId}:`, error.message);
       break;
+    }
 
     case 'PAYMENT_OVERDUE':
-    case 'PAYMENT_DELETED':
-      await supabase
+    case 'PAYMENT_DELETED': {
+      const { error } = await supabase
         .from('orders')
         .update({ payment_status: 'failed', status: 'cancelled' })
         .eq('id', orderId);
+      if (error) console.error(`[webhook] falha ao cancelar orderId=${orderId}:`, error.message);
       break;
+    }
   }
 
   return NextResponse.json({ received: true });
