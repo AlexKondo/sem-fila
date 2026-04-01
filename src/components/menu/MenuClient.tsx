@@ -312,57 +312,51 @@ export default function MenuClient({ vendor, items, mesa, waitTime, hasFeaturedB
     <div className="relative flex min-h-screen w-full flex-col max-w-md mx-auto pb-24 bg-slate-50 dark:bg-slate-950 transition-colors">
       {/* Sticky header */}
       <header className="sticky top-0 z-50 border-b border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md">
-        <div className="flex items-center p-4 justify-between">
-          <div className="flex items-center gap-3">
-            <ThemeToggle />
-            <div className="flex w-10 h-10 items-center justify-center rounded-full bg-orange-500/10 dark:bg-orange-500/20">
-              {vendor.logo_url ? (
-                <Image src={vendor.logo_url} alt={vendor.name} width={40} height={40} className="w-10 h-10 rounded-full object-cover" />
-              ) : (
-                <svg className="w-5 h-5" style={{ color: P }} fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z"/>
-                </svg>
-              )}
-            </div>
-            <div>
-              <div className="flex items-center gap-1.5 flex-wrap">
-                <h2 className="text-slate-900 text-lg font-bold leading-tight tracking-tight">{vendor.name}</h2>
-                {activeBadges.map(slug => {
-                  const cfg = BADGE_CONFIG[slug];
-                  if (!cfg) return null;
-                  return (
-                    <span key={slug} className={`inline-flex items-center gap-0.5 ${cfg.bg} ${cfg.text} text-[9px] font-black px-1.5 py-0.5 rounded-full border ${cfg.border} uppercase whitespace-nowrap`}>
-                      <svg className="w-2.5 h-2.5" fill="currentColor" viewBox="0 0 24 24"><path d={cfg.icon}/></svg>
-                      {cfg.label}
-                    </span>
-                  );
-                })}
-              </div>
-              <p className="text-xs text-slate-500">
-                {mesa ? `Mesa ${mesa} • ` : ''}{waitTime}
-              </p>
-            </div>
-          </div>
+        {/* Linha 1: toggle + nome da marca + botão usuário */}
+        <div className="flex items-center px-4 pt-3 pb-2 justify-between gap-3">
+          <ThemeToggle />
+          <h2 className="flex-1 text-center text-slate-900 dark:text-white text-lg font-black leading-tight tracking-tight truncate">{vendor.name}</h2>
+          {customerName ? (
+            <Link href="/profile?edit=true" className="flex items-center gap-1.5 bg-orange-50 dark:bg-orange-950/30 border border-orange-200/50 dark:border-orange-500/20 rounded-xl px-3 py-1.5 text-xs font-black text-orange-600 dark:text-orange-400 shadow-sm active:scale-95 transition-all shrink-0">
+              <span className="w-1.5 h-1.5 rounded-full bg-orange-600 animate-pulse" />
+              <span>{customerName.toUpperCase()}</span>
+            </Link>
+          ) : (
+            <Link href="/login-user" className="w-9 h-9 rounded-xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 flex items-center justify-center text-slate-400 dark:text-slate-500 active:scale-95 transition-all shadow-sm shrink-0">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+              </svg>
+            </Link>
+          )}
+        </div>
 
-          <div className="flex items-center gap-2">
-
-
-            <div>
-            {customerName ? (
-              <Link href="/profile?edit=true" className="flex items-center gap-1.5 bg-orange-50 dark:bg-orange-950/30 border border-orange-200/50 dark:border-orange-500/20 rounded-xl px-3 py-1.5 text-xs font-black text-orange-600 dark:text-orange-400 shadow-sm active:scale-95 transition-all">
-                <span className="w-1.5 h-1.5 rounded-full bg-orange-600 animate-pulse" />
-                <span>{customerName.toUpperCase()}</span>
-              </Link>
+        {/* Linha 2: logo + badges + info */}
+        <div className="flex items-center gap-2 px-4 pb-3">
+          <div className="flex w-8 h-8 shrink-0 items-center justify-center rounded-full bg-orange-500/10 dark:bg-orange-500/20">
+            {vendor.logo_url ? (
+              <Image src={vendor.logo_url} alt={vendor.name} width={32} height={32} className="w-8 h-8 rounded-full object-cover" />
             ) : (
-              <Link href="/login-user" className="w-10 h-10 rounded-xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 flex items-center justify-center text-slate-400 dark:text-slate-500 active:scale-95 transition-all shadow-sm">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                </svg>
-              </Link>
+              <svg className="w-4 h-4" style={{ color: P }} fill="currentColor" viewBox="0 0 24 24">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z"/>
+              </svg>
             )}
           </div>
+          <div className="flex items-center gap-1.5 flex-wrap min-w-0">
+            {activeBadges.map(slug => {
+              const cfg = BADGE_CONFIG[slug];
+              if (!cfg) return null;
+              return (
+                <span key={slug} className={`inline-flex items-center gap-0.5 ${cfg.bg} ${cfg.text} text-[9px] font-black px-1.5 py-0.5 rounded-full border ${cfg.border} uppercase whitespace-nowrap`}>
+                  <svg className="w-2.5 h-2.5" fill="currentColor" viewBox="0 0 24 24"><path d={cfg.icon}/></svg>
+                  {cfg.label}
+                </span>
+              );
+            })}
+            <p className="text-xs text-slate-500 dark:text-slate-400">
+              {mesa ? `Mesa ${mesa} • ` : ''}{waitTime}
+            </p>
+          </div>
         </div>
-      </div>
 
         {/* Search bar + Help */}
         <div className="px-4 pb-3 flex items-center gap-2">
