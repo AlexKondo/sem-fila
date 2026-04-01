@@ -62,47 +62,49 @@ interface MenuClientProps {
 interface Extra { name: string; price: number; }
 
 /* ─── Menu Item Card (memoizado) ─── */
-const MenuItemCard = memo(function MenuItemCard({ item, onAdd }: { item: MenuItem; onAdd: (item: MenuItem) => void }) {
+const MenuItemCard = memo(function MenuItemCard({ item, onOpen }: { item: MenuItem; onOpen: (item: MenuItem) => void }) {
   return (
-    <div className="flex gap-4 p-3 bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700">
+    <button
+      onClick={() => onOpen(item)}
+      className="w-full flex gap-4 p-3 bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 text-left active:scale-[0.98] transition-transform"
+    >
       <div className="relative w-28 h-28 shrink-0 rounded-xl overflow-hidden">
-        <Image 
-          src={item.image_url || getItemImage(item.name, item.category ?? undefined)} 
-          alt={item.name} 
-          fill 
-          className="object-cover" 
+        <Image
+          src={item.image_url || getItemImage(item.name, item.category ?? undefined)}
+          alt={item.name}
+          fill
+          className="object-cover"
         />
       </div>
 
       <div className="flex flex-col flex-1 justify-between">
         <div>
           <div className="flex justify-between items-start gap-2">
-            <h4 className="font-bold text-slate-900 leading-tight">{item.name}</h4>
+            <h4 className="font-bold text-slate-900 dark:text-white leading-tight">{item.name}</h4>
             <span className="font-bold flex-shrink-0" style={{ color: P }}>{formatCurrency(item.price)}</span>
           </div>
           {item.description && (
-            <p className="text-xs text-slate-500 line-clamp-2 mt-1">{item.description}</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 mt-1">{item.description}</p>
           )}
         </div>
         <div className="flex justify-end mt-2">
-          <button
-            onClick={() => onAdd(item)}
-            className="px-4 py-1.5 text-xs font-bold rounded-full flex items-center gap-1 transition-colors hover:opacity-90"
+          <span
+            className="px-4 py-1.5 text-xs font-bold rounded-full flex items-center gap-1"
             style={{ backgroundColor: '#ec5b131a', color: '#ec5b13' }}
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
             </svg>
             Adicionar
-          </button>
+          </span>
         </div>
       </div>
-    </div>
+    </button>
   );
 });
 
 /* ─── Menu Items List (memoizado) ─── */
-const ItemList = memo(function ItemList({ items, waitTime, onAdd }: { items: MenuItem[]; waitTime: string; onAdd: (item: MenuItem) => void }) {
+const ItemList = memo(function ItemList({ items, waitTime, onOpen }: { items: MenuItem[]; waitTime: string; onOpen: (item: MenuItem) => void }) {
   if (items.length === 0) {
     return (
       <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 p-12 text-center shadow-sm">
@@ -115,7 +117,7 @@ const ItemList = memo(function ItemList({ items, waitTime, onAdd }: { items: Men
   return (
     <div className="space-y-4">
       {items.map((item) => (
-        <MenuItemCard key={item.id} item={item} onAdd={onAdd} />
+        <MenuItemCard key={item.id} item={item} onOpen={onOpen} />
       ))}
     </div>
   );
@@ -127,8 +129,8 @@ export default function MenuClient({ vendor, items, mesa, waitTime, hasFeaturedB
   const deferredSearchQuery = useDeferredValue(searchQuery);
   const [customerName, setCustomerName] = useState<string | null>(null);
 
-  // Extras Modal State
-  const [extrasModal, setExtrasModal] = useState<MenuItem | null>(null);
+  // Product Detail Sheet State
+  const [detailItem, setDetailItem] = useState<MenuItem | null>(null);
   const [extraQty, setExtraQty] = useState<Record<string, number>>({});
 
   const [liveItems, setLiveItems] = useState<MenuItem[]>(items);
@@ -219,19 +221,14 @@ export default function MenuClient({ vendor, items, mesa, waitTime, hasFeaturedB
     return () => { supabase.removeChannel(channel); };
   }, [vendor.id, mesa]);
 
-  const handleAddToCart = useCallback((item: MenuItem) => {
-    const extras = (item as any).extras as Extra[] | undefined;
-    if (extras && extras.length > 0) {
-      setExtraQty({});
-      setExtrasModal(item);
-    } else {
-      document.dispatchEvent(new CustomEvent('add-to-cart', { detail: { id: item.id, menuItemId: item.id, name: item.name, price: item.price } }));
-    }
+  const handleOpenDetail = useCallback((item: MenuItem) => {
+    setExtraQty({});
+    setDetailItem(item);
   }, []);
 
   const confirmExtras = useCallback(() => {
-    if (!extrasModal) return;
-    const allExtras = (extrasModal as any).extras as Extra[];
+    if (!detailItem) return;
+    const allExtras = ((detailItem as any).extras as Extra[] | undefined) ?? [];
     const chosenExtras: Extra[] = [];
     allExtras.forEach(e => {
       const qty = extraQty[e.name] || 0;
@@ -239,14 +236,14 @@ export default function MenuClient({ vendor, items, mesa, waitTime, hasFeaturedB
     });
     const extrasTotal = chosenExtras.reduce((s, e) => s + e.price, 0);
     document.dispatchEvent(new CustomEvent('add-to-cart', { detail: {
-      id: extrasModal.id + (chosenExtras.length ? '-' + Object.entries(extraQty).filter(([,q])=>q>0).map(([n,q])=>`${n}x${q}`).join('_') : ''),
-      menuItemId: extrasModal.id,
-      name: extrasModal.name,
-      price: extrasModal.price + extrasTotal,
+      id: detailItem.id + (chosenExtras.length ? '-' + Object.entries(extraQty).filter(([,q])=>q>0).map(([n,q])=>`${n}x${q}`).join('_') : ''),
+      menuItemId: detailItem.id,
+      name: detailItem.name,
+      price: detailItem.price + extrasTotal,
       extras: chosenExtras,
     }}));
-    setExtrasModal(null);
-  }, [extrasModal, extraQty]);
+    setDetailItem(null);
+  }, [detailItem, extraQty]);
 
   const changeExtraQty = useCallback((extra: Extra, delta: number) => {
     setExtraQty(prev => {
@@ -303,13 +300,13 @@ export default function MenuClient({ vendor, items, mesa, waitTime, hasFeaturedB
   }, [liveItems, deferredSearchQuery, selectedCat]);
 
   // Total dos extras para o modal
-  const extrasModalTotal = useMemo(() => {
-    if (!extrasModal) return 0;
-    return extrasModal.price + Object.entries(extraQty).reduce((s, [name, qty]) => {
-      const ex = ((extrasModal as any).extras as Extra[]).find(e => e.name === name);
+  const detailItemTotal = useMemo(() => {
+    if (!detailItem) return 0;
+    return detailItem.price + Object.entries(extraQty).reduce((s, [name, qty]) => {
+      const ex = (((detailItem as any).extras as Extra[] | undefined) ?? []).find(e => e.name === name);
       return s + (ex ? ex.price * qty : 0);
     }, 0);
-  }, [extrasModal, extraQty]);
+  }, [detailItem, extraQty]);
 
   return (
     <div className="relative flex min-h-screen w-full flex-col max-w-md mx-auto pb-24 bg-slate-50 dark:bg-slate-950 transition-colors">
@@ -427,77 +424,102 @@ export default function MenuClient({ vendor, items, mesa, waitTime, hasFeaturedB
       <main className="px-4 py-6 space-y-6">
         <h3 className="text-lg font-bold text-slate-900 dark:text-white">{selectedCat === 'Todos' ? 'Cardápio Completo' : selectedCat}</h3>
 
-        <ItemList items={filteredItems} waitTime={waitTime} onAdd={handleAddToCart} />
+        <ItemList items={filteredItems} waitTime={waitTime} onOpen={handleOpenDetail} />
       </main>
 
       <CartSheet vendor={vendor} tableNumber={mesa} />
 
-      {/* Extras Modal */}
-      {extrasModal && (
-        <div className="fixed inset-0 z-[100] flex items-end justify-center bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="w-full max-w-md bg-white dark:bg-slate-900 rounded-t-3xl shadow-2xl overflow-hidden animate-in slide-in-from-bottom-4 duration-300 border-t dark:border-slate-800">
-            <div className="flex justify-center pt-3 pb-1">
-              <div className="w-10 h-1 bg-slate-200 dark:bg-slate-800 rounded-full" />
-            </div>
-            <div className="px-5 py-3 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center">
-              <div>
-                <h2 className="font-bold text-slate-900 dark:text-white">{extrasModal.name}</h2>
-                <p className="text-sm" style={{ color: P }}>{formatCurrency(extrasModal.price)}</p>
-              </div>
-              <button onClick={() => setExtrasModal(null)} className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400 dark:text-slate-500">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+      {/* Product Detail Sheet */}
+      {detailItem && (
+        <div className="fixed inset-0 z-[100] flex items-end justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="w-full max-w-md bg-white dark:bg-slate-900 rounded-t-3xl shadow-2xl overflow-hidden animate-in slide-in-from-bottom-4 duration-300 flex flex-col max-h-[92dvh]">
+
+            {/* Foto grande */}
+            <div className="relative w-full h-64 shrink-0">
+              <Image
+                src={detailItem.image_url || getItemImage(detailItem.name, detailItem.category ?? undefined)}
+                alt={detailItem.name}
+                fill
+                className="object-cover"
+              />
+              {/* Botão fechar */}
+              <button
+                onClick={() => setDetailItem(null)}
+                className="absolute top-4 left-4 w-9 h-9 rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center text-white"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
               </button>
             </div>
 
-            <div className="px-5 py-4 max-h-64 overflow-y-auto">
-              <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Adicionais / Opcionais</p>
-              <div className="space-y-2">
-                {((extrasModal as any).extras as Extra[]).map((extra, idx) => {
-                  const qty = extraQty[extra.name] || 0;
-                  return (
-                    <div
-                      key={idx}
-                      className={`w-full flex items-center justify-between p-3 rounded-xl border-2 transition-all ${
-                        qty > 0 ? 'border-orange-500 bg-orange-50 dark:bg-orange-950/20' : 'border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900'
-                      }`}
-                    >
-                      <span className="text-sm font-semibold text-slate-800 dark:text-slate-200">{extra.name}</span>
-                      <div className="flex items-center gap-3">
-                        <span className="text-sm font-bold" style={{ color: P }}>+{formatCurrency(extra.price)}</span>
-                        <div className="flex items-center gap-2">
-                           <button
-                             onClick={() => changeExtraQty(extra, -1)}
-                             disabled={qty === 0}
-                             className="w-7 h-7 rounded-lg border border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-30"
-                           >
-                             <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M20 12H4" /></svg>
-                           </button>
-                           <span className="w-5 text-center text-sm font-bold text-slate-900 dark:text-white">{qty}</span>
-                          <button
-                            onClick={() => changeExtraQty(extra, 1)}
-                            className="w-7 h-7 rounded-lg flex items-center justify-center text-white"
-                            style={{ backgroundColor: P }}
-                          >
-                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" /></svg>
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
+            {/* Conteúdo scrollável */}
+            <div className="overflow-y-auto flex-1">
+              {/* Info do produto */}
+              <div className="px-5 pt-5 pb-4 border-b border-slate-100 dark:border-slate-800">
+                <div className="flex justify-between items-start gap-3">
+                  <h2 className="text-xl font-bold text-slate-900 dark:text-white leading-tight">{detailItem.name}</h2>
+                  <span className="text-xl font-black shrink-0" style={{ color: P }}>{formatCurrency(detailItem.price)}</span>
+                </div>
+                {detailItem.description && (
+                  <p className="text-sm text-slate-500 dark:text-slate-400 mt-2 leading-relaxed">{detailItem.description}</p>
+                )}
               </div>
+
+              {/* Extras / Opcionais */}
+              {((detailItem as any).extras as Extra[] | undefined)?.length ? (
+                <div className="px-5 py-4">
+                  <p className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-3">Personalize seu pedido</p>
+                  <div className="space-y-2">
+                    {((detailItem as any).extras as Extra[]).map((extra, idx) => {
+                      const qty = extraQty[extra.name] || 0;
+                      return (
+                        <div
+                          key={idx}
+                          className={`flex items-center justify-between p-3 rounded-xl border-2 transition-all ${
+                            qty > 0 ? 'border-orange-500 bg-orange-50 dark:bg-orange-950/20' : 'border-slate-100 dark:border-slate-800'
+                          }`}
+                        >
+                          <div>
+                            <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">{extra.name}</p>
+                            {extra.price > 0 && (
+                              <p className="text-xs font-bold mt-0.5" style={{ color: P }}>+{formatCurrency(extra.price)}</p>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => changeExtraQty(extra, -1)}
+                              disabled={qty === 0}
+                              className="w-8 h-8 rounded-full border border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-600 dark:text-slate-400 disabled:opacity-30"
+                            >
+                              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M20 12H4" /></svg>
+                            </button>
+                            <span className="w-5 text-center text-sm font-bold text-slate-900 dark:text-white">{qty}</span>
+                            <button
+                              onClick={() => changeExtraQty(extra, 1)}
+                              className="w-8 h-8 rounded-full flex items-center justify-center text-white"
+                              style={{ backgroundColor: P }}
+                            >
+                              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" /></svg>
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              ) : null}
             </div>
 
-            <div className="px-5 py-4 border-t border-slate-100">
+            {/* Botão adicionar */}
+            <div className="px-5 py-4 border-t border-slate-100 dark:border-slate-800 shrink-0">
               <button
                 onClick={confirmExtras}
-                className="w-full h-14 font-bold rounded-xl text-white shadow-lg transition flex items-center justify-between px-6"
+                className="w-full h-14 font-bold rounded-2xl text-white shadow-lg transition flex items-center justify-between px-6 active:scale-[0.98]"
                 style={{ backgroundColor: P }}
               >
                 <span>Adicionar ao carrinho</span>
-                <span className="font-black text-lg">
-                  {formatCurrency(extrasModalTotal)}
-                </span>
+                <span className="font-black text-lg">{formatCurrency(detailItemTotal)}</span>
               </button>
             </div>
           </div>
