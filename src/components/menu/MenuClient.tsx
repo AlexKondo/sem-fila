@@ -62,7 +62,7 @@ interface MenuClientProps {
 interface Extra { name: string; price: number; }
 
 /* ─── Menu Item Card (memoizado) ─── */
-const MenuItemCard = memo(function MenuItemCard({ item, waitTime, onAdd }: { item: MenuItem; waitTime: string; onAdd: (item: MenuItem) => void }) {
+const MenuItemCard = memo(function MenuItemCard({ item, onAdd }: { item: MenuItem; onAdd: (item: MenuItem) => void }) {
   return (
     <div className="flex gap-4 p-3 bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700">
       <div className="relative w-28 h-28 shrink-0 rounded-xl overflow-hidden">
@@ -83,12 +83,6 @@ const MenuItemCard = memo(function MenuItemCard({ item, waitTime, onAdd }: { ite
           {item.description && (
             <p className="text-xs text-slate-500 line-clamp-2 mt-1">{item.description}</p>
           )}
-          <div className="flex items-center gap-1.5 mt-2">
-            <svg className="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            <span className="text-[11px] text-slate-500">{waitTime}</span>
-          </div>
         </div>
         <div className="flex justify-end mt-2">
           <button
@@ -121,7 +115,7 @@ const ItemList = memo(function ItemList({ items, waitTime, onAdd }: { items: Men
   return (
     <div className="space-y-4">
       {items.map((item) => (
-        <MenuItemCard key={item.id} item={item} waitTime={waitTime} onAdd={onAdd} />
+        <MenuItemCard key={item.id} item={item} onAdd={onAdd} />
       ))}
     </div>
   );
