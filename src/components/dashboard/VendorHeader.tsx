@@ -44,10 +44,13 @@ export default function VendorHeader({ vendorName, userName, cnpjFormatted, vend
   const [pendingCalls, setPendingCalls] = React.useState(0);
   const [pendingInvites, setPendingInvites] = React.useState(0);
   const [alertingMesa, setAlertingMesa] = React.useState<string | null>(null);
+  const [alertOrder, setAlertOrder] = React.useState<{ pickup_code: string } | null>(null);
 
   // Refs para valores atualizados dentro de callbacks (evita stale closures)
   const vendorEventIdRef = React.useRef(vendorEventId);
   vendorEventIdRef.current = vendorEventId;
+  const pathnameRef = React.useRef(pathname);
+  pathnameRef.current = pathname;
 
   React.useEffect(() => {
     if (!vendorId) return;
@@ -95,6 +98,25 @@ export default function VendorHeader({ vendorName, userName, cnpjFormatted, vend
       });
 
     fetchInvites();
+
+    // ── Realtime: novos pedidos (alarme global — soa em qualquer aba) ──
+    const channelOrders = supabase
+      .channel(`header-orders-${vendorId}`)
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'orders',
+        filter: `vendor_id=eq.${vendorId}`,
+      }, (payload) => {
+        const newOrder = payload.new as any;
+        if (newOrder?.payment_status !== 'paid') return;
+        playWaiterSound();
+        // Só mostra overlay se não estiver já na página de Pedidos (que tem seu próprio alerta)
+        if (pathnameRef.current !== '/dashboard/vendor') {
+          setAlertOrder({ pickup_code: newOrder.pickup_code });
+        }
+      })
+      .subscribe();
 
     // ── Realtime: chamadas de garçom ──
     const channelCalls = supabase
@@ -147,6 +169,7 @@ export default function VendorHeader({ vendorName, userName, cnpjFormatted, vend
 
     return () => {
       cancelled = true;
+      supabase.removeChannel(channelOrders);
       supabase.removeChannel(channelCalls);
       supabase.removeChannel(channelInvites);
     };
@@ -246,6 +269,25 @@ export default function VendorHeader({ vendorName, userName, cnpjFormatted, vend
           )}
         </nav>
       </div>
+
+      {/* Alerta Global de Novo Pedido (outras abas) */}
+      {alertOrder && (
+        <div
+          onClick={() => setAlertOrder(null)}
+          className="fixed inset-0 z-[10000] bg-green-600 flex flex-col items-center justify-center p-8 text-white text-center cursor-pointer animate-in fade-in zoom-in duration-300"
+        >
+          <div className="w-28 h-28 rounded-full bg-white/20 flex items-center justify-center mb-8 animate-bounce">
+            <svg className="w-16 h-16 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+            </svg>
+          </div>
+          <h2 className="text-3xl font-black uppercase tracking-widest opacity-80 mb-4">Novo Pedido Recebido!</h2>
+          <p className="text-[9rem] font-black leading-none italic mb-8">#{alertOrder.pickup_code}</p>
+          <p className="text-xl font-bold uppercase tracking-widest bg-white text-green-600 px-8 py-3 rounded-full">
+            Toque para fechar
+          </p>
+        </div>
+      )}
 
       {/* Alerta Global de Garçom */}
       {alertingMesa && (

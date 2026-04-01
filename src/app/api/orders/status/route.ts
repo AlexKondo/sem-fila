@@ -24,7 +24,7 @@ export async function PATCH(request: Request) {
 
   const { order_id, status } = parsed.data;
 
-  // Verifica se o pedido pertence a um vendor do usuário autenticado
+  // Verifica se o pedido pertence a um vendor do usuário autenticado (owner ou staff)
   const { data: order } = await userClient
     .from('orders')
     .select('id, vendor_id, vendors!inner(owner_id)')
@@ -36,8 +36,22 @@ export async function PATCH(request: Request) {
   }
 
   const vendor = (order as any).vendors;
-  if (vendor?.owner_id !== user.id) {
-    return NextResponse.json({ error: 'Acesso negado.' }, { status: 403 });
+  const isOwner = vendor?.owner_id === user.id;
+
+  if (!isOwner) {
+    // Verifica se é staff ativo do vendor
+    const { data: staffSchedule } = await userClient
+      .from('staff_schedules')
+      .select('id')
+      .eq('user_id', user.id)
+      .eq('vendor_id', order.vendor_id)
+      .eq('active', true)
+      .limit(1)
+      .single();
+
+    if (!staffSchedule) {
+      return NextResponse.json({ error: 'Acesso negado.' }, { status: 403 });
+    }
   }
 
   // Atualiza o status
