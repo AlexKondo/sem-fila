@@ -37,7 +37,6 @@ export default function UserOrdersDashboard() {
         return;
       }
 
-      // Busca nome do perfil
       const { data: profile } = await supabase
         .from('profiles')
         .select('full_name')
@@ -61,7 +60,6 @@ export default function UserOrdersDashboard() {
 
     fetchOrders();
 
-    // Inscrição Realtime para atualizar status nos cards imediatamente
     const channel = supabase
       .channel('user-orders-updates')
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'orders' }, (payload) => {
@@ -85,7 +83,7 @@ export default function UserOrdersDashboard() {
   }, []);
 
   if (loading) return (
-    <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-900 flex items-center justify-center">
       <div className="animate-spin rounded-full h-8 w-8 border-b-2" style={{ borderColor: P }}></div>
     </div>
   );
@@ -94,21 +92,21 @@ export default function UserOrdersDashboard() {
   const pastOrders = orders.filter(o => ['delivered', 'cancelled'].includes(o.status));
 
   return (
-    <main className="min-h-screen pb-20" style={{ backgroundColor: '#f8f6f6' }}>
-      <header className="bg-white px-6 py-6 border-b border-slate-100 sticky top-0 z-30">
+    <main className="min-h-screen pb-20 bg-slate-50 dark:bg-slate-900">
+      <header className="bg-white dark:bg-slate-800 px-6 py-6 border-b border-slate-100 dark:border-slate-700 sticky top-0 z-30">
         <div className="max-w-md mx-auto flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-black text-slate-900 tracking-tight">Meus Pedidos</h1>
+            <h1 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">Meus Pedidos</h1>
             <p className="text-sm text-slate-400 font-medium">Acompanhe tudo em tempo real</p>
           </div>
           <div className="flex items-center gap-2">
             {userName && (
-              <span className="text-sm font-semibold text-slate-600 max-w-[120px] truncate">{userName}</span>
+              <span className="text-sm font-semibold text-slate-600 dark:text-slate-300 max-w-[120px] truncate">{userName}</span>
             )}
-            <Link href="/profile" className="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 hover:bg-slate-100 transition-colors">
+            <Link href="/profile" className="w-10 h-10 rounded-full bg-slate-50 dark:bg-slate-700 flex items-center justify-center text-slate-400 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-600 transition-colors">
               <UserCircle className="w-6 h-6" />
             </Link>
-            <Link href="/" className="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 hover:bg-slate-100 transition-colors">
+            <Link href="/" className="w-10 h-10 rounded-full bg-slate-50 dark:bg-slate-700 flex items-center justify-center text-slate-400 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-600 transition-colors">
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"/></svg>
             </Link>
           </div>
@@ -122,9 +120,9 @@ export default function UserOrdersDashboard() {
             <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
             <h2 className="text-sm font-black text-slate-400 uppercase tracking-widest">Em andamento</h2>
           </div>
-          
+
           {activeOrders.length === 0 ? (
-            <div className="bg-white rounded-3xl p-8 text-center border border-slate-100 shadow-sm">
+            <div className="bg-white dark:bg-slate-800 rounded-3xl p-8 text-center border border-slate-100 dark:border-slate-700 shadow-sm">
               <p className="text-4xl mb-2">🛍️</p>
               <p className="text-slate-400 text-sm">Você não tem pedidos ativos no momento.</p>
               <Link href="/" className="inline-block mt-4 text-sm font-bold" style={{ color: P }}>Ir para o cardápio →</Link>
@@ -150,14 +148,14 @@ export default function UserOrdersDashboard() {
           </section>
         )}
 
-        {/* Affiliate Promo Card — CTA para o usuário virar parceiro */}
-        <div className="bg-slate-900 rounded-[32px] p-8 text-white relative overflow-hidden shadow-xl border border-white/5">
+        {/* Affiliate Promo Card */}
+        <div className="bg-slate-900 dark:bg-slate-800 rounded-[32px] p-8 text-white relative overflow-hidden shadow-xl border border-white/5">
            <div className="absolute top-0 right-0 p-4 opacity-10 text-6xl">💸</div>
            <h3 className="text-xl font-black mb-2 leading-none tracking-tight">Ganhe Dinheiro Indicando</h3>
            <p className="text-slate-400 text-sm mb-6 leading-relaxed">
              Conhece algum quiosque ou barraca sem nosso app? Indique e ganhe uma porcentagem recorrente por cada venda deles.
            </p>
-           <button 
+           <button
              onClick={() => setShowAffiliateModal(true)}
              className="w-full py-4 rounded-2xl bg-orange-600 hover:bg-orange-500 font-black text-sm transition-all shadow-lg active:scale-95"
            >
@@ -188,17 +186,17 @@ export default function UserOrdersDashboard() {
         </div>
       )}
 
-      {/* Success Modal (Simulation) */}
+      {/* Success Modal */}
       {showSuccess && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
-          <div className="bg-white rounded-[32px] p-8 w-full max-w-sm text-center shadow-2xl animate-in zoom-in-95 duration-300">
-             <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+          <div className="bg-white dark:bg-slate-800 rounded-[32px] p-8 w-full max-w-sm text-center shadow-2xl animate-in zoom-in-95 duration-300">
+             <div className="w-20 h-20 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-6">
                 <svg className="w-10 h-10 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
                 </svg>
              </div>
-             <h2 className="text-2xl font-black text-slate-900 mb-2">Pedido Confirmado!</h2>
-             <p className="text-slate-500 text-sm mb-8 leading-relaxed">
+             <h2 className="text-2xl font-black text-slate-900 dark:text-white mb-2">Pedido Confirmado!</h2>
+             <p className="text-slate-500 dark:text-slate-400 text-sm mb-8 leading-relaxed">
                 Excelente escolha! O quiosque já recebeu seu pedido e começou a preparar.
              </p>
              <button
@@ -230,29 +228,29 @@ function OrderCard({ order, isPast }: { order: OrderWithVendor; isPast?: boolean
   const vendorCode = order.vendors?.id ? getShortCode(order.vendors.id) : null;
 
   return (
-    <Link 
+    <Link
       href={`/order/${order.id}`}
-      className="bg-white rounded-[24px] p-5 border border-slate-100 shadow-sm block active:scale-[0.98] transition-all"
+      className="bg-white dark:bg-slate-800 rounded-[24px] p-5 border border-slate-100 dark:border-slate-700 shadow-sm block active:scale-[0.98] transition-all"
     >
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-slate-50 flex items-center justify-center text-xl overflow-hidden border border-slate-100 shrink-0">
+          <div className="w-12 h-12 rounded-2xl bg-slate-50 dark:bg-slate-700 flex items-center justify-center text-xl overflow-hidden border border-slate-100 dark:border-slate-600 shrink-0">
              {order.vendors?.logo_url ? (
                <img src={order.vendors.logo_url} className="w-full h-full object-cover" />
              ) : '🍽️'}
           </div>
           <div className="min-w-0">
-            <h3 className="font-bold text-slate-900 leading-none truncate mb-1">{order.vendors?.name}</h3>
+            <h3 className="font-bold text-slate-900 dark:text-white leading-none truncate mb-1">{order.vendors?.name}</h3>
             <p className="text-[10px] font-black text-slate-400 tracking-tighter uppercase tabular-nums">
               PEDIDO {order.pickup_code}{vendorCode ? ` · ${vendorCode}` : ''}
             </p>
           </div>
         </div>
         <div className="text-right shrink-0">
-          <p className="font-black text-slate-900 leading-none mb-1.5">{formatCurrency(order.total_price)}</p>
-          <span 
+          <p className="font-black text-slate-900 dark:text-white leading-none mb-1.5">{formatCurrency(order.total_price)}</p>
+          <span
             className="text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider"
-            style={{ backgroundColor: statusColor + '10', color: statusColor }}
+            style={{ backgroundColor: statusColor + '20', color: statusColor }}
           >
             {ORDER_STATUS_LABEL[order.status]}
           </span>
