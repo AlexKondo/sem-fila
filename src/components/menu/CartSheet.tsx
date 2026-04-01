@@ -15,7 +15,7 @@ interface Extra { name: string; price: number; }
 interface CartItem { id: string; menuItemId: string; name: string; price: number; quantity: number; extras?: Extra[]; image_url?: string; category?: string; }
 
 interface CartSheetProps { vendor: Vendor; tableNumber?: string; }
-type Step = 'cart' | 'identify' | 'pix';
+type Step = 'cart' | 'payment' | 'identify' | 'pix';
 
 /* ─── Cart Item Row (memoizado) ─── */
 const CartItemRow = memo(function CartItemRow({ item, onUpdateQty, onRemove, onUpdateExtra }: {
@@ -217,8 +217,6 @@ export default function CartSheet({ vendor, tableNumber }: CartSheetProps) {
   const [step, setStep] = useState<Step>('cart');
   const [customerName, setCustomerName] = useState('');
   const [customerPhone, setCustomerPhone] = useState('');
-  const [mesa, setMesa] = useState(tableNumber || '');
-
   const [paymentMethod, setPaymentMethod] = useState<'pix' | 'cartão' | 'dinheiro' | ''>('');
   const [pixData, setPixData] = useState<{ payment_id: string; qr_code: string; copy_paste: string; order_id: string } | null>(null);
   const [pixCopied, setPixCopied] = useState(false);
@@ -353,8 +351,6 @@ export default function CartSheet({ vendor, tableNumber }: CartSheetProps) {
         if (cpf.replace(/\D/g, '').length !== 11) { setError('Informe seu CPF para pagar com cartão.'); return; }
       }
     }
-    if (vendor.table_delivery && !mesa.trim()) { setError('Por favor, informe o número da mesa para entrega.'); return; }
-
     setLoading(true);
     
     // Se logado, tenta prosseguir direto
@@ -447,7 +443,7 @@ export default function CartSheet({ vendor, tableNumber }: CartSheetProps) {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           vendor_id: vendor.id,
-          table_number: mesa.trim() || null,
+          table_number: null,
           notes: notesStr || null,
           payment_method: paymentMethod || undefined,
           customer_name: name || undefined,
@@ -527,7 +523,9 @@ export default function CartSheet({ vendor, tableNumber }: CartSheetProps) {
             <div className="flex items-center justify-between px-5 pb-3 border-b border-slate-100 dark:border-slate-800">
               <div className="flex items-center gap-3">
                 <ThemeToggle />
-                <h2 className="font-bold text-slate-900 dark:text-white text-lg">{step === 'identify' ? 'Seus dados' : step === 'pix' ? 'Pagamento PIX' : 'Seu pedido'}</h2>
+                <h2 className="font-bold text-slate-900 dark:text-white text-lg">
+                {step === 'identify' ? 'Seus dados' : step === 'pix' ? 'Pagamento PIX' : step === 'payment' ? 'Forma de pagamento' : 'Seu pedido'}
+              </h2>
               </div>
               <button onClick={() => setIsOpen(false)} className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -545,15 +543,12 @@ export default function CartSheet({ vendor, tableNumber }: CartSheetProps) {
                   ))}
                 </div>
 
-                {/* Footer fixo com totais + pagamento + botão */}
-                <div className="overflow-y-auto max-h-[55vh] px-5 pt-4 pb-5 border-t border-slate-100 dark:border-slate-800 space-y-3">
-                  {error && <div className="bg-red-50 text-red-700 text-xs px-3 py-2 rounded-lg">{error}</div>}
-
-                  {/* Totais */}
+                {/* Footer: totais + obs + pedindo como + botão continuar */}
+                <div className="px-5 pt-4 pb-5 border-t border-slate-100 dark:border-slate-800 space-y-3">
                   {(serviceFee > 0 || couvertFee > 0) && (
                     <div className="flex items-center justify-between">
-                      <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">Subtotal dos produtos</span>
-                      <span className="font-bold text-sm text-slate-800 dark:text-white">{formatCurrency(subtotal)}</span>
+                      <span className="text-sm text-slate-500">Subtotal dos produtos</span>
+                      <span className="font-semibold text-sm text-slate-700 dark:text-slate-300">{formatCurrency(subtotal)}</span>
                     </div>
                   )}
                   {serviceFee > 0 && (
@@ -568,79 +563,17 @@ export default function CartSheet({ vendor, tableNumber }: CartSheetProps) {
                       <span className="font-medium text-sm text-slate-700 dark:text-slate-300">{formatCurrency(couvertFee)}</span>
                     </div>
                   )}
-
                   <div className="flex items-center justify-between border-t border-slate-100 dark:border-slate-800 pt-2">
                     <span className="text-sm font-bold text-slate-900 dark:text-white">Total</span>
-                    <span className="font-black text-xl text-slate-900 dark:text-white">{formatCurrency(total)}</span>
+                    <span className="font-black text-xl" style={{ color: P }}>{formatCurrency(total)}</span>
                   </div>
 
-                  {/* Observações */}
                   <div>
-                    <label className="block text-xs font-semibold text-slate-500 mb-1.5">Observações (opcional)</label>
+                    <label className="block text-xs font-semibold text-slate-500 mb-1.5">Observações do pedido</label>
                     <textarea value={notes} onChange={e => setNotes(e.target.value)} maxLength={500} rows={2} placeholder="Ex: sem cebola, bem passado…"
                       className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2" style={ringStyle} />
                   </div>
 
-                  {/* Forma de pagamento */}
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-500 mb-1.5">Forma de pagamento <span className="text-red-500">*</span></label>
-                    <div className="grid grid-cols-3 gap-2">
-                      {vendor.accept_pix && (
-                        <button type="button" onClick={() => setPaymentMethod('pix')} className={`p-2.5 rounded-xl border text-center text-xs font-bold transition-all ${paymentMethod === 'pix' ? 'border-orange-500 bg-orange-50 text-orange-600' : 'border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 bg-white dark:bg-slate-800'}`}>Pix</button>
-                      )}
-                      {vendor.accept_card && (
-                        <button type="button" onClick={() => setPaymentMethod('cartão')} className={`p-2.5 rounded-xl border text-center text-xs font-bold transition-all ${paymentMethod === 'cartão' ? 'border-orange-500 bg-orange-50 text-orange-600' : 'border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 bg-white dark:bg-slate-800'}`}>Cartão</button>
-                      )}
-                      {vendor.accept_cash && (
-                        <button type="button" onClick={() => setPaymentMethod('dinheiro')} className={`p-2.5 rounded-xl border text-center text-xs font-bold transition-all ${paymentMethod === 'dinheiro' ? 'border-orange-500 bg-orange-50 text-orange-600' : 'border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 bg-white dark:bg-slate-800'}`}>Dinheiro</button>
-                      )}
-                    </div>
-                    {paymentMethod === 'cartão' && (
-                      <CardPaymentForm
-                        savedCardToken={savedCardToken}
-                        savedCardLast4={savedCardLast4}
-                        cpf={cpf}
-                        onCpfChange={setCpf}
-                        ringStyle={ringStyle}
-                        onCardChange={handleCardChange}
-                      />
-                    )}
-                    {paymentMethod === 'pix' && (
-                      <div className="mt-3">
-                        <label className="block text-xs font-semibold text-slate-500 mb-1.5">CPF <span className="text-red-500">*</span> <span className="font-normal text-slate-400">(obrigatório para PIX)</span></label>
-                        <CpfInput value={cpf} onChange={setCpf} style={ringStyle} />
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Mesa */}
-                  {(vendor as any).table_delivery && (() => {
-                    const numTables = (vendor as any).num_tables || 0;
-                    return (
-                      <div>
-                        <label className="block text-xs font-semibold text-slate-500 mb-1.5 flex items-center gap-1">
-                          🛋️ Mesa / Localização <span className="text-red-500">*</span>
-                        </label>
-                        <select
-                          value={mesa}
-                          onChange={e => setMesa(e.target.value)}
-                          className="w-full h-12 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 text-sm focus:outline-none focus:ring-2 appearance-none"
-                          style={{ '--tw-ring-color': P, color: mesa ? '#0f172a' : '#94a3b8' } as React.CSSProperties}
-                        >
-                          <option value="" disabled>Escolha o número da mesa ou Para Viagem</option>
-                          <option value="Para Viagem">🛍️ Para Viagem</option>
-                          {numTables > 0
-                            ? Array.from({ length: numTables }, (_, i) => i + 1).map(n => (
-                                <option key={n} value={String(n)}>Mesa {n}</option>
-                              ))
-                            : null
-                          }
-                        </select>
-                      </div>
-                    );
-                  })()}
-
-                  {/* Pedindo como */}
                   {customerName && (
                     <button onClick={() => setStep('identify')} className="flex items-center gap-1.5 text-xs text-slate-400 hover:text-slate-600 transition">
                       <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
@@ -649,11 +582,68 @@ export default function CartSheet({ vendor, tableNumber }: CartSheetProps) {
                     </button>
                   )}
 
+                  <button
+                    onClick={() => setStep('payment')}
+                    disabled={!items.length}
+                    className="w-full h-14 font-bold rounded-xl text-white shadow-lg transition disabled:opacity-50 flex items-center justify-center gap-2"
+                    style={{ backgroundColor: P }}
+                  >
+                    Ir para pagamento
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
+                  </button>
+                </div>
+              </>
+            )}
+
+            {step === 'payment' && (
+              <>
+                <div className="overflow-y-auto flex-1 px-5 py-4 space-y-4">
+                  {error && <div className="bg-red-50 text-red-700 text-xs px-3 py-2 rounded-lg">{error}</div>}
+
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-500 mb-2">Forma de pagamento <span className="text-red-500">*</span></label>
+                    <div className="grid grid-cols-3 gap-2">
+                      {vendor.accept_pix && (
+                        <button type="button" onClick={() => setPaymentMethod('pix')} className={`p-3 rounded-xl border text-center text-sm font-bold transition-all ${paymentMethod === 'pix' ? 'border-orange-500 bg-orange-50 text-orange-600' : 'border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 bg-white dark:bg-slate-800'}`}>Pix</button>
+                      )}
+                      {vendor.accept_card && (
+                        <button type="button" onClick={() => setPaymentMethod('cartão')} className={`p-3 rounded-xl border text-center text-sm font-bold transition-all ${paymentMethod === 'cartão' ? 'border-orange-500 bg-orange-50 text-orange-600' : 'border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 bg-white dark:bg-slate-800'}`}>Cartão</button>
+                      )}
+                      {vendor.accept_cash && (
+                        <button type="button" onClick={() => setPaymentMethod('dinheiro')} className={`p-3 rounded-xl border text-center text-sm font-bold transition-all ${paymentMethod === 'dinheiro' ? 'border-orange-500 bg-orange-50 text-orange-600' : 'border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 bg-white dark:bg-slate-800'}`}>Dinheiro</button>
+                      )}
+                    </div>
+                  </div>
+
+                  {paymentMethod === 'cartão' && (
+                    <CardPaymentForm
+                      savedCardToken={savedCardToken}
+                      savedCardLast4={savedCardLast4}
+                      cpf={cpf}
+                      onCpfChange={setCpf}
+                      ringStyle={ringStyle}
+                      onCardChange={handleCardChange}
+                    />
+                  )}
+                  {paymentMethod === 'pix' && (
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-500 mb-1.5">CPF <span className="text-red-500">*</span> <span className="font-normal text-slate-400">(obrigatório para PIX)</span></label>
+                      <CpfInput value={cpf} onChange={setCpf} style={ringStyle} />
+                    </div>
+                  )}
+                </div>
+
+                <div className="px-5 pb-5 pt-3 border-t border-slate-100 dark:border-slate-800 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-bold text-slate-900 dark:text-white">Total</span>
+                    <span className="font-black text-xl" style={{ color: P }}>{formatCurrency(total)}</span>
+                  </div>
                   <button onClick={handleConfirm} disabled={loading}
                     className="w-full h-14 font-bold rounded-xl text-white shadow-lg transition disabled:opacity-50 flex items-center justify-center gap-2"
                     style={{ backgroundColor: P }}>
                     {loading ? 'Enviando…' : <>Confirmar pedido <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg></>}
                   </button>
+                  <button type="button" onClick={() => setStep('cart')} className="w-full text-slate-400 text-xs py-1">← Voltar ao pedido</button>
                 </div>
               </>
             )}
