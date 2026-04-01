@@ -1,4 +1,8 @@
--- Permite que staff (waitstaff, deliverer, org_admin) acesse pedidos do vendor via RPC
+-- =============================================================================
+-- Permite que staff acesse pedidos do vendor
+-- =============================================================================
+
+-- 1. Atualiza RPC get_vendor_orders para incluir staff
 CREATE OR REPLACE FUNCTION public.get_vendor_orders(
   p_vendor_id uuid,
   p_since timestamptz
@@ -9,27 +13,23 @@ SECURITY DEFINER
 SET search_path = public
 AS $$
 BEGIN
-  -- 1. Dono do vendor
-  IF EXISTS (
-    SELECT 1 FROM public.vendors
-    WHERE id = p_vendor_id AND owner_id = auth.uid()
+  -- Autoriza: dono do vendor, platform_admin ou staff ativo vinculado ao vendor
+  IF NOT (
+    EXISTS (
+      SELECT 1 FROM public.vendors
+      WHERE id = p_vendor_id AND owner_id = auth.uid()
+    )
+    OR EXISTS (
+      SELECT 1 FROM public.profiles
+      WHERE id = auth.uid() AND role = 'platform_admin'
+    )
+    OR EXISTS (
+      SELECT 1 FROM public.staff_schedules
+      WHERE user_id = auth.uid()
+        AND vendor_id = p_vendor_id
+        AND active = true
+    )
   ) THEN
-    NULL; -- autorizado
-  -- 2. Platform admin
-  ELSIF EXISTS (
-    SELECT 1 FROM public.profiles
-    WHERE id = auth.uid() AND role = 'platform_admin'
-  ) THEN
-    NULL; -- autorizado
-  -- 3. Staff ativo vinculado ao vendor
-  ELSIF EXISTS (
-    SELECT 1 FROM public.staff_schedules
-    WHERE user_id = auth.uid()
-      AND vendor_id = p_vendor_id
-      AND active = true
-  ) THEN
-    NULL; -- autorizado
-  ELSE
     RAISE EXCEPTION 'Não autorizado';
   END IF;
 
@@ -69,7 +69,16 @@ $$;
 
 GRANT EXECUTE ON FUNCTION public.get_vendor_orders(uuid, timestamptz) TO authenticated;
 
--- Permite que staff leia pedidos do seu vendor via RLS (para Realtime funcionar)
+-- 2. Permite que staff leia sua própria entrada em staff_schedules
+--    (necessário para que a policy de orders abaixo funcione corretamente)
+DROP POLICY IF EXISTS "Staff can read own schedule" ON public.staff_schedules;
+CREATE POLICY "Staff can read own schedule"
+  ON public.staff_schedules
+  FOR SELECT
+  TO authenticated
+  USING (user_id = auth.uid());
+
+-- 3. Permite que staff leia pedidos do vendor via RLS (Realtime funciona)
 DROP POLICY IF EXISTS "Staff can view vendor orders" ON public.orders;
 CREATE POLICY "Staff can view vendor orders"
   ON public.orders
@@ -84,7 +93,7 @@ CREATE POLICY "Staff can view vendor orders"
     )
   );
 
--- Permite que staff atualize status dos pedidos do seu vendor
+-- 4. Permite que staff atualize status dos pedidos do vendor
 DROP POLICY IF EXISTS "Staff can update vendor orders status" ON public.orders;
 CREATE POLICY "Staff can update vendor orders status"
   ON public.orders
