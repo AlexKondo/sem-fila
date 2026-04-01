@@ -105,7 +105,8 @@ export default function OrderTracker({ initialOrder }: { initialOrder: any }) {
   const currentIdx = STATUS_STEPS.indexOf(order.status as OrderStatus);
   const isCancelled = order.status === 'cancelled';
   const isPaid = order.payment_status === 'paid';
-  const needsPayment = order.payment_status === 'pending' && 
+  const isCashPending = order.payment_method === 'dinheiro' && order.payment_status === 'pending';
+  const needsPayment = order.payment_status === 'pending' &&
                        !['cancelled', 'ready', 'delivered'].includes(order.status);
                        
   const subtotal = order.order_items?.reduce((acc: number, item: any) => {
@@ -189,7 +190,17 @@ export default function OrderTracker({ initialOrder }: { initialOrder: any }) {
         {/* {needsPayment && ( ... )} */}
 
 
-        {isPaid && (
+        {isCashPending && (
+          <div className="bg-orange-50 border border-orange-200 rounded-2xl px-4 py-3 flex items-center gap-2">
+            <span className="text-base">💵</span>
+            <div>
+              <p className="text-sm text-orange-800 font-bold">Aguardando pagamento</p>
+              <p className="text-xs text-orange-600">Dirija-se ao caixa para pagar em dinheiro. A produção começa após a confirmação.</p>
+            </div>
+          </div>
+        )}
+
+        {isPaid && !isCashPending && (
           <div className="bg-green-50 border border-green-200 rounded-2xl px-4 py-3 flex items-center gap-2">
             <svg className="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
@@ -244,7 +255,7 @@ export default function OrderTracker({ initialOrder }: { initialOrder: any }) {
                         fontWeight: isCurrent ? 700 : 500,
                       }}
                     >
-                      {ORDER_STATUS_LABEL[step]}
+                      {step === 'received' && isCashPending ? 'Aguardando pagamento' : ORDER_STATUS_LABEL[step]}
                     </p>
                     
                     {(isCompleted || isCurrent) && (

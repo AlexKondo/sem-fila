@@ -237,10 +237,11 @@ function formatTimestamp(isoString: string): string {
 }
 
 function OrderCard({ order, isPast }: { order: OrderWithVendor; isPast?: boolean }) {
-  const statusColor = (order.status === 'ready' || order.status === 'delivered') ? '#22c55e' : order.status === 'cancelled' ? '#ef4444' : P;
+  const isCashPending = order.payment_method === 'dinheiro' && order.payment_status === 'pending';
+  const statusColor = isCashPending ? '#ef4444' : (order.status === 'ready' || order.status === 'delivered') ? '#22c55e' : order.status === 'cancelled' ? '#ef4444' : P;
+  const statusLabel = isCashPending ? 'Ag. pagamento' : ORDER_STATUS_LABEL[order.status];
   const vendorCode = order.vendors?.id ? getShortCode(order.vendors.id) : null;
   const paymentLabel = order.payment_method ? (PAYMENT_METHOD_LABEL[order.payment_method] ?? order.payment_method) : null;
-  const isCashPending = order.payment_method === 'dinheiro' && order.payment_status === 'pending';
 
   return (
     <Link
@@ -268,7 +269,7 @@ function OrderCard({ order, isPast }: { order: OrderWithVendor; isPast?: boolean
             className="text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider"
             style={{ backgroundColor: statusColor + '20', color: statusColor }}
           >
-            {ORDER_STATUS_LABEL[order.status]}
+            {statusLabel}
           </span>
           {paymentLabel && (
             <p className={`text-[10px] font-semibold mt-1 ${isCashPending ? 'text-red-500' : 'text-slate-400'}`}>
