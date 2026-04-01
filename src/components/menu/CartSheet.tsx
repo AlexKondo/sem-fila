@@ -1,8 +1,9 @@
 'use client';
 
 import { useState, useEffect, useCallback, useMemo, memo } from 'react';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { formatCurrency } from '@/lib/utils';
+import { formatCurrency, getItemImage } from '@/lib/utils';
 import type { Vendor } from '@/types/database';
 import { createClient } from '@/lib/supabase/client';
 import ThemeToggle from '@/components/ui/ThemeToggle';
@@ -11,7 +12,7 @@ const STORAGE_KEY = 'qp_customer';
 const P = '#ec5b13';
 
 interface Extra { name: string; price: number; }
-interface CartItem { id: string; menuItemId: string; name: string; price: number; quantity: number; extras?: Extra[]; }
+interface CartItem { id: string; menuItemId: string; name: string; price: number; quantity: number; extras?: Extra[]; image_url?: string; category?: string; }
 
 interface CartSheetProps { vendor: Vendor; tableNumber?: string; }
 type Step = 'cart' | 'identify' | 'pix';
@@ -22,10 +23,17 @@ const CartItemRow = memo(function CartItemRow({ item, onUpdateQty, onRemove }: {
   onUpdateQty: (id: string, d: number) => void;
   onRemove: (id: string) => void;
 }) {
+  const imgSrc = item.image_url || getItemImage(item.name, item.category);
   return (
-    <div className="flex items-start gap-3">
+    <div className="flex items-center gap-3 py-2 border-b border-slate-100 dark:border-slate-800 last:border-0">
+      {/* Foto do produto */}
+      <div className="relative w-14 h-14 shrink-0 rounded-xl overflow-hidden bg-slate-100 dark:bg-slate-800">
+        <Image src={imgSrc} alt={item.name} fill className="object-cover" />
+      </div>
+
+      {/* Info */}
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-semibold text-slate-900 leading-tight">{item.name}</p>
+        <p className="text-sm font-semibold text-slate-900 dark:text-white leading-tight truncate">{item.name}</p>
         {item.extras && item.extras.length > 0 && (() => {
           const grouped: Record<string, { price: number; qty: number }> = {};
           item.extras.forEach(e => {
@@ -35,7 +43,7 @@ const CartItemRow = memo(function CartItemRow({ item, onUpdateQty, onRemove }: {
           const extrasTotal = item.extras.reduce((s, e) => s + e.price, 0);
           const basePrice = item.price - extrasTotal;
           return (
-            <div className="flex flex-col gap-0.5 mt-1">
+            <div className="flex flex-col gap-0.5 mt-0.5">
               <span className="text-[10px] font-bold text-slate-500">
                 🍽 Prato {formatCurrency(basePrice)}
               </span>
@@ -49,19 +57,23 @@ const CartItemRow = memo(function CartItemRow({ item, onUpdateQty, onRemove }: {
         })()}
         <p className="text-xs text-slate-400 mt-0.5">{formatCurrency(item.price)} cada</p>
       </div>
-      <div className="flex items-center gap-2">
-        <button onClick={() => onUpdateQty(item.id, -1)} className="w-7 h-7 rounded-lg border border-slate-200 flex items-center justify-center text-slate-600 hover:bg-slate-50">
-          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M20 12H4" /></svg>
-        </button>
-        <span className="text-sm font-bold text-slate-900 w-5 text-center">{item.quantity}</span>
-        <button onClick={() => onUpdateQty(item.id, 1)} className="w-7 h-7 rounded-lg flex items-center justify-center text-white" style={{ backgroundColor: P }}>
-          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" /></svg>
-        </button>
+
+      {/* Controles +/- e total */}
+      <div className="flex flex-col items-end gap-1.5 shrink-0">
+        <div className="flex items-center gap-1.5">
+          <button onClick={() => onUpdateQty(item.id, -1)} className="w-7 h-7 rounded-lg border border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800">
+            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M20 12H4" /></svg>
+          </button>
+          <span className="text-sm font-bold text-slate-900 dark:text-white w-5 text-center">{item.quantity}</span>
+          <button onClick={() => onUpdateQty(item.id, 1)} className="w-7 h-7 rounded-lg flex items-center justify-center text-white" style={{ backgroundColor: P }}>
+            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" /></svg>
+          </button>
+          <button onClick={() => onRemove(item.id)} className="text-slate-300 hover:text-red-400 transition ml-1">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+          </button>
+        </div>
+        <span className="text-sm font-bold text-slate-900 dark:text-white">{formatCurrency(item.price * item.quantity)}</span>
       </div>
-      <span className="text-sm font-bold text-slate-900 w-16 text-right">{formatCurrency(item.price * item.quantity)}</span>
-      <button onClick={() => onRemove(item.id)} className="text-slate-300 hover:text-red-400 transition">
-        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-      </button>
     </div>
   );
 });
@@ -241,11 +253,11 @@ export default function CartSheet({ vendor, tableNumber }: CartSheetProps) {
     return () => subscription.unsubscribe();
   }, [customerName]);
 
-  const addItem = useCallback((item: { id: string; menuItemId?: string; name: string; price: number; extras?: Extra[] }) => {
+  const addItem = useCallback((item: { id: string; menuItemId?: string; name: string; price: number; extras?: Extra[]; image_url?: string; category?: string }) => {
     setItems(prev => {
       const ex = prev.find(i => i.id === item.id);
       if (ex) return prev.map(i => i.id === item.id ? { ...i, quantity: i.quantity + 1 } : i);
-      return [...prev, { ...item, menuItemId: item.menuItemId ?? item.id, quantity: 1, extras: item.extras ?? [] }];
+      return [...prev, { ...item, menuItemId: item.menuItemId ?? item.id, quantity: 1, extras: item.extras ?? [], image_url: item.image_url, category: item.category }];
     });
   }, []);
 
@@ -486,10 +498,12 @@ export default function CartSheet({ vendor, tableNumber }: CartSheetProps) {
 
             {step === 'cart' && (
               <>
-                <div className="overflow-y-auto flex-1 px-5 py-4 space-y-3">
-                  {items.map(item => (
-                    <CartItemRow key={item.id} item={item} onUpdateQty={updateQty} onRemove={removeItem} />
-                  ))}
+                <div className="overflow-y-auto flex-1 px-5 py-4">
+                  <div className="mb-3">
+                    {items.map(item => (
+                      <CartItemRow key={item.id} item={item} onUpdateQty={updateQty} onRemove={removeItem} />
+                    ))}
+                  </div>
                   <div className="pt-1">
                     <label className="block text-xs font-semibold text-slate-500 mb-1.5">Observações (opcional)</label>
                     <textarea value={notes} onChange={e => setNotes(e.target.value)} maxLength={500} rows={2} placeholder="Ex: sem cebola, bem passado…"

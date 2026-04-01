@@ -241,6 +241,8 @@ export default function MenuClient({ vendor, items, mesa, waitTime, activeBadges
       name: detailItem.name,
       price: detailItem.price + extrasTotal,
       extras: chosenExtras,
+      image_url: detailItem.image_url ?? null,
+      category: detailItem.category ?? null,
     }}));
     setDetailItem(null);
   }, [detailItem, extraQty]);
