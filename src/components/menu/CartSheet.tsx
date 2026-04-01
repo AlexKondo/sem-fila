@@ -483,15 +483,12 @@ export default function CartSheet({ vendor, tableNumber }: CartSheetProps) {
     }
   }
 
-  // Esconde o botão flutuante se carrinho vazio E não está mostrando PIX
-  if (count === 0 && !pixData) return null;
-
   const ringStyle = { '--tw-ring-color': P } as React.CSSProperties;
 
   return (
     <>
       {/* Floating cart button */}
-      {!isOpen && count > 0 && (
+      {!isOpen && (
         <div className="fixed bottom-20 left-0 right-0 px-4 flex justify-center z-50 max-w-md mx-auto">
           <button
             onClick={() => { setIsOpen(true); setStep('cart'); }}
