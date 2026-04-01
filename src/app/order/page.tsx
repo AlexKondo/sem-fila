@@ -6,10 +6,16 @@ import Link from 'next/link';
 import { ArrowLeft, Clock, CheckCircle, Package, Receipt, ShoppingBag, ChevronDown } from 'lucide-react';
 import BottomNav from '@/components/ui/BottomNav';
 
+interface Extra {
+  name: string;
+  price: number;
+}
+
 interface OrderItem {
   id: string;
   quantity: number;
   unit_price: number;
+  extras?: Extra[] | null;
   menu_items: { name: string } | null;
 }
 
@@ -77,7 +83,7 @@ export default function OrderPage() {
     if (!itemsMap[orderId]) {
       const { data } = await supabase
         .from('order_items')
-        .select('id, quantity, unit_price, menu_items(name)')
+        .select('id, quantity, unit_price, extras, menu_items(name)')
         .eq('order_id', orderId);
       if (data) setItemsMap(prev => ({ ...prev, [orderId]: data as any }));
     }
@@ -213,18 +219,33 @@ export default function OrderPage() {
               ) : items.length === 0 ? (
                 <p className="text-xs text-slate-400">Nenhum item encontrado.</p>
               ) : (
-                <div className="space-y-1.5">
-                  {items.map(item => (
-                    <div key={item.id} className="flex items-center justify-between text-sm">
-                      <span className="text-slate-700 dark:text-slate-300">
-                        <span className="font-bold text-slate-500 dark:text-slate-400 mr-1">{item.quantity}×</span>
-                        {(item.menu_items as any)?.name || '—'}
-                      </span>
-                      <span className="font-semibold text-slate-700 dark:text-slate-300">
-                        R$ {(Number(item.unit_price) * item.quantity).toFixed(2)}
-                      </span>
-                    </div>
-                  ))}
+                <div className="space-y-2">
+                  {items.map(item => {
+                    const extraGroups = (item.extras ?? []).reduce<Record<string, { price: number; qty: number }>>((acc, e) => {
+                      if (!acc[e.name]) acc[e.name] = { price: e.price, qty: 0 };
+                      acc[e.name].qty++;
+                      return acc;
+                    }, {});
+                    return (
+                      <div key={item.id}>
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-slate-700 dark:text-slate-300">
+                            <span className="font-bold text-slate-500 dark:text-slate-400 mr-1">{item.quantity}×</span>
+                            {(item.menu_items as any)?.name || '—'}
+                          </span>
+                          <span className="font-semibold text-slate-700 dark:text-slate-300">
+                            R$ {(Number(item.unit_price) * item.quantity).toFixed(2)}
+                          </span>
+                        </div>
+                        {Object.entries(extraGroups).map(([name, { price, qty }]) => (
+                          <div key={name} className="flex items-center justify-between text-xs pl-4 mt-0.5">
+                            <span className="text-red-400">+ {qty}× {name}</span>
+                            <span className="text-slate-400">R$ {(price * qty).toFixed(2)}</span>
+                          </div>
+                        ))}
+                      </div>
+                    );
+                  })}
                 </div>
               )}
             </div>
