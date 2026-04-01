@@ -312,7 +312,7 @@ export default function MenuClient({ vendor, items, mesa, waitTime, activeBadges
   }, [detailItem, extraQty]);
 
   return (
-    <div className="relative flex min-h-screen w-full flex-col max-w-md mx-auto pb-24 bg-slate-50 dark:bg-slate-950 transition-colors">
+    <div className="relative flex min-h-screen w-full flex-col max-w-md mx-auto pb-52 bg-slate-50 dark:bg-slate-950 transition-colors">
       {/* Sticky header */}
       <header className="sticky top-0 z-50 border-b border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md">
         {/* Linha 1: nome da marca + toggle + botão usuário */}
