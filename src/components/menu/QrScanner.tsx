@@ -181,7 +181,7 @@ export default function QrScanner() {
       </header>
 
       {/* Main */}
-      <main className="flex-1 flex flex-col items-center px-6 pt-8 pb-[100px]">
+      <main className="flex-1 flex flex-col items-center px-6 pt-8 pb-[120px]">
         {error ? (
           <>
             <div className="text-center mb-8">
