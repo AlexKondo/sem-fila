@@ -104,7 +104,7 @@ const MenuItemCard = memo(function MenuItemCard({ item, onOpen }: { item: MenuIt
 });
 
 /* ─── Menu Items List (memoizado) ─── */
-const ItemList = memo(function ItemList({ items, waitTime, onOpen }: { items: MenuItem[]; waitTime: string; onOpen: (item: MenuItem) => void }) {
+const ItemList = memo(function ItemList({ items, onOpen }: { items: MenuItem[]; onOpen: (item: MenuItem) => void }) {
   if (items.length === 0) {
     return (
       <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 p-12 text-center shadow-sm">
@@ -123,7 +123,7 @@ const ItemList = memo(function ItemList({ items, waitTime, onOpen }: { items: Me
   );
 });
 
-export default function MenuClient({ vendor, items, mesa, waitTime, hasFeaturedBadge, activeBadges = [] }: MenuClientProps) {
+export default function MenuClient({ vendor, items, mesa, waitTime, activeBadges = [] }: MenuClientProps) {
   const [selectedCat, setSelectedCat] = useState('Todos');
   const [searchQuery, setSearchQuery] = useState('');
   const deferredSearchQuery = useDeferredValue(searchQuery);
@@ -312,10 +312,10 @@ export default function MenuClient({ vendor, items, mesa, waitTime, hasFeaturedB
     <div className="relative flex min-h-screen w-full flex-col max-w-md mx-auto pb-24 bg-slate-50 dark:bg-slate-950 transition-colors">
       {/* Sticky header */}
       <header className="sticky top-0 z-50 border-b border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md">
-        {/* Linha 1: toggle + nome da marca + botão usuário */}
+        {/* Linha 1: nome da marca + toggle + botão usuário */}
         <div className="flex items-center px-4 pt-3 pb-2 justify-between gap-3">
+          <h2 className="flex-1 text-slate-900 dark:text-white text-lg font-black leading-tight tracking-tight truncate">{vendor.name}</h2>
           <ThemeToggle />
-          <h2 className="flex-1 text-center text-slate-900 dark:text-white text-lg font-black leading-tight tracking-tight truncate">{vendor.name}</h2>
           {customerName ? (
             <Link href="/profile?edit=true" className="flex items-center gap-1.5 bg-orange-50 dark:bg-orange-950/30 border border-orange-200/50 dark:border-orange-500/20 rounded-xl px-3 py-1.5 text-xs font-black text-orange-600 dark:text-orange-400 shadow-sm active:scale-95 transition-all shrink-0">
               <span className="w-1.5 h-1.5 rounded-full bg-orange-600 animate-pulse" />
@@ -418,7 +418,7 @@ export default function MenuClient({ vendor, items, mesa, waitTime, hasFeaturedB
       <main className="px-4 py-6 space-y-6">
         <h3 className="text-lg font-bold text-slate-900 dark:text-white">{selectedCat === 'Todos' ? 'Cardápio Completo' : selectedCat}</h3>
 
-        <ItemList items={filteredItems} waitTime={waitTime} onOpen={handleOpenDetail} />
+        <ItemList items={filteredItems} onOpen={handleOpenDetail} />
       </main>
 
       <CartSheet vendor={vendor} tableNumber={mesa} />
