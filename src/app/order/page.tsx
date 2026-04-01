@@ -20,7 +20,6 @@ interface Order {
   payment_status: string;
   total_price: number;
   created_at: string;
-  notes?: string;
   vendors: { name: string } | null;
   order_items?: OrderItem[];
 }
@@ -51,7 +50,7 @@ export default function OrderPage() {
       const { data } = await supabase
         .from('orders')
         .select(`
-          id, pickup_code, status, payment_status, total_price, created_at, notes,
+          id, pickup_code, status, payment_status, total_price, created_at,
           vendors ( name )
         `)
         .eq('user_id', user.id)
@@ -229,14 +228,6 @@ export default function OrderPage() {
                 </div>
               )}
             </div>
-
-            {/* Observações */}
-            {order.notes && (
-              <div>
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Observações</p>
-                <p className="text-xs text-slate-500 dark:text-slate-400 italic">{order.notes}</p>
-              </div>
-            )}
 
             {/* Total */}
             <div className="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-slate-700">
