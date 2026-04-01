@@ -36,16 +36,18 @@ function todayStr() {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
+// Singleton de AudioContext — criado na 1ª interação do usuário e reutilizado.
+// Navegadores bloqueiam new AudioContext() sem gesto do usuário; criar o contexto
+// durante um clique garante que ele fique em estado "running" para uso posterior.
+let _audioCtx: AudioContext | null = null;
+
 function playAlarmBeep() {
   try {
     if (typeof window === 'undefined') return;
     const enabled = localStorage.getItem('vendor_alerts_enabled') !== 'false';
     if (!enabled) return;
-    const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
-    if (!AudioCtx) return;
-    const ctx = new AudioCtx();
-    // ctx.resume() é necessário: navegadores suspendem o AudioContext até
-    // que o usuário interaja com a página (política de autoplay).
+    const ctx = _audioCtx;
+    if (!ctx) return; // ainda não desbloqueado pelo usuário
     ctx.resume().then(() => {
       for (let i = 0; i < 3; i++) {
         const osc = ctx.createOscillator();
@@ -80,6 +82,25 @@ export default function VendorOrdersBoard({ initialOrders, vendorId }: Props) {
   // Ref para rastrear IDs de pedidos já conhecidos (evita alertas falsos)
   const knownIdsRef = useRef<Set<string>>(new Set(initialOrders.map(o => o.id)));
   const playNewOrderSound = useCallback(() => { playAlarmBeep(); }, []);
+
+  // Cria o AudioContext singleton na primeira interação do usuário com a página.
+  // Isso garante que o contexto fique em estado "running" (desbloqueado) para
+  // poder tocar o alarme quando um novo pedido chegar, mesmo minutos depois.
+  useEffect(() => {
+    function unlock() {
+      if (_audioCtx) return;
+      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+      if (!AudioCtx) return;
+      _audioCtx = new AudioCtx();
+      _audioCtx.resume().catch(() => {});
+    }
+    document.addEventListener('click', unlock, { once: true });
+    document.addEventListener('touchstart', unlock, { once: true });
+    return () => {
+      document.removeEventListener('click', unlock);
+      document.removeEventListener('touchstart', unlock);
+    };
+  }, []);
 
   // Recarrega pedidos imediatamente quando o filtro de data muda
   const isToday = dateFrom === todayStr() && dateTo === todayStr();
