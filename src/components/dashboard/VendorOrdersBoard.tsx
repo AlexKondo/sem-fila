@@ -44,20 +44,24 @@ function playAlarmBeep() {
     const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
     if (!AudioCtx) return;
     const ctx = new AudioCtx();
-    for (let i = 0; i < 3; i++) {
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.type = 'sine';
-      osc.frequency.value = 880;
-      const t = ctx.currentTime + i * 0.35;
-      gain.gain.setValueAtTime(0, t);
-      gain.gain.linearRampToValueAtTime(0.4, t + 0.05);
-      gain.gain.linearRampToValueAtTime(0, t + 0.25);
-      osc.start(t);
-      osc.stop(t + 0.25);
-    }
+    // ctx.resume() é necessário: navegadores suspendem o AudioContext até
+    // que o usuário interaja com a página (política de autoplay).
+    ctx.resume().then(() => {
+      for (let i = 0; i < 3; i++) {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.type = 'sine';
+        osc.frequency.value = 880;
+        const t = ctx.currentTime + i * 0.35;
+        gain.gain.setValueAtTime(0, t);
+        gain.gain.linearRampToValueAtTime(0.4, t + 0.05);
+        gain.gain.linearRampToValueAtTime(0, t + 0.25);
+        osc.start(t);
+        osc.stop(t + 0.25);
+      }
+    }).catch(() => {});
   } catch {}
 }
 
