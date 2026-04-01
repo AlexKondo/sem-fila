@@ -18,62 +18,86 @@ interface CartSheetProps { vendor: Vendor; tableNumber?: string; }
 type Step = 'cart' | 'identify' | 'pix';
 
 /* ─── Cart Item Row (memoizado) ─── */
-const CartItemRow = memo(function CartItemRow({ item, onUpdateQty, onRemove }: {
+const CartItemRow = memo(function CartItemRow({ item, onUpdateQty, onRemove, onUpdateExtra }: {
   item: CartItem;
   onUpdateQty: (id: string, d: number) => void;
   onRemove: (id: string) => void;
+  onUpdateExtra: (itemId: string, extraName: string, extraPrice: number, delta: number) => void;
 }) {
   const imgSrc = item.image_url || getItemImage(item.name, item.category);
+
+  const grouped: Record<string, { price: number; qty: number }> = {};
+  (item.extras ?? []).forEach(e => {
+    if (grouped[e.name]) grouped[e.name].qty++;
+    else grouped[e.name] = { price: e.price, qty: 1 };
+  });
+  const extrasTotal = (item.extras ?? []).reduce((s, e) => s + e.price, 0);
+  const basePrice = item.price - extrasTotal;
+  const hasExtras = (item.extras ?? []).length > 0;
+
   return (
-    <div className="flex items-center gap-3 py-2 border-b border-slate-100 dark:border-slate-800 last:border-0">
-      {/* Foto do produto */}
-      <div className="relative w-14 h-14 shrink-0 rounded-xl overflow-hidden bg-slate-100 dark:bg-slate-800">
-        <Image src={imgSrc} alt={item.name} fill className="object-cover" />
-      </div>
-
-      {/* Info */}
-      <div className="flex-1 min-w-0">
-        <p className="text-sm font-semibold text-slate-900 dark:text-white leading-tight truncate">{item.name}</p>
-        {item.extras && item.extras.length > 0 && (() => {
-          const grouped: Record<string, { price: number; qty: number }> = {};
-          item.extras.forEach(e => {
-            if (grouped[e.name]) grouped[e.name].qty++;
-            else grouped[e.name] = { price: e.price, qty: 1 };
-          });
-          const extrasTotal = item.extras.reduce((s, e) => s + e.price, 0);
-          const basePrice = item.price - extrasTotal;
-          return (
-            <div className="flex flex-col gap-0.5 mt-0.5">
-              <span className="text-[10px] font-bold text-slate-500">
-                🍽 Prato {formatCurrency(basePrice)}
-              </span>
-              {Object.entries(grouped).map(([name, { price, qty }]) => (
-                <span key={name} className="text-[10px] font-bold text-orange-600">
-                  {qty > 1 ? `${qty}x ` : '+'}{name} {formatCurrency(price)}{qty > 1 ? ` = ${formatCurrency(price * qty)}` : ''}
-                </span>
-              ))}
-            </div>
-          );
-        })()}
-        <p className="text-xs text-slate-400 mt-0.5">{formatCurrency(item.price)} cada</p>
-      </div>
-
-      {/* Controles +/- e total */}
-      <div className="flex flex-col items-end gap-1.5 shrink-0">
-        <div className="flex items-center gap-1.5">
-          <button onClick={() => onUpdateQty(item.id, -1)} className="w-7 h-7 rounded-lg border border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800">
-            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M20 12H4" /></svg>
-          </button>
-          <span className="text-sm font-bold text-slate-900 dark:text-white w-5 text-center">{item.quantity}</span>
-          <button onClick={() => onUpdateQty(item.id, 1)} className="w-7 h-7 rounded-lg flex items-center justify-center text-white" style={{ backgroundColor: P }}>
-            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" /></svg>
-          </button>
-          <button onClick={() => onRemove(item.id)} className="text-slate-300 hover:text-red-400 transition ml-1">
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-          </button>
+    <div className="py-2 border-b border-slate-100 dark:border-slate-800 last:border-0">
+      <div className="flex items-center gap-3">
+        {/* Foto do produto */}
+        <div className="relative w-14 h-14 shrink-0 rounded-xl overflow-hidden bg-slate-100 dark:bg-slate-800">
+          <Image src={imgSrc} alt={item.name} fill className="object-cover" />
         </div>
-        <span className="text-sm font-bold text-slate-900 dark:text-white">{formatCurrency(item.price * item.quantity)}</span>
+
+        {/* Info */}
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-semibold text-slate-900 dark:text-white leading-tight truncate">{item.name}</p>
+          {hasExtras && (
+            <span className="text-[10px] font-bold text-slate-500">🍽 Prato {formatCurrency(basePrice)}</span>
+          )}
+          <p className="text-xs text-slate-400 mt-0.5">{formatCurrency(item.price)} cada</p>
+        </div>
+
+        {/* Controles +/- prato e total */}
+        <div className="flex flex-col items-end gap-1.5 shrink-0">
+          <div className="flex items-center gap-1.5">
+            <button onClick={() => onUpdateQty(item.id, -1)} className="w-7 h-7 rounded-lg border border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800">
+              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M20 12H4" /></svg>
+            </button>
+            <span className="text-sm font-bold text-slate-900 dark:text-white w-5 text-center">{item.quantity}</span>
+            <button onClick={() => onUpdateQty(item.id, 1)} className="w-7 h-7 rounded-lg flex items-center justify-center text-white" style={{ backgroundColor: P }}>
+              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" /></svg>
+            </button>
+            <button onClick={() => onRemove(item.id)} className="text-slate-300 hover:text-red-400 transition ml-1">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+            </button>
+          </div>
+          <span className="text-sm font-bold text-slate-900 dark:text-white">{formatCurrency(item.price * item.quantity)}</span>
+        </div>
       </div>
+
+      {/* Extras com +/- indentados */}
+      {hasExtras && (
+        <div className="ml-[68px] mt-1 flex flex-col gap-1">
+          {Object.entries(grouped).map(([name, { price, qty }]) => (
+            <div key={name} className="flex items-center justify-between gap-2">
+              <span className="text-[10px] font-bold text-red-500 flex-1 min-w-0">
+                +{name} {formatCurrency(price)}{qty > 1 ? ` × ${qty}` : ''}
+              </span>
+              <div className="flex items-center gap-1 shrink-0">
+                <button
+                  onClick={() => onUpdateExtra(item.id, name, price, -1)}
+                  className="w-5 h-5 rounded border border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-500 dark:text-slate-400"
+                >
+                  <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M20 12H4" /></svg>
+                </button>
+                <span className="text-[10px] font-bold text-slate-700 dark:text-slate-300 w-4 text-center">{qty}</span>
+                <button
+                  onClick={() => onUpdateExtra(item.id, name, price, 1)}
+                  className="w-5 h-5 rounded flex items-center justify-center text-white"
+                  style={{ backgroundColor: P }}
+                >
+                  <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" /></svg>
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 });
@@ -284,6 +308,22 @@ export default function CartSheet({ vendor, tableNumber }: CartSheetProps) {
 
   const removeItem = useCallback((id: string) => {
     setItems(prev => prev.filter(i => i.id !== id));
+  }, []);
+
+  const updateExtra = useCallback((itemId: string, extraName: string, extraPrice: number, delta: number) => {
+    setItems(prev => prev.map(item => {
+      if (item.id !== itemId) return item;
+      const extras = item.extras ?? [];
+      let newExtras: Extra[];
+      if (delta > 0) {
+        newExtras = [...extras, { name: extraName, price: extraPrice }];
+      } else {
+        const idx = extras.findIndex(e => e.name === extraName);
+        if (idx === -1) return item;
+        newExtras = [...extras.slice(0, idx), ...extras.slice(idx + 1)];
+      }
+      return { ...item, extras: newExtras, price: item.price + extraPrice * delta };
+    }));
   }, []);
 
   // Memoiza calculos de totais
@@ -501,7 +541,7 @@ export default function CartSheet({ vendor, tableNumber }: CartSheetProps) {
                 <div className="overflow-y-auto flex-1 px-5 py-4">
                   <div className="mb-3">
                     {items.map(item => (
-                      <CartItemRow key={item.id} item={item} onUpdateQty={updateQty} onRemove={removeItem} />
+                      <CartItemRow key={item.id} item={item} onUpdateQty={updateQty} onRemove={removeItem} onUpdateExtra={updateExtra} />
                     ))}
                   </div>
                   <div className="pt-1">
