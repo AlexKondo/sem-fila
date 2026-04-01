@@ -31,15 +31,13 @@ export default async function ProfilePage() {
         <h1 className="font-bold text-slate-900 dark:text-white">Meu Perfil</h1>
       </header>
 
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto pb-24">
         <div className="max-w-lg mx-auto w-full px-4 py-6">
           <ProfileForm profile={profile} email={user.email ?? ''} />
         </div>
       </div>
 
-      <div className="shrink-0">
-        <BottomNav />
-      </div>
+      <BottomNav />
     </main>
   );
 }
