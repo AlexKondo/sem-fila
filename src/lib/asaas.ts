@@ -133,7 +133,7 @@ export async function createCreditCardChargeWithToken(params: {
   orderId: string;
   description: string;
   cardToken: string;
-}): Promise<{ paymentId: string }> {
+}): Promise<{ paymentId: string; }> {
   const due = new Date();
   due.setDate(due.getDate() + 1);
   const dueDate = due.toISOString().split('T')[0];
@@ -162,4 +162,22 @@ export async function simulatePayment(paymentId: string): Promise<void> {
     method: 'POST',
     headers: h,
   });
+}
+
+// Estorna uma cobrança Asaas (total ou parcial)
+// value omitido = estorno total; value informado = estorno parcial
+export async function refundPayment(paymentId: string, value?: number): Promise<void> {
+  const body: Record<string, unknown> = {};
+  if (value !== undefined) body.value = value;
+
+  const res = await fetch(`${BASE_URL}/payments/${paymentId}/refund`, {
+    method: 'POST',
+    headers: h,
+    body: JSON.stringify(body),
+  });
+
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(`Asaas refund error (${res.status}): ${JSON.stringify(data)}`);
+  }
 }

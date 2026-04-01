@@ -184,6 +184,7 @@ export async function POST(request: Request) {
       status: 'received',
       payment_status: (isPix || isCard) ? 'pending' : 'paid',
       pickup_code: generatePickupCode(),
+      payment_method,
     })
     .select('id, pickup_code')
     .single();
@@ -225,6 +226,8 @@ export async function POST(request: Request) {
         orderId: order.id,
         description: `Pedido ${order.pickup_code} — ${vendor.id}`,
       });
+      // Salva o ID da cobrança Asaas para permitir estorno posterior
+      await supabase.from('orders').update({ asaas_payment_id: pix.paymentId }).eq('id', order.id);
       return NextResponse.json({
         order_id: order.id,
         pickup_code: order.pickup_code,
@@ -261,14 +264,14 @@ export async function POST(request: Request) {
 
       // Usa token salvo
       if (use_saved_card && savedToken && asaasCustomerId) {
-        await createCreditCardChargeWithToken({
+        const tokenResult = await createCreditCardChargeWithToken({
           customerId: asaasCustomerId,
           value: total_price,
           orderId: order.id,
           description: `Pedido ${order.pickup_code}`,
           cardToken: savedToken,
         });
-        await supabase.from('orders').update({ payment_status: 'paid' }).eq('id', order.id);
+        await supabase.from('orders').update({ payment_status: 'paid', asaas_payment_id: tokenResult.paymentId }).eq('id', order.id);
         return NextResponse.json({ order_id: order.id, pickup_code: order.pickup_code, payment_confirmed: true }, { status: 201 });
       }
 
@@ -298,7 +301,7 @@ export async function POST(request: Request) {
           }).eq('id', user.id);
         }
 
-        await supabase.from('orders').update({ payment_status: 'paid' }).eq('id', order.id);
+        await supabase.from('orders').update({ payment_status: 'paid', asaas_payment_id: result.paymentId }).eq('id', order.id);
         return NextResponse.json({ order_id: order.id, pickup_code: order.pickup_code, payment_confirmed: true }, { status: 201 });
       }
     } catch (err: any) {
