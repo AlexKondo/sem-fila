@@ -8,6 +8,7 @@ import { createClient } from '@/lib/supabase/client';
 import CartSheet from './CartSheet';
 import type { MenuItem, Vendor } from '@/types/database';
 import ThemeToggle from '@/components/ui/ThemeToggle';
+import BottomNav from '@/components/ui/BottomNav';
 
 const P = '#ec5b13';
 
@@ -424,6 +425,11 @@ export default function MenuClient({ vendor, items, mesa, waitTime, activeBadges
       </main>
 
       <CartSheet vendor={vendor} tableNumber={mesa} />
+
+      {/* Bottom navigation */}
+      <div className="fixed bottom-0 left-0 right-0 z-40 max-w-md mx-auto">
+        <BottomNav />
+      </div>
 
       {/* Product Detail Sheet */}
       {detailItem && (
