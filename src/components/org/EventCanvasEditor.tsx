@@ -255,14 +255,14 @@ export default function EventCanvasEditor({ eventId, initialLayouts, availableVe
     setTimeout(() => setSaved(false), 2000);
   }, [activeId, supabase]);
 
-  // ── Add palette item ──
-  const addPaletteItem = useCallback(async (item: PaletteItem) => {
+  // ── Add palette item (dropX/Y = canvas-space coords; undefined = center) ──
+  const addPaletteItem = useCallback(async (item: PaletteItem, dropX?: number, dropY?: number) => {
     const fabric = (window as any).__fabric;
     const canvas = fabricRef.current;
     if (!fabric || !canvas || !activeId) return;
 
-    const cx = canvas.width / 2 + (Math.random() - 0.5) * 100;
-    const cy = canvas.height / 2 + (Math.random() - 0.5) * 100;
+    const cx = dropX ?? canvas.width / 2 + (Math.random() - 0.5) * 100;
+    const cy = dropY ?? canvas.height / 2 + (Math.random() - 0.5) * 100;
 
     // Create DB record first if it's a booth type
     let boothId: string | undefined;
@@ -281,16 +281,15 @@ export default function EventCanvasEditor({ eventId, initialLayouts, availableVe
       }
     }
 
+    const boothNum = canvasBooths.filter(b => b.element_type === item.id).length + 1;
+    const labelText = item.isBoothType
+      ? `${item.emoji} ${item.label} ${boothNum}`
+      : `${item.emoji} ${item.label}`;
+
     const baseProps = { left: 0, top: 0, fill: item.color + '33', stroke: item.color, strokeWidth: 2 };
     const shape = item.shape === 'circle'
       ? new fabric.Ellipse({ ...baseProps, width: item.width, height: item.height, rx: item.width / 2, ry: item.height / 2 })
       : new fabric.Rect({ ...baseProps, width: item.width, height: item.height, rx: 8, ry: 8 });
-
-    const labelText = boothId
-      ? canvasBooths.filter(b => b.element_type === item.id).length + 1 > 1
-        ? `${item.emoji} ${item.label} ${canvasBooths.filter(b => b.element_type === item.id).length + 1}`
-        : `${item.emoji} ${item.label} 1`
-      : `${item.emoji} ${item.label}`;
 
     const label = new fabric.Text(labelText, {
       fontSize: 11, fill: item.color, fontFamily: 'Inter, sans-serif', fontWeight: 'bold',
@@ -306,6 +305,24 @@ export default function EventCanvasEditor({ eventId, initialLayouts, availableVe
     canvas.setActiveObject(group);
     canvas.renderAll();
   }, [activeId, canvasBooths, eventId, supabase]);
+
+  // ── Drag item from palette ──
+  const dragItemId = useRef<string | null>(null);
+
+  const handleCanvasDrop = useCallback((e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    const itemId = dragItemId.current;
+    if (!itemId) return;
+    dragItemId.current = null;
+    const item = PALETTE_BY_ID[itemId];
+    if (!item) return;
+    const canvasEl = canvasRef.current;
+    if (!canvasEl) return;
+    const rect = canvasEl.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    addPaletteItem(item, x, y);
+  }, [addPaletteItem]);
 
   // ── Booth label/fee editing (debounced save) ──
   const updateBoothField = useCallback((boothId: string, field: 'label' | 'fee', value: string) => {
@@ -575,8 +592,22 @@ export default function EventCanvasEditor({ eventId, initialLayouts, availableVe
         <div className="w-36 shrink-0 bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 p-2 flex flex-col gap-1 max-h-[620px] overflow-y-auto">
           <p className="text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wide px-1 mb-1">Elementos</p>
           {PALETTE.map(item => (
-            <button key={item.id} onClick={() => addPaletteItem(item)}
-              className="flex items-center gap-2 px-2 py-1.5 rounded-xl text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition text-left w-full">
+            <button
+              key={item.id}
+              draggable
+              onDragStart={e => {
+                dragItemId.current = item.id;
+                e.dataTransfer.effectAllowed = 'copy';
+                // ghost image
+                const ghost = document.createElement('div');
+                ghost.style.cssText = 'position:fixed;top:-200px;left:-200px;padding:4px 8px;background:#7c3aed;color:white;border-radius:8px;font-size:12px;font-weight:bold;white-space:nowrap;';
+                ghost.textContent = `${item.emoji} ${item.label}`;
+                document.body.appendChild(ghost);
+                e.dataTransfer.setDragImage(ghost, ghost.offsetWidth / 2, ghost.offsetHeight / 2);
+                setTimeout(() => document.body.removeChild(ghost), 0);
+              }}
+              onClick={() => addPaletteItem(item)}
+              className="flex items-center gap-2 px-2 py-1.5 rounded-xl text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 active:bg-purple-50 dark:active:bg-purple-900/20 transition text-left w-full cursor-grab active:cursor-grabbing select-none">
               <span className="text-base leading-none">{item.emoji}</span>
               <span className="truncate">{item.label}</span>
               {item.isBoothType && <span className="ml-auto text-[9px] text-purple-500 font-bold">LISTA</span>}
@@ -585,7 +616,12 @@ export default function EventCanvasEditor({ eventId, initialLayouts, availableVe
         </div>
 
         {/* Canvas */}
-        <div className="flex-1 overflow-auto rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950" style={{ minHeight: 620 }}>
+        <div
+          className="flex-1 overflow-auto rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950"
+          style={{ minHeight: 620 }}
+          onDragOver={e => { e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; }}
+          onDrop={handleCanvasDrop}
+        >
           {!fabricLoaded && <div className="flex items-center justify-center h-full text-slate-400 text-sm">Carregando editor…</div>}
           <canvas ref={canvasRef} className={fabricLoaded ? 'block' : 'hidden'} />
         </div>
