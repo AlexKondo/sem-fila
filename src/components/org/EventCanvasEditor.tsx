@@ -85,9 +85,10 @@ export default function EventCanvasEditor({ eventId, initialLayouts, availableVe
   const switchingRef = useRef(false);
   const addPaletteItemRef = useRef<(item: PaletteItem, x?: number, y?: number) => Promise<void>>(async () => {});
 
-  // Custom drag-from-palette state
+  // Custom drag-from-palette
   const [draggingItem, setDraggingItem] = useState<PaletteItem | null>(null);
   const ghostRef = useRef<HTMLDivElement | null>(null);
+  const draggingItemRef = useRef<PaletteItem | null>(null);
 
   // Color + zoom
   const [strokeColor, setStrokeColor] = useState('#1e293b');
@@ -333,52 +334,55 @@ export default function EventCanvasEditor({ eventId, initialLayouts, availableVe
   useEffect(() => { addPaletteItemRef.current = addPaletteItem; }, [addPaletteItem]);
   useEffect(() => { strokeColorRef.current = strokeColor; }, [strokeColor]);
 
-  // ── Custom palette drag ──
+  // ── Custom palette drag (listeners added synchronously in mousedown — no useEffect delay) ──
   const startPaletteDrag = useCallback((e: React.MouseEvent, item: PaletteItem) => {
     e.preventDefault();
+    draggingItemRef.current = item;
+    setDraggingItem(item);
+
     const ghost = document.createElement('div');
     ghost.style.cssText = `position:fixed;pointer-events:none;z-index:9999;padding:6px 12px;background:#7c3aed;color:white;border-radius:10px;font-size:12px;font-weight:bold;white-space:nowrap;opacity:0.92;transform:translate(-50%,-50%);left:${e.clientX}px;top:${e.clientY}px;box-shadow:0 4px 16px rgba(124,58,237,.4);`;
     ghost.textContent = `${item.emoji} ${item.label}`;
     document.body.appendChild(ghost);
     ghostRef.current = ghost;
-    setDraggingItem(item);
-  }, []);
 
-  useEffect(() => {
-    if (!draggingItem) return;
-
-    const onMove = (e: MouseEvent) => {
-      if (ghostRef.current) {
-        ghostRef.current.style.left = e.clientX + 'px';
-        ghostRef.current.style.top = e.clientY + 'px';
-      }
+    const onMove = (ev: MouseEvent) => {
+      ghost.style.left = ev.clientX + 'px';
+      ghost.style.top  = ev.clientY + 'px';
     };
 
-    const onUp = (e: MouseEvent) => {
-      if (ghostRef.current) { document.body.removeChild(ghostRef.current); ghostRef.current = null; }
-      const wrapper = canvasWrapperRef.current;
-      if (wrapper) {
-        const rect = wrapper.getBoundingClientRect();
-        if (e.clientX >= rect.left && e.clientX <= rect.right && e.clientY >= rect.top && e.clientY <= rect.bottom) {
-          const fc = fabricRef.current;
-          if (fc) {
-            const upper = fc.upperCanvasEl as HTMLElement;
-            const cr = upper.getBoundingClientRect();
-            const vpt = fc.viewportTransform ?? [1,0,0,1,0,0];
-            const z = fc.getZoom();
-            const x = (e.clientX - cr.left - vpt[4]) / z;
-            const y = (e.clientY - cr.top  - vpt[5]) / z;
-            addPaletteItemRef.current(draggingItem, x, y);
-          }
-        }
-      }
+    const onUp = (ev: MouseEvent) => {
+      document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('mouseup', onUp);
+      document.body.removeChild(ghost);
+      ghostRef.current = null;
       setDraggingItem(null);
+
+      const currentItem = draggingItemRef.current;
+      draggingItemRef.current = null;
+      if (!currentItem) return;
+
+      const wrapper = canvasWrapperRef.current;
+      const fc = fabricRef.current;
+      if (!wrapper || !fc) return;
+
+      const wRect = wrapper.getBoundingClientRect();
+      if (ev.clientX < wRect.left || ev.clientX > wRect.right || ev.clientY < wRect.top || ev.clientY > wRect.bottom) return;
+
+      // Convert screen coords → fabric canvas coords (handles zoom + pan)
+      const upper = fc.upperCanvasEl as HTMLElement;
+      const cr = upper.getBoundingClientRect();
+      const vpt: number[] = fc.viewportTransform ?? [1,0,0,1,0,0];
+      const z = fc.getZoom();
+      const x = (ev.clientX - cr.left  - vpt[4]) / z;
+      const y = (ev.clientY - cr.top   - vpt[5]) / z;
+      addPaletteItemRef.current(currentItem, x, y);
     };
 
+    // Attach immediately — no React render cycle needed
     document.addEventListener('mousemove', onMove);
     document.addEventListener('mouseup', onUp);
-    return () => { document.removeEventListener('mousemove', onMove); document.removeEventListener('mouseup', onUp); };
-  }, [draggingItem]);
+  }, []);
 
   // ── Booth label/fee editing (debounced save) ──
   const updateBoothField = useCallback((boothId: string, field: 'label' | 'fee', value: string) => {
