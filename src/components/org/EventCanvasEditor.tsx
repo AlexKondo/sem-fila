@@ -547,7 +547,7 @@ export default function EventCanvasEditor({ eventId, initialLayouts, availableVe
         sp = null; dr = null; setActiveTool('select');
       });
     }
-  }, [activeTool]);
+  }, [activeTool, fabricLoaded]);
 
   // ── Background image ──
   const handleBgUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
