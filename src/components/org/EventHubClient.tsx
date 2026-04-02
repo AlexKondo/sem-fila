@@ -287,7 +287,12 @@ export default function EventHubClient({
 
   const handleCellMouseDown = useCallback((x: number, y: number) => {
     if (placingBooth) {
-      addBooth(x, y);
+      const existing = booths.find(b => b.position_x === x && b.position_y === y);
+      if (existing) {
+        deleteBooth(existing.id);
+      } else {
+        addBooth(x, y);
+      }
       return;
     }
     if (drawType) {
