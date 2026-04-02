@@ -354,7 +354,7 @@ export default function EventCanvasEditor({ eventId, initialLayouts, availableVe
     const onUp = (ev: MouseEvent) => {
       document.removeEventListener('mousemove', onMove);
       document.removeEventListener('mouseup', onUp);
-      document.body.removeChild(ghost);
+      if (ghost.parentNode) document.body.removeChild(ghost);
       ghostRef.current = null;
       setDraggingItem(null);
 
@@ -362,21 +362,18 @@ export default function EventCanvasEditor({ eventId, initialLayouts, availableVe
       draggingItemRef.current = null;
       if (!currentItem) return;
 
-      const wrapper = canvasWrapperRef.current;
       const fc = fabricRef.current;
-      if (!wrapper || !fc) return;
+      if (!fc) return;
 
-      const wRect = wrapper.getBoundingClientRect();
-      if (ev.clientX < wRect.left || ev.clientX > wRect.right || ev.clientY < wRect.top || ev.clientY > wRect.bottom) return;
+      // Check if drop is over the Fabric canvas element
+      const lowerCanvas = fc.lowerCanvasEl as HTMLElement;
+      if (!lowerCanvas) return;
+      const cr = lowerCanvas.getBoundingClientRect();
+      if (ev.clientX < cr.left || ev.clientX > cr.right || ev.clientY < cr.top || ev.clientY > cr.bottom) return;
 
-      // Convert screen coords → fabric canvas coords (handles zoom + pan)
-      const upper = fc.upperCanvasEl as HTMLElement;
-      const cr = upper.getBoundingClientRect();
-      const vpt: number[] = fc.viewportTransform ?? [1,0,0,1,0,0];
-      const z = fc.getZoom();
-      const x = (ev.clientX - cr.left  - vpt[4]) / z;
-      const y = (ev.clientY - cr.top   - vpt[5]) / z;
-      addPaletteItemRef.current(currentItem, x, y);
+      // getPointer handles zoom + pan automatically
+      const pointer = fc.getPointer(ev);
+      addPaletteItemRef.current(currentItem, pointer.x, pointer.y);
     };
 
     // Attach immediately — no React render cycle needed
