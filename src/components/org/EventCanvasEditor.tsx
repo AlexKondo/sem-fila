@@ -399,6 +399,11 @@ export default function EventCanvasEditor({ eventId, initialLayouts, availableVe
     canvas.add(group);
     canvas.setActiveObject(group);
     canvas.renderAll();
+
+    // Auto-save canvas JSON so elements persist even without clicking Salvar
+    const json = canvas.toJSON(['data']);
+    await supabase.from('event_canvas_layouts').update({ canvas_data: json }).eq('id', activeId);
+    setLayouts(prev => prev.map(l => l.id === activeId ? { ...l, canvas_data: json } : l));
   }, [activeId, canvasBooths, eventId, supabase]);
 
   // Keep refs in sync
@@ -451,6 +456,29 @@ export default function EventCanvasEditor({ eventId, initialLayouts, availableVe
     document.addEventListener('mousemove', onMove);
     document.addEventListener('mouseup', onUp);
   }, []);
+
+  // ── Delete booth from list (removes DB record + canvas element if present) ──
+  const deleteBoothFromList = useCallback(async (boothId: string) => {
+    if (!confirm('Remover esta barraca?')) return;
+    // Remove canvas element if it exists
+    const canvas = fabricRef.current;
+    if (canvas) {
+      const obj = canvas.getObjects().find((o: any) => o.data?.boothId === boothId);
+      if (obj) {
+        switchingRef.current = true; // prevent double-delete via object:removed
+        canvas.remove(obj);
+        switchingRef.current = false;
+        canvas.renderAll();
+        // Re-save canvas after removal
+        const json = canvas.toJSON(['data']);
+        await supabase.from('event_canvas_layouts').update({ canvas_data: json }).eq('id', activeId);
+        setLayouts(prev => prev.map(l => l.id === activeId ? { ...l, canvas_data: json } : l));
+      }
+    }
+    await supabase.from('event_canvas_booths').delete().eq('id', boothId);
+    setCanvasBooths(prev => prev.filter(b => b.id !== boothId));
+    setBoothEdits(prev => { const n = { ...prev }; delete n[boothId]; return n; });
+  }, [activeId, supabase]);
 
   // ── Booth label/fee editing (debounced save) ──
   const updateBoothField = useCallback((boothId: string, field: 'label' | 'fee', value: string) => {
@@ -863,6 +891,17 @@ export default function EventCanvasEditor({ eventId, initialLayouts, availableVe
               onChange={e => handleOpacityChange(Number(e.target.value))}
               className="w-20 h-1 accent-purple-600" />
             <span className="text-xs text-slate-400 w-7">{Math.round(bgOpacity * 100)}%</span>
+            <button
+              onClick={() => {
+                const canvas = fabricRef.current;
+                if (!canvas) return;
+                const bg = canvas.getObjects().find((o: any) => o.data?.isBg);
+                if (bg) canvas.remove(bg);
+                canvas.renderAll();
+                setBgImage(null);
+              }}
+              title="Remover imagem de fundo"
+              className="w-7 h-7 rounded-lg text-xs bg-red-50 dark:bg-red-900/20 text-red-500 border border-red-200 dark:border-red-800 hover:bg-red-100 flex items-center justify-center">✕</button>
           </div>
         )}
 
@@ -984,6 +1023,11 @@ export default function EventCanvasEditor({ eventId, initialLayouts, availableVe
                         {isInviting ? 'Cancelar' : '✉ Convidar'}
                       </button>
                     )}
+                    {/* Delete booth from list */}
+                    <button
+                      onClick={() => deleteBoothFromList(booth.id)}
+                      title="Remover barraca"
+                      className="w-7 h-7 rounded-lg text-xs bg-red-50 dark:bg-red-900/20 text-red-500 border border-red-200 dark:border-red-800 hover:bg-red-100 flex items-center justify-center shrink-0">🗑</button>
                   </div>
 
                   {/* Invite form */}
