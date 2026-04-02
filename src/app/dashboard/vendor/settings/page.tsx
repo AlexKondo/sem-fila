@@ -8,6 +8,7 @@ import { RevenueReport, EfficiencyPanel, MenuAnalysisPanel, SupportPanel } from 
 import CollapsibleSection from '@/components/dashboard/CollapsibleSection';
 import VendorDashboardClient from '@/components/dashboard/VendorDashboardClient';
 import StaffPage from '@/app/dashboard/vendor/staff/page';
+import VendorEventPage from '@/app/dashboard/vendor/event/page';
 import { fetchDashboardData } from '@/lib/dashboard-data';
 
 const P = '#ec5b13';
@@ -126,6 +127,17 @@ export default async function VendorSettingsPage() {
               globalSummary={dashboardData.globalSummary}
               orderLimitAlert={dashboardData.orderLimitAlert}
             />
+          </CollapsibleSection>
+        </div>
+
+        {/* Evento (expandível) */}
+        <div className="mb-6">
+          <CollapsibleSection
+            title="Evento"
+            subtitle="Convites e barraca no evento"
+            icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>}
+          >
+            <VendorEventPage />
           </CollapsibleSection>
         </div>
 
