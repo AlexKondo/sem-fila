@@ -339,7 +339,15 @@ export default function EventCanvasEditor({ eventId, initialLayouts, availableVe
     const group = new fabric.Group([shape, label], {
       left: cx - item.width / 2, top: cy - item.height / 2,
       data: { type: item.id, label: item.label, boothId },
+      hasControls: true,
+      hasBorders: true,
     });
+    // Move rotation handle to bottom-center to avoid being clipped by canvas top edge
+    group.setControlsVisibility({ mtr: true });
+    if (group.controls?.mtr) {
+      group.controls.mtr.offsetY = 20;
+      group.controls.mtr.y = 0.5;
+    }
 
     canvas.add(group);
     canvas.setActiveObject(group);
@@ -674,9 +682,19 @@ export default function EventCanvasEditor({ eventId, initialLayouts, availableVe
         )}
 
         {selectedObj && (
-          <button onClick={deleteSelected} className="flex items-center gap-1 px-3 h-8 rounded-lg text-xs font-medium bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800 hover:bg-red-100 transition">
-            🗑 Deletar
-          </button>
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => { const c = fabricRef.current; const o = c?.getActiveObject(); if (!o) return; o.rotate((o.angle ?? 0) - 45); c.requestRenderAll(); }}
+              title="Girar −45°"
+              className="w-8 h-8 rounded-lg text-base bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 flex items-center justify-center">↺</button>
+            <button
+              onClick={() => { const c = fabricRef.current; const o = c?.getActiveObject(); if (!o) return; o.rotate((o.angle ?? 0) + 45); c.requestRenderAll(); }}
+              title="Girar +45°"
+              className="w-8 h-8 rounded-lg text-base bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 flex items-center justify-center">↻</button>
+            <button onClick={deleteSelected} className="flex items-center gap-1 px-3 h-8 rounded-lg text-xs font-medium bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800 hover:bg-red-100 transition">
+              🗑 Deletar
+            </button>
+          </div>
         )}
 
         <label className="flex items-center gap-1 px-3 h-8 rounded-lg text-xs font-medium bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 cursor-pointer transition">
