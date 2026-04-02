@@ -27,6 +27,12 @@ export default async function OrgEventDetailPage({ params }: { params: Promise<{
     .eq('event_id', eventId)
     .order('label');
 
+  // Busca células estruturais do layout
+  const { data: layoutCells } = await supabase
+    .from('event_layout_cells')
+    .select('*')
+    .eq('event_id', eventId);
+
   // Busca convites
   const { data: invitations } = await supabase
     .from('event_vendor_invitations')
@@ -90,6 +96,7 @@ export default async function OrgEventDetailPage({ params }: { params: Promise<{
         event={event}
         initialBooths={booths ?? []}
         initialInvitations={invitations ?? []}
+        initialLayoutCells={layoutCells ?? []}
         revenueData={revenueData}
         availableVendors={(allVendors ?? []).map(v => ({
           id: v.id,
