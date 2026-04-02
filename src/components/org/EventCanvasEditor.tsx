@@ -188,9 +188,11 @@ export default function EventCanvasEditor({ eventId, initialLayouts, availableVe
     const first = layouts.find(l => l.id === activeId);
     if (first?.canvas_data) {
       canvas.loadFromJSON(first.canvas_data, () => {
-        canvas.renderAll();
+        const bgObj = canvas.getObjects().find((o: any) => o.data?.isBg);
+        if (bgObj) { bgObj.set({ selectable: false, evented: false, opacity: bgOpacity }); setBgImage('loaded'); }
         const bg = canvas.backgroundImage;
-        if (bg) { bg.set('opacity', bgOpacity); canvas.renderAll(); setBgImage('loaded'); }
+        if (bg) { bg.set('opacity', bgOpacity); setBgImage('loaded'); }
+        canvas.renderAll();
       });
     }
     if (activeId) loadBooths(activeId);
@@ -213,6 +215,9 @@ export default function EventCanvasEditor({ eventId, initialLayouts, availableVe
         supabase.from('event_canvas_booths').delete().eq('id', boothId).then(() => {});
         setCanvasBooths(prev => prev.filter(b => b.id !== boothId));
         setBoothEdits(prev => { const n = { ...prev }; delete n[boothId]; return n; });
+      }
+      if (opt.target?.data?.isBg) {
+        setBgImage(null);
       }
     });
 
@@ -280,9 +285,11 @@ export default function EventCanvasEditor({ eventId, initialLayouts, availableVe
     const target = layouts.find(l => l.id === id);
     if (target?.canvas_data) {
       canvas.loadFromJSON(target.canvas_data, () => {
-        canvas.renderAll();
+        const bgObj = canvas.getObjects().find((o: any) => o.data?.isBg);
+        if (bgObj) { bgObj.set({ selectable: false, evented: false, opacity: bgOpacity }); setBgImage('loaded'); }
         const bg = canvas.backgroundImage;
-        if (bg) { bg.set('opacity', bgOpacity); canvas.renderAll(); setBgImage('loaded'); }
+        if (bg) { bg.set('opacity', bgOpacity); setBgImage('loaded'); }
+        canvas.renderAll();
         switchingRef.current = false;
       });
     } else {
@@ -657,8 +664,8 @@ export default function EventCanvasEditor({ eventId, initialLayouts, availableVe
           left, top,
           scaleX: scale, scaleY: scale,
           opacity: bgOpacity,
-          selectable: true,
-          evented: true,
+          selectable: false,
+          evented: false,
           data: { isBg: true },
         });
 
