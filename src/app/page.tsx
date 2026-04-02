@@ -39,7 +39,7 @@ export default async function LandingPage() {
               Bem-vindo, {firstName}
             </Link>
           ) : (
-            <Link href="/login" className="flex items-center gap-1.5 text-sm font-semibold text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors">
+            <Link href="/login-user" className="flex items-center gap-1.5 text-sm font-semibold text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors">
               <LogIn className="w-4 h-4" />
               Entrar
             </Link>
