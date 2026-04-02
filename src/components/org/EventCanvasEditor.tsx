@@ -798,7 +798,7 @@ export default function EventCanvasEditor({ eventId, initialLayouts, availableVe
       </div>
 
       {/* ── Toolbar ── */}
-      <div className="flex flex-wrap items-center gap-2 bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 p-3">
+      <div className="flex flex-wrap items-center gap-2 bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 p-3 sticky top-14 z-30 shadow-sm">
         {/* Tools */}
         <div className="flex gap-1 border-r border-slate-200 dark:border-slate-700 pr-3 mr-1">
           {([
