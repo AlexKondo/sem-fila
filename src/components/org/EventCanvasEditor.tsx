@@ -862,11 +862,11 @@ export default function EventCanvasEditor({ eventId, initialLayouts, availableVe
             <button
               onClick={() => { const c = fabricRef.current; const o = c?.getActiveObject(); if (!o) return; o.rotate((o.angle ?? 0) - 45); c.requestRenderAll(); }}
               title="Girar −45°"
-              className="w-8 h-8 rounded-lg text-base bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 flex items-center justify-center">↺</button>
+              className="w-8 h-8 rounded-lg text-base bg-blue-100 dark:bg-blue-900/30 hover:bg-blue-200 dark:hover:bg-blue-800/50 text-blue-600 dark:text-blue-400 flex items-center justify-center">↺</button>
             <button
               onClick={() => { const c = fabricRef.current; const o = c?.getActiveObject(); if (!o) return; o.rotate((o.angle ?? 0) + 45); c.requestRenderAll(); }}
               title="Girar +45°"
-              className="w-8 h-8 rounded-lg text-base bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 flex items-center justify-center">↻</button>
+              className="w-8 h-8 rounded-lg text-base bg-blue-100 dark:bg-blue-900/30 hover:bg-blue-200 dark:hover:bg-blue-800/50 text-blue-600 dark:text-blue-400 flex items-center justify-center">↻</button>
             {/* Copy / Paste */}
             <button onClick={copySelected} title="Copiar (Ctrl+C)"
               className="w-8 h-8 rounded-lg text-sm bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 flex items-center justify-center">⎘</button>
