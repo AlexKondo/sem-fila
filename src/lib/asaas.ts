@@ -129,7 +129,7 @@ export async function createCreditCardCharge(params: {
 
   return {
     paymentId: payment.id,
-    cardToken: payment.creditCardToken ?? undefined,
+    cardToken: payment.creditCardToken ?? payment.creditCard?.creditCardToken ?? undefined,
     cardLast4: payment.creditCard?.creditCardNumber?.slice(-4) ?? undefined,
   };
 }
