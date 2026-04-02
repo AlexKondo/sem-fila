@@ -119,6 +119,8 @@ export default function EventCanvasEditor({ eventId, initialLayouts, availableVe
   const [bgImage, setBgImage] = useState<string | null>(null);
   const [activeTool, setActiveTool] = useState<'select' | 'text' | 'arrow' | 'rect'>('select');
   const [selectedObj, setSelectedObj] = useState(false);
+  const [selectedColor, setSelectedColor] = useState<string | null>(null);
+  const clipboardRef = useRef<any>(null);
 
   const arrowStartRef = useRef<{ x: number; y: number } | null>(null);
   const drawingArrowRef = useRef<any>(null);
@@ -184,9 +186,15 @@ export default function EventCanvasEditor({ eventId, initialLayouts, availableVe
     }
     if (activeId) loadBooths(activeId);
 
-    canvas.on('selection:created', () => setSelectedObj(true));
-    canvas.on('selection:updated', () => setSelectedObj(true));
-    canvas.on('selection:cleared', () => setSelectedObj(false));
+    const syncSelectedColor = () => {
+      const obj = canvas.getActiveObject();
+      if (!obj) { setSelectedColor(null); return; }
+      const color = obj.stroke || obj.fill || obj.get?.('fill') || null;
+      setSelectedColor(typeof color === 'string' && color !== 'transparent' ? color : null);
+    };
+    canvas.on('selection:created', () => { setSelectedObj(true); syncSelectedColor(); });
+    canvas.on('selection:updated', () => { setSelectedObj(true); syncSelectedColor(); });
+    canvas.on('selection:cleared', () => { setSelectedObj(false); setSelectedColor(null); });
 
     // Delete booth from DB when element is removed from canvas
     canvas.on('object:removed', (opt: any) => {
@@ -592,15 +600,46 @@ export default function EventCanvasEditor({ eventId, initialLayouts, availableVe
     canvas.discardActiveObject(); canvas.renderAll();
   }, []);
 
+  // ── Copy / Paste ──
+  const copySelected = useCallback(() => {
+    const canvas = fabricRef.current;
+    if (!canvas) return;
+    const obj = canvas.getActiveObject();
+    if (!obj) return;
+    obj.clone((cloned: any) => { clipboardRef.current = cloned; });
+  }, []);
+
+  const pasteClipboard = useCallback(() => {
+    const canvas = fabricRef.current;
+    if (!canvas || !clipboardRef.current) return;
+    clipboardRef.current.clone((cloned: any) => {
+      canvas.discardActiveObject();
+      cloned.set({ left: (cloned.left ?? 0) + 20, top: (cloned.top ?? 0) + 20, evented: true });
+      if (cloned.type === 'activeSelection') {
+        cloned.canvas = canvas;
+        cloned.forEachObject((obj: any) => canvas.add(obj));
+        cloned.setCoords();
+      } else {
+        canvas.add(cloned);
+      }
+      // Shift clipboard so each subsequent paste offsets further
+      clipboardRef.current.left = (clipboardRef.current.left ?? 0) + 20;
+      clipboardRef.current.top  = (clipboardRef.current.top  ?? 0) + 20;
+      canvas.setActiveObject(cloned);
+      canvas.requestRenderAll();
+    });
+  }, []);
+
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      if ((e.key === 'Delete' || e.key === 'Backspace') &&
-          document.activeElement?.tagName !== 'INPUT' &&
-          document.activeElement?.tagName !== 'TEXTAREA') deleteSelected();
+      if (document.activeElement?.tagName === 'INPUT' || document.activeElement?.tagName === 'TEXTAREA') return;
+      if (e.key === 'Delete' || e.key === 'Backspace') deleteSelected();
+      if ((e.ctrlKey || e.metaKey) && e.key === 'c') { e.preventDefault(); copySelected(); }
+      if ((e.ctrlKey || e.metaKey) && e.key === 'v') { e.preventDefault(); pasteClipboard(); }
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, [deleteSelected]);
+  }, [deleteSelected, copySelected, pasteClipboard]);
 
   const activeLayout = layouts.find(l => l.id === activeId);
   const inviteBooth = canvasBooths.find(b => b.id === inviteBoothId);
@@ -682,7 +721,37 @@ export default function EventCanvasEditor({ eventId, initialLayouts, availableVe
         )}
 
         {selectedObj && (
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1 flex-wrap">
+            {/* Color picker for selected object */}
+            {selectedColor !== null && (
+              <div className="flex items-center gap-1.5 border-r border-slate-200 dark:border-slate-700 pr-2 mr-1">
+                <span className="text-xs text-slate-500 dark:text-slate-400">Cor</span>
+                <input
+                  type="color"
+                  value={selectedColor}
+                  onChange={e => {
+                    const color = e.target.value;
+                    setSelectedColor(color);
+                    const canvas = fabricRef.current;
+                    const obj = canvas?.getActiveObject();
+                    if (!obj) return;
+                    // Apply to all relevant properties depending on object type
+                    const apply = (o: any) => {
+                      if (o.type === 'group') { o.getObjects().forEach(apply); return; }
+                      if (o.stroke && o.stroke !== 'transparent') o.set('stroke', color);
+                      if (o.fill && o.fill !== 'transparent' && o.type !== 'rect') o.set('fill', color);
+                      if (o.type === 'i-text' || o.type === 'text') o.set('fill', color);
+                      if (o.type === 'rect') { o.set('stroke', color); o.set('fill', color + '22'); }
+                    };
+                    apply(obj);
+                    canvas?.requestRenderAll();
+                  }}
+                  title="Cor do elemento"
+                  className="w-7 h-7 rounded-lg cursor-pointer border border-slate-200 dark:border-slate-700 p-0.5 bg-white dark:bg-slate-800"
+                />
+              </div>
+            )}
+            {/* Rotate */}
             <button
               onClick={() => { const c = fabricRef.current; const o = c?.getActiveObject(); if (!o) return; o.rotate((o.angle ?? 0) - 45); c.requestRenderAll(); }}
               title="Girar −45°"
@@ -691,6 +760,12 @@ export default function EventCanvasEditor({ eventId, initialLayouts, availableVe
               onClick={() => { const c = fabricRef.current; const o = c?.getActiveObject(); if (!o) return; o.rotate((o.angle ?? 0) + 45); c.requestRenderAll(); }}
               title="Girar +45°"
               className="w-8 h-8 rounded-lg text-base bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 flex items-center justify-center">↻</button>
+            {/* Copy / Paste */}
+            <button onClick={copySelected} title="Copiar (Ctrl+C)"
+              className="w-8 h-8 rounded-lg text-sm bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 flex items-center justify-center">⎘</button>
+            <button onClick={pasteClipboard} title="Colar (Ctrl+V)"
+              className="w-8 h-8 rounded-lg text-sm bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 flex items-center justify-center">📋</button>
+            {/* Delete */}
             <button onClick={deleteSelected} className="flex items-center gap-1 px-3 h-8 rounded-lg text-xs font-medium bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800 hover:bg-red-100 transition">
               🗑 Deletar
             </button>
