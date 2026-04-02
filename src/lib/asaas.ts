@@ -120,6 +120,13 @@ export async function createCreditCardCharge(params: {
   const payment = await res.json();
   if (!payment.id) throw new Error(`Asaas card error: ${JSON.stringify(payment)}`);
 
+  console.log('[Asaas] card charge response fields:', {
+    id: payment.id,
+    creditCardToken: payment.creditCardToken,
+    creditCard: payment.creditCard,
+    status: payment.status,
+  });
+
   return {
     paymentId: payment.id,
     cardToken: payment.creditCardToken ?? undefined,
