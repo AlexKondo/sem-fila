@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { createClient } from '@/lib/supabase/client';
-import { Send, Users, LayoutGrid, DollarSign, Plus, Trash2, X, Shuffle, Minus, Square } from 'lucide-react';
+import { Send, Users, LayoutGrid, DollarSign, Plus, Trash2, Shuffle, Minus, Square } from 'lucide-react';
 
 type Booth = {
   id: string;
@@ -160,7 +160,6 @@ export default function EventHubClient({
   const [savingConfigs, setSavingConfigs] = useState(false);
 
   const GRID_SIZE = 12;
-  const [boothLabel, setBoothLabel] = useState('');
   const [placingBooth, setPlacingBooth] = useState(false);
   const [drawType, setDrawType] = useState<LayoutCellType | null>(null);
 
@@ -231,7 +230,7 @@ export default function EventHubClient({
   }, []);
 
   const addBooth = useCallback(async (x: number, y: number) => {
-    const label = boothLabel.trim() || String.fromCharCode(65 + y) + (x + 1);
+    const label = String.fromCharCode(65 + y) + (x + 1);
     const supabase = createClient();
     const { data, error } = await supabase.from('event_booths').insert({
       event_id: event.id,
@@ -242,8 +241,7 @@ export default function EventHubClient({
 
     if (error) { alert(error.message); return; }
     setBooths(prev => [...prev, data as Booth]);
-    setBoothLabel('');
-  }, [boothLabel, event.id]);
+  }, [event.id]);
 
   const deleteBooth = useCallback(async (id: string) => {
     const supabase = createClient();
@@ -541,19 +539,11 @@ export default function EventHubClient({
                 <Plus className="w-4 h-4" /> {placingBooth ? 'Clique no grid...' : 'Barraca'}
               </button>
 
-              {placingBooth && (
-                <input
-                  placeholder="Rótulo (ex: A1)"
-                  value={boothLabel} onChange={e => setBoothLabel(e.target.value)}
-                  className="border border-gray-200 dark:border-slate-700 rounded-xl px-3 py-2 text-sm w-28 focus:outline-none focus:ring-2 focus:ring-purple-400 bg-white dark:bg-slate-950 text-slate-900 dark:text-white"
-                />
-              )}
-
               {/* Draw type buttons */}
               {DRAW_TYPES.map(dt => (
                 <button
                   key={dt.type}
-                  onClick={() => { setDrawType(drawType === dt.type ? null : dt.type); setPlacingBooth(false); setBoothLabel(''); }}
+                  onClick={() => { setDrawType(drawType === dt.type ? null : dt.type); setPlacingBooth(false); }}
                   className={"flex items-center gap-1 px-3 py-2 rounded-xl text-sm font-medium transition " + (drawType === dt.type ? dt.activeClass : dt.idleClass)}
                 >
                   {dt.type === 'corridor' && <Minus className="w-3.5 h-3.5" />}
@@ -601,16 +591,11 @@ export default function EventHubClient({
                   return (
                     <div
                       key={idx}
-                      className={"aspect-square rounded-lg flex items-center justify-center text-[9px] font-bold relative group cursor-pointer transition-all " + (booth.status === 'confirmed' ? "bg-green-200 dark:bg-green-600/60 text-green-800 dark:text-green-100" : booth.status === 'reserved' ? "bg-yellow-200 dark:bg-yellow-600/60 text-yellow-800 dark:text-yellow-100" : "bg-purple-200 dark:bg-purple-600/60 text-purple-800 dark:text-purple-100")}
+                      onMouseDown={() => handleCellMouseDown(x, y)}
+                      className={"aspect-square rounded-lg flex items-center justify-center text-[9px] font-bold transition-all " + (placingBooth ? "cursor-pointer " : "") + (booth.status === 'confirmed' ? "bg-green-200 dark:bg-green-600/60 text-green-800 dark:text-green-100" : booth.status === 'reserved' ? "bg-yellow-200 dark:bg-yellow-600/60 text-yellow-800 dark:text-yellow-100" : "bg-purple-200 dark:bg-purple-600/60 text-purple-800 dark:text-purple-100")}
                       title={booth.label + (booth.vendors?.name ? " - " + booth.vendors.name : '')}
                     >
                       {booth.label}
-                      <button
-                        onClick={() => deleteBooth(booth.id)}
-                        className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white rounded-full items-center justify-center text-[8px] hidden group-hover:flex shadow-sm"
-                      >
-                        <X className="w-2.5 h-2.5" />
-                      </button>
                     </div>
                   );
                 }
