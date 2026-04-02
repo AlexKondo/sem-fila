@@ -79,11 +79,20 @@ interface Props {
 // ── Component ──────────────────────────────────────────────────────────────
 export default function EventCanvasEditor({ eventId, initialLayouts, availableVendors }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const canvasWrapperRef = useRef<HTMLDivElement>(null);
   const fabricRef = useRef<any>(null);
   const [fabricLoaded, setFabricLoaded] = useState(false);
-  const switchingRef = useRef(false); // prevents object:removed from deleting during layout switch
+  const switchingRef = useRef(false);
   const addPaletteItemRef = useRef<(item: PaletteItem, x?: number, y?: number) => Promise<void>>(async () => {});
-  const dragItemId = useRef<string | null>(null);
+
+  // Custom drag-from-palette state
+  const [draggingItem, setDraggingItem] = useState<PaletteItem | null>(null);
+  const ghostRef = useRef<HTMLDivElement | null>(null);
+
+  // Color + zoom
+  const [strokeColor, setStrokeColor] = useState('#1e293b');
+  const strokeColorRef = useRef('#1e293b');
+  const [zoom, setZoom] = useState(100);
 
   const [layouts, setLayouts] = useState<CanvasLayout[]>(initialLayouts);
   const [activeId, setActiveId] = useState<string | null>(initialLayouts[0]?.id ?? null);
@@ -173,28 +182,19 @@ export default function EventCanvasEditor({ eventId, initialLayouts, availableVe
       }
     });
 
-    // Drag-and-drop from palette — attach directly to Fabric's wrapper element
-    const fabricWrapper = canvas.wrapperEl as HTMLElement;
-    const onDragOver = (e: DragEvent) => { e.preventDefault(); if (e.dataTransfer) e.dataTransfer.dropEffect = 'copy'; };
-    const onDrop = (e: DragEvent) => {
-      e.preventDefault();
-      const itemId = dragItemId.current;
-      if (!itemId) return;
-      dragItemId.current = null;
-      const item = PALETTE_BY_ID[itemId];
-      if (!item) return;
-      const rect = fabricWrapper.getBoundingClientRect();
-      addPaletteItemRef.current(item, e.clientX - rect.left, e.clientY - rect.top);
-    };
-    fabricWrapper.addEventListener('dragover', onDragOver);
-    fabricWrapper.addEventListener('drop', onDrop);
+    // Mouse-wheel zoom
+    canvas.on('mouse:wheel', (opt: any) => {
+      const delta = opt.e.deltaY;
+      let z = canvas.getZoom();
+      z *= 0.999 ** delta;
+      z = Math.min(Math.max(z, 0.1), 8);
+      canvas.zoomToPoint({ x: opt.e.offsetX, y: opt.e.offsetY }, z);
+      setZoom(Math.round(z * 100));
+      opt.e.preventDefault();
+      opt.e.stopPropagation();
+    });
 
-    return () => {
-      fabricWrapper.removeEventListener('dragover', onDragOver);
-      fabricWrapper.removeEventListener('drop', onDrop);
-      canvas.dispose();
-      fabricRef.current = null;
-    };
+    return () => { canvas.dispose(); fabricRef.current = null; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fabricLoaded]);
 
@@ -329,8 +329,56 @@ export default function EventCanvasEditor({ eventId, initialLayouts, availableVe
     canvas.renderAll();
   }, [activeId, canvasBooths, eventId, supabase]);
 
-  // Keep ref in sync so canvas drop handler always calls latest version
+  // Keep refs in sync
   useEffect(() => { addPaletteItemRef.current = addPaletteItem; }, [addPaletteItem]);
+  useEffect(() => { strokeColorRef.current = strokeColor; }, [strokeColor]);
+
+  // ── Custom palette drag ──
+  const startPaletteDrag = useCallback((e: React.MouseEvent, item: PaletteItem) => {
+    e.preventDefault();
+    const ghost = document.createElement('div');
+    ghost.style.cssText = `position:fixed;pointer-events:none;z-index:9999;padding:6px 12px;background:#7c3aed;color:white;border-radius:10px;font-size:12px;font-weight:bold;white-space:nowrap;opacity:0.92;transform:translate(-50%,-50%);left:${e.clientX}px;top:${e.clientY}px;box-shadow:0 4px 16px rgba(124,58,237,.4);`;
+    ghost.textContent = `${item.emoji} ${item.label}`;
+    document.body.appendChild(ghost);
+    ghostRef.current = ghost;
+    setDraggingItem(item);
+  }, []);
+
+  useEffect(() => {
+    if (!draggingItem) return;
+
+    const onMove = (e: MouseEvent) => {
+      if (ghostRef.current) {
+        ghostRef.current.style.left = e.clientX + 'px';
+        ghostRef.current.style.top = e.clientY + 'px';
+      }
+    };
+
+    const onUp = (e: MouseEvent) => {
+      if (ghostRef.current) { document.body.removeChild(ghostRef.current); ghostRef.current = null; }
+      const wrapper = canvasWrapperRef.current;
+      if (wrapper) {
+        const rect = wrapper.getBoundingClientRect();
+        if (e.clientX >= rect.left && e.clientX <= rect.right && e.clientY >= rect.top && e.clientY <= rect.bottom) {
+          const fc = fabricRef.current;
+          if (fc) {
+            const upper = fc.upperCanvasEl as HTMLElement;
+            const cr = upper.getBoundingClientRect();
+            const vpt = fc.viewportTransform ?? [1,0,0,1,0,0];
+            const z = fc.getZoom();
+            const x = (e.clientX - cr.left - vpt[4]) / z;
+            const y = (e.clientY - cr.top  - vpt[5]) / z;
+            addPaletteItemRef.current(draggingItem, x, y);
+          }
+        }
+      }
+      setDraggingItem(null);
+    };
+
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onUp);
+    return () => { document.removeEventListener('mousemove', onMove); document.removeEventListener('mouseup', onUp); };
+  }, [draggingItem]);
 
   // ── Booth label/fee editing (debounced save) ──
   const updateBoothField = useCallback((boothId: string, field: 'label' | 'fee', value: string) => {
@@ -395,7 +443,7 @@ export default function EventCanvasEditor({ eventId, initialLayouts, availableVe
         const fabric = (window as any).__fabric;
         const p = canvas.getPointer(opt.e);
         const text = new fabric.IText('Texto', {
-          left: p.x, top: p.y, fontSize: 16, fill: '#1e293b', fontFamily: 'Inter, sans-serif', editable: true,
+          left: p.x, top: p.y, fontSize: 16, fill: strokeColorRef.current, fontFamily: 'Inter, sans-serif', editable: true,
         });
         canvas.add(text); canvas.setActiveObject(text); text.enterEditing(); text.selectAll();
         setActiveTool('select');
@@ -407,7 +455,7 @@ export default function EventCanvasEditor({ eventId, initialLayouts, availableVe
         const p = canvas.getPointer(opt.e);
         arrowStartRef.current = { x: p.x, y: p.y };
         const fabric = (window as any).__fabric;
-        const line = new fabric.Line([p.x, p.y, p.x, p.y], { stroke: '#1e293b', strokeWidth: 2, selectable: false });
+        const line = new fabric.Line([p.x, p.y, p.x, p.y], { stroke: strokeColorRef.current, strokeWidth: 2, selectable: false });
         drawingArrowRef.current = line; canvas.add(line);
       });
       canvas.on('mouse:move', (opt: any) => {
@@ -425,8 +473,9 @@ export default function EventCanvasEditor({ eventId, initialLayouts, availableVe
         const len = Math.sqrt(dx * dx + dy * dy);
         if (len < 10) { arrowStartRef.current = null; drawingArrowRef.current = null; return; }
         const angle = Math.atan2(dy, dx) * 180 / Math.PI;
-        const line = new fabric.Line([0, 0, len, 0], { stroke: '#1e293b', strokeWidth: 2, originX: 'left', originY: 'center' });
-        const head = new fabric.Triangle({ width: 12, height: 14, fill: '#1e293b', left: len - 6, top: 0, originX: 'center', originY: 'center', angle: 90 });
+        const col = strokeColorRef.current;
+        const line = new fabric.Line([0, 0, len, 0], { stroke: col, strokeWidth: 2, originX: 'left', originY: 'center' });
+        const head = new fabric.Triangle({ width: 12, height: 14, fill: col, left: len - 6, top: 0, originX: 'center', originY: 'center', angle: 90 });
         canvas.add(new fabric.Group([line, head], { left: s.x, top: s.y, angle, originX: 'left', originY: 'center' }));
         arrowStartRef.current = null; drawingArrowRef.current = null;
         setActiveTool('select');
@@ -438,7 +487,8 @@ export default function EventCanvasEditor({ eventId, initialLayouts, availableVe
       canvas.on('mouse:down', (opt: any) => {
         const p = canvas.getPointer(opt.e); sp = { x: p.x, y: p.y };
         const fabric = (window as any).__fabric;
-        dr = new fabric.Rect({ left: p.x, top: p.y, width: 0, height: 0, fill: 'rgba(100,116,139,0.15)', stroke: '#64748b', strokeWidth: 1.5, selectable: false });
+        const col = strokeColorRef.current;
+        dr = new fabric.Rect({ left: p.x, top: p.y, width: 0, height: 0, fill: col + '22', stroke: col, strokeWidth: 1.5, selectable: false });
         canvas.add(dr);
       });
       canvas.on('mouse:move', (opt: any) => {
@@ -550,6 +600,7 @@ export default function EventCanvasEditor({ eventId, initialLayouts, availableVe
 
       {/* ── Toolbar ── */}
       <div className="flex flex-wrap items-center gap-2 bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 p-3">
+        {/* Tools */}
         <div className="flex gap-1 border-r border-slate-200 dark:border-slate-700 pr-3 mr-1">
           {([
             { key: 'select', label: 'Selecionar', icon: '↖' },
@@ -564,6 +615,19 @@ export default function EventCanvasEditor({ eventId, initialLayouts, availableVe
           ))}
         </div>
 
+        {/* Color picker (shown for drawing tools) */}
+        {activeTool !== 'select' && (
+          <div className="flex items-center gap-1.5 border-r border-slate-200 dark:border-slate-700 pr-3 mr-1">
+            <span className="text-xs text-slate-500 dark:text-slate-400">Cor</span>
+            <input
+              type="color" value={strokeColor}
+              onChange={e => setStrokeColor(e.target.value)}
+              title="Cor do elemento"
+              className="w-7 h-7 rounded-lg cursor-pointer border border-slate-200 dark:border-slate-700 p-0.5 bg-white dark:bg-slate-800"
+            />
+          </div>
+        )}
+
         {selectedObj && (
           <button onClick={deleteSelected} className="flex items-center gap-1 px-3 h-8 rounded-lg text-xs font-medium bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800 hover:bg-red-100 transition">
             🗑 Deletar
@@ -577,13 +641,29 @@ export default function EventCanvasEditor({ eventId, initialLayouts, availableVe
 
         {bgImage && (
           <div className="flex items-center gap-2">
-            <span className="text-xs text-slate-500">Opacidade</span>
+            <span className="text-xs text-slate-500">Opac.</span>
             <input type="range" min={0} max={1} step={0.05} value={bgOpacity}
               onChange={e => handleOpacityChange(Number(e.target.value))}
-              className="w-24 h-1 accent-purple-600" />
-            <span className="text-xs text-slate-400 w-8">{Math.round(bgOpacity * 100)}%</span>
+              className="w-20 h-1 accent-purple-600" />
+            <span className="text-xs text-slate-400 w-7">{Math.round(bgOpacity * 100)}%</span>
           </div>
         )}
+
+        {/* Zoom controls */}
+        <div className="flex items-center gap-1 border-l border-slate-200 dark:border-slate-700 pl-3 ml-1">
+          <button
+            onClick={() => { const c = fabricRef.current; if (!c) return; const z = Math.max(c.getZoom() * 0.8, 0.1); c.setZoom(z); setZoom(Math.round(z * 100)); }}
+            className="w-7 h-7 rounded-lg text-base bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 font-bold flex items-center justify-center leading-none">−</button>
+          <button
+            onClick={() => { const c = fabricRef.current; if (!c) return; c.setZoom(1); c.setViewportTransform([1,0,0,1,0,0]); setZoom(100); }}
+            title="Resetar zoom"
+            className="px-2 h-7 rounded-lg text-xs bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400 font-medium min-w-[46px] text-center tabular-nums">
+            {zoom}%
+          </button>
+          <button
+            onClick={() => { const c = fabricRef.current; if (!c) return; const z = Math.min(c.getZoom() * 1.25, 8); c.setZoom(z); setZoom(Math.round(z * 100)); }}
+            className="w-7 h-7 rounded-lg text-base bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 font-bold flex items-center justify-center leading-none">+</button>
+        </div>
 
         <div className="ml-auto flex items-center gap-2">
           {activeLayout && <span className="text-xs text-slate-400 hidden sm:block">{activeLayout.name}</span>}
@@ -597,25 +677,15 @@ export default function EventCanvasEditor({ eventId, initialLayouts, availableVe
       {/* ── Canvas + Palette ── */}
       <div className="flex gap-3">
         {/* Palette */}
-        <div className="w-36 shrink-0 bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 p-2 flex flex-col gap-1 max-h-[620px] overflow-y-auto">
+        <div className="w-36 shrink-0 bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 p-2 flex flex-col gap-1 max-h-[620px] overflow-y-auto select-none">
           <p className="text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wide px-1 mb-1">Elementos</p>
+          <p className="text-[10px] text-slate-400 dark:text-slate-600 px-1 mb-1">Arraste ou clique</p>
           {PALETTE.map(item => (
             <button
               key={item.id}
-              draggable
-              onDragStart={e => {
-                dragItemId.current = item.id;
-                e.dataTransfer.effectAllowed = 'copy';
-                // ghost image
-                const ghost = document.createElement('div');
-                ghost.style.cssText = 'position:fixed;top:-200px;left:-200px;padding:4px 8px;background:#7c3aed;color:white;border-radius:8px;font-size:12px;font-weight:bold;white-space:nowrap;';
-                ghost.textContent = `${item.emoji} ${item.label}`;
-                document.body.appendChild(ghost);
-                e.dataTransfer.setDragImage(ghost, ghost.offsetWidth / 2, ghost.offsetHeight / 2);
-                setTimeout(() => document.body.removeChild(ghost), 0);
-              }}
+              onMouseDown={e => startPaletteDrag(e, item)}
               onClick={() => addPaletteItem(item)}
-              className="flex items-center gap-2 px-2 py-1.5 rounded-xl text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 active:bg-purple-50 dark:active:bg-purple-900/20 transition text-left w-full cursor-grab active:cursor-grabbing select-none">
+              className={`flex items-center gap-2 px-2 py-1.5 rounded-xl text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-purple-50 dark:hover:bg-purple-900/20 transition text-left w-full cursor-grab active:cursor-grabbing ${draggingItem?.id === item.id ? 'bg-purple-100 dark:bg-purple-900/30' : ''}`}>
               <span className="text-base leading-none">{item.emoji}</span>
               <span className="truncate">{item.label}</span>
               {item.isBoothType && <span className="ml-auto text-[9px] text-purple-500 font-bold">LISTA</span>}
@@ -623,11 +693,11 @@ export default function EventCanvasEditor({ eventId, initialLayouts, availableVe
           ))}
         </div>
 
-        {/* Canvas */}
+        {/* Canvas wrapper */}
         <div
-          className="flex-1 overflow-auto rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950"
+          ref={canvasWrapperRef}
+          className={`flex-1 overflow-auto rounded-2xl border bg-slate-50 dark:bg-slate-950 transition-colors ${draggingItem ? 'border-purple-400 dark:border-purple-600 ring-2 ring-purple-400/30' : 'border-slate-200 dark:border-slate-700'}`}
           style={{ minHeight: 620 }}
-          onDragOver={e => e.preventDefault()}
         >
           {!fabricLoaded && <div className="flex items-center justify-center h-full text-slate-400 text-sm">Carregando editor…</div>}
           <canvas ref={canvasRef} className={fabricLoaded ? 'block' : 'hidden'} />
