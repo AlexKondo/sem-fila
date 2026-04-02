@@ -207,6 +207,11 @@ export default function EventCanvasEditor({ eventId, initialLayouts, availableVe
       }
     });
 
+    // Keep background image always at the back after any modification
+    canvas.on('object:modified', (opt: any) => {
+      if (opt.target?.data?.isBg) canvas.sendToBack(opt.target);
+    });
+
     // Mouse-wheel zoom
     canvas.on('mouse:wheel', (opt: any) => {
       const delta = opt.e.deltaY;
@@ -575,9 +580,29 @@ export default function EventCanvasEditor({ eventId, initialLayouts, availableVe
     reader.onload = (ev) => {
       const url = ev.target?.result as string;
       fabric.Image.fromURL(url, (img: any) => {
-        const scale = Math.min(canvas.width / img.width, canvas.height / img.height);
-        img.set({ scaleX: scale, scaleY: scale, opacity: bgOpacity, selectable: false, evented: false });
-        canvas.setBackgroundImage(img, canvas.renderAll.bind(canvas));
+        // Remove existing background image object if any
+        const existing = canvas.getObjects().find((o: any) => o.data?.isBg);
+        if (existing) canvas.remove(existing);
+
+        // Scale to fill canvas fully (cover), centered
+        const scaleX = canvas.width  / img.width;
+        const scaleY = canvas.height / img.height;
+        const scale  = Math.max(scaleX, scaleY); // cover (no white space)
+        const left   = (canvas.width  - img.width  * scale) / 2;
+        const top    = (canvas.height - img.height * scale) / 2;
+
+        img.set({
+          left, top,
+          scaleX: scale, scaleY: scale,
+          opacity: bgOpacity,
+          selectable: true,
+          evented: true,
+          data: { isBg: true },
+        });
+
+        canvas.add(img);
+        canvas.sendToBack(img);
+        canvas.renderAll();
         setBgImage(url);
       });
     };
@@ -588,7 +613,7 @@ export default function EventCanvasEditor({ eventId, initialLayouts, availableVe
     setBgOpacity(val);
     const canvas = fabricRef.current;
     if (!canvas) return;
-    const bg = canvas.backgroundImage;
+    const bg = canvas.getObjects().find((o: any) => o.data?.isBg);
     if (bg) { bg.set('opacity', val); canvas.renderAll(); }
   }, []);
 
