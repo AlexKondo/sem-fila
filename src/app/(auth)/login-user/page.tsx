@@ -11,7 +11,7 @@ const P = '#ec5b13';
 function LoginUserContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const redirectTo = searchParams.get('redirect') ?? '/profile/orders';
+  const redirectTo = searchParams.get('redirect') ?? '/scan';
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
