@@ -132,6 +132,22 @@ export default function EventCanvasEditor({ eventId, initialLayouts, availableVe
     });
   }, []);
 
+  // ── Auto-create initial layout if none exist ──
+  useEffect(() => {
+    if (!fabricLoaded || layouts.length > 0) return;
+    supabase
+      .from('event_canvas_layouts')
+      .insert({ event_id: eventId, name: 'Layout 1', canvas_data: null })
+      .select('id, name, canvas_data')
+      .single()
+      .then(({ data }) => {
+        if (!data) return;
+        setLayouts([data]);
+        setActiveId(data.id);
+      });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fabricLoaded]);
+
   // ── Load booths for a layout ──
   const loadBooths = useCallback(async (layoutId: string) => {
     const { data } = await supabase
