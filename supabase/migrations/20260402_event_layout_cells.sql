@@ -14,24 +14,18 @@ CREATE INDEX IF NOT EXISTS idx_event_layout_cells_event ON public.event_layout_c
 
 ALTER TABLE public.event_layout_cells ENABLE ROW LEVEL SECURITY;
 
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.event_layout_cells TO authenticated;
+
 DROP POLICY IF EXISTS "event_layout_cells_owner" ON public.event_layout_cells;
 CREATE POLICY "event_layout_cells_owner" ON public.event_layout_cells
   FOR ALL TO authenticated
   USING (
-    EXISTS (
-      SELECT 1 FROM public.events e
-      JOIN public.organizations o ON o.id = e.organization_id
-      WHERE e.id = event_layout_cells.event_id
-        AND o.owner_id = auth.uid()
-    )
+    public.is_org_admin_of_event(event_id)
+    OR public.has_role('platform_admin')
   )
   WITH CHECK (
-    EXISTS (
-      SELECT 1 FROM public.events e
-      JOIN public.organizations o ON o.id = e.organization_id
-      WHERE e.id = event_layout_cells.event_id
-        AND o.owner_id = auth.uid()
-    )
+    public.is_org_admin_of_event(event_id)
+    OR public.has_role('platform_admin')
   );
 
 NOTIFY pgrst, 'reload schema';

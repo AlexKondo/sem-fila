@@ -243,7 +243,6 @@ export default function EventHubClient({
     if (error) { alert(error.message); return; }
     setBooths(prev => [...prev, data as Booth]);
     setBoothLabel('');
-    setPlacingBooth(false);
   }, [boothLabel, event.id]);
 
   const deleteBooth = useCallback(async (id: string) => {
