@@ -280,7 +280,7 @@ export default function OrderPage() {
         <h1 className="text-xl font-bold text-slate-900 dark:text-white">Meus Pedidos</h1>
       </header>
 
-      <main className="flex-1 max-w-lg mx-auto w-full px-4 py-6 pb-24 space-y-6">
+      <main className="flex-1 max-w-lg mx-auto w-full px-4 py-6 pb-[120px] space-y-6">
         {loading ? (
           <div className="flex flex-col items-center justify-center p-12 text-slate-400">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500 mb-4" />
