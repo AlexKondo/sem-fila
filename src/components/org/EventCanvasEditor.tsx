@@ -122,6 +122,15 @@ export default function EventCanvasEditor({ eventId, initialLayouts, availableVe
   const [selectedColor, setSelectedColor] = useState<string | null>(null);
   const clipboardRef = useRef<any>(null);
 
+  // Inline label editing (dblclick on canvas group)
+  const [editingLabel, setEditingLabel] = useState<{
+    obj: any;
+    firstLine: string;
+    customName: string;
+    boothId?: string;
+    screen: { left: number; top: number; width: number };
+  } | null>(null);
+
   const arrowStartRef = useRef<{ x: number; y: number } | null>(null);
   const drawingArrowRef = useRef<any>(null);
   const supabase = createClient();
@@ -222,6 +231,31 @@ export default function EventCanvasEditor({ eventId, initialLayouts, availableVe
       setZoom(Math.round(z * 100));
       opt.e.preventDefault();
       opt.e.stopPropagation();
+    });
+
+    // Double-click on a palette group → open inline label editor
+    canvas.on('mouse:dblclick', (opt: any) => {
+      const obj = opt.target;
+      if (!obj || obj.type !== 'group' || !obj.data?.type) return;
+      const textChild = obj.getObjects().find((o: any) => o.type === 'text');
+      if (!textChild) return;
+      const canvasEl = canvas.lowerCanvasEl as HTMLElement;
+      const canvasRect = canvasEl.getBoundingClientRect();
+      const br = obj.getBoundingRect(); // already in element-space (accounts for zoom+pan)
+      const lines = (textChild.text ?? '').split('\n');
+      const firstLine = lines[0] ?? '';
+      const customName = lines[1] ?? '';
+      setEditingLabel({
+        obj,
+        firstLine,
+        customName,
+        boothId: obj.data?.boothId,
+        screen: {
+          left: canvasRect.left + br.left,
+          top: canvasRect.top + br.top,
+          width: Math.max(br.width, 120),
+        },
+      });
     });
 
     return () => { canvas.dispose(); fabricRef.current = null; };
@@ -655,6 +689,26 @@ export default function EventCanvasEditor({ eventId, initialLayouts, availableVe
     });
   }, []);
 
+  const commitLabelEdit = useCallback(() => {
+    setEditingLabel(current => {
+      if (!current) return null;
+      const { obj, firstLine, customName, boothId } = current;
+      const newCustom = customName.trim();
+      const newText = newCustom ? `${firstLine}\n${newCustom}` : firstLine;
+      const textChild = obj.getObjects?.().find((o: any) => o.type === 'text');
+      if (textChild) {
+        textChild.set('text', newText);
+        obj.setCoords();
+        fabricRef.current?.requestRenderAll();
+      }
+      // Sync custom name to DB booth label
+      if (boothId && newCustom) {
+        updateBoothField(boothId, 'label', newCustom);
+      }
+      return null;
+    });
+  }, [updateBoothField]);
+
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (document.activeElement?.tagName === 'INPUT' || document.activeElement?.tagName === 'TEXTAREA') return;
@@ -983,6 +1037,35 @@ export default function EventCanvasEditor({ eventId, initialLayouts, availableVe
       <p className="text-xs text-slate-400 dark:text-slate-600 text-center">
         Elementos marcados com LISTA aparecem abaixo para gerenciamento · Duplo clique no nome da aba para renomear · Del remove selecionado
       </p>
+
+      {/* ── Inline label editor overlay (dblclick on canvas element) ── */}
+      {editingLabel && (
+        <div
+          style={{
+            position: 'fixed',
+            left: editingLabel.screen.left,
+            top: editingLabel.screen.top,
+            width: editingLabel.screen.width,
+            zIndex: 9999,
+          }}
+          className="bg-white dark:bg-slate-900 border border-purple-500 rounded-xl shadow-xl p-2"
+        >
+          <div className="text-[10px] text-slate-400 dark:text-slate-500 mb-1 px-1 truncate">{editingLabel.firstLine}</div>
+          <input
+            autoFocus
+            value={editingLabel.customName}
+            onChange={e => setEditingLabel(prev => prev ? { ...prev, customName: e.target.value } : null)}
+            onKeyDown={e => {
+              if (e.key === 'Enter') { e.preventDefault(); commitLabelEdit(); }
+              if (e.key === 'Escape') setEditingLabel(null);
+            }}
+            onBlur={commitLabelEdit}
+            placeholder="Nome personalizado…"
+            className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-2 py-1 text-xs text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-purple-500"
+          />
+          <p className="text-[9px] text-slate-400 mt-1 px-1">Enter para salvar · Esc para cancelar</p>
+        </div>
+      )}
     </div>
   );
 }
