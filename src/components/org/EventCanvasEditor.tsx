@@ -240,7 +240,9 @@ export default function EventCanvasEditor({ eventId, initialLayouts, availableVe
 
     // Double-click on a palette group → open inline label editor
     canvas.on('mouse:dblclick', (opt: any) => {
-      const obj = opt.target;
+      let obj = opt.target;
+      // Fabric.js v5 can return a sub-object (rect/text inside the group) instead of the group itself
+      if (obj && !obj.data?.type && obj.group?.data?.type) obj = obj.group;
       if (!obj || obj.type !== 'group' || !obj.data?.type) return;
       const textChild = obj.getObjects().find((o: any) => o.type === 'text');
       if (!textChild) return;
@@ -396,11 +398,26 @@ export default function EventCanvasEditor({ eventId, initialLayouts, availableVe
       hasControls: true,
       hasBorders: true,
     });
-    // Move rotation handle to bottom-center to avoid being clipped by canvas top edge
+    // Move rotation handle to bottom-center; render as orange circle
     group.setControlsVisibility({ mtr: true });
     if (group.controls?.mtr) {
       group.controls.mtr.offsetY = 20;
       group.controls.mtr.y = 0.5;
+      group.controls.mtr.sizeX = 18;
+      group.controls.mtr.sizeY = 18;
+      group.controls.mtr.render = function(ctx: any, left: number, top: number) {
+        ctx.save();
+        ctx.fillStyle = '#f97316';
+        ctx.strokeStyle = '#fff';
+        ctx.lineWidth = 2.5;
+        ctx.shadowColor = 'rgba(0,0,0,0.35)';
+        ctx.shadowBlur = 5;
+        ctx.beginPath();
+        ctx.arc(left, top, 9, 0, 2 * Math.PI);
+        ctx.fill();
+        ctx.stroke();
+        ctx.restore();
+      };
     }
 
     canvas.add(group);
