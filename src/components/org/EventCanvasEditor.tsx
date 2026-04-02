@@ -82,6 +82,8 @@ export default function EventCanvasEditor({ eventId, initialLayouts, availableVe
   const fabricRef = useRef<any>(null);
   const [fabricLoaded, setFabricLoaded] = useState(false);
   const switchingRef = useRef(false); // prevents object:removed from deleting during layout switch
+  const addPaletteItemRef = useRef<(item: PaletteItem, x?: number, y?: number) => Promise<void>>(async () => {});
+  const dragItemId = useRef<string | null>(null);
 
   const [layouts, setLayouts] = useState<CanvasLayout[]>(initialLayouts);
   const [activeId, setActiveId] = useState<string | null>(initialLayouts[0]?.id ?? null);
@@ -171,7 +173,28 @@ export default function EventCanvasEditor({ eventId, initialLayouts, availableVe
       }
     });
 
-    return () => { canvas.dispose(); fabricRef.current = null; };
+    // Drag-and-drop from palette — attach directly to Fabric's wrapper element
+    const fabricWrapper = canvas.wrapperEl as HTMLElement;
+    const onDragOver = (e: DragEvent) => { e.preventDefault(); if (e.dataTransfer) e.dataTransfer.dropEffect = 'copy'; };
+    const onDrop = (e: DragEvent) => {
+      e.preventDefault();
+      const itemId = dragItemId.current;
+      if (!itemId) return;
+      dragItemId.current = null;
+      const item = PALETTE_BY_ID[itemId];
+      if (!item) return;
+      const rect = fabricWrapper.getBoundingClientRect();
+      addPaletteItemRef.current(item, e.clientX - rect.left, e.clientY - rect.top);
+    };
+    fabricWrapper.addEventListener('dragover', onDragOver);
+    fabricWrapper.addEventListener('drop', onDrop);
+
+    return () => {
+      fabricWrapper.removeEventListener('dragover', onDragOver);
+      fabricWrapper.removeEventListener('drop', onDrop);
+      canvas.dispose();
+      fabricRef.current = null;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fabricLoaded]);
 
@@ -306,23 +329,8 @@ export default function EventCanvasEditor({ eventId, initialLayouts, availableVe
     canvas.renderAll();
   }, [activeId, canvasBooths, eventId, supabase]);
 
-  // ── Drag item from palette ──
-  const dragItemId = useRef<string | null>(null);
-
-  const handleCanvasDrop = useCallback((e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    const itemId = dragItemId.current;
-    if (!itemId) return;
-    dragItemId.current = null;
-    const item = PALETTE_BY_ID[itemId];
-    if (!item) return;
-    const canvasEl = canvasRef.current;
-    if (!canvasEl) return;
-    const rect = canvasEl.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    addPaletteItem(item, x, y);
-  }, [addPaletteItem]);
+  // Keep ref in sync so canvas drop handler always calls latest version
+  useEffect(() => { addPaletteItemRef.current = addPaletteItem; }, [addPaletteItem]);
 
   // ── Booth label/fee editing (debounced save) ──
   const updateBoothField = useCallback((boothId: string, field: 'label' | 'fee', value: string) => {
@@ -619,8 +627,7 @@ export default function EventCanvasEditor({ eventId, initialLayouts, availableVe
         <div
           className="flex-1 overflow-auto rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950"
           style={{ minHeight: 620 }}
-          onDragOver={e => { e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; }}
-          onDrop={handleCanvasDrop}
+          onDragOver={e => e.preventDefault()}
         >
           {!fabricLoaded && <div className="flex items-center justify-center h-full text-slate-400 text-sm">Carregando editor…</div>}
           <canvas ref={canvasRef} className={fabricLoaded ? 'block' : 'hidden'} />
