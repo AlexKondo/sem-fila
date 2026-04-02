@@ -117,7 +117,7 @@ export default function EventCanvasEditor({ eventId, initialLayouts, availableVe
   const [saved, setSaved] = useState(false);
   const [bgOpacity, setBgOpacity] = useState(0.4);
   const [bgImage, setBgImage] = useState<string | null>(null);
-  const [activeTool, setActiveTool] = useState<'select' | 'pan' | 'text' | 'arrow' | 'rect'>('select');
+  const [activeTool, setActiveTool] = useState<'select' | 'text' | 'arrow' | 'rect'>('select');
   const [selectedObj, setSelectedObj] = useState(false);
 
   const arrowStartRef = useRef<{ x: number; y: number } | null>(null);
@@ -451,16 +451,18 @@ export default function EventCanvasEditor({ eventId, initialLayouts, availableVe
 
     canvas.isDrawingMode = false;
     canvas.selection = activeTool === 'select';
-    canvas.defaultCursor = activeTool === 'pan' ? 'grab' : activeTool === 'select' ? 'default' : 'crosshair';
+    canvas.defaultCursor = activeTool === 'select' ? 'default' : 'crosshair';
     canvas.off('mouse:down'); canvas.off('mouse:move'); canvas.off('mouse:up');
 
-    if (activeTool === 'pan') {
-      let lastX = 0, lastY = 0, isPanning = false;
+    if (activeTool === 'select') {
+      // Click+drag on empty area → pan; click on object → select normally
+      let isPanning = false, lastX = 0, lastY = 0;
       canvas.on('mouse:down', (opt: any) => {
+        if (opt.target) return; // hit an object — let Fabric handle selection
         isPanning = true;
         lastX = opt.e.clientX;
         lastY = opt.e.clientY;
-        canvas.defaultCursor = 'grabbing';
+        canvas.selection = false;
         canvas.setCursor('grabbing');
       });
       canvas.on('mouse:move', (opt: any) => {
@@ -471,12 +473,12 @@ export default function EventCanvasEditor({ eventId, initialLayouts, availableVe
         canvas.requestRenderAll();
         lastX = opt.e.clientX;
         lastY = opt.e.clientY;
-        setZoom(Math.round(canvas.getZoom() * 100));
       });
       canvas.on('mouse:up', () => {
+        if (!isPanning) return;
         isPanning = false;
-        canvas.defaultCursor = 'grab';
-        canvas.setCursor('grab');
+        canvas.selection = true;
+        canvas.defaultCursor = 'default';
       });
     }
 
@@ -647,7 +649,6 @@ export default function EventCanvasEditor({ eventId, initialLayouts, availableVe
         <div className="flex gap-1 border-r border-slate-200 dark:border-slate-700 pr-3 mr-1">
           {([
             { key: 'select', label: 'Selecionar', icon: '↖' },
-            { key: 'pan',    label: 'Mover',      icon: '✋' },
             { key: 'text',   label: 'Texto',      icon: 'T' },
             { key: 'arrow',  label: 'Seta',       icon: '→' },
             { key: 'rect',   label: 'Área',       icon: '▭' },
