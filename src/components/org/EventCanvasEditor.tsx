@@ -895,8 +895,13 @@ export default function EventCanvasEditor({ eventId, initialLayouts, availableVe
               onClick={() => {
                 const canvas = fabricRef.current;
                 if (!canvas) return;
+                // Remove as regular object (new format)
                 const bg = canvas.getObjects().find((o: any) => o.data?.isBg);
                 if (bg) canvas.remove(bg);
+                // Remove as canvas.backgroundImage (legacy format)
+                if (canvas.backgroundImage) {
+                  canvas.backgroundImage = null;
+                }
                 canvas.renderAll();
                 setBgImage(null);
               }}
