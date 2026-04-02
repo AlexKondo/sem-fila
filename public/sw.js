@@ -31,6 +31,14 @@ self.addEventListener('fetch', (event) => {
   );
 });
 
+// Vibração ~10 segundos: [vibra, pausa] repetido
+const VIBRATE_PATTERN = [
+  800, 300, 800, 300, 800, 300,
+  800, 300, 800, 300, 800, 300,
+  800, 300, 800, 300, 800, 300,
+  800,
+];
+
 // Push notification handler
 self.addEventListener('push', (event) => {
   if (!event.data) return;
@@ -48,12 +56,18 @@ self.addEventListener('push', (event) => {
     badge: '/icon-72.png',
     tag: data.tag || 'quickpick-order',
     renotify: true,
+    requireInteraction: true,
     data: { url: data.url || '/order' },
-    vibrate: [200, 100, 200],
+    vibrate: VIBRATE_PATTERN,
   };
 
   event.waitUntil(
-    self.registration.showNotification(data.title || 'QuickPick', options)
+    self.registration.showNotification(data.title || 'QuickPick', options).then(() => {
+      // Avisa clientes abertos para tocarem o alarme (app em primeiro plano)
+      return self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
+        clientList.forEach((client) => client.postMessage({ type: 'PLAY_ALARM' }));
+      });
+    })
   );
 });
 

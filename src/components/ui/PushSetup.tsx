@@ -12,21 +12,58 @@ function urlBase64ToUint8Array(base64String: string): ArrayBuffer {
   return Uint8Array.from([...raw].map((c) => c.charCodeAt(0))).buffer;
 }
 
+// Toca alarme via Web Audio API (~10 segundos de bipes)
+function playAlarm() {
+  try {
+    const ctx = new AudioContext();
+    const totalBeeps = 8;
+    const beepDuration = 0.6;
+    const beepGap = 0.6;
+
+    for (let i = 0; i < totalBeeps; i++) {
+      const start = ctx.currentTime + i * (beepDuration + beepGap);
+
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(880, start); // Lá 5 — som agudo de alerta
+      gain.gain.setValueAtTime(0, start);
+      gain.gain.linearRampToValueAtTime(1, start + 0.05);
+      gain.gain.setValueAtTime(1, start + beepDuration - 0.1);
+      gain.gain.linearRampToValueAtTime(0, start + beepDuration);
+
+      osc.start(start);
+      osc.stop(start + beepDuration);
+    }
+  } catch {
+    // AudioContext não disponível (ex: fora do contexto de usuário)
+  }
+}
+
 export default function PushSetup() {
   useEffect(() => {
     if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
+
+    // Listener: toca alarme quando SW envia PLAY_ALARM (app em primeiro plano)
+    function onSwMessage(event: MessageEvent) {
+      if (event.data?.type === 'PLAY_ALARM') {
+        playAlarm();
+      }
+    }
+    navigator.serviceWorker.addEventListener('message', onSwMessage);
 
     async function setup() {
       const supabase = createClient();
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      // Só pergunta se ainda não foi decidido
       if (Notification.permission === 'denied') return;
 
       const reg = await navigator.serviceWorker.ready;
 
-      // Verifica se já tem subscription ativa
       let sub = await reg.pushManager.getSubscription();
       if (!sub) {
         if (Notification.permission === 'default') {
@@ -39,7 +76,6 @@ export default function PushSetup() {
         });
       }
 
-      // Envia para o servidor
       await fetch('/api/push/subscribe', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -48,6 +84,10 @@ export default function PushSetup() {
     }
 
     setup().catch(() => {});
+
+    return () => {
+      navigator.serviceWorker.removeEventListener('message', onSwMessage);
+    };
   }, []);
 
   return null;
