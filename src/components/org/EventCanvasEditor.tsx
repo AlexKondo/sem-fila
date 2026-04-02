@@ -117,7 +117,7 @@ export default function EventCanvasEditor({ eventId, initialLayouts, availableVe
   const [saved, setSaved] = useState(false);
   const [bgOpacity, setBgOpacity] = useState(0.4);
   const [bgImage, setBgImage] = useState<string | null>(null);
-  const [activeTool, setActiveTool] = useState<'select' | 'text' | 'arrow' | 'rect'>('select');
+  const [activeTool, setActiveTool] = useState<'select' | 'pan' | 'text' | 'arrow' | 'rect'>('select');
   const [selectedObj, setSelectedObj] = useState(false);
 
   const arrowStartRef = useRef<{ x: number; y: number } | null>(null);
@@ -451,8 +451,34 @@ export default function EventCanvasEditor({ eventId, initialLayouts, availableVe
 
     canvas.isDrawingMode = false;
     canvas.selection = activeTool === 'select';
-    canvas.defaultCursor = activeTool === 'select' ? 'default' : 'crosshair';
+    canvas.defaultCursor = activeTool === 'pan' ? 'grab' : activeTool === 'select' ? 'default' : 'crosshair';
     canvas.off('mouse:down'); canvas.off('mouse:move'); canvas.off('mouse:up');
+
+    if (activeTool === 'pan') {
+      let lastX = 0, lastY = 0, isPanning = false;
+      canvas.on('mouse:down', (opt: any) => {
+        isPanning = true;
+        lastX = opt.e.clientX;
+        lastY = opt.e.clientY;
+        canvas.defaultCursor = 'grabbing';
+        canvas.setCursor('grabbing');
+      });
+      canvas.on('mouse:move', (opt: any) => {
+        if (!isPanning) return;
+        const vpt = canvas.viewportTransform as number[];
+        vpt[4] += opt.e.clientX - lastX;
+        vpt[5] += opt.e.clientY - lastY;
+        canvas.requestRenderAll();
+        lastX = opt.e.clientX;
+        lastY = opt.e.clientY;
+        setZoom(Math.round(canvas.getZoom() * 100));
+      });
+      canvas.on('mouse:up', () => {
+        isPanning = false;
+        canvas.defaultCursor = 'grab';
+        canvas.setCursor('grab');
+      });
+    }
 
     if (activeTool === 'text') {
       canvas.on('mouse:down', (opt: any) => {
@@ -621,9 +647,10 @@ export default function EventCanvasEditor({ eventId, initialLayouts, availableVe
         <div className="flex gap-1 border-r border-slate-200 dark:border-slate-700 pr-3 mr-1">
           {([
             { key: 'select', label: 'Selecionar', icon: '↖' },
+            { key: 'pan',    label: 'Mover',      icon: '✋' },
             { key: 'text',   label: 'Texto',      icon: 'T' },
-            { key: 'arrow',  label: 'Seta',        icon: '→' },
-            { key: 'rect',   label: 'Área',        icon: '▭' },
+            { key: 'arrow',  label: 'Seta',       icon: '→' },
+            { key: 'rect',   label: 'Área',       icon: '▭' },
           ] as const).map(t => (
             <button key={t.key} onClick={() => setActiveTool(t.key)} title={t.label}
               className={`w-8 h-8 rounded-lg text-sm font-bold transition ${activeTool === t.key ? 'bg-purple-600 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'}`}>
