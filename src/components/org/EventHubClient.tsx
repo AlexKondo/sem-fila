@@ -536,7 +536,7 @@ export default function EventHubClient({
                 onClick={() => { setPlacingBooth(!placingBooth); setDrawType(null); }}
                 className={"flex items-center gap-1 px-3 py-2 rounded-xl text-sm font-medium transition " + (placingBooth ? "bg-purple-600 text-white shadow-lg shadow-purple-500/20" : "bg-purple-50 dark:bg-purple-950/20 text-purple-600 dark:text-purple-400 hover:bg-purple-100 dark:hover:bg-purple-900/30")}
               >
-                <Plus className="w-4 h-4" /> {placingBooth ? 'Clique no grid...' : 'Barraca'}
+                <Plus className="w-4 h-4" /> {placingBooth ? 'Clique no grid...' : 'Kiosk'}
               </button>
 
               {/* Draw type buttons */}
