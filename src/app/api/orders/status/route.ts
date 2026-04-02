@@ -3,6 +3,13 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { UpdateOrderStatusSchema } from '@/lib/validations/order';
 
+const STATUS_PUSH_MESSAGE: Record<string, { title: string; body: string }> = {
+  preparing:    { title: '👨‍🍳 Preparando seu pedido!', body: 'O quiosque começou a preparar seu pedido.' },
+  almost_ready: { title: '⏰ Quase pronto!',           body: 'Seu pedido está quase pronto. Fique por perto!' },
+  ready:        { title: '🎉 Pedido pronto!',           body: 'Pode retirar! Seu pedido está esperando por você.' },
+  delivered:    { title: '✅ Pedido entregue!',         body: 'Bom apetite! Obrigado por usar o QuickPick.' },
+};
+
 export async function PATCH(request: Request) {
   // Verifica autenticação
   const userClient = await createClient();
@@ -62,6 +69,32 @@ export async function PATCH(request: Request) {
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+
+  // Envia push notification para o customer
+  const pushMsg = STATUS_PUSH_MESSAGE[status];
+  if (pushMsg) {
+    try {
+      const { createAdminClient } = await import('@/lib/supabase/server');
+      const adminSupabase = await createAdminClient();
+      const { data: fullOrder } = await adminSupabase
+        .from('orders')
+        .select('user_id, pickup_code')
+        .eq('id', order_id)
+        .single();
+
+      if (fullOrder?.user_id) {
+        const { sendPushToUser } = await import('@/lib/push');
+        await sendPushToUser(adminSupabase, fullOrder.user_id, {
+          title: pushMsg.title,
+          body: `Senha #${fullOrder.pickup_code} — ${pushMsg.body}`,
+          url: `/order/${order_id}`,
+          tag: `order-${order_id}`,
+        });
+      }
+    } catch (pushErr) {
+      console.error('[Push] Falha ao enviar notificação:', pushErr);
+    }
   }
 
   return NextResponse.json({ success: true }, { status: 200 });

@@ -3,6 +3,7 @@ import { cookies } from 'next/headers';
 import './globals.css';
 import UserNotifications from '@/components/notifications/UserNotifications';
 import ThemeProvider from '@/components/ui/ThemeProvider';
+import PushSetup from '@/components/ui/PushSetup';
 
 export const metadata: Metadata = {
   title: 'QuickPick — Sem fila, só sabor',
@@ -60,6 +61,7 @@ export default async function RootLayout({
         <ThemeProvider>
           {children}
           <UserNotifications />
+          <PushSetup />
         </ThemeProvider>
         <script
           dangerouslySetInnerHTML={{
