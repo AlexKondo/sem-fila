@@ -49,25 +49,30 @@ export default function EventKioskFinder() {
       const eventIds = eventsData.map(e => e.id);
 
       // Passo 1: busca convites confirmados (sem join)
-      const { data: invites } = await supabase
+      const { data: invites, error: invError } = await supabase
         .from('event_vendor_invitations')
         .select('event_id, vendor_id')
         .in('event_id', eventIds)
         .in('status', ['confirmed', 'accepted', 'paid'])
         .not('vendor_id', 'is', null);
 
+      console.log('[EventKioskFinder] invites:', invites, 'error:', invError);
+
       const vendorIds = [...new Set((invites ?? []).map(i => i.vendor_id).filter(Boolean))];
 
       // Passo 2: busca vendors separadamente (evita problemas de join + RLS)
       let vendorsMap: Record<string, string> = {};
       if (vendorIds.length > 0) {
-        const { data: vendorsData } = await supabase
+        const { data: vendorsData, error: vendError } = await supabase
           .from('vendors')
           .select('id, name')
           .in('id', vendorIds);
+        console.log('[EventKioskFinder] vendors:', vendorsData, 'error:', vendError);
         if (vendorsData) {
           for (const v of vendorsData) vendorsMap[v.id] = v.name;
         }
+      } else {
+        console.log('[EventKioskFinder] no vendorIds to fetch');
       }
 
       const vendorsByEvent: Record<string, Vendor[]> = {};
