@@ -89,6 +89,13 @@ export default async function VendorSettingsPage() {
 
   if (!vendor) redirect('/dashboard/vendor');
 
+  // Convites pendentes para badge
+  const { count: pendingInvites } = await supabase
+    .from('event_vendor_invitations')
+    .select('id', { count: 'exact', head: true })
+    .eq('vendor_id', vendor.id)
+    .eq('status', 'pending');
+
   // Dados do Dashboard (hoje por padrão)
   const dashboardData = await fetchDashboardData(supabase, vendor, vendors, user.id);
 
@@ -136,8 +143,8 @@ export default async function VendorSettingsPage() {
             title="Evento"
             subtitle="Convites e barraca no evento"
             icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>}
-            glow
-            badge="Novo"
+            glow={!!pendingInvites && pendingInvites > 0}
+            badge={pendingInvites && pendingInvites > 0 ? `${pendingInvites} pendente${pendingInvites > 1 ? 's' : ''}` : undefined}
           >
             <VendorEventPage />
           </CollapsibleSection>
