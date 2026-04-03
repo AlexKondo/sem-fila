@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { QrCode, ShoppingBag, Clock, ScanLine, Check, LogIn, User } from 'lucide-react';
 import { createClient } from '@/lib/supabase/server';
 import ThemeToggle from '@/components/ui/ThemeToggle';
+import EventKioskFinder from '@/components/EventKioskFinder';
 
 export default async function LandingPage() {
   const supabase = await createClient();
@@ -79,6 +80,10 @@ export default async function LandingPage() {
             <span className="flex items-center gap-1"><Check className="w-3.5 h-3.5 text-green-500" /> Sem download</span>
             <span className="flex items-center gap-1"><Check className="w-3.5 h-3.5 text-green-500" /> Grátis</span>
             <span className="flex items-center gap-1"><Check className="w-3.5 h-3.5 text-green-500" /> Tempo real</span>
+          </div>
+
+          <div className="mt-4">
+            <EventKioskFinder />
           </div>
         </div>
       </section>
