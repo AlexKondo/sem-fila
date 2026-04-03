@@ -100,7 +100,7 @@ export default function EventKioskFinder() {
             {/* Header */}
             <div className="flex items-center justify-between px-5 pt-5 pb-3 border-b border-slate-100 dark:border-slate-800 flex-shrink-0">
               <div>
-                <h2 className="font-black text-slate-900 dark:text-white text-base">Eventos com Kiosks</h2>
+                <h2 className="font-black text-slate-900 dark:text-white text-base">Eventos</h2>
                 <p className="text-xs text-slate-400 mt-0.5">Toque no evento para ver os vendedores</p>
               </div>
               <button onClick={() => setOpen(false)} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
