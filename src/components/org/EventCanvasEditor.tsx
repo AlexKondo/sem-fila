@@ -275,11 +275,10 @@ export default function EventCanvasEditor({ eventId, initialLayouts, availableVe
       const rawTop  = wrapperRect.top  + br.top + br.height + 4;
       const left = Math.min(rawLeft, window.innerWidth  - overlayW - 8);
       const top  = Math.min(Math.max(rawTop, 8), window.innerHeight - 120);
-      const lines = (textChild.text ?? '').split('\n');
       setEditingLabel({
         obj,
-        firstLine: lines[0] ?? '',
-        customName: lines[1] ?? '',
+        firstLine: obj.data?.label ?? '',
+        customName: textChild.text ?? '',
         boothId: obj.data?.boothId,
         screen: { left, top, width: overlayW },
       });
@@ -757,6 +756,19 @@ export default function EventCanvasEditor({ eventId, initialLayouts, availableVe
         });
         cloned.setCoords();
       } else {
+        // Generate copy name: "Kiosk 1" → "Kiosk 1(2)", "Kiosk 1(3)", etc.
+        if (cloned.type === 'group' && cloned.data?.type) {
+          const textChild = cloned.getObjects?.().find((o: any) => o.type === 'text');
+          if (textChild) {
+            const firstLine = (textChild.text ?? '').split('\n')[0] ?? '';
+            // Strip leading emoji+space to get base label ("🟧 Kiosk 1" → "Kiosk 1")
+            const baseName = firstLine.split(' ').slice(1).join(' ');
+            const sameTypeCount = canvas.getObjects().filter((o: any) => o.data?.type === cloned.data?.type).length;
+            const copyName = `${baseName}(${sameTypeCount + 1})`;
+            textChild.set('text', `${firstLine}\n${copyName}`);
+            cloned.dirty = true;
+          }
+        }
         canvas.add(cloned);
       }
       // Shift clipboard so each subsequent paste offsets further
@@ -770,9 +782,9 @@ export default function EventCanvasEditor({ eventId, initialLayouts, availableVe
   const commitLabelEdit = useCallback(() => {
     setEditingLabel(prev => {
       if (!prev) return null;
-      const { obj, firstLine, customName, boothId } = prev;
+      const { obj, firstLine, customName } = prev;
       const newCustom = customName.trim();
-      const newText = newCustom ? `${firstLine}\n${newCustom}` : firstLine;
+      const newText = newCustom || firstLine;
       const textChild = obj.getObjects?.().find((o: any) => o.type === 'text');
       if (textChild) {
         textChild.set('text', newText);
