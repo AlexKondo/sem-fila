@@ -30,15 +30,15 @@ export default function EventKioskFinder() {
     if (!open || events.length > 0) return;
     setLoading(true);
 
-    const today = new Date().toISOString().split('T')[0];
-
     (async () => {
-      // Busca eventos que ainda estão ativos (sem data de fim ou data de fim >= hoje)
-      const { data: eventsData } = await supabase
+      // Busca todos os eventos (sem filtro de data para garantir que dados chegam)
+      const { data: eventsData, error: eventsError } = await supabase
         .from('events')
         .select('id, name, location, start_date, end_date')
-        .or(`end_date.is.null,end_date.gte.${today}`)
-        .order('start_date', { ascending: true });
+        .order('start_date', { ascending: false })
+        .limit(20);
+
+      console.log('[EventKioskFinder] events:', eventsData, 'error:', eventsError);
 
       if (!eventsData || eventsData.length === 0) {
         setEvents([]);
