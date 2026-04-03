@@ -768,23 +768,29 @@ export default function EventCanvasEditor({ eventId, initialLayouts, availableVe
   }, []);
 
   const commitLabelEdit = useCallback(() => {
-    setEditingLabel(current => {
-      if (!current) return null;
-      const { obj, firstLine, customName, boothId } = current;
+    setEditingLabel(prev => {
+      if (!prev) return null;
+      const { obj, firstLine, customName, boothId } = prev;
       const newCustom = customName.trim();
       const newText = newCustom ? `${firstLine}\n${newCustom}` : firstLine;
       const textChild = obj.getObjects?.().find((o: any) => o.type === 'text');
       if (textChild) {
         textChild.set('text', newText);
+        obj.dirty = true;
         obj.setCoords();
         fabricRef.current?.requestRenderAll();
       }
-      // Sync custom name to DB booth label
-      if (boothId && newCustom) {
-        updateBoothField(boothId, 'label', newCustom);
-      }
       return null;
     });
+  }, []);
+
+  // Separate effect: when editingLabel closes, sync label to booth list
+  const commitLabelEditWithSync = useCallback((current: typeof editingLabel) => {
+    if (!current) return;
+    const newCustom = current.customName.trim();
+    if (current.boothId && newCustom) {
+      updateBoothField(current.boothId, 'label', newCustom);
+    }
   }, [updateBoothField]);
 
   useEffect(() => {
@@ -1155,10 +1161,10 @@ export default function EventCanvasEditor({ eventId, initialLayouts, availableVe
             value={editingLabel.customName}
             onChange={e => setEditingLabel(prev => prev ? { ...prev, customName: e.target.value } : null)}
             onKeyDown={e => {
-              if (e.key === 'Enter') { e.preventDefault(); commitLabelEdit(); }
+              if (e.key === 'Enter') { e.preventDefault(); commitLabelEditWithSync(editingLabel); commitLabelEdit(); }
               if (e.key === 'Escape') setEditingLabel(null);
             }}
-            onBlur={commitLabelEdit}
+            onBlur={() => { commitLabelEditWithSync(editingLabel); commitLabelEdit(); }}
             placeholder="Nome personalizado…"
             className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-2 py-1 text-xs text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-purple-500"
           />
