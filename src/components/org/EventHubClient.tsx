@@ -485,22 +485,12 @@ export default function EventHubClient({
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="text-xs font-bold text-gray-500 uppercase tracking-widest ml-1">Local</label>
-                  <input
-                    type="text" value={eventLocation} onChange={e => setEventLocation(e.target.value)}
-                    className="w-full border border-gray-200 dark:border-slate-800 rounded-xl px-4 py-3 text-sm bg-white dark:bg-slate-950 text-slate-900 dark:text-white focus:ring-2 focus:ring-purple-400 focus:outline-none"
-                  />
-                </div>
-                <div>
-                  <label className="text-xs font-bold text-gray-500 uppercase tracking-widest ml-1">Layout (Link Imagem/Drive)</label>
-                  <input
-                    type="text" value={eventLayoutUrl} onChange={e => setEventLayoutUrl(e.target.value)}
-                    placeholder="URL com o mapa das mesas"
-                    className="w-full border border-gray-200 dark:border-slate-800 rounded-xl px-4 py-3 text-sm bg-white dark:bg-slate-950 text-slate-900 dark:text-white focus:ring-2 focus:ring-purple-400 focus:outline-none"
-                  />
-                </div>
+              <div>
+                <label className="text-xs font-bold text-gray-500 uppercase tracking-widest ml-1">Local</label>
+                <input
+                  type="text" value={eventLocation} onChange={e => setEventLocation(e.target.value)}
+                  className="w-full border border-gray-200 dark:border-slate-800 rounded-xl px-4 py-3 text-sm bg-white dark:bg-slate-950 text-slate-900 dark:text-white focus:ring-2 focus:ring-purple-400 focus:outline-none"
+                />
               </div>
 
               <div>

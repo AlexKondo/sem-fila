@@ -196,20 +196,6 @@ export default function VendorEventClient({ vendorId, activeEvent, invitations: 
             </div>
           )}
 
-          {ev?.layout_url && (
-            <a
-              href={ev.layout_url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 p-4 shadow-sm transition-colors flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-800"
-            >
-              <div className="flex items-center gap-3">
-                <LayoutIcon className="w-5 h-5 text-orange-500" />
-                <span className="text-sm font-bold text-slate-900 dark:text-white">Ver Mapa / Layout do Evento</span>
-              </div>
-              <ChevronRight className="w-4 h-4 text-slate-400" />
-            </a>
-          )}
         </div>
 
         {selectedInvite.status === 'pending' && (
@@ -292,20 +278,6 @@ export default function VendorEventClient({ vendorId, activeEvent, invitations: 
             </div>
           </div>
 
-          {activeEvent.layout_url && (
-            <a
-              href={activeEvent.layout_url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 p-4 shadow-sm transition-colors flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-800"
-            >
-              <div className="flex items-center gap-3">
-                <LayoutIcon className="w-5 h-5 text-purple-500" />
-                <span className="text-sm font-bold text-slate-900 dark:text-white">Ver Mapa / Layout do Evento</span>
-              </div>
-              <ChevronRight className="w-4 h-4 text-slate-400" />
-            </a>
-          )}
 
           <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 p-5 shadow-sm transition-colors space-y-2">
             <div className="flex items-center gap-2">
