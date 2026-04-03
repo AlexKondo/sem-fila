@@ -738,7 +738,7 @@ export default function EventCanvasEditor({ eventId, initialLayouts, availableVe
     if (!canvas) return;
     const obj = canvas.getActiveObject();
     if (!obj) return;
-    obj.clone((cloned: any) => { clipboardRef.current = cloned; });
+    obj.clone((cloned: any) => { clipboardRef.current = cloned; }, ['data']);
   }, []);
 
   const pasteClipboard = useCallback(() => {
@@ -747,9 +747,14 @@ export default function EventCanvasEditor({ eventId, initialLayouts, availableVe
     clipboardRef.current.clone((cloned: any) => {
       canvas.discardActiveObject();
       cloned.set({ left: (cloned.left ?? 0) + 20, top: (cloned.top ?? 0) + 20, evented: true });
+      // Clear boothId so the pasted element is independent from the original's DB record
+      if (cloned.data) cloned.data = { ...cloned.data, boothId: undefined };
       if (cloned.type === 'activeSelection') {
         cloned.canvas = canvas;
-        cloned.forEachObject((obj: any) => canvas.add(obj));
+        cloned.forEachObject((obj: any) => {
+          if (obj.data) obj.data = { ...obj.data, boothId: undefined };
+          canvas.add(obj);
+        });
         cloned.setCoords();
       } else {
         canvas.add(cloned);
@@ -759,7 +764,7 @@ export default function EventCanvasEditor({ eventId, initialLayouts, availableVe
       clipboardRef.current.top  = (clipboardRef.current.top  ?? 0) + 20;
       canvas.setActiveObject(cloned);
       canvas.requestRenderAll();
-    });
+    }, ['data']);
   }, []);
 
   const commitLabelEdit = useCallback(() => {
