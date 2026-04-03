@@ -169,6 +169,23 @@ export default function EventCanvasEditor({ eventId, initialLayouts, availableVe
     const booths = data ?? [];
     setCanvasBooths(booths);
     setBoothEdits(Object.fromEntries(booths.map(b => [b.id, { label: b.label, fee: String(b.fee_amount) }])));
+
+    // Sync canvas element texts to DB labels (fixes emoji-prefix divergence after reload)
+    const canvas = fabricRef.current;
+    if (canvas && booths.length > 0) {
+      let changed = false;
+      for (const booth of booths) {
+        const obj = canvas.getObjects().find((o: any) => o.data?.boothId === booth.id) as any;
+        if (!obj) continue;
+        const textChild = obj.getObjects?.().find((o: any) => o.type === 'text');
+        if (textChild && textChild.text !== booth.label) {
+          textChild.set('text', booth.label);
+          obj.dirty = true;
+          changed = true;
+        }
+      }
+      if (changed) canvas.requestRenderAll();
+    }
   }, [supabase]);
 
   // ── Init canvas ──
@@ -696,6 +713,7 @@ export default function EventCanvasEditor({ eventId, initialLayouts, availableVe
   // ── Background image ──
   const handleBgUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]; if (!file) return;
+    e.target.value = ''; // reset so same file can be re-selected
     const fabric = (window as any).__fabric;
     const canvas = fabricRef.current;
     if (!fabric || !canvas) return;
