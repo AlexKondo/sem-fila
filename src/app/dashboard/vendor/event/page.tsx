@@ -13,27 +13,27 @@ export default async function VendorEventPage() {
   const { vendor } = await resolveVendor(supabase, user.id, { select: 'id, name, event_id' });
   if (!vendor) redirect('/dashboard/vendor');
 
-  // 1. Busca TODOS os convites deste vendor
+  // 1. Busca convites do vendor
   const { data: rawInvitations } = await supabase
     .from('event_vendor_invitations')
     .select('*')
     .eq('vendor_id', vendor.id)
     .order('invited_at', { ascending: false });
 
-  // 2. Busca eventos e enriquece (query separada para não depender do join do PostgREST)
   const invitations = rawInvitations ?? [];
   const eventIds = [...new Set(invitations.map((i: any) => i.event_id).filter(Boolean))];
 
+  // 2. Busca eventos (requer policy "Authenticated lê eventos" no Supabase)
   let enrichedInvitations: any[] = invitations;
   if (eventIds.length > 0) {
     const { data: events } = await supabase
       .from('events')
-      .select('id, name, location, start_date, end_date, start_time, end_time, layout_url, rules, address, organization_id')
+      .select('id, name, location, start_date, end_date, start_time, end_time, rules, address, organization_id')
       .in('id', eventIds);
 
     if (events && events.length > 0) {
       const orgIds = [...new Set(events.map((e: any) => e.organization_id).filter(Boolean))];
-      let orgsMap: Record<string, any> = {};
+      const orgsMap: Record<string, any> = {};
       if (orgIds.length > 0) {
         const { data: orgs } = await supabase.from('organizations').select('id, name').in('id', orgIds);
         if (orgs) for (const org of orgs) orgsMap[org.id] = org;
