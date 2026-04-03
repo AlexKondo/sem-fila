@@ -740,44 +740,60 @@ export default function EventCanvasEditor({ eventId, initialLayouts, availableVe
     obj.clone((cloned: any) => { clipboardRef.current = cloned; }, ['data']);
   }, []);
 
-  const pasteClipboard = useCallback(() => {
+  const pasteClipboard = useCallback(async () => {
     const canvas = fabricRef.current;
     if (!canvas || !clipboardRef.current) return;
-    clipboardRef.current.clone((cloned: any) => {
-      canvas.discardActiveObject();
-      cloned.set({ left: (cloned.left ?? 0) + 20, top: (cloned.top ?? 0) + 20, evented: true });
-      // Clear boothId so the pasted element is independent from the original's DB record
-      if (cloned.data) cloned.data = { ...cloned.data, boothId: undefined };
-      if (cloned.type === 'activeSelection') {
-        cloned.canvas = canvas;
-        cloned.forEachObject((obj: any) => {
-          if (obj.data) obj.data = { ...obj.data, boothId: undefined };
-          canvas.add(obj);
-        });
-        cloned.setCoords();
-      } else {
-        // Generate copy name: "Kiosk 1" → "Kiosk 1(2)", "Kiosk 1(3)", etc.
-        if (cloned.type === 'group' && cloned.data?.type) {
-          const textChild = cloned.getObjects?.().find((o: any) => o.type === 'text');
-          if (textChild) {
-            const firstLine = (textChild.text ?? '').split('\n')[0] ?? '';
-            // Strip leading emoji+space to get base label ("🟧 Kiosk 1" → "Kiosk 1")
-            const baseName = firstLine.split(' ').slice(1).join(' ');
-            const sameTypeCount = canvas.getObjects().filter((o: any) => o.data?.type === cloned.data?.type).length;
-            const copyName = `${baseName}(${sameTypeCount + 1})`;
-            textChild.set('text', `${firstLine}\n${copyName}`);
-            cloned.dirty = true;
+
+    const cloned: any = await new Promise(resolve => {
+      clipboardRef.current.clone((c: any) => resolve(c), ['data']);
+    });
+
+    canvas.discardActiveObject();
+    cloned.set({ left: (cloned.left ?? 0) + 20, top: (cloned.top ?? 0) + 20, evented: true });
+    if (cloned.data) cloned.data = { ...cloned.data, boothId: undefined };
+
+    if (cloned.type === 'activeSelection') {
+      cloned.canvas = canvas;
+      cloned.forEachObject((obj: any) => {
+        if (obj.data) obj.data = { ...obj.data, boothId: undefined };
+        canvas.add(obj);
+      });
+      cloned.setCoords();
+    } else {
+      // Generate copy name and create DB record for booth-type elements
+      if (cloned.type === 'group' && cloned.data?.type) {
+        const textChild = cloned.getObjects?.().find((o: any) => o.type === 'text');
+        if (textChild) {
+          const firstLine = (textChild.text ?? '').split('\n')[0] ?? '';
+          const baseName = firstLine.split(' ').slice(1).join(' ');
+          const sameTypeCount = canvas.getObjects().filter((o: any) => o.data?.type === cloned.data?.type).length;
+          const copyName = `${baseName}(${sameTypeCount + 1})`;
+          textChild.set('text', copyName);
+          cloned.dirty = true;
+
+          const paletteItem = PALETTE_BY_ID[cloned.data.type];
+          if (paletteItem?.isBoothType && activeId) {
+            const { data } = await supabase
+              .from('event_canvas_booths')
+              .insert({ event_id: eventId, canvas_layout_id: activeId, label: copyName, element_type: cloned.data.type, fee_amount: 0 })
+              .select('id, label, element_type, fee_amount, vendor_id, status')
+              .single();
+            if (data) {
+              cloned.data = { ...cloned.data, boothId: data.id };
+              setCanvasBooths(prev => [...prev, data]);
+              setBoothEdits(prev => ({ ...prev, [data.id]: { label: data.label, fee: '0' } }));
+            }
           }
         }
-        canvas.add(cloned);
       }
-      // Shift clipboard so each subsequent paste offsets further
-      clipboardRef.current.left = (clipboardRef.current.left ?? 0) + 20;
-      clipboardRef.current.top  = (clipboardRef.current.top  ?? 0) + 20;
-      canvas.setActiveObject(cloned);
-      canvas.requestRenderAll();
-    }, ['data']);
-  }, []);
+      canvas.add(cloned);
+    }
+
+    clipboardRef.current.left = (clipboardRef.current.left ?? 0) + 20;
+    clipboardRef.current.top  = (clipboardRef.current.top  ?? 0) + 20;
+    canvas.setActiveObject(cloned);
+    canvas.requestRenderAll();
+  }, [activeId, eventId, supabase]);
 
   const commitLabelEdit = useCallback(() => {
     setEditingLabel(prev => {
