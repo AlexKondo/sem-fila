@@ -162,6 +162,8 @@ export default function EventHubClient({
   const [eventAddress, setEventAddress] = useState(event.address || '');
   const [eventRules, setEventRules] = useState(event.rules || '');
   const [eventLayoutUrl, setEventLayoutUrl] = useState(event.layout_url || '');
+  const [eventStartDate, setEventStartDate] = useState(event.start_date ? event.start_date.slice(0, 10) : '');
+  const [eventEndDate, setEventEndDate] = useState(event.end_date ? event.end_date.slice(0, 10) : '');
   const [savingConfigs, setSavingConfigs] = useState(false);
 
   const GRID_SIZE = 12;
@@ -354,7 +356,9 @@ export default function EventHubClient({
         location: eventLocation,
         address: eventAddress,
         rules: eventRules,
-        layout_url: eventLayoutUrl
+        layout_url: eventLayoutUrl,
+        start_date: eventStartDate || null,
+        end_date: eventEndDate || null,
       })
       .eq('id', event.id);
 
@@ -364,7 +368,7 @@ export default function EventHubClient({
       alert('Configurações salvas com sucesso!');
     }
     setSavingConfigs(false);
-  }, [event.id, eventName, eventLocation, eventAddress, eventRules, eventLayoutUrl]);
+  }, [event.id, eventName, eventLocation, eventAddress, eventRules, eventLayoutUrl, eventStartDate, eventEndDate]);
 
   const totalRevenue = revenueData.reduce((acc, r) => acc + r.revenue, 0);
 
@@ -499,6 +503,24 @@ export default function EventHubClient({
                   type="text" value={eventAddress} onChange={e => setEventAddress(e.target.value)}
                   className="w-full border border-gray-200 dark:border-slate-800 rounded-xl px-4 py-3 text-sm bg-white dark:bg-slate-950 text-slate-900 dark:text-white focus:ring-2 focus:ring-purple-400 focus:outline-none"
                 />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-bold text-gray-500 uppercase tracking-widest ml-1">Data Início</label>
+                  <input
+                    type="date" value={eventStartDate} onChange={e => setEventStartDate(e.target.value)}
+                    className="w-full border border-gray-200 dark:border-slate-800 rounded-xl px-4 py-3 text-sm bg-white dark:bg-slate-950 text-slate-900 dark:text-white focus:ring-2 focus:ring-purple-400 focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-bold text-gray-500 uppercase tracking-widest ml-1">Data Fim</label>
+                  <input
+                    type="date" value={eventEndDate} onChange={e => setEventEndDate(e.target.value)}
+                    min={eventStartDate || undefined}
+                    className="w-full border border-gray-200 dark:border-slate-800 rounded-xl px-4 py-3 text-sm bg-white dark:bg-slate-950 text-slate-900 dark:text-white focus:ring-2 focus:ring-purple-400 focus:outline-none"
+                  />
+                </div>
               </div>
 
               <div>
