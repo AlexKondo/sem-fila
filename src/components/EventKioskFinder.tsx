@@ -98,12 +98,12 @@ export default function EventKioskFinder() {
           {/* Panel */}
           <div className="relative w-full sm:max-w-md bg-white dark:bg-slate-900 rounded-t-3xl sm:rounded-3xl shadow-2xl max-h-[80vh] flex flex-col">
             {/* Header */}
-            <div className="flex items-center justify-between px-5 pt-5 pb-3 border-b border-slate-100 dark:border-slate-800 flex-shrink-0">
-              <div>
+            <div className="relative flex items-center justify-center px-12 pt-5 pb-4 border-b border-slate-100 dark:border-slate-800 flex-shrink-0">
+              <div className="text-center">
                 <h2 className="font-black text-slate-900 dark:text-white text-base">Eventos</h2>
-                <p className="text-xs text-slate-400 mt-0.5">Toque no evento para ver os vendedores</p>
+                <p className="text-xs text-slate-400 mt-0.5">Toque no evento para ver os kiosks</p>
               </div>
-              <button onClick={() => setOpen(false)} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+              <button onClick={() => setOpen(false)} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1">
                 <X className="w-5 h-5" />
               </button>
             </div>
