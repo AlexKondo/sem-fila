@@ -161,7 +161,8 @@ export default function EventHubClient({
   const [eventLocation, setEventLocation] = useState(event.location || '');
   const [eventAddress, setEventAddress] = useState(event.address || '');
   const [eventRules, setEventRules] = useState(event.rules || '');
-  const [eventLayoutUrl, setEventLayoutUrl] = useState(event.layout_url || '');
+  const [eventStartTime, setEventStartTime] = useState(event.start_time || '');
+  const [eventEndTime, setEventEndTime] = useState(event.end_time || '');
   // Converte timestamptz do banco para data local (evita shift de fuso)
   const toLocalDate = (d: string | null | undefined) => {
     if (!d) return '';
@@ -362,9 +363,10 @@ export default function EventHubClient({
         location: eventLocation,
         address: eventAddress,
         rules: eventRules,
-        layout_url: eventLayoutUrl,
         start_date: eventStartDate ? `${eventStartDate}T12:00:00Z` : null,
         end_date: eventEndDate ? `${eventEndDate}T12:00:00Z` : null,
+        start_time: eventStartTime || null,
+        end_time: eventEndTime || null,
       })
       .eq('id', event.id);
 
@@ -374,7 +376,7 @@ export default function EventHubClient({
       alert('Configurações salvas com sucesso!');
     }
     setSavingConfigs(false);
-  }, [event.id, eventName, eventLocation, eventAddress, eventRules, eventLayoutUrl, eventStartDate, eventEndDate]);
+  }, [event.id, eventName, eventLocation, eventAddress, eventRules, eventStartDate, eventEndDate, eventStartTime, eventEndTime]);
 
   const totalRevenue = revenueData.reduce((acc, r) => acc + r.revenue, 0);
 
@@ -524,6 +526,23 @@ export default function EventHubClient({
                   <input
                     type="date" value={eventEndDate} onChange={e => setEventEndDate(e.target.value)}
                     min={eventStartDate || undefined}
+                    className="w-full border border-gray-200 dark:border-slate-800 rounded-xl px-4 py-3 text-sm bg-white dark:bg-slate-950 text-slate-900 dark:text-white focus:ring-2 focus:ring-purple-400 focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-bold text-gray-500 uppercase tracking-widest ml-1">Horário Início</label>
+                  <input
+                    type="time" value={eventStartTime} onChange={e => setEventStartTime(e.target.value)}
+                    className="w-full border border-gray-200 dark:border-slate-800 rounded-xl px-4 py-3 text-sm bg-white dark:bg-slate-950 text-slate-900 dark:text-white focus:ring-2 focus:ring-purple-400 focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-bold text-gray-500 uppercase tracking-widest ml-1">Horário Fim</label>
+                  <input
+                    type="time" value={eventEndTime} onChange={e => setEventEndTime(e.target.value)}
                     className="w-full border border-gray-200 dark:border-slate-800 rounded-xl px-4 py-3 text-sm bg-white dark:bg-slate-950 text-slate-900 dark:text-white focus:ring-2 focus:ring-purple-400 focus:outline-none"
                   />
                 </div>
