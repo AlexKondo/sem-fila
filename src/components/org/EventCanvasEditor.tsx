@@ -258,8 +258,8 @@ export default function EventCanvasEditor({ eventId, initialLayouts, availableVe
     });
 
     // Double-click on a palette group → open inline label editor (native DOM — more reliable than Fabric event)
-    const onDblClick = (e: MouseEvent) => {
-      let obj = canvas.findTarget(e, false) as any;
+    const onDblClick = (_e: MouseEvent) => {
+      let obj = canvas.getActiveObject() as any;
       // Fabric v5 may return a sub-object inside the group
       if (obj && !obj.data?.type && obj.group?.data?.type) obj = obj.group;
       if (!obj || obj.type !== 'group' || !obj.data?.type) return;
