@@ -48,23 +48,34 @@ export default function EventKioskFinder() {
 
       const eventIds = eventsData.map(e => e.id);
 
-      // Busca convites confirmados e seus vendors
+      // Passo 1: busca convites confirmados (sem join)
       const { data: invites } = await supabase
         .from('event_vendor_invitations')
-        .select('event_id, vendor_id, vendors(id, name)')
+        .select('event_id, vendor_id')
         .in('event_id', eventIds)
         .in('status', ['confirmed', 'accepted', 'paid'])
         .not('vendor_id', 'is', null);
 
+      const vendorIds = [...new Set((invites ?? []).map(i => i.vendor_id).filter(Boolean))];
+
+      // Passo 2: busca vendors separadamente (evita problemas de join + RLS)
+      let vendorsMap: Record<string, string> = {};
+      if (vendorIds.length > 0) {
+        const { data: vendorsData } = await supabase
+          .from('vendors')
+          .select('id, name')
+          .in('id', vendorIds);
+        if (vendorsData) {
+          for (const v of vendorsData) vendorsMap[v.id] = v.name;
+        }
+      }
+
       const vendorsByEvent: Record<string, Vendor[]> = {};
-      if (invites) {
-        for (const inv of invites) {
-          if (!inv.vendor_id || !inv.vendors) continue;
-          const v = inv.vendors as any;
-          if (!vendorsByEvent[inv.event_id]) vendorsByEvent[inv.event_id] = [];
-          if (!vendorsByEvent[inv.event_id].find(x => x.id === v.id)) {
-            vendorsByEvent[inv.event_id].push({ id: v.id, name: v.name });
-          }
+      for (const inv of (invites ?? [])) {
+        if (!inv.vendor_id || !vendorsMap[inv.vendor_id]) continue;
+        if (!vendorsByEvent[inv.event_id]) vendorsByEvent[inv.event_id] = [];
+        if (!vendorsByEvent[inv.event_id].find(x => x.id === inv.vendor_id)) {
+          vendorsByEvent[inv.event_id].push({ id: inv.vendor_id, name: vendorsMap[inv.vendor_id] });
         }
       }
 
