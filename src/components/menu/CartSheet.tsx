@@ -511,7 +511,7 @@ export default function CartSheet({ vendor, tableNumber }: CartSheetProps) {
     <>
       {/* Floating cart button */}
       {!isOpen && (
-        <div className="fixed bottom-[125px] left-0 right-0 px-4 flex justify-center z-50 max-w-md mx-auto">
+        <div className="fixed bottom-[115px] left-0 right-0 px-4 flex justify-center z-50 max-w-md mx-auto">
           <button
             onClick={() => { setIsOpen(true); setStep('cart'); }}
             className="w-full font-bold py-4 rounded-xl shadow-xl flex justify-between items-center px-6 text-white transition hover:opacity-95"
