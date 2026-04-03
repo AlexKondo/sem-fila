@@ -1,6 +1,9 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  experimental: {
+    instrumentationHook: true,
+  },
   // Security Headers (skill: zero-trust-security)
   async headers() {
     return [

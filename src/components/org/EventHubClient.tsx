@@ -162,8 +162,14 @@ export default function EventHubClient({
   const [eventAddress, setEventAddress] = useState(event.address || '');
   const [eventRules, setEventRules] = useState(event.rules || '');
   const [eventLayoutUrl, setEventLayoutUrl] = useState(event.layout_url || '');
-  const [eventStartDate, setEventStartDate] = useState(event.start_date ? event.start_date.slice(0, 10) : '');
-  const [eventEndDate, setEventEndDate] = useState(event.end_date ? event.end_date.slice(0, 10) : '');
+  // Converte timestamptz do banco para data local (evita shift de fuso)
+  const toLocalDate = (d: string | null | undefined) => {
+    if (!d) return '';
+    const dt = new Date(d);
+    return `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}-${String(dt.getDate()).padStart(2, '0')}`;
+  };
+  const [eventStartDate, setEventStartDate] = useState(() => toLocalDate(event.start_date));
+  const [eventEndDate, setEventEndDate] = useState(() => toLocalDate(event.end_date));
   const [savingConfigs, setSavingConfigs] = useState(false);
 
   const GRID_SIZE = 12;
@@ -357,8 +363,8 @@ export default function EventHubClient({
         address: eventAddress,
         rules: eventRules,
         layout_url: eventLayoutUrl,
-        start_date: eventStartDate || null,
-        end_date: eventEndDate || null,
+        start_date: eventStartDate ? `${eventStartDate}T12:00:00Z` : null,
+        end_date: eventEndDate ? `${eventEndDate}T12:00:00Z` : null,
       })
       .eq('id', event.id);
 
