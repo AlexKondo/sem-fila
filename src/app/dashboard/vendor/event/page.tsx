@@ -28,7 +28,7 @@ export default async function VendorEventPage() {
   if (eventIds.length > 0) {
     const { data: events } = await supabase
       .from('events')
-      .select('id, name, location, start_date, start_time, organization_id, layout_url, rules, address')
+      .select('id, name, location, start_date, end_date, start_time, end_time, organization_id, layout_url, rules, address')
       .in('id', eventIds);
 
     if (events) {
@@ -52,7 +52,7 @@ export default async function VendorEventPage() {
   // 3. Busca evento ativo e barraca
   const [{ data: activeEvent }, { data: booth }] = await Promise.all([
     vendor.event_id
-      ? supabase.from('events').select('*, organizations(name)').eq('id', vendor.event_id).single()
+      ? supabase.from('events').select('*, organizations(name), start_date, end_date, start_time, end_time, address').eq('id', vendor.event_id).single()
       : Promise.resolve({ data: null }),
     supabase.from('event_booths').select('*').eq('vendor_id', vendor.id).maybeSingle()
   ]);

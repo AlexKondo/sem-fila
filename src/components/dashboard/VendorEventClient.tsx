@@ -48,7 +48,7 @@ export default function VendorEventClient({ vendorId, activeEvent, invitations: 
           // Busca dados do evento para enriquecer o convite
           const { data: ev } = await supabase
             .from('events')
-            .select('id, name, location, start_date, start_time, organizations(name), layout_url, rules, address')
+            .select('id, name, location, start_date, end_date, start_time, end_time, organizations(name), layout_url, rules, address')
             .eq('id', newInvite.event_id)
             .single();
 
@@ -148,35 +148,53 @@ export default function VendorEventClient({ vendorId, activeEvent, invitations: 
         </div>
 
         <div className="grid gap-3">
-          {(ev?.start_date || ev?.location) && (
-            <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 p-4 grid grid-cols-2 gap-3 shadow-sm transition-colors">
-              {ev?.start_date && (
-                <div>
-                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Data</p>
-                  <p className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
-                    <Calendar className="w-3.5 h-3.5 text-orange-500" />
-                    {new Date(ev.start_date).toLocaleDateString('pt-BR')}
-                  </p>
-                </div>
-              )}
-              {ev?.location && (
-                <div>
-                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Local</p>
-                  <p className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
-                    <MapPin className="w-3.5 h-3.5 text-orange-500" />
-                    {ev.location}
-                  </p>
-                </div>
-              )}
+          {/* Data início / fim */}
+          <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 p-4 grid grid-cols-2 gap-3 shadow-sm transition-colors">
+            <div>
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Data Início</p>
+              <p className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+                <Calendar className="w-3.5 h-3.5 text-orange-500" />
+                {ev?.start_date ? new Date(ev.start_date).toLocaleDateString('pt-BR') : 'A definir'}
+              </p>
             </div>
-          )}
+            <div>
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Data Fim</p>
+              <p className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+                <Calendar className="w-3.5 h-3.5 text-orange-500" />
+                {ev?.end_date ? new Date(ev.end_date).toLocaleDateString('pt-BR') : 'A definir'}
+              </p>
+            </div>
+          </div>
 
-          {ev?.address && (
-            <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 p-4 shadow-sm transition-colors">
-              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Endereço</p>
-              <p className="text-sm text-slate-600 dark:text-slate-300 font-medium">{ev.address}</p>
+          {/* Horário início / fim */}
+          <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 p-4 grid grid-cols-2 gap-3 shadow-sm transition-colors">
+            <div>
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Horário Início</p>
+              <p className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+                <Calendar className="w-3.5 h-3.5 text-orange-500" />
+                {ev?.start_time ?? 'A definir'}
+              </p>
             </div>
-          )}
+            <div>
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Horário Fim</p>
+              <p className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+                <Calendar className="w-3.5 h-3.5 text-orange-500" />
+                {ev?.end_time ?? 'A definir'}
+              </p>
+            </div>
+          </div>
+
+          {/* Local e endereço */}
+          <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 p-4 shadow-sm transition-colors">
+            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Local</p>
+            <p className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+              <MapPin className="w-3.5 h-3.5 text-orange-500" />
+              {ev?.location ?? 'A definir'}
+            </p>
+            {ev?.address && (
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 ml-5">{ev.address}</p>
+            )}
+          </div>
 
           <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 p-4 shadow-sm transition-colors">
             <p className="text-[10px] font-black text-orange-600 uppercase tracking-widest mb-1">Taxa de Participação</p>
@@ -242,29 +260,53 @@ export default function VendorEventClient({ vendorId, activeEvent, invitations: 
         </div>
 
         <div className="grid gap-3">
+          {/* Data início / fim */}
           <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 p-4 grid grid-cols-2 gap-3 shadow-sm transition-colors">
             <div>
-              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Local</p>
-              <p className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
-                <MapPin className="w-3.5 h-3.5 text-purple-500" />
-                {activeEvent.location || 'Não definido'}
-              </p>
-            </div>
-            <div>
-              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Início</p>
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Data Início</p>
               <p className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
                 <Calendar className="w-3.5 h-3.5 text-purple-500" />
                 {activeEvent.start_date ? new Date(activeEvent.start_date).toLocaleDateString('pt-BR') : 'A definir'}
               </p>
             </div>
+            <div>
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Data Fim</p>
+              <p className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+                <Calendar className="w-3.5 h-3.5 text-purple-500" />
+                {activeEvent.end_date ? new Date(activeEvent.end_date).toLocaleDateString('pt-BR') : 'A definir'}
+              </p>
+            </div>
           </div>
 
-          {activeEvent.address && (
-            <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 p-4 shadow-sm transition-colors">
-              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Endereço</p>
-              <p className="text-sm text-slate-600 dark:text-slate-300 font-medium">{activeEvent.address}</p>
+          {/* Horários */}
+          <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 p-4 grid grid-cols-2 gap-3 shadow-sm transition-colors">
+            <div>
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Horário Início</p>
+              <p className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+                <Calendar className="w-3.5 h-3.5 text-purple-500" />
+                {activeEvent.start_time ?? 'A definir'}
+              </p>
             </div>
-          )}
+            <div>
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Horário Fim</p>
+              <p className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+                <Calendar className="w-3.5 h-3.5 text-purple-500" />
+                {activeEvent.end_time ?? 'A definir'}
+              </p>
+            </div>
+          </div>
+
+          {/* Local e endereço */}
+          <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 p-4 shadow-sm transition-colors">
+            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Local</p>
+            <p className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+              <MapPin className="w-3.5 h-3.5 text-purple-500" />
+              {activeEvent.location || 'A definir'}
+            </p>
+            {activeEvent.address && (
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 ml-5">{activeEvent.address}</p>
+            )}
+          </div>
 
           <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 p-4 shadow-sm transition-colors flex items-center gap-4">
             <div className="w-10 h-10 rounded-xl bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
