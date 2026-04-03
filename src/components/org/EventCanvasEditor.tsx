@@ -257,35 +257,7 @@ export default function EventCanvasEditor({ eventId, initialLayouts, availableVe
       opt.e.stopPropagation();
     });
 
-    // Double-click on a palette group → open inline label editor (native DOM — more reliable than Fabric event)
-    const onDblClick = (_e: MouseEvent) => {
-      let obj = canvas.getActiveObject() as any;
-      // Fabric v5 may return a sub-object inside the group
-      if (obj && !obj.data?.type && obj.group?.data?.type) obj = obj.group;
-      if (!obj || obj.type !== 'group' || !obj.data?.type) return;
-      const textChild = obj.getObjects().find((o: any) => o.type === 'text');
-      if (!textChild) return;
-      const canvasEl = canvas.upperCanvasEl as HTMLElement;
-      const canvasRect = canvasEl.getBoundingClientRect();
-      const br = obj.getBoundingRect();
-      const overlayW = Math.max(br.width, 160);
-      // Clamp so the overlay stays within the viewport
-      const rawLeft = canvasRect.left + br.left;
-      const rawTop  = canvasRect.top  + br.top + br.height + 4;
-      const left = Math.min(rawLeft, window.innerWidth  - overlayW - 8);
-      const top  = Math.min(Math.max(rawTop, 8), window.innerHeight - 100);
-      const lines = (textChild.text ?? '').split('\n');
-      setEditingLabel({
-        obj,
-        firstLine: lines[0] ?? '',
-        customName: lines[1] ?? '',
-        boothId: obj.data?.boothId,
-        screen: { left, top, width: overlayW },
-      });
-    };
-    canvas.upperCanvasEl.addEventListener('dblclick', onDblClick);
-
-    return () => { canvas.upperCanvasEl.removeEventListener('dblclick', onDblClick); canvas.dispose(); fabricRef.current = null; };
+    return () => { canvas.dispose(); fabricRef.current = null; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fabricLoaded]);
 
@@ -1003,6 +975,30 @@ export default function EventCanvasEditor({ eventId, initialLayouts, availableVe
           ref={canvasWrapperRef}
           className={`flex-1 overflow-auto rounded-2xl border bg-slate-50 dark:bg-slate-950 transition-colors ${draggingItem ? 'border-purple-400 dark:border-purple-600 ring-2 ring-purple-400/30' : 'border-slate-200 dark:border-slate-700'}`}
           style={{ minHeight: 620 }}
+          onDoubleClick={(e) => {
+            const canvas = fabricRef.current;
+            if (!canvas) return;
+            let obj = canvas.getActiveObject() as any;
+            if (obj && !obj.data?.type && obj.group?.data?.type) obj = obj.group;
+            if (!obj || obj.type !== 'group' || !obj.data?.type) return;
+            const textChild = obj.getObjects().find((o: any) => o.type === 'text');
+            if (!textChild) return;
+            const wrapperRect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+            const br = obj.getBoundingRect();
+            const overlayW = Math.max(br.width, 160);
+            const rawLeft = wrapperRect.left + br.left;
+            const rawTop  = wrapperRect.top  + br.top + br.height + 4;
+            const left = Math.min(rawLeft, window.innerWidth  - overlayW - 8);
+            const top  = Math.min(Math.max(rawTop, 8), window.innerHeight - 120);
+            const lines = (textChild.text ?? '').split('\n');
+            setEditingLabel({
+              obj,
+              firstLine: lines[0] ?? '',
+              customName: lines[1] ?? '',
+              boothId: obj.data?.boothId,
+              screen: { left, top, width: overlayW },
+            });
+          }}
         >
           {!fabricLoaded && <div className="flex items-center justify-center h-full text-slate-400 text-sm">Carregando editor…</div>}
           <canvas ref={canvasRef} className={fabricLoaded ? 'block' : 'hidden'} />
