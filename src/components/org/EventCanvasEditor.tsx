@@ -176,6 +176,25 @@ export default function EventCanvasEditor({ eventId, initialLayouts, availableVe
     if (!fabricLoaded || !canvasRef.current) return;
     const fabric = (window as any).__fabric;
 
+    // Override rotation handle globally → orange circle for all objects
+    if (fabric.Object.prototype.controls?.mtr) {
+      fabric.Object.prototype.controls.mtr.sizeX = 18;
+      fabric.Object.prototype.controls.mtr.sizeY = 18;
+      fabric.Object.prototype.controls.mtr.render = function(ctx: any, left: number, top: number) {
+        ctx.save();
+        ctx.fillStyle = '#f97316';
+        ctx.strokeStyle = '#fff';
+        ctx.lineWidth = 2.5;
+        ctx.shadowColor = 'rgba(0,0,0,0.35)';
+        ctx.shadowBlur = 5;
+        ctx.beginPath();
+        ctx.arc(left, top, 9, 0, 2 * Math.PI);
+        ctx.fill();
+        ctx.stroke();
+        ctx.restore();
+      };
+    }
+
     const canvas = new fabric.Canvas(canvasRef.current, {
       width: 800,
       height: 600,
@@ -238,34 +257,35 @@ export default function EventCanvasEditor({ eventId, initialLayouts, availableVe
       opt.e.stopPropagation();
     });
 
-    // Double-click on a palette group → open inline label editor
-    canvas.on('mouse:dblclick', (opt: any) => {
-      let obj = opt.target;
-      // Fabric.js v5 can return a sub-object (rect/text inside the group) instead of the group itself
+    // Double-click on a palette group → open inline label editor (native DOM — more reliable than Fabric event)
+    const onDblClick = (e: MouseEvent) => {
+      let obj = canvas.findTarget(e, false) as any;
+      // Fabric v5 may return a sub-object inside the group
       if (obj && !obj.data?.type && obj.group?.data?.type) obj = obj.group;
       if (!obj || obj.type !== 'group' || !obj.data?.type) return;
       const textChild = obj.getObjects().find((o: any) => o.type === 'text');
       if (!textChild) return;
-      const canvasEl = canvas.lowerCanvasEl as HTMLElement;
+      const canvasEl = canvas.upperCanvasEl as HTMLElement;
       const canvasRect = canvasEl.getBoundingClientRect();
-      const br = obj.getBoundingRect(); // already in element-space (accounts for zoom+pan)
+      const br = obj.getBoundingRect();
+      const overlayW = Math.max(br.width, 160);
+      // Clamp so the overlay stays within the viewport
+      const rawLeft = canvasRect.left + br.left;
+      const rawTop  = canvasRect.top  + br.top + br.height + 4;
+      const left = Math.min(rawLeft, window.innerWidth  - overlayW - 8);
+      const top  = Math.min(Math.max(rawTop, 8), window.innerHeight - 100);
       const lines = (textChild.text ?? '').split('\n');
-      const firstLine = lines[0] ?? '';
-      const customName = lines[1] ?? '';
       setEditingLabel({
         obj,
-        firstLine,
-        customName,
+        firstLine: lines[0] ?? '',
+        customName: lines[1] ?? '',
         boothId: obj.data?.boothId,
-        screen: {
-          left: canvasRect.left + br.left,
-          top: canvasRect.top + br.top,
-          width: Math.max(br.width, 120),
-        },
+        screen: { left, top, width: overlayW },
       });
-    });
+    };
+    canvas.upperCanvasEl.addEventListener('dblclick', onDblClick);
 
-    return () => { canvas.dispose(); fabricRef.current = null; };
+    return () => { canvas.upperCanvasEl.removeEventListener('dblclick', onDblClick); canvas.dispose(); fabricRef.current = null; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fabricLoaded]);
 
