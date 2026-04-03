@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { createClient } from '@/lib/supabase/client';
 import { MapPin, ChevronDown, ChevronUp, Store, X } from 'lucide-react';
 import Link from 'next/link';
 
@@ -20,7 +19,6 @@ interface EventItem {
 }
 
 export default function EventKioskFinder() {
-  const supabase = createClient();
   const [open, setOpen] = useState(false);
   const [events, setEvents] = useState<EventItem[]>([]);
   const [loading, setLoading] = useState(false);
@@ -31,52 +29,13 @@ export default function EventKioskFinder() {
     setLoading(true);
 
     (async () => {
-      // Passo 1: começa pelas invitações confirmadas (fonte de verdade)
-      const { data: invites } = await supabase
-        .from('event_vendor_invitations')
-        .select('event_id, vendor_id')
-        .in('status', ['confirmed', 'accepted', 'paid'])
-        .not('vendor_id', 'is', null);
-
-      if (!invites || invites.length === 0) {
+      try {
+        const res = await fetch('/api/public-events');
+        const data = await res.json();
+        setEvents(Array.isArray(data) ? data : []);
+      } catch {
         setEvents([]);
-        setLoading(false);
-        return;
       }
-
-      const inviteEventIds = [...new Set(invites.map(i => i.event_id).filter(Boolean))];
-      const vendorIds = [...new Set(invites.map(i => i.vendor_id).filter(Boolean))];
-
-      // Passo 2: busca eventos e vendors em paralelo pelos IDs das invitações
-      const [{ data: eventsData }, { data: vendorsData }] = await Promise.all([
-        supabase
-          .from('events')
-          .select('id, name, location, start_date, end_date')
-          .in('id', inviteEventIds)
-          .order('start_date', { ascending: true }),
-        supabase
-          .from('vendors')
-          .select('id, name')
-          .in('id', vendorIds),
-      ]);
-
-      const vendorsMap: Record<string, string> = {};
-      for (const v of (vendorsData ?? [])) vendorsMap[v.id] = v.name;
-
-      const vendorsByEvent: Record<string, Vendor[]> = {};
-      for (const inv of invites) {
-        if (!inv.vendor_id || !vendorsMap[inv.vendor_id]) continue;
-        if (!vendorsByEvent[inv.event_id]) vendorsByEvent[inv.event_id] = [];
-        if (!vendorsByEvent[inv.event_id].find(x => x.id === inv.vendor_id)) {
-          vendorsByEvent[inv.event_id].push({ id: inv.vendor_id, name: vendorsMap[inv.vendor_id] });
-        }
-      }
-
-      const result: EventItem[] = (eventsData ?? [])
-        .map(e => ({ ...e, vendors: vendorsByEvent[e.id] ?? [] }))
-        .filter(e => e.vendors.length > 0);
-
-      setEvents(result);
       setLoading(false);
     })();
   }, [open]);
