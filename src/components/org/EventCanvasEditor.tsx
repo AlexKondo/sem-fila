@@ -257,7 +257,36 @@ export default function EventCanvasEditor({ eventId, initialLayouts, availableVe
       opt.e.stopPropagation();
     });
 
-    return () => { canvas.dispose(); fabricRef.current = null; };
+    // Double-click: listen on document capture phase so Fabric's stopPropagation doesn't block it
+    const onDblClick = (e: MouseEvent) => {
+      const wrapper = canvasWrapperRef.current;
+      if (!wrapper || !wrapper.contains(e.target as Node)) return;
+      const fc = fabricRef.current;
+      if (!fc) return;
+      let obj = fc.getActiveObject() as any;
+      if (obj && !obj.data?.type && obj.group?.data?.type) obj = obj.group;
+      if (!obj || obj.type !== 'group' || !obj.data?.type) return;
+      const textChild = obj.getObjects().find((o: any) => o.type === 'text');
+      if (!textChild) return;
+      const br = obj.getBoundingRect();
+      const wrapperRect = wrapper.getBoundingClientRect();
+      const overlayW = Math.max(br.width, 160);
+      const rawLeft = wrapperRect.left + br.left;
+      const rawTop  = wrapperRect.top  + br.top + br.height + 4;
+      const left = Math.min(rawLeft, window.innerWidth  - overlayW - 8);
+      const top  = Math.min(Math.max(rawTop, 8), window.innerHeight - 120);
+      const lines = (textChild.text ?? '').split('\n');
+      setEditingLabel({
+        obj,
+        firstLine: lines[0] ?? '',
+        customName: lines[1] ?? '',
+        boothId: obj.data?.boothId,
+        screen: { left, top, width: overlayW },
+      });
+    };
+    document.addEventListener('dblclick', onDblClick, true);
+
+    return () => { document.removeEventListener('dblclick', onDblClick, true); canvas.dispose(); fabricRef.current = null; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fabricLoaded]);
 
@@ -975,30 +1004,6 @@ export default function EventCanvasEditor({ eventId, initialLayouts, availableVe
           ref={canvasWrapperRef}
           className={`flex-1 overflow-auto rounded-2xl border bg-slate-50 dark:bg-slate-950 transition-colors ${draggingItem ? 'border-purple-400 dark:border-purple-600 ring-2 ring-purple-400/30' : 'border-slate-200 dark:border-slate-700'}`}
           style={{ minHeight: 620 }}
-          onDoubleClick={(e) => {
-            const canvas = fabricRef.current;
-            if (!canvas) return;
-            let obj = canvas.getActiveObject() as any;
-            if (obj && !obj.data?.type && obj.group?.data?.type) obj = obj.group;
-            if (!obj || obj.type !== 'group' || !obj.data?.type) return;
-            const textChild = obj.getObjects().find((o: any) => o.type === 'text');
-            if (!textChild) return;
-            const wrapperRect = (e.currentTarget as HTMLElement).getBoundingClientRect();
-            const br = obj.getBoundingRect();
-            const overlayW = Math.max(br.width, 160);
-            const rawLeft = wrapperRect.left + br.left;
-            const rawTop  = wrapperRect.top  + br.top + br.height + 4;
-            const left = Math.min(rawLeft, window.innerWidth  - overlayW - 8);
-            const top  = Math.min(Math.max(rawTop, 8), window.innerHeight - 120);
-            const lines = (textChild.text ?? '').split('\n');
-            setEditingLabel({
-              obj,
-              firstLine: lines[0] ?? '',
-              customName: lines[1] ?? '',
-              boothId: obj.data?.boothId,
-              screen: { left, top, width: overlayW },
-            });
-          }}
         >
           {!fabricLoaded && <div className="flex items-center justify-center h-full text-slate-400 text-sm">Carregando editor…</div>}
           <canvas ref={canvasRef} className={fabricLoaded ? 'block' : 'hidden'} />
