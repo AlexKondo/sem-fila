@@ -527,6 +527,23 @@ export default function EventCanvasEditor({ eventId, initialLayouts, availableVe
   // ── Booth label/fee editing (debounced save) ──
   const updateBoothField = useCallback((boothId: string, field: 'label' | 'fee', value: string) => {
     setBoothEdits(prev => ({ ...prev, [boothId]: { ...prev[boothId], [field]: value } }));
+
+    // Sync label to canvas element immediately
+    if (field === 'label') {
+      const canvas = fabricRef.current;
+      if (canvas) {
+        const obj = canvas.getObjects().find((o: any) => o.data?.boothId === boothId) as any;
+        if (obj) {
+          const textChild = obj.getObjects?.().find((o: any) => o.type === 'text');
+          if (textChild) {
+            textChild.set('text', value || 'Kiosk');
+            obj.dirty = true;
+            canvas.requestRenderAll();
+          }
+        }
+      }
+    }
+
     if (savingBoothRef.current[boothId]) clearTimeout(savingBoothRef.current[boothId]);
     savingBoothRef.current[boothId] = setTimeout(async () => {
       const patch = field === 'label'
