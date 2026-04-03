@@ -8,14 +8,16 @@ interface Props {
   subtitle?: string;
   icon?: React.ReactNode;
   defaultOpen?: boolean;
+  glow?: boolean;
+  badge?: string;
   children: React.ReactNode;
 }
 
-export default function CollapsibleSection({ title, subtitle, icon, defaultOpen = false, children }: Props) {
+export default function CollapsibleSection({ title, subtitle, icon, defaultOpen = false, glow, badge, children }: Props) {
   const [open, setOpen] = useState(defaultOpen);
 
   return (
-    <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800 overflow-hidden">
+    <div className={`bg-white dark:bg-slate-900 rounded-3xl shadow-sm overflow-hidden relative transition-all duration-300 ${glow ? 'border-2 border-orange-400/60 dark:border-orange-500/50 shadow-[0_0_24px_4px_rgba(236,91,19,0.18)] dark:shadow-[0_0_32px_6px_rgba(236,91,19,0.22)]' : 'border border-slate-100 dark:border-slate-800'}`}>
       <button
         type="button"
         onClick={() => setOpen(!open)}
@@ -28,7 +30,14 @@ export default function CollapsibleSection({ title, subtitle, icon, defaultOpen 
             </div>
           )}
           <div className="text-left">
-            <h2 className="text-lg font-bold text-slate-900 dark:text-white">{title}</h2>
+            <div className="flex items-center gap-2">
+              <h2 className="text-lg font-bold text-slate-900 dark:text-white">{title}</h2>
+              {badge && (
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider text-white animate-pulse" style={{ backgroundColor: '#ec5b13' }}>
+                  {badge}
+                </span>
+              )}
+            </div>
             {subtitle && <p className="text-xs text-slate-400 dark:text-slate-500 font-medium tracking-tight">{subtitle}</p>}
           </div>
         </div>
