@@ -96,6 +96,7 @@ export default function OrderPage() {
       case 'almost_ready': return { label: 'Quase Pronto',      color: 'bg-orange-50 text-orange-600 border-orange-200', icon: Package };
       case 'ready':        return { label: 'Pronto p/ Retirada',color: 'bg-green-50 text-green-700 border-green-200',    icon: CheckCircle };
       case 'delivered':    return { label: 'Entregue',          color: 'bg-gray-100 text-gray-600 border-gray-200',      icon: CheckCircle };
+      case 'cancelled':    return { label: 'Cancelado',         color: 'bg-red-50 text-red-600 border-red-200',          icon: Receipt };
       default:             return { label: status || 'Processando', color: 'bg-gray-50 text-gray-500 border-gray-100',   icon: Receipt };
     }
   };
