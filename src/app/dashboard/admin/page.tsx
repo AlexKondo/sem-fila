@@ -43,6 +43,7 @@ export default async function AdminDashboardPage() {
   ]);
 
   const totalRevenue = revenueData?.reduce((sum, o) => sum + (o.total_price ?? 0), 0) ?? 0;
+  const firstName = profile?.name?.split(' ')[0] ?? 'Admin';
 
   const stats = [
     { label: 'Usuários', value: totalUsers ?? 0, icon: Users, color: 'bg-blue-50 dark:bg-blue-950/30 text-blue-600 dark:text-blue-400', href: '/dashboard/admin/users' },
@@ -58,9 +59,9 @@ export default async function AdminDashboardPage() {
       <header className="bg-white dark:bg-slate-800 border-b border-gray-100 dark:border-slate-700 sticky top-0 z-40">
         <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
-             <div className="w-8 h-8 bg-black rounded-lg flex items-center justify-center font-black text-white">M</div>
+             <div className="w-8 h-8 bg-black rounded-lg flex items-center justify-center font-black text-white">{firstName[0].toUpperCase()}</div>
              <div>
-              <h1 className="font-bold text-gray-900 dark:text-white leading-none">Master Admin</h1>
+              <h1 className="font-bold text-gray-900 dark:text-white leading-none">Olá, {firstName}</h1>
               <p className="text-[10px] text-gray-400 dark:text-slate-500 uppercase font-bold tracking-tighter">Visão Global do Sistema</p>
              </div>
           </div>
