@@ -162,14 +162,14 @@ export default function QrScanner() {
     <div className="relative flex min-h-screen flex-col bg-[#f8f6f6] dark:bg-slate-900 transition-colors duration-300">
       {/* Header */}
       <header className="flex items-center justify-between px-6 py-4">
-        <div className="flex items-center gap-2">
+        <Link href="/" className="flex items-center gap-2">
           <div className="p-2 rounded-lg" style={{ backgroundColor: P }}>
             <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
               <path d="M3 3h7v7H3V3zm2 2v3h3V5H5zm7-2h7v7h-7V3zm2 2v3h3V5h-3zM3 13h7v7H3v-7zm2 2v3h3v-3H5zm10 0h2v2h-2v-2zm-2 2h2v2h-2v-2zm4 0h2v2h-2v-2zm0-4h2v2h-2v-2zm-4 0h2v2h-2v-2zm2 2h2v2h-2v-2z"/>
             </svg>
           </div>
           <h1 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">QuickPick</h1>
-        </div>
+        </Link>
         <div className="flex items-center gap-1">
           <ThemeToggle />
           <Link href="/" className="w-10 h-10 flex items-center justify-center rounded-full bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-300 dark:hover:bg-slate-600 transition">
