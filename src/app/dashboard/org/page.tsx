@@ -42,7 +42,7 @@ export default async function OrgDashboardPage() {
         .from('events')
         .select('id, name, location, start_date, end_date, active')
         .eq('organization_id', orgId)
-        .order('start_date', { ascending: false })
+        .order('start_date', { ascending: false, nullsFirst: false })
     : { data: [] };
 
   const activeEvents = events?.filter(e => e.active) ?? [];

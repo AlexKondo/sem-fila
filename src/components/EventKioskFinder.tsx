@@ -49,7 +49,7 @@ export default function EventKioskFinder() {
         style={{ borderColor: '#ec5b13', color: '#ec5b13' }}
       >
         <MapPin className="w-4 h-4 flex-shrink-0" />
-        Está em um evento? Ache os Kiosks aqui
+        Está em um restaurante ou evento? Veja as opções aqui ...
       </button>
 
       {/* Modal/Sheet */}
